@@ -73,7 +73,7 @@ The application provides the following capabilities:
 ## 🚀 How to Run
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/flux-personal-finance.git
+   git clone https://github.com/yourusername/flux-personal-finance-dashboard.git
    ```
 
 2. **Open the Project**
