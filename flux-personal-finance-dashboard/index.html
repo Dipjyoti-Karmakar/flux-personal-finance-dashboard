@@ -118,7 +118,7 @@ select option{background:var(--s2)}
 .sbtn{width:100%;padding:12px;margin-top:auto;border-radius:var(--rs);border:none;background:var(--ac);color:#0d0f14;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:600;cursor:pointer;transition:all .3s cubic-bezier(0.16, 1, 0.3, 1)}
 .sbtn:hover{transform:translateY(-2px);box-shadow:var(--sh-btn);opacity:1}
 .sbtn:active{transform:translateY(0);box-shadow:none;}
-.fltr{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--bd);flex-wrap:wrap;align-items:center;min-width:0;}
+.fltr{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--bd);flex-wrap:wrap;align-items:center;min-width:0;max-width:100%;}
 .ft{padding:4px 12px;border-radius:20px;border:1px solid var(--bd);background:transparent;color:var(--mu);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;font-weight:600;white-space:nowrap;flex-shrink:0;}
 .ft:hover{border-color:var(--bs);color:var(--tx);transform:translateY(-1px);}
 .ft.act{background:var(--ag);border-color:var(--ac);color:var(--ac);transform:translateY(0);}
@@ -211,7 +211,9 @@ select option{background:var(--s2)}
     border-bottom: 1px solid var(--bd); 
     scrollbar-width: none; 
     -webkit-overflow-scrolling: touch; 
-    min-width: 0; 
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
 }
 .fltr-scroll::-webkit-scrollbar { display: none; }
 .fltr-scroll::after {
@@ -392,7 +394,7 @@ select option{background:var(--s2)}
   .tb { padding: 12px 8px; font-size: 11px; border-radius: 10px;}
   
   /* Filters */
-  .fltr-scroll { padding: 12px 16px; margin: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .fltr-scroll { padding: 12px 16px; margin: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; max-width: 100%; min-width: 0; }
   .fltr-scroll::after { flex: 0 0 16px; } 
   .ft { padding: 8px 16px; font-size: 11px; border-radius: 20px;}
   #customDtWrap { padding: 12px; gap: 10px; }
@@ -518,7 +520,7 @@ select option{background:var(--s2)}
   <!-- Left Side: Transactions List -->
   <div class="pn">
     <div class="ph"><span class="pt">Transactions</span><span class="pb" id="txCnt">0</span></div>
-    <div class="fltr" style="padding:0; flex-direction:column; align-items:stretch; border-bottom:none; overflow:visible;">
+    <div class="fltr" style="padding:0; flex-direction:column; align-items:stretch; border-bottom:none; overflow:hidden;">
       <div class="fltr-scroll">
         <button class="ft dt-flt act" onclick="setDt('today', this)">Today</button>
         <button class="ft dt-flt" onclick="setDt('month', this)">This Month</button>
