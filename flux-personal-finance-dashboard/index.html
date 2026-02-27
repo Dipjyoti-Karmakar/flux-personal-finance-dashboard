@@ -395,7 +395,9 @@ select option{background:var(--s2)}
   .fltr-scroll { padding: 12px 0 12px 16px; margin: 0 -16px; }
   .fltr-scroll::after { flex: 0 0 16px; } 
   .ft { padding: 8px 16px; font-size: 11px; border-radius: 20px;}
-  #customDtWrap { padding: 16px; gap: 12px; }
+  #customDtWrap { padding: 12px; gap: 10px; }
+  #customDtWrap > div { flex: 1 1 100%; min-width: 0; }
+  #customDtWrap input[type="date"] { width: 100%; max-width: 100%; box-sizing: border-box; }
   
   /* Transaction List */
   .txl{padding:4px 12px 12px;}
@@ -523,14 +525,14 @@ select option{background:var(--s2)}
         <button class="ft dt-flt" onclick="setDt('all', this)">All Dates</button>
         <button class="ft dt-flt" onclick="setDt('custom', this)">Custom Range</button>
       </div>
-      <div id="customDtWrap" style="display:none; padding:12px 16px; border-bottom:1px solid var(--bd); background:var(--s2); gap:8px; align-items:flex-end; flex-wrap: wrap;">
-        <div style="display:flex; flex-direction:column; gap:6px; flex: 1 1 110px;">
+      <div id="customDtWrap" style="display:none; padding:12px 16px; border-bottom:1px solid var(--bd); background:var(--s2); gap:8px; align-items:flex-end; flex-wrap: wrap; overflow:hidden; box-sizing:border-box; max-width:100%;">
+        <div style="display:flex; flex-direction:column; gap:6px; flex: 1 1 110px; min-width:0;">
             <label style="font-size:9px; color:var(--mu); font-family:'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; font-weight:600;">From Date</label>
-            <input type="date" id="cDtFrom" onchange="updCustomDt()" style="padding:8px 10px; font-size:12px;">
+            <input type="date" id="cDtFrom" onchange="updCustomDt()" style="padding:8px 10px; font-size:12px; min-width:0; width:100%; box-sizing:border-box;">
         </div>
-        <div style="display:flex; flex-direction:column; gap:6px; flex: 1 1 110px;">
+        <div style="display:flex; flex-direction:column; gap:6px; flex: 1 1 110px; min-width:0;">
             <label style="font-size:9px; color:var(--mu); font-family:'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; font-weight:600;">To Date</label>
-            <input type="date" id="cDtTo" onchange="updCustomDt()" style="padding:8px 10px; font-size:12px;">
+            <input type="date" id="cDtTo" onchange="updCustomDt()" style="padding:8px 10px; font-size:12px; min-width:0; width:100%; box-sizing:border-box;">
         </div>
         <button class="btn" onclick="clearCustomDt()" style="padding:8px 12px; height:35px; flex: 1 1 100%;">Clear</button>
       </div>
@@ -902,7 +904,10 @@ async function addTx() {
   }
 }
 
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function uid() { 
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return Date.now().toString(36) + Math.random().toString(36).slice(2); 
+}
 function shake(id){const el=document.getElementById(id);el.style.borderColor='var(--ex)';el.animate([{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],{duration:280});setTimeout(()=>{el.style.borderColor='';},600);}
 
 function askDelTx(id) {
@@ -1526,9 +1531,9 @@ function exportCSV() {
     t.date,
     `"${t.desc.replace(/"/g, '""')}"`,
     t.amount,
-    t.type,
-    t.mode,
-    t.cat
+    `"${t.type.replace(/"/g, '""')}"`,
+    `"${t.mode.replace(/"/g, '""')}"`,
+    `"${t.cat.replace(/"/g, '""')}"`
   ].join(','));
   
   const csvContent = [headers.join(','), ...rows].join('\n');
