@@ -392,7 +392,7 @@ select option{background:var(--s2)}
   .tb { padding: 12px 8px; font-size: 11px; border-radius: 10px;}
   
   /* Filters */
-  .fltr-scroll { padding: 12px 0 12px 16px; margin: 0 -16px; }
+  .fltr-scroll { padding: 12px 16px; margin: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .fltr-scroll::after { flex: 0 0 16px; } 
   .ft { padding: 8px 16px; font-size: 11px; border-radius: 20px;}
   #customDtWrap { padding: 12px; gap: 10px; }
@@ -518,7 +518,7 @@ select option{background:var(--s2)}
   <!-- Left Side: Transactions List -->
   <div class="pn">
     <div class="ph"><span class="pt">Transactions</span><span class="pb" id="txCnt">0</span></div>
-    <div class="fltr" style="padding:0; flex-direction:column; align-items:stretch; border-bottom:none; overflow:hidden;">
+    <div class="fltr" style="padding:0; flex-direction:column; align-items:stretch; border-bottom:none; overflow:visible;">
       <div class="fltr-scroll">
         <button class="ft dt-flt act" onclick="setDt('today', this)">Today</button>
         <button class="ft dt-flt" onclick="setDt('month', this)">This Month</button>
