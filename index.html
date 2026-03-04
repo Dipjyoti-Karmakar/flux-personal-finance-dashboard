@@ -339,7 +339,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .tst .undo-btn:hover{background:rgba(255,255,255,.12)}
 /* Summary custom date range */
 .stats-custom-dt{display:none;align-items:center;gap:8px;margin-top:8px}
-.stats-custom-dt.vis{display:flex}
+.stats-custom-dt.vis{display:flex;margin-bottom:12px}
 .stats-custom-dt input[type=date]{padding:5px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-family:'DM Mono',monospace;font-size:11px;outline:none}
 .stats-custom-dt input[type=date]:focus{border-color:var(--ac)}
 .stats-custom-dt .dt-clear{font-size:10px;color:var(--mu);cursor:pointer;text-decoration:underline;font-family:'DM Mono',monospace}
@@ -1071,6 +1071,8 @@ function loadDataFromCloud() {
       }
     });
     txs = loadedTxs.sort((a,b) => new Date(b.date) - new Date(a.date));
+    // Exclude tx pending soft-delete during undo window
+    if (_undoTxData) txs = txs.filter(t => t.id !== _undoTxData.id);
     
     const dot = document.getElementById('cloudDot');
     dot.className = 'sync-dot online';
@@ -1254,6 +1256,15 @@ function uid() {
 function shake(id){const el=document.getElementById(id);el.style.borderColor='var(--ex)';el.animate([{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(-3px)'},{transform:'translateX(0)'}],{duration:280});setTimeout(()=>{el.style.borderColor='';},600);}
 
 function askDelTx(id) {
+    showConfirm(
+        'Delete Transaction',
+        'Are you sure? You will have 5 seconds to undo after confirming.',
+        () => executeSoftDelete(id),
+        true
+    );
+}
+
+function executeSoftDelete(id) {
     // Find the transaction data for undo
     const txData = txs.find(t => t.id === id);
     if (!txData) return;
@@ -1268,7 +1279,7 @@ function askDelTx(id) {
     // Remove from local array immediately for responsive feel
     txs = txs.filter(t => t.id !== id);
     render();
-    // Show undo toast
+    // Show undo toast with 5-second recovery window
     showUndoToast(id);
 }
 
@@ -1311,7 +1322,7 @@ async function undoDelete() {
   _undoTxData = null;
 }
 
-function showToast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
+function showToast(msg,type){if(_undoTimer)return;const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
 function fmt(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{maximumFractionDigits:0});}
 function fmtDt(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
