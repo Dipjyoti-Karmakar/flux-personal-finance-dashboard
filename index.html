@@ -85,11 +85,11 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
   flex-direction: column;
   gap: 0;
   min-width: 0;
-  align-self: stretch;
+  align-self: start;
 }
 
-/* Right Stack card sizing – use auto basis so cards take their content height */
-.right-stack > .pn { flex: 0 0 auto; }
+/* Right Stack card sizing – override .pn height:100% so cards use natural size */
+.right-stack > .pn { flex: 0 0 auto; height: auto; }
 .right-stack > .pn:nth-child(3) { max-height: 280px; } /* Category */
 .right-stack > .pn + .pn { border-top: none; }
 #eventList{overflow-y:auto;min-height:0;max-height:360px;padding-right:4px;}
