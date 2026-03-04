@@ -85,15 +85,12 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
   flex-direction: column;
   gap: 0;
   min-width: 0;
-  height: auto;
-  align-self: start;
+  align-self: stretch;
 }
 
-/* Enhanced Right Stack heights */
-.right-stack > .pn:nth-child(1) { flex: 0.9 0 0; } /* Online vs Offline */
-.right-stack > .pn:nth-child(2) { flex: 1.2 0 0; } /* Spending Breakdown */
-.right-stack > .pn:nth-child(3) { flex: 0.9 0 0; max-height: 280px; } /* Category */
-.right-stack > .pn:nth-child(4) { flex: 1.6 0 0; } /* Special Events gets more space */
+/* Right Stack card sizing – use auto basis so cards take their content height */
+.right-stack > .pn { flex: 0 0 auto; }
+.right-stack > .pn:nth-child(3) { max-height: 280px; } /* Category */
 .right-stack > .pn + .pn { border-top: none; }
 #eventList{overflow-y:auto;min-height:0;max-height:360px;padding-right:4px;}
 #eventList::-webkit-scrollbar{width:4px}
@@ -669,6 +666,42 @@ select option{background:var(--s2)}
   </div>
 </div>
 
+<!-- Event Modal -->
+<div class="bk" id="eventMod">
+  <div class="mo" style="max-width:440px;">
+    <div class="mh"><span class="mti" id="eventModTitle">New Event</span><button class="mc2" onclick="closeEventMod()">×</button></div>
+    <div class="mb">
+      <div class="fb2" style="padding:0">
+        <div class="fd full-mob" style="margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Event Name</label>
+          <input type="text" id="evtName" placeholder="e.g. Birthday Trip" maxlength="60" style="width:100%;box-sizing:border-box;">
+        </div>
+        <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div class="fd">
+            <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Start Date</label>
+            <input type="date" id="evtStart" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div class="fd">
+            <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">End Date</label>
+            <input type="date" id="evtEnd" style="width:100%;box-sizing:border-box;">
+          </div>
+        </div>
+        <div class="fd full-mob" style="margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Color</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="color" id="evtColor" value="#c8a96e" style="width:48px;height:36px;padding:2px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--s2);cursor:pointer;">
+            <span id="evtColorHex" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--mu);">#c8a96e</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeEventMod()">Cancel</button>
+      <button class="btn pr" id="eventModSaveBtn" onclick="saveEventMod()">Create Event</button>
+    </div>
+  </div>
+</div>
+
 <div id="trendTip" class="trend-tip"></div>
 <div class="tst" id="toast"></div>
 
@@ -682,8 +715,8 @@ const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8',
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-const TX_PAGE_SIZE = 50;
-let txVisibleCount = 50;
+const TX_PAGE_SIZE = 20;
+let txVisibleCount = 20;
 let txFilteredList = [];
 
 let txs = [];
@@ -1073,6 +1106,16 @@ function renderTxList(){
 
   document.getElementById('txCnt').textContent = list.length;
 
+  // Compute totals for special event / custom range / all-dates filters
+  const showTotals = (cDtFilt === 'custom' || cDtFilt === 'all' || cTyFilt === 'event');
+  let filtIncome = 0, filtExpense = 0;
+  if (showTotals) {
+    list.forEach(t => {
+      if (t.type === 'income') filtIncome += t.amount;
+      else filtExpense += t.amount;
+    });
+  }
+
   if(!list.length){
     if (cDtFilt === 'custom' && !document.getElementById('cDtFrom').value && !document.getElementById('cDtTo').value) {
         el.innerHTML='<div class="txa"><div style="font-size:26px;margin-bottom:8px;opacity:.4">◈</div>Select dates to view</div>';
@@ -1117,6 +1160,27 @@ function renderTxList(){
     
   if (hasMore) {
     html += `<div style="text-align:center;padding:16px;"><button class="sbtn" onclick="loadMoreTx()" style="background:var(--s2);color:var(--ac);border:1px solid var(--ac);font-size:11px;padding:10px 16px;">▼ Load ${Math.min(TX_PAGE_SIZE, remaining)} More (${remaining} remaining)</button></div>`;
+  }
+
+  // Prepend totals bar for special event / custom range / all dates
+  if (showTotals && list.length) {
+    const net = filtIncome - filtExpense;
+    html = `<div style="display:flex;gap:12px;padding:14px 18px;background:var(--s2);border-bottom:1px solid var(--bd);flex-wrap:wrap;align-items:center;">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Income</span>
+        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--in);">${fmt(filtIncome)}</span>
+      </div>
+      <div style="width:1px;height:20px;background:var(--bd);"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Expense</span>
+        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--ex);">${fmt(filtExpense)}</span>
+      </div>
+      <div style="width:1px;height:20px;background:var(--bd);"></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Net</span>
+        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${net >= 0 ? 'var(--in)' : 'var(--ex)'};">${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}</span>
+      </div>
+    </div>` + html;
   }
   
   el.innerHTML = html;
@@ -2015,17 +2079,30 @@ function renderEvents() {
   `).join('');
 }
 
+let editingEventId = null;
+
 function showCreateEvent() {
   if (!userId) { showToast('Please sign in first', 'er'); return; }
-  const name = prompt('Event name:');
-  if (!name || !name.trim()) return;
-  const start = (prompt('Start date (YYYY-MM-DD):') || '').trim();
-  if (!start) return;
-  const end = (prompt('End date (YYYY-MM-DD):') || '').trim();
-  if (!end) return;
-  const color = (prompt('Color hex (e.g. #e07070):', '#c8a96e') || '').trim();
-  createEvent({ name: name.trim(), start, end, color: color || '#c8a96e' });
+  editingEventId = null;
+  document.getElementById('eventModTitle').textContent = 'New Event';
+  document.getElementById('eventModSaveBtn').textContent = 'Create Event';
+  document.getElementById('evtName').value = '';
+  document.getElementById('evtStart').value = '';
+  document.getElementById('evtEnd').value = '';
+  document.getElementById('evtColor').value = '#c8a96e';
+  document.getElementById('evtColorHex').textContent = '#c8a96e';
+  document.getElementById('eventMod').classList.add('op');
 }
+
+function closeEventMod() {
+  document.getElementById('eventMod').classList.remove('op');
+  editingEventId = null;
+}
+
+document.getElementById('evtColor').addEventListener('input', (e) => {
+  document.getElementById('evtColorHex').textContent = e.target.value;
+});
+document.getElementById('eventMod').addEventListener('click', function(e) { if (e.target === this) closeEventMod(); });
 
 async function createEvent(evt) {
   if (!userId) return;
@@ -2079,14 +2156,32 @@ async function createEvent(evt) {
 function showEditEvent(evtId) {
   const evt = events[evtId];
   if (!evt) return;
-  const name = prompt('Event name:', evt.name);
-  if (!name || !name.trim()) return;
-  const start = prompt('Start date:', evt.start);
-  if (!start) return;
-  const end = prompt('End date:', evt.end);
-  if (!end) return;
-  const color = prompt('Color hex:', evt.color || '#c8a96e');
-  editEvent(evtId, { name: name.trim(), start, end, color: color || '#c8a96e' });
+  editingEventId = evtId;
+  document.getElementById('eventModTitle').textContent = 'Edit Event';
+  document.getElementById('eventModSaveBtn').textContent = 'Save Changes';
+  document.getElementById('evtName').value = evt.name || '';
+  document.getElementById('evtStart').value = evt.start || '';
+  document.getElementById('evtEnd').value = evt.end || '';
+  document.getElementById('evtColor').value = evt.color || '#c8a96e';
+  document.getElementById('evtColorHex').textContent = evt.color || '#c8a96e';
+  document.getElementById('eventMod').classList.add('op');
+}
+
+async function saveEventMod() {
+  const name = document.getElementById('evtName').value.trim();
+  const start = document.getElementById('evtStart').value;
+  const end = document.getElementById('evtEnd').value;
+  const color = document.getElementById('evtColor').value || '#c8a96e';
+  if (!name) { shake('evtName'); return; }
+  if (!start) { shake('evtStart'); return; }
+  if (!end) { shake('evtEnd'); return; }
+  if (start > end) { showToast('Start date must be before end date', 'er'); return; }
+  closeEventMod();
+  if (editingEventId) {
+    await editEvent(editingEventId, { name, start, end, color });
+  } else {
+    await createEvent({ name, start, end, color });
+  }
 }
 
 async function editEvent(evtId, data) {
@@ -2189,6 +2284,8 @@ window.showCreateEvent = showCreateEvent;
 window.showEditEvent = showEditEvent;
 window.applyEventToTxs = applyEventToTxs;
 window.askDeleteEvent = askDeleteEvent;
+window.closeEventMod = closeEventMod;
+window.saveEventMod = saveEventMod;
 
 </script>
 </body>
