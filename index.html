@@ -83,15 +83,14 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .right-stack {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 24px;
   min-width: 0;
   align-self: start;
 }
 
 /* Right Stack card sizing – override .pn height:100% so cards use natural size */
 .right-stack > .pn { flex: 0 0 auto; height: auto; }
-.right-stack > .pn + .pn { border-top: none; }
-#eventList{overflow-y:auto;min-height:0;max-height:260px;padding-right:4px;}
+#eventList{overflow-y:auto;min-height:0;max-height:280px;padding-right:4px;scrollbar-width:thin;scrollbar-color:var(--s3) transparent;}
 #eventList::-webkit-scrollbar{width:4px}
 #eventList::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
 
@@ -1382,19 +1381,42 @@ function renderTrend() {
 
       ctx.fillStyle = theme === 'dark' ? '#7a8099' : '#6d7283';
       ctx.textBaseline = 'top';
+      ctx.font = '11px DM Mono';
       const maxLabels = 5; 
       const skip = Math.max(1, Math.ceil(pts.length / maxLabels));
+      
+      // Measure first and last labels to create proper exclusion zones
+      const firstLbl = pts[0].label;
+      const lastLbl = pts[pts.length - 1].label;
+      const firstLblW = ctx.measureText(firstLbl).width;
+      const lastLblW = ctx.measureText(lastLbl).width;
+      // First label is left-aligned, so it occupies [x, x + width]
+      const firstLblEnd = pts[0].x + firstLblW + 12;
+      // Last label is right-aligned, so it occupies [x - width, x]
+      const lastLblStart = pts[pts.length - 1].x - lastLblW - 12;
+      
+      let lastDrawnX = -Infinity;
+      
       for (let i = 0; i < pts.length; i++) {
           if (i === 0) {
               ctx.textAlign = 'left';
-              ctx.fillText(pts[i].label, pts[i].x, h - pyB + 6);
+              ctx.fillText(firstLbl, pts[i].x, h - pyB + 6);
+              lastDrawnX = pts[i].x + firstLblW;
           } else if (i === pts.length - 1) {
-              ctx.textAlign = 'right';
-              ctx.fillText(pts[i].label, pts[i].x, h - pyB + 6);
-          } else if (i % skip === 0 && i !== 0 && i !== pts.length - 1) {
-              if (pts[i].x > px + 30 && pts[i].x < w - px - 30) {
+              // Only draw last label if it won't overlap the previous drawn label
+              if (lastLblStart > lastDrawnX + 8) {
+                  ctx.textAlign = 'right';
+                  ctx.fillText(lastLbl, pts[i].x, h - pyB + 6);
+              }
+          } else if (i % skip === 0) {
+              const lblW = ctx.measureText(pts[i].label).width;
+              const lblLeft = pts[i].x - lblW / 2;
+              const lblRight = pts[i].x + lblW / 2;
+              // Only draw if it doesn't overlap the first label, last label, or previous drawn label
+              if (lblLeft > firstLblEnd && lblRight < lastLblStart && lblLeft > lastDrawnX + 8) {
                   ctx.textAlign = 'center';
                   ctx.fillText(pts[i].label, pts[i].x, h - pyB + 6);
+                  lastDrawnX = lblRight;
               }
           }
       }
