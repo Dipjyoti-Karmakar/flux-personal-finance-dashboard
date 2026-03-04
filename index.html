@@ -85,7 +85,8 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
   flex-direction: column;
   gap: 24px;
   min-width: 0;
-  height: 100%;
+  height: auto;
+  align-self: start;
 }
 
 /* Enhanced Right Stack heights */
@@ -175,6 +176,10 @@ select option{background:var(--s2)}
 .spcv{font-family:'DM Mono',monospace;font-size:18px;font-weight:600}
 .spcs2{font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);margin-top:4px;font-weight:500;}
 .nd{text-align:center;padding:48px;color:var(--di);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:600;}
+
+/* Event badge and tx-event highlight */
+.event-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.5px;}
+.tx-event{transition:border-left .2s ease;}
 
 /* New Category Strip Tag */
 .cat-tag { display:flex; align-items:center; gap:8px; background:var(--s2); padding:10px 14px; border-radius:10px; border:1px solid var(--bd); transition:all .2s ease; cursor:default; }
@@ -497,6 +502,7 @@ select option{background:var(--s2)}
         <div class="fd"><label>Amount (₹)</label><input type="number" id="txA" placeholder="0.00" min="0" step="0.01"></div>
         <div class="fd"><label>Date</label><input type="date" id="txDt"></div>
       </div>
+      <div class="fd full-mob"><label>Event (Optional)</label><select id="txEvent"><option value="">— No Event —</option></select></div>
       <button class="sbtn" onclick="addTx()">＋ Add Transaction</button>
     </div>
   </div>
@@ -555,6 +561,11 @@ select option{background:var(--s2)}
       <div class="ph"><span class="pt">By Category</span></div>
       <div class="ca" style="padding: 16px 20px;"><div class="ctl" id="ctArea"><div class="nd" style="padding:12px 0">No data yet</div></div></div>
     </div>
+
+    <div class="pn" id="eventArea">
+      <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
+      <div class="ca" style="padding: 16px 20px;" id="eventList"><div class="nd" style="padding:12px 0">No events yet</div></div>
+    </div>
   </div>
 </div>
 
@@ -610,6 +621,10 @@ select option{background:var(--s2)}
           <label>Category</label>
           <select id="eCat"></select>
         </div>
+        <div class="fd full-mob">
+          <label>Event (Optional)</label>
+          <select id="eEvent"><option value="">— No Event —</option></select>
+        </div>
         <div class="fr">
           <div class="fd">
             <label>Amount (₹)</label>
@@ -646,16 +661,19 @@ select option{background:var(--s2)}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',salary:'💼',freelance:'💻',investment:'📈',other:'✦'};
 const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8','#c8c36e','#6e8dc8','#c86e6e','#7ac86e'];
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-const UI_LIST_LIMIT = 150; 
+const TX_PAGE_SIZE = 50;
+let txVisibleCount = 50;
+let txFilteredList = [];
 
 let txs = [];
+let events = {};
 let cType='income', cMode='online';
 let theme=localStorage.getItem('flux_theme')||'dark';
 let statsMode='month'; 
@@ -675,6 +693,7 @@ let confirmActionCallback = null;
 
 let userId = null;
 let unsubscribeFirestore = null;
+let unsubscribeEvents = null;
 let trendAbort = null;
 
 const firebaseConfig = {
@@ -749,12 +768,16 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     userId = user.uid;
     if (unsubscribeFirestore) unsubscribeFirestore();
+    if (unsubscribeEvents) unsubscribeEvents();
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Sign Out`;
     loadDataFromCloud();
+    loadEvents();
   } else {
     userId = null;
-    txs = []; 
-    if(unsubscribeFirestore) unsubscribeFirestore(); 
+    txs = [];
+    events = {};
+    if(unsubscribeFirestore) unsubscribeFirestore();
+    if(unsubscribeEvents) unsubscribeEvents();
     
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> Sign In`;
     
@@ -834,6 +857,7 @@ function setMode(m){cMode=m;document.getElementById('bOnl').className='tb'+(m===
 
 function setDt(filterVal, btn) {
   cDtFilt = filterVal;
+  txVisibleCount = TX_PAGE_SIZE;
   document.querySelectorAll('.ft.dt-flt').forEach(b => b.classList.remove('act'));
   btn.classList.add('act');
   
@@ -859,6 +883,7 @@ function clearCustomDt() {
 
 function setF(filterVal, btn) {
   cTyFilt = filterVal;
+  txVisibleCount = TX_PAGE_SIZE;
   document.querySelectorAll('.ft.ty-flt').forEach(b => b.classList.remove('act'));
   btn.classList.add('act');
   renderTxList();
@@ -879,7 +904,9 @@ async function addTx() {
      return;
   }
 
+  const eventId = document.getElementById('txEvent').value || '';
   const newTx = { type: cType, mode: cMode, desc, amount: amt, cat, date };
+  if (eventId) newTx.eventId = eventId;
   const txId = uid();
   
   try {
@@ -957,6 +984,7 @@ function render(){
   renderCatStrip();
   renderTrend();
   renderYearly();
+  renderEvents();
 }
 
 function renderStats(){
@@ -1026,17 +1054,23 @@ function renderTxList(){
     return;
   }
   
-  const isCapped = list.length > UI_LIST_LIMIT;
-  const renderList = isCapped ? list.slice(0, UI_LIST_LIMIT) : list;
+  txFilteredList = list;
+  const renderList = list.slice(0, txVisibleCount);
+  const hasMore = list.length > txVisibleCount;
+  const remaining = list.length - txVisibleCount;
   
-  let html = renderList.map(tx=>`
-    <div class="txi" id="tx-${tx.id}">
+  let html = renderList.map(tx=>{
+    const evtBadge = (tx.eventId && events[tx.eventId]) ? `<span class="event-badge" style="background:${events[tx.eventId].color}22;color:${events[tx.eventId].color};border:1px solid ${events[tx.eventId].color}44;">${esc(events[tx.eventId].name)}</span>` : '';
+    const evtBorder = (tx.eventId && events[tx.eventId]) ? `border-left:3px solid ${events[tx.eventId].color};` : '';
+    return `
+    <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="tx-${tx.id}" style="${evtBorder}">
       <div class="dot ${tx.type}"></div>
       <div class="ti">
         <div class="tn">${esc(tx.desc)}</div>
         <div class="tm">
           <span class="bg ct">${CICO[tx.cat]||'✦'} ${tx.cat||'other'}</span>
           <span class="bg ${tx.mode==='online'?'on':'of'}">${tx.mode==='online'?'⚡ online':'🏪 offline'}</span>
+          ${evtBadge}
           ${tx._imp?'<span class="bg ip">xlsx</span>':''}
           <span>${fmtDt(tx.date)}</span>
         </div>
@@ -1050,10 +1084,11 @@ function renderTxList(){
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
     
-  if (isCapped) {
-      html += `<div class="txa" style="padding:16px"><span style="color:var(--mu)">+ ${list.length - UI_LIST_LIMIT} older transactions hidden for performance</span></div>`;
+  if (hasMore) {
+    html += `<div style="text-align:center;padding:16px;"><button class="sbtn" onclick="loadMoreTx()" style="background:var(--s2);color:var(--ac);border:1px solid var(--ac);font-size:11px;padding:10px 16px;">▼ Load ${Math.min(TX_PAGE_SIZE, remaining)} More (${remaining} remaining)</button></div>`;
   }
   
   el.innerHTML = html;
@@ -1079,6 +1114,9 @@ function editTx(id) {
   document.getElementById('eAmt').value = tx.amount;
   document.getElementById('eDt').value = tx.date;
   
+  populateEventSelects();
+  document.getElementById('eEvent').value = tx.eventId || '';
+  
   document.getElementById('editMod').classList.add('op');
 }
 
@@ -1101,7 +1139,8 @@ async function saveEditTx() {
   if(!amt || amt <= 0) return shake('eAmt');
   if(!date) return shake('eDt');
 
-  const updatedTx = { desc, amount: amt, cat, date, type, mode };
+  const eventId = document.getElementById('eEvent').value || '';
+  const updatedTx = { desc, amount: amt, cat, date, type, mode, eventId };
   
   try {
     const docRef = doc(db, 'users', userId, 'transactions', editingTxId);
@@ -1423,8 +1462,8 @@ function mkMnCard(m,yr,yrExp,isCurYr,cM,cD,todayISO,mMax,yrTot,yrTxs){
   let txListHTML = '';
   
   if(mTxs.length > 0) {
-    const isCapped = mTxs.length > UI_LIST_LIMIT;
-    const renderTxs = isCapped ? mTxs.slice(0, UI_LIST_LIMIT) : mTxs;
+    const isCapped = mTxs.length > 50;
+    const renderTxs = isCapped ? mTxs.slice(0, 50) : mTxs;
     
     txListHTML = `<div class="tx-cnt" onclick="event.stopPropagation();">` +
       renderTxs.map(t => `
@@ -1434,7 +1473,7 @@ function mkMnCard(m,yr,yrExp,isCurYr,cM,cD,todayISO,mMax,yrTot,yrTxs){
           <div class="mtx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${t.type === 'income' ? '+' : '−'}${fmt(t.amount)}</div>
         </div>
       `).join('') +
-      (isCapped ? `<div style="text-align:center;color:var(--mu);font-size:10px;padding:8px 0;font-family:'DM Mono',monospace;">+ ${mTxs.length - UI_LIST_LIMIT} older items hidden</div>` : '') +
+      (isCapped ? `<div style="text-align:center;color:var(--mu);font-size:10px;padding:8px 0;font-family:'DM Mono',monospace;">+ ${mTxs.length - 50} more items</div>` : '') +
       `</div>`;
   } else {
     txListHTML = `<div class="tx-cnt" onclick="event.stopPropagation();"><div style="text-align:center;color:var(--di);font-size:10px;padding:12px 0;font-family:'DM Mono',monospace;">No transactions for this month</div></div>`;
@@ -1855,6 +1894,162 @@ async function executeImport(mode) {
 
 document.getElementById('impMod').addEventListener('click',function(e){if(e.target===this)closeMod();});
 
+// === Special Events Feature ===
+function loadEvents() {
+  if (!userId) return;
+  if (unsubscribeEvents) unsubscribeEvents();
+  const evtRef = collection(db, 'users', userId, 'events');
+  unsubscribeEvents = onSnapshot(evtRef, (snap) => {
+    events = {};
+    snap.forEach(d => { events[d.id] = { id: d.id, ...d.data() }; });
+    populateEventSelects();
+    renderEvents();
+  }, (err) => {
+    console.error('Events sync error:', err);
+  });
+}
+
+function populateEventSelects() {
+  const evtOpts = '<option value="">\u2014 No Event \u2014</option>' +
+    Object.values(events).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
+  const txEvt = document.getElementById('txEvent');
+  if (txEvt) txEvt.innerHTML = evtOpts;
+  const eEvt = document.getElementById('eEvent');
+  if (eEvt) eEvt.innerHTML = evtOpts;
+}
+
+function renderEvents() {
+  const area = document.getElementById('eventList');
+  if (!area) return;
+  const evts = Object.values(events);
+  if (!evts.length) {
+    area.innerHTML = '<div class="nd" style="padding:12px 0">No events yet</div>';
+    return;
+  }
+  area.innerHTML = evts.map(e => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--rs);background:var(--s2);border:1px solid var(--bd);margin-bottom:8px;border-left:3px solid ${e.color || 'var(--ac)'};">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:2px;">${esc(e.name)}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${e.start || '?'} \u2192 ${e.end || '?'}</div>
+      </div>
+      <button class="td" onclick="showEditEvent('${e.id}')" title="Edit" style="opacity:1;transform:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      <button class="td" onclick="applyEventToTxs('${e.id}')" title="Apply to transactions" style="opacity:1;transform:none;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+      <button class="td" onclick="askDeleteEvent('${e.id}')" title="Delete" style="opacity:1;transform:none;">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function showCreateEvent() {
+  if (!userId) { showToast('Please sign in first', 'er'); return; }
+  const name = prompt('Event name:');
+  if (!name || !name.trim()) return;
+  const start = prompt('Start date (YYYY-MM-DD):');
+  if (!start) return;
+  const end = prompt('End date (YYYY-MM-DD):');
+  if (!end) return;
+  const color = prompt('Color hex (e.g. #e07070):', '#c8a96e');
+  createEvent({ name: name.trim(), start, end, color: color || '#c8a96e' });
+}
+
+async function createEvent(evt) {
+  if (!userId) return;
+  const evtId = uid();
+  try {
+    await setDoc(doc(db, 'users', userId, 'events', evtId), evt);
+    showToast('Event created', 'ok');
+    const apply = confirm(`Apply "${evt.name}" to transactions between ${evt.start} and ${evt.end}?`);
+    if (apply) await assignTransactionsToEvent(evtId, evt.start, evt.end);
+  } catch(e) {
+    console.error('Error creating event', e);
+    showToast('Error creating event', 'er');
+  }
+}
+
+function showEditEvent(evtId) {
+  const evt = events[evtId];
+  if (!evt) return;
+  const name = prompt('Event name:', evt.name);
+  if (!name || !name.trim()) return;
+  const start = prompt('Start date:', evt.start);
+  if (!start) return;
+  const end = prompt('End date:', evt.end);
+  if (!end) return;
+  const color = prompt('Color hex:', evt.color || '#c8a96e');
+  editEvent(evtId, { name: name.trim(), start, end, color: color || '#c8a96e' });
+}
+
+async function editEvent(evtId, data) {
+  if (!userId) return;
+  try {
+    await setDoc(doc(db, 'users', userId, 'events', evtId), data, { merge: true });
+    showToast('Event updated', 'ok');
+  } catch(e) {
+    console.error('Error updating event', e);
+    showToast('Error updating event', 'er');
+  }
+}
+
+function askDeleteEvent(evtId) {
+  const evt = events[evtId];
+  if (!evt) return;
+  showConfirm('Delete Event', `Delete "${evt.name}"? This removes the event tag from all associated transactions.`, () => deleteEvent(evtId), true);
+}
+
+async function deleteEvent(evtId) {
+  if (!userId) return;
+  try {
+    await removeEventFromTransactions(evtId);
+    await deleteDoc(doc(db, 'users', userId, 'events', evtId));
+    showToast('Event deleted', 'ok');
+  } catch(e) {
+    console.error('Error deleting event', e);
+    showToast('Error deleting event', 'er');
+  }
+}
+
+async function assignTransactionsToEvent(evtId, start, end) {
+  if (!userId) return;
+  const matching = txs.filter(t => t.date >= start && t.date <= end);
+  if (!matching.length) { showToast('No transactions in date range', 'er'); return; }
+  showToast(`Applying to ${matching.length} transactions...`, 'ok');
+  for (let i = 0; i < matching.length; i += 450) {
+    const chunk = matching.slice(i, i + 450);
+    const batch = writeBatch(db);
+    chunk.forEach(tx => { batch.update(doc(db, 'users', userId, 'transactions', tx.id), { eventId: evtId }); });
+    await batch.commit();
+  }
+  showToast(`Applied to ${matching.length} transactions`, 'ok');
+}
+
+function applyEventToTxs(evtId) {
+  const evt = events[evtId];
+  if (!evt) return;
+  showConfirm('Apply Event', `Apply "${evt.name}" to all transactions between ${evt.start} and ${evt.end}?`, () => assignTransactionsToEvent(evtId, evt.start, evt.end), false);
+}
+
+async function removeEventFromTransactions(evtId) {
+  if (!userId) return;
+  const matching = txs.filter(t => t.eventId === evtId);
+  if (!matching.length) return;
+  for (let i = 0; i < matching.length; i += 450) {
+    const chunk = matching.slice(i, i + 450);
+    const batch = writeBatch(db);
+    chunk.forEach(tx => { batch.update(doc(db, 'users', userId, 'transactions', tx.id), { eventId: '' }); });
+    await batch.commit();
+  }
+}
+
+function loadMoreTx() {
+  txVisibleCount += TX_PAGE_SIZE;
+  renderTxList();
+}
+
 window.addTx = addTx;
 window.askDelTx = askDelTx; // FIXED: Renamed from delTx to askDelTx so the inline HTML button handler finds it correctly
 window.editTx = editTx;
@@ -1877,6 +2072,11 @@ window.toggleAuth = toggleAuth;
 window.closeConfirm = closeConfirm;
 window.updCustomDt = updCustomDt;
 window.clearCustomDt = clearCustomDt;
+window.loadMoreTx = loadMoreTx;
+window.showCreateEvent = showCreateEvent;
+window.showEditEvent = showEditEvent;
+window.applyEventToTxs = applyEventToTxs;
+window.askDeleteEvent = askDeleteEvent;
 
 </script>
 </body>
