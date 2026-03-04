@@ -90,7 +90,6 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 
 /* Right Stack card sizing – override .pn height:100% so cards use natural size */
 .right-stack > .pn { flex: 0 0 auto; height: auto; }
-.right-stack > .pn:nth-child(3) { max-height: 280px; } /* Category */
 .right-stack > .pn + .pn { border-top: none; }
 #eventList{overflow-y:auto;min-height:0;max-height:360px;padding-right:4px;}
 #eventList::-webkit-scrollbar{width:4px}
@@ -563,16 +562,17 @@ select option{background:var(--s2)}
       <div class="ca" style="padding: 16px 20px;"><div id="spArea"><div class="nd">No expense data</div></div></div>
     </div>
 
-    <div class="pn">
-      <div class="ph"><span class="pt">By Category</span></div>
-      <div class="ca" style="padding: 16px 20px;"><div class="ctl" id="ctArea"><div class="nd" style="padding:12px 0">No data yet</div></div></div>
-    </div>
-
     <div class="pn" id="eventArea">
       <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
       <div class="ca" style="padding: 16px 20px;" id="eventList"><div class="nd" style="padding:12px 0">No events yet</div></div>
     </div>
   </div>
+</div>
+
+<!-- By Category Strip Card -->
+<div class="pn" style="margin-top: 24px;">
+  <div class="ph"><span class="pt">By Category</span></div>
+  <div class="ca" style="padding: 24px;" id="ctArea"><div class="nd" style="padding:12px 0">No data yet</div></div>
 </div>
 
 <div class="ys">
@@ -1470,9 +1470,17 @@ function renderPie(){
 function renderCats(){
   const exp=getActiveTxs().filter(t=>t.type==='expense'),area=document.getElementById('ctArea');
   if(!exp.length){area.innerHTML='<div class="nd" style="padding:10px 0">No data yet</div>';return;}
-  const tot={};exp.forEach(t=>{tot[t.cat||'other']=(tot[t.cat||'other']||0)+t.amount;});
-  const cats=Object.entries(tot).sort((a,b)=>b[1]-a[1]),max=cats[0][1];
-  area.innerHTML=cats.map(([cat,val],i)=>`<div class="ctr"><span class="ci">${CICO[cat]||'✦'}</span><span class="cn">${cat}</span><div class="cbw"><div class="cb" style="width:${(val/max*100).toFixed(1)}%;background:${CC[i%CC.length]}"></div></div><span class="cam">${fmt(val)}</span></div>`).join('');
+  const tot={};
+  let totalExp=0;
+  exp.forEach(t=>{tot[t.cat||'other']=(tot[t.cat||'other']||0)+t.amount;totalExp+=t.amount;});
+  const cats=Object.entries(tot).sort((a,b)=>b[1]-a[1]);
+  let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:24px;">';
+  cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
+  barHtml+='</div>';
+  let detHtml='<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
+  cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);detHtml+=`<div class="cat-tag"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mu);margin-left:4px;">${fmtS(val)}</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--di);">${pct}%</span></div>`;});
+  detHtml+='</div>';
+  area.innerHTML=barHtml+detHtml;
 }
 
 function renderCatStrip(){
