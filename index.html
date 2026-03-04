@@ -1949,25 +1949,46 @@ function showCreateEvent() {
   if (!userId) { showToast('Please sign in first', 'er'); return; }
   const name = prompt('Event name:');
   if (!name || !name.trim()) return;
-  const start = prompt('Start date (YYYY-MM-DD):');
+  const start = (prompt('Start date (YYYY-MM-DD):') || '').trim();
   if (!start) return;
-  const end = prompt('End date (YYYY-MM-DD):');
+  const end = (prompt('End date (YYYY-MM-DD):') || '').trim();
   if (!end) return;
-  const color = prompt('Color hex (e.g. #e07070):', '#c8a96e');
+  const color = (prompt('Color hex (e.g. #e07070):', '#c8a96e') || '').trim();
   createEvent({ name: name.trim(), start, end, color: color || '#c8a96e' });
 }
 
 async function createEvent(evt) {
   if (!userId) return;
+  const dateRx = /^\d{4}-\d{2}-\d{2}$/;
+  if (!evt?.name || !evt.name.trim()) {
+    showToast('Event name is required', 'er');
+    return;
+  }
+  if (!dateRx.test(evt.start) || !dateRx.test(evt.end)) {
+    showToast('Use dates as YYYY-MM-DD', 'er');
+    return;
+  }
+  if (evt.start > evt.end) {
+    showToast('Start date must be before end date', 'er');
+    return;
+  }
+  const cleanEvent = {
+    name: evt.name.trim(),
+    start: evt.start,
+    end: evt.end,
+    color: evt.color || '#c8a96e',
+    createdAt: Date.now()
+  };
   const evtId = uid();
   try {
-    await setDoc(doc(db, 'users', userId, 'events', evtId), evt);
+    await setDoc(doc(db, 'users', userId, 'events', evtId), cleanEvent);
     showToast('Event created', 'ok');
-    const apply = confirm(`Apply "${evt.name}" to transactions between ${evt.start} and ${evt.end}?`);
-    if (apply) await assignTransactionsToEvent(evtId, evt.start, evt.end);
+    const apply = confirm(`Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`);
+    if (apply) await assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end);
   } catch(e) {
     console.error('Error creating event', e);
-    showToast('Error creating event', 'er');
+    const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
+    showToast(`Error creating event: ${errMsg}`, 'er');
   }
 }
 
@@ -2021,8 +2042,9 @@ async function assignTransactionsToEvent(evtId, start, end) {
   for (let i = 0; i < matching.length; i += 450) {
     const chunk = matching.slice(i, i + 450);
     const batch = writeBatch(db);
-    chunk.forEach(tx => { batch.update(doc(db, 'users', userId, 'transactions', tx.id), { eventId: evtId }); });
+    chunk.forEach(tx => { batch.set(doc(db, 'users', userId, 'transactions', tx.id), { eventId: evtId }, { merge: true }); });
     await batch.commit();
+    showToast(`Applied ${Math.min(i + 450, matching.length)} / ${matching.length}`, 'ok');
   }
   showToast(`Applied to ${matching.length} transactions`, 'ok');
 }
@@ -2040,8 +2062,9 @@ async function removeEventFromTransactions(evtId) {
   for (let i = 0; i < matching.length; i += 450) {
     const chunk = matching.slice(i, i + 450);
     const batch = writeBatch(db);
-    chunk.forEach(tx => { batch.update(doc(db, 'users', userId, 'transactions', tx.id), { eventId: '' }); });
+    chunk.forEach(tx => { batch.set(doc(db, 'users', userId, 'transactions', tx.id), { eventId: '' }, { merge: true }); });
     await batch.commit();
+    showToast(`Removing tags ${Math.min(i + 450, matching.length)} / ${matching.length}`, 'ok');
   }
 }
 
