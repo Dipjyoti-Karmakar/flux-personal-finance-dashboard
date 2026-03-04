@@ -80,26 +80,13 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
   min-width: 0;
 }
 
-.right-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  min-width: 0;
-  align-self: start;
-}
-
-/* Right Stack card sizing – override .pn height:100% so cards use natural size */
-.right-stack > .pn { flex: 0 0 auto; height: auto; }
-#eventList{overflow-y:auto;min-height:0;max-height:280px;padding-right:4px;scrollbar-width:thin;scrollbar-color:var(--s3) transparent;}
+/* Transactions & Special Events – same fixed height, internal scroll */
+.mg > .pn-fixed { max-height: 520px; display:flex; flex-direction:column; overflow:hidden; }
+.mg > .pn-fixed .txl { flex:1; min-height:0; overflow-y:auto; }
+#eventArea .ca { flex:1; min-height:0; overflow:hidden; }
+#eventList { overflow-y:auto; min-height:0; height:100%; max-height:none; padding-right:4px; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
 #eventList::-webkit-scrollbar{width:4px}
 #eventList::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
-
-/* Compact Online vs Offline split cards */
-.right-stack .spcs { gap: 8px; }
-.right-stack .spc { padding: 10px; }
-.right-stack .spcv { font-size: 15px; }
-.right-stack .spcs2 { font-size: 9px; margin-top: 2px; }
-.right-stack .spcl { font-size: 9px; margin-bottom: 4px; }
 
 .pn{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;min-width:0;display:flex;flex-direction:column;height:100%;transition:box-shadow .4s ease, border-color .4s ease;}
 .pn:hover{border-color:var(--bs); box-shadow:var(--sh-hov);}
@@ -521,7 +508,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   
   <!-- Bottom Row -->
   <!-- Left Side: Transactions List -->
-  <div class="pn">
+  <div class="pn pn-fixed">
     <div class="ph"><span class="pt">Transactions</span><span class="pb" id="txCnt">0</span></div>
     <div class="fltr" style="padding:0; flex-direction:column; align-items:stretch; border-bottom:none; overflow:hidden;">
       <div class="fltr-scroll">
@@ -561,22 +548,21 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
     <div class="txl" id="txList"><div class="txa"><div style="font-size:26px;margin-bottom:8px;opacity:.4">◈</div>No transactions yet</div></div>
   </div>
 
-  <!-- Right Side: Stacked Vertical Cards -->
-  <div class="right-stack">
-    <div class="pn" id="eventArea">
-      <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
-      <div class="ca" style="padding: 12px 20px;" id="eventList"><div class="nd" style="padding:12px 0">No events yet</div></div>
-    </div>
-
-    <div class="pn">
-      <div class="ph"><span class="pt">Online vs Offline</span></div>
-      <div class="ca" style="padding: 12px 20px;"><div id="spArea"><div class="nd">No expense data</div></div></div>
-    </div>
+  <!-- Special Events (same height as Transactions) -->
+  <div class="pn pn-fixed" id="eventArea">
+    <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
+    <div class="ca" style="padding: 12px 20px;" id="eventList"><div class="nd" style="padding:12px 0">No events yet</div></div>
   </div>
 </div>
 
-<!-- By Category Strip Card -->
+<!-- Online vs Offline Strip Card -->
 <div class="pn" style="margin-top: 24px;">
+  <div class="ph"><span class="pt">Online vs Offline</span></div>
+  <div class="ca" style="padding: 24px;"><div id="spArea"><div class="nd">No expense data</div></div></div>
+</div>
+
+<!-- By Category Strip Card -->
+<div class="pn" style="margin-top: 16px;">
   <div class="ph"><span class="pt">By Category</span></div>
   <div class="ca" style="padding: 24px;" id="ctArea"><div class="nd" style="padding:12px 0">No data yet</div></div>
 </div>
@@ -711,7 +697,8 @@ const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec
 const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 const TX_PAGE_SIZE = 20;
-let txVisibleCount = 20;
+const TX_TODAY_SIZE = 5;
+let txVisibleCount = 5;
 let txs = [];
 let events = {};
 let cType='income', cMode='online';
@@ -896,7 +883,7 @@ function setMode(m){cMode=m;document.getElementById('bOnl').className='tb'+(m===
 
 function setDt(filterVal, btn) {
   cDtFilt = filterVal;
-  txVisibleCount = TX_PAGE_SIZE;
+  txVisibleCount = (filterVal === 'today') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
   document.querySelectorAll('.ft.dt-flt').forEach(b => b.classList.remove('act'));
   btn.classList.add('act');
   
@@ -922,7 +909,7 @@ function clearCustomDt() {
 
 function setF(filterVal, btn) {
   cTyFilt = filterVal;
-  txVisibleCount = TX_PAGE_SIZE;
+  txVisibleCount = (cDtFilt === 'today' && filterVal !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
   document.querySelectorAll('.ft.ty-flt').forEach(b => b.classList.remove('act'));
   btn.classList.add('act');
   const evtWrap = document.getElementById('eventTxFilterWrap');
@@ -2248,7 +2235,7 @@ async function removeEventFromTransactions(evtId) {
 }
 
 function loadMoreTx() {
-  txVisibleCount += TX_PAGE_SIZE;
+  txVisibleCount += (cDtFilt === 'today' && cTyFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
   renderTxList();
 }
 
