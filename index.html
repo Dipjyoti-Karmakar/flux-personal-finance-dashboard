@@ -83,16 +83,21 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .right-stack {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 0;
   min-width: 0;
   height: auto;
   align-self: start;
 }
 
 /* Enhanced Right Stack heights */
-.right-stack > .pn:nth-child(1) { flex: 0 0 auto; } /* Fit content for Mode Card */
-.right-stack > .pn:nth-child(2) { flex: 1.4 0 0; } /* Spending Breakdown gets most space */
-.right-stack > .pn:nth-child(3) { flex: 0.8 0 0; max-height: 280px; } /* Category gets internal scroll */
+.right-stack > .pn:nth-child(1) { flex: 0.9 0 0; } /* Online vs Offline */
+.right-stack > .pn:nth-child(2) { flex: 1.2 0 0; } /* Spending Breakdown */
+.right-stack > .pn:nth-child(3) { flex: 0.9 0 0; max-height: 280px; } /* Category */
+.right-stack > .pn:nth-child(4) { flex: 1.6 0 0; } /* Special Events gets more space */
+.right-stack > .pn + .pn { border-top: none; }
+#eventList{overflow-y:auto;min-height:0;max-height:360px;padding-right:4px;}
+#eventList::-webkit-scrollbar{width:4px}
+#eventList::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
 
 .pn{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;min-width:0;display:flex;flex-direction:column;height:100%;transition:box-shadow .4s ease, border-color .4s ease;}
 .pn:hover{border-color:var(--bs); box-shadow:var(--sh-hov);}
@@ -540,6 +545,15 @@ select option{background:var(--s2)}
         <button class="ft ty-flt" onclick="setF('expense', this)">Expense</button>
         <button class="ft ty-flt" onclick="setF('online', this)">Online</button>
         <button class="ft ty-flt" onclick="setF('offline', this)">Offline</button>
+        <button class="ft ty-flt" onclick="setF('event', this)">Special Event</button>
+      </div>
+      <div id="eventTxFilterWrap" style="display:none; padding:10px 16px 12px; border-top:1px solid var(--bd); background:var(--s2);">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <label style="font-size:9px; color:var(--mu); font-family:'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; font-weight:600;">Event</label>
+          <select id="eventTxFilterSel" onchange="setEventFilter(this.value)" style="padding:8px 10px; font-size:12px;">
+            <option value="all">All Special Events</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="txl" id="txList"><div class="txa"><div style="font-size:26px;margin-bottom:8px;opacity:.4">◈</div>No transactions yet</div></div>
@@ -680,6 +694,7 @@ let statsMode='month';
 
 let cDtFilt = 'today'; 
 let cTyFilt = 'all';
+let cEventFilt = 'all';
 
 let rawImportRows = [];
 let importHeaders = [];
@@ -887,7 +902,15 @@ function setF(filterVal, btn) {
   txVisibleCount = TX_PAGE_SIZE;
   document.querySelectorAll('.ft.ty-flt').forEach(b => b.classList.remove('act'));
   btn.classList.add('act');
+  const evtWrap = document.getElementById('eventTxFilterWrap');
+  if (evtWrap) evtWrap.style.display = filterVal === 'event' ? 'block' : 'none';
   renderTxList();
+}
+
+function setEventFilter(eventId) {
+  cEventFilt = eventId || 'all';
+  txVisibleCount = TX_PAGE_SIZE;
+  if (cTyFilt === 'event') renderTxList();
 }
 
 async function addTx() {
@@ -1043,6 +1066,10 @@ function renderTxList(){
   else if(cTyFilt === 'expense') list = list.filter(t => t.type === 'expense');
   else if(cTyFilt === 'online') list = list.filter(t => t.mode === 'online');
   else if(cTyFilt === 'offline') list = list.filter(t => t.mode !== 'online');
+  else if(cTyFilt === 'event') {
+    list = list.filter(t => !!t.eventId);
+    if (cEventFilt !== 'all') list = list.filter(t => t.eventId === cEventFilt);
+  }
 
   document.getElementById('txCnt').textContent = list.length;
 
@@ -1424,7 +1451,6 @@ function renderYearly(){
   if(!txs.length){area.innerHTML='<div style="text-align:center;padding:40px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--di);letter-spacing:1px;font-weight:500;">Add transactions to see yearly breakdown</div>';return;}
   const yrs=[...new Set([cY,...txs.map(t=>new Date(t.date+'T00:00:00').getFullYear())])].sort((a,b)=>b-a);
   area.innerHTML=yrs.map(yr=>mkYrBlock(yr,txs,todayISO,cY,cM,cD)).join('');
-  const cb=document.getElementById('yb'+cY);if(cb)cb.classList.add('op');
 }
 
 function mkYrBlock(yr,allTxs,todayISO,cY,cM,cD){
@@ -1952,6 +1978,14 @@ function populateEventSelects() {
   if (txEvt) txEvt.innerHTML = evtOpts;
   const eEvt = document.getElementById('eEvent');
   if (eEvt) eEvt.innerHTML = evtOpts;
+  const evtFilterSel = document.getElementById('eventTxFilterSel');
+  if (evtFilterSel) {
+    const prev = cEventFilt;
+    evtFilterSel.innerHTML = '<option value="all">All Special Events</option>' +
+      Object.values(events).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
+    cEventFilt = (prev === 'all' || events[prev]) ? prev : 'all';
+    evtFilterSel.value = cEventFilt;
+  }
 }
 
 function renderEvents() {
@@ -2150,6 +2184,7 @@ window.closeConfirm = closeConfirm;
 window.updCustomDt = updCustomDt;
 window.clearCustomDt = clearCustomDt;
 window.loadMoreTx = loadMoreTx;
+window.setEventFilter = setEventFilter;
 window.showCreateEvent = showCreateEvent;
 window.showEditEvent = showEditEvent;
 window.applyEventToTxs = applyEventToTxs;
