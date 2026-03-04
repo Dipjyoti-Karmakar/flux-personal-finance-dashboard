@@ -304,11 +304,11 @@ select option{background:var(--s2)}
 .map-item label{font-size:10px;color:var(--mu)}
 .map-item select{padding:8px 12px;font-size:12px}
 .tw{overflow-x:auto;border-radius:var(--rs);border:1px solid var(--bd)}
-.pt{width:100%;border-collapse:collapse;font-size:13px}
-.pt th{background:var(--s2);padding:10px 14px;text-align:left;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);border-bottom:1px solid var(--bd);white-space:nowrap;font-weight:600;}
-.pt td{padding:10px 14px;border-bottom:1px solid var(--bd);color:var(--tx);vertical-align:middle}
-.pt tr:last-child td{border-bottom:none}
-.pt tr.sk td{color:var(--di);opacity:.5}
+table.pt{width:100%;border-collapse:collapse;font-size:13px}
+table.pt th{background:var(--s2);padding:10px 14px;text-align:left;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);border-bottom:1px solid var(--bd);white-space:nowrap;font-weight:600;}
+table.pt td{padding:10px 14px;border-bottom:1px solid var(--bd);color:var(--tx);vertical-align:middle}
+table.pt tr:last-child td{border-bottom:none}
+table.pt tr.sk td{color:var(--di);opacity:.5}
 .bdg{display:inline-block;padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;}
 .bdg.bi{background:var(--ib);color:var(--in)}
 .bdg.be{background:var(--eb);color:var(--ex)}
@@ -706,8 +706,6 @@ const MF=['January','February','March','April','May','June','July','August','Sep
 
 const TX_PAGE_SIZE = 20;
 let txVisibleCount = 20;
-let txFilteredList = [];
-
 let txs = [];
 let events = {};
 let cType='income', cMode='online';
@@ -931,6 +929,7 @@ function setF(filterVal, btn) {
     if (customWrap) customWrap.style.display = 'none';
   } else {
     dtBtns.forEach(b => { b.style.opacity = ''; b.style.pointerEvents = ''; });
+    if (customWrap && cDtFilt === 'custom') customWrap.style.display = 'flex';
   }
   renderTxList();
 }
@@ -1127,7 +1126,6 @@ function renderTxList(){
     return;
   }
   
-  txFilteredList = list;
   const renderList = list.slice(0, txVisibleCount);
   const hasMore = list.length > txVisibleCount;
   const remaining = list.length - txVisibleCount;
@@ -1453,20 +1451,6 @@ window.addEventListener('resize', () => {
     window._resizeT = setTimeout(() => { renderTrend(); }, 200);
 });
 
-function renderPie(){
-  const exp=getActiveTxs().filter(t=>t.type==='expense'),area=document.getElementById('piArea');
-  if(!exp.length){area.innerHTML='<div class="nd">No expense data</div>';return;}
-  const tot={};exp.forEach(t=>{tot[t.cat||'other']=(tot[t.cat||'other']||0)+t.amount;});
-  const cats=Object.entries(tot).sort((a,b)=>b[1]-a[1]),total=cats.reduce((s,[,v])=>s+v,0);
-  area.innerHTML='<div class="cw"><canvas id="pieC" width="144" height="144"></canvas><div class="leg" id="piLeg"></div></div>';
-  const cv=document.getElementById('pieC'),ctx=cv.getContext('2d'),dark=theme==='dark';
-  let a=-Math.PI/2;
-  cats.forEach(([,val],i)=>{const sl=val/total*2*Math.PI;ctx.beginPath();ctx.moveTo(72,72);ctx.arc(72,72,62,a,a+sl);ctx.closePath();ctx.fillStyle=CC[i%CC.length];ctx.fill();ctx.strokeStyle=dark?'#0d0f14':'#ffffff';ctx.lineWidth=2;ctx.stroke();a+=sl;});
-  ctx.beginPath();ctx.arc(72,72,28,0,2*Math.PI);ctx.fillStyle=dark?'#13161e':'#ffffff';ctx.fill();
-  ctx.fillStyle=dark?'#e8eaf0':'#090a0c';ctx.font='600 10px DM Mono,monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(cats.length+' cats',72,72);
-  document.getElementById('piLeg').innerHTML=cats.slice(0,8).map(([cat,val],i)=>`<div class="li"><div class="ld" style="background:${CC[i%CC.length]}"></div><span class="ll">${CICO[cat]||'✦'} ${cat}</span><span class="lp">${Math.round(val/total*100)}%</span></div>`).join('');
-}
-
 function renderCats(){
   const exp=getActiveTxs().filter(t=>t.type==='expense'),area=document.getElementById('ctArea');
   if(!exp.length){area.innerHTML='<div class="nd" style="padding:10px 0">No data yet</div>';return;}
@@ -1481,43 +1465,6 @@ function renderCats(){
   cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);detHtml+=`<div class="cat-tag"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mu);margin-left:4px;">${fmtS(val)}</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--di);">${pct}%</span></div>`;});
   detHtml+='</div>';
   area.innerHTML=barHtml+detHtml;
-}
-
-function renderCatStrip(){
-  const exp = getActiveTxs().filter(t => t.type === 'expense');
-  const area = document.getElementById('catStripArea');
-  if(!exp.length){ area.innerHTML='<div class="nd">No expense data</div>'; return; }
-  
-  const tot = {}; 
-  let totalExp = 0;
-  exp.forEach(t => {
-      tot[t.cat || 'other'] = (tot[t.cat || 'other'] || 0) + t.amount; 
-      totalExp += t.amount;
-  });
-  
-  const cats = Object.entries(tot).sort((a, b) => b[1] - a[1]);
-  
-  let barHtml = '<div style="display:flex; height:12px; border-radius:6px; overflow:hidden; gap:2px; margin-bottom: 24px;">';
-  cats.forEach(([cat, val], i) => {
-      const pct = (val / totalExp) * 100;
-      barHtml += `<div style="width:${pct}%; background:${CC[i % CC.length]}; transition:width .5s cubic-bezier(0.16, 1, 0.3, 1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;
-  });
-  barHtml += '</div>';
-
-  let detailsHtml = '<div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:center;">';
-  cats.forEach(([cat, val], i) => {
-      const pct = Math.round((val / totalExp) * 100);
-      detailsHtml += `
-      <div class="cat-tag">
-          <div style="width:10px; height:10px; border-radius:3px; background:${CC[i % CC.length]};"></div>
-          <span style="font-family:'DM Mono',monospace; font-size:12px; font-weight:600; color:var(--tx); text-transform:capitalize;">${CICO[cat] || '✦'} ${cat}</span>
-          <span style="font-family:'DM Mono',monospace; font-size:13px; font-weight:600; color:var(--mu); margin-left:4px;">${fmtS(val)}</span>
-          <span style="font-family:'DM Mono',monospace; font-size:11px; font-weight:600; color:var(--di);">${pct}%</span>
-      </div>`;
-  });
-  detailsHtml += '</div>';
-  
-  area.innerHTML = barHtml + detailsHtml;
 }
 
 function renderSplit(){
@@ -2152,8 +2099,7 @@ async function createEvent(evt) {
     const payload = eventsUseFallback ? { ...cleanEvent, _metaType: 'event' } : cleanEvent;
     await setDoc(getEventDocRef(evtId), payload);
     showToast('Event created', 'ok');
-    const apply = confirm(`Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`);
-    if (apply) await assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end);
+    showConfirm('Apply to Transactions', `Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`, () => assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end), false);
   } catch(e) {
     console.error('Error creating event', e);
     if (e?.code === 'permission-denied' && !eventsUseFallback) {
@@ -2162,8 +2108,7 @@ async function createEvent(evt) {
         await setDoc(getEventDocRef(evtId, 'transactions'), { ...cleanEvent, _metaType: 'event' });
         loadEvents();
         showToast('Event created (compat mode)', 'ok');
-        const apply = confirm(`Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`);
-        if (apply) await assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end);
+        showConfirm('Apply to Transactions', `Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`, () => assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end), false);
         return;
       } catch (fallbackCreateErr) {
         console.error('Fallback create failed', fallbackCreateErr);
