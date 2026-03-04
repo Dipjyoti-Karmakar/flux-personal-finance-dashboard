@@ -1,4 +1,4 @@
-# Flux — Personal Finance Dashboard
+# Flux - Personal Finance Dashboard
 
 ![HTML5](https://img.shields.io/badge/HTML5-Frontend-orange?style=for-the-badge&logo=html5)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-yellow?style=for-the-badge&logo=javascript)
