@@ -11,7 +11,7 @@
 
 Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data sync across devices — no backend code, no build step, no framework.
 
-The entire application ships as one `index.html` file (~2,700 lines) with embedded styles and ES-module scripts. It is installable as a **Progressive Web App** and works offline.
+The entire application ships as one `index.html` file (~3,100 lines) with embedded styles and ES-module scripts. It is installable as a **Progressive Web App** and works offline.
 
 ---
 
@@ -46,11 +46,20 @@ The entire application ships as one `index.html` file (~2,700 lines) with embedd
 | **Animated Number Counters** | All stat values count up smoothly with ease-out cubic animation on each render |
 | **Balance Health Glow** | Net Balance card pulses green / red / amber based on financial health |
 | **Add TX Flash** | Submit button shows "✓ Added" with a green flash; new transaction highlights with a gold inset glow |
-| **Mobile FAB** | Floating "＋" button on ≤ 520 px screens — auto-hides when the form is in viewport |
+| **Mobile FAB** | Floating "+" button on ≤ 520 px screens, auto-hides when the form is in viewport |
+| **Skeleton Loading** | Shimmer placeholders in transactions, trend chart, categories, and split view while Firestore data loads |
+| **Staggered Entrances** | Summary cards and below-grid sections fade-slide in with staggered delays on page load |
+| **Scroll-to-Top** | Fixed button appears after 400 px scroll, smooth-scrolls to top (bottom-left, clear of the FAB) |
+| **Illustrated Empty States** | Every no-data view shows a floating animated icon, title, and descriptive subtitle instead of plain text |
+| **Theme Wipe Animation** | Toggling dark/light triggers a circular clip-path wipe that expands from the toggle button position |
+| **Swipe-to-Action** | On touch devices, swipe a transaction left to reveal Delete or right to reveal Edit - follows finger with spring physics |
+| **Milestone Confetti** | Canvas-based confetti burst on transaction milestones (1st, 10th, 25th, every 50th) with themed particle colours |
+| **Parallax Summary Cards** | Subtle scroll-driven translateY parallax on summary cards (desktop only, uses CSS custom properties to coexist with hover) |
+| **Description Autocomplete** | Custom dropdown on the description input suggests past transaction descriptions, with keyboard navigation and click selection |
 
 ### UX & Accessibility
 
-- **Dark / Light theme** — persisted in `localStorage`, toggles all CSS custom properties instantly
+- **Dark / Light theme** - persisted in `localStorage`, toggles all CSS custom properties with a circular wipe animation expanding from the toggle button
 - **Responsive layout** — CSS Grid with breakpoints at 960 px, 768 px, and 520 px; bottom-sheet modals on mobile
 - **Transaction search** — real-time text filter across descriptions
 - **Advanced filters** — date range (today / month / all / custom), type (income / expense / online / offline), and event-based filtering with totals bar

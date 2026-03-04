@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Flux — Personal Finance</title>
+<title>Flux - Personal Finance</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#c8a96e">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -496,7 +496,49 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .pwa-install-bar .pwa-text { flex:1; font-family:'DM Mono',monospace; font-size:12px; color:var(--ac); letter-spacing:.5px; font-weight:600; }
 .pwa-install-bar .pwa-dismiss { background:none; border:none; color:var(--mu); font-size:16px; cursor:pointer; padding:4px; line-height:1; }
 
-/* Floating Action Button — mobile only */
+/* ── Skeleton Loading Placeholders ── */
+.skel { position:relative; overflow:hidden; background:var(--s2); border-radius:var(--rs); }
+.skel::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--s3) 60%, transparent) 50%, transparent 100%); animation:skelShimmer 1.6s ease-in-out infinite; }
+@keyframes skelShimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+.skel-line { height:14px; margin-bottom:10px; }
+.skel-line.w80 { width:80%; }
+.skel-line.w60 { width:60%; }
+.skel-line.w40 { width:40%; }
+.skel-line.tall { height:28px; }
+.skel-line.short { height:10px; }
+.skel-block { padding:16px; display:flex; flex-direction:column; gap:12px; }
+.skel-row { display:flex; align-items:center; gap:12px; padding:12px; border-radius:var(--rs); background:var(--s2); border:1px solid var(--bd); }
+.skel-circle { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.skel-bar { height:12px; border-radius:6px; flex:1; }
+.skel-amt { width:70px; height:14px; border-radius:6px; flex-shrink:0; }
+
+/* ── Staggered Card Entrance Animations ── */
+@keyframes cardIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.card-in { animation:cardIn .5s cubic-bezier(0.16,1,0.3,1) backwards; }
+.card-in:nth-child(1) { animation-delay:0s; }
+.card-in:nth-child(2) { animation-delay:.06s; }
+.card-in:nth-child(3) { animation-delay:.12s; }
+.card-in:nth-child(4) { animation-delay:.18s; }
+.card-in:nth-child(5) { animation-delay:.24s; }
+.card-in:nth-child(6) { animation-delay:.30s; }
+.card-in:nth-child(7) { animation-delay:.36s; }
+.section-in { animation:cardIn .6s cubic-bezier(0.16,1,0.3,1) backwards; }
+
+/* ── Scroll-to-Top Button ── */
+.scroll-top { position:fixed; bottom:24px; left:20px; z-index:900; width:44px; height:44px; border-radius:50%; border:1px solid var(--bd); background:var(--sf); color:var(--mu); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transform:translateY(12px); transition:all .3s cubic-bezier(0.16,1,0.3,1); box-shadow:0 4px 16px rgba(0,0,0,0.2); backdrop-filter:blur(8px); }
+.scroll-top.vis { opacity:1; pointer-events:auto; transform:translateY(0); }
+.scroll-top:hover { border-color:var(--ac); color:var(--ac); transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.25); }
+.scroll-top:active { transform:scale(0.9); }
+@media(max-width:520px) { .scroll-top { bottom:24px; left:20px; width:40px; height:40px; font-size:16px; } }
+
+/* ── Enhanced Empty States ── */
+.empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; gap:16px; text-align:center; }
+.empty-icon { font-size:40px; opacity:.5; animation:emptyFloat 3s ease-in-out infinite; }
+@keyframes emptyFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.empty-title { font-family:'DM Mono',monospace; font-size:13px; color:var(--mu); letter-spacing:1px; text-transform:uppercase; font-weight:600; }
+.empty-sub { font-family:'DM Sans',sans-serif; font-size:12px; color:var(--di); line-height:1.5; max-width:240px; }
+
+/* Floating Action Button - mobile only */
 .fab { display:none; }
 
 /* Add TX success micro-interactions */
@@ -518,6 +560,36 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .fab:active { transform:scale(0.9); box-shadow:0 2px 8px rgba(200,169,110,0.3); }
   .fab.hide { opacity:0; pointer-events:none; transform:translateY(20px); }
 }
+
+/* -- Theme Circular Wipe -- */
+.theme-wipe{position:fixed;inset:0;z-index:99999;pointer-events:none;clip-path:circle(0% at var(--cx,50%) var(--cy,50%));}
+.theme-wipe.expand{clip-path:circle(150% at var(--cx,50%) var(--cy,50%));transition:clip-path .55s cubic-bezier(0.4,0,0.2,1);}
+
+/* -- Swipe-to-Action (Touch) -- */
+.txi-wrap{position:relative;overflow:hidden;border-radius:var(--rs);margin-bottom:6px;}
+.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--bg);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;}
+.txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
+.txi-wrap.swiping .txi{transition:none;}
+.txi-actions{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+.txi-actions.act-left{left:0;padding-left:16px;color:var(--in);}
+.txi-actions.act-right{right:0;padding-right:16px;color:var(--ex);}
+.txi-act{background:none;border:none;color:inherit;cursor:pointer;font:inherit;padding:8px 14px;border-radius:8px;transition:background .2s;}
+.txi-act:active{background:rgba(255,255,255,0.08);}
+
+/* -- Confetti Canvas -- */
+#confettiCanvas{position:fixed;inset:0;z-index:100000;pointer-events:none;}
+
+/* -- Parallax Summary Cards -- */
+@media(min-width:768px){
+  .sc.parallax-active{transform:translateY(var(--py,0));will-change:transform;}
+  .sc.parallax-active:hover{transform:translateY(calc(var(--py,0) - 5px));border-color:var(--bs);box-shadow:var(--sh-hov);}
+}
+
+/* -- Autocomplete Dropdown -- */
+.ac-list{position:absolute;top:100%;left:0;right:0;z-index:500;background:var(--sf);border:1px solid var(--bd);border-radius:var(--rs);max-height:160px;overflow-y:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.2);margin-top:4px;}
+.ac-list.vis{display:block;}
+.ac-item{padding:8px 12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;color:var(--tx);transition:background .15s;}
+.ac-item:hover,.ac-item.sel{background:var(--s2);color:var(--ac);}
 </style>
 </head>
 <body>
@@ -574,15 +646,15 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 </div>
 
 <div class="srow sr1">
-  <div class="sc gl" id="balCard"><div class="sl">Net Balance</div><div class="sv big neu" id="sBal">₹0.00</div><div class="ss" id="sBalSub">—</div></div>
-  <div class="sc"><div class="sl">Total Income</div><div class="sv med pos" id="sInc">₹0.00</div><div class="ss" id="sIncS">0 transactions</div></div>
-  <div class="sc"><div class="sl">Total Expenses</div><div class="sv med neg" id="sExp">₹0.00</div><div class="ss" id="sExpS">0 transactions</div></div>
+  <div class="sc gl card-in" id="balCard"><div class="sl">Net Balance</div><div class="sv big neu" id="sBal">₹0.00</div><div class="ss" id="sBalSub">—</div></div>
+  <div class="sc card-in"><div class="sl">Total Income</div><div class="sv med pos" id="sInc">₹0.00</div><div class="ss" id="sIncS">0 transactions</div></div>
+  <div class="sc card-in"><div class="sl">Total Expenses</div><div class="sv med neg" id="sExp">₹0.00</div><div class="ss" id="sExpS">0 transactions</div></div>
 </div>
 <div class="srow sr2">
-  <div class="sc"><div class="sl">Avg / Day</div><div class="sv med neu" id="sAvg">₹0</div><div class="ss">expense per active day</div></div>
-  <div class="sc"><div class="sl">Active Days</div><div class="sv med neu" id="sDays">0</div><div class="ss">days with ≥1 transaction</div></div>
-  <div class="sc"><div class="sl">Online Spend</div><div class="sv med onc" id="sOnl">₹0</div><div class="ss" id="sOnlS">0 transactions</div></div>
-  <div class="sc"><div class="sl">Offline Spend</div><div class="sv med ofc" id="sOfl">₹0</div><div class="ss" id="sOflS">0 transactions</div></div>
+  <div class="sc card-in"><div class="sl">Avg / Day</div><div class="sv med neu" id="sAvg">₹0</div><div class="ss">expense per active day</div></div>
+  <div class="sc card-in"><div class="sl">Active Days</div><div class="sv med neu" id="sDays">0</div><div class="ss">days with ≥1 transaction</div></div>
+  <div class="sc card-in"><div class="sl">Online Spend</div><div class="sv med onc" id="sOnl">₹0</div><div class="ss" id="sOnlS">0 transactions</div></div>
+  <div class="sc card-in"><div class="sl">Offline Spend</div><div class="sv med ofc" id="sOfl">₹0</div><div class="ss" id="sOflS">0 transactions</div></div>
 </div>
 
 <!-- 2-Column Main Dashboard Grid -->
@@ -610,7 +682,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
   <div class="pn">
     <div class="ph"><span class="pt">Expense Trend</span></div>
-    <div class="ca" id="trendArea" style="padding:16px 20px 24px; min-height:220px; position:relative;"><div class="nd">No expense data</div></div>
+    <div class="ca" id="trendArea" style="padding:16px 20px 24px; min-height:220px; position:relative;"><div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No expense data</div><div class="empty-sub">Your spending trend chart will appear here</div></div></div>
   </div>
   
   <!-- Bottom Row -->
@@ -655,37 +727,37 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
     <div style="padding:8px 16px;border-bottom:1px solid var(--bd);">
       <input type="text" id="txSearch" placeholder="Search transactions…" oninput="setTxSearch(this.value)" style="padding:8px 12px;font-size:12px;width:100%;border-radius:20px;background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;" aria-label="Search transactions by description">
     </div>
-    <div class="txl" id="txList"><div class="txa"><div style="font-size:26px;margin-bottom:8px;opacity:.4">◈</div>No transactions yet</div></div>
+    <div class="txl" id="txList"><div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">No transactions yet</div><div class="empty-sub">Sign in and add your first transaction to get started</div></div></div>
   </div>
 
   <!-- Special Events (same height as Transactions) -->
   <div class="pn pn-fixed" id="eventArea">
     <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
-    <div class="ca" style="padding: 12px 20px;" id="eventList"><div class="nd" style="padding:12px 0">No events yet</div></div>
+    <div class="ca" style="padding: 12px 20px;" id="eventList"><div class="empty-state" style="padding:20px 12px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div></div>
   </div>
 </div>
 
 <!-- Online vs Offline Strip Card -->
-<div class="pn" style="margin-top: 24px;">
+<div class="pn section-in" style="margin-top: 24px; animation-delay:.1s;">
   <div class="ph"><span class="pt">Online vs Offline</span></div>
-  <div class="ca" style="padding: 24px;"><div id="spArea"><div class="nd">No expense data</div></div></div>
+  <div class="ca" style="padding: 24px;"><div id="spArea"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div></div></div>
 </div>
 
 <!-- By Category Strip Card -->
-<div class="pn" style="margin-top: 16px;">
+<div class="pn section-in" style="margin-top: 16px; animation-delay:.2s;">
   <div class="ph"><span class="pt">By Category</span></div>
-  <div class="ca" style="padding: 24px;" id="ctArea"><div class="nd" style="padding:12px 0">No data yet</div></div>
+  <div class="ca" style="padding: 24px;" id="ctArea"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Category breakdown appears once you track expenses</div></div></div>
 </div>
 
 <!-- Month-over-Month Insights -->
-<div class="insight-card" id="insightCard">
+<div class="insight-card section-in" id="insightCard" style="animation-delay:.3s;">
   <div class="ph"><span class="pt">Monthly Insights</span><span class="pb" id="insightPeriod"></span></div>
   <div class="insight-list" id="insightList"><div class="insight-empty">Add transactions to see insights</div></div>
 </div>
 
 <div class="ys">
   <div class="yst">Yearly Overview</div>
-  <div id="yrArea"><div style="text-align:center;padding:40px;font-family:'DM Mono',monospace;font-size:11px;color:var(--di);letter-spacing:1px">Add expenses to see yearly breakdown</div></div>
+  <div id="yrArea"><div class="empty-state"><div class="empty-icon">📆</div><div class="empty-title">Yearly Overview</div><div class="empty-sub">Add transactions to see your year at a glance</div></div></div>
 </div>
 
 </div>
@@ -800,6 +872,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 </div>
 
 <button class="fab" id="fab" onclick="scrollToForm()" aria-label="Add new transaction">＋</button>
+<button class="scroll-top" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Scroll to top">↑</button>
 
 <div id="trendTip" class="trend-tip"></div>
 <div class="tst" id="toast"></div>
@@ -872,6 +945,10 @@ document.addEventListener('DOMContentLoaded', () => {
   apTheme(theme);
   document.getElementById('txDt').valueAsDate=new Date();
   render();
+  initScrollTop();
+  initSwipeActions();
+  initParallax();
+  initAutocomplete();
 });
 
 function showConfirm(title, msg, actionFn, isDestructive = true) {
@@ -929,6 +1006,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Sign Out`;
     loadDataFromCloud();
     loadEvents();
+    showSkeletons();
   } else {
     userId = null;
     txs = [];
@@ -992,19 +1070,37 @@ function loadDataFromCloud() {
   });
 }
 
-function apTheme(t){
-  theme=t;
-  document.documentElement.setAttribute('data-theme',t);
-  const label = t==='dark'?'Dark':'Light';
-  document.querySelectorAll('.thlbl').forEach(el => el.textContent = label);
-  localStorage.setItem('flux_theme',t);
-  renderTrend(); 
+function apTheme(t, evt){
+  function commit(){
+    theme=t;
+    document.documentElement.setAttribute('data-theme',t);
+    const label = t==='dark'?'Dark':'Light';
+    document.querySelectorAll('.thlbl').forEach(el => el.textContent = label);
+    localStorage.setItem('flux_theme',t);
+    renderTrend();
+  }
+  // Circular wipe animation when triggered by a click
+  if(evt && evt.currentTarget){
+    const r = evt.currentTarget.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+    const ov = document.createElement('div');
+    ov.className = 'theme-wipe';
+    ov.style.background = t === 'dark' ? '#0d0f14' : '#e9e7e2';
+    ov.style.setProperty('--cx', cx + 'px');
+    ov.style.setProperty('--cy', cy + 'px');
+    document.body.appendChild(ov);
+    requestAnimationFrame(() => requestAnimationFrame(() => ov.classList.add('expand')));
+    setTimeout(() => { commit(); setTimeout(() => ov.remove(), 120); }, 500);
+  } else {
+    commit();
+  }
 }
 
 const toggles = ['#thtog_desktop'];
 toggles.forEach(id => {
   const el = document.querySelector(id);
-  if(el) el.addEventListener('click',()=>apTheme(theme==='dark'?'light':'dark'));
+  if(el) el.addEventListener('click',(e)=>apTheme(theme==='dark'?'light':'dark', e));
 });
 
 function setStatsMode(m) {
@@ -1114,6 +1210,9 @@ async function addTx() {
     window._highlightTxId = txId;
     
     showToast('Transaction added', 'ok');
+    // Confetti on milestones: 1st, 10th, 25th, every 50th
+    const mc = txs.length + 1;
+    if (mc === 1 || mc === 10 || mc === 25 || mc % 50 === 0) launchConfetti();
   } catch(e) {
     console.error("Error adding transaction", e);
     showToast('Error saving to cloud.', 'er');
@@ -1139,7 +1238,8 @@ async function executeDelTx(id) {
   if (!userId) return;
   const el = document.getElementById('tx-' + id);
   if (el) {
-    Object.assign(el.style, { transition: 'opacity .18s,transform .18s', opacity: '0', transform: 'translateX(-8px)' });
+    const wrap = el.closest('.txi-wrap') || el;
+    Object.assign(wrap.style, { transition: 'opacity .18s,transform .18s', opacity: '0', transform: 'translateX(-8px)' });
   }
   
   try {
@@ -1183,14 +1283,14 @@ function render(){
   renderInsights();
 }
 
-// Debounced render — coalesces rapid Firestore snapshot fires (e.g. during batch imports)
+// Debounced render - coalesces rapid Firestore snapshot fires (e.g. during batch imports)
 let _renderTimer = null;
 function debouncedRender() {
   if (_renderTimer) clearTimeout(_renderTimer);
   _renderTimer = setTimeout(() => { _renderTimer = null; render(); }, 120);
 }
 
-// Animated number counter — smoothly counts from current to target value
+// Animated number counter - smoothly counts from current to target value
 function animateVal(el, target, formatter, duration) {
   if (!el) return;
   duration = duration || 600;
@@ -1306,9 +1406,9 @@ function renderTxList(){
 
   if(!list.length){
     if (cDtFilt === 'custom' && !document.getElementById('cDtFrom').value && !document.getElementById('cDtTo').value) {
-        el.innerHTML='<div class="txa"><div style="font-size:26px;margin-bottom:8px;opacity:.4">◈</div>Select dates to view</div>';
+        el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Select dates to view</div><div class="empty-sub">Pick a date range above to filter transactions</div></div>';
     } else {
-        el.innerHTML='<div class="txa"><div style="font-size:26px;margin-bottom:8px;opacity:.4">◈</div>No matching transactions</div>';
+        el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No matching transactions</div><div class="empty-sub">Try adjusting your filters or search query</div></div>';
     }
     return;
   }
@@ -1321,7 +1421,10 @@ function renderTxList(){
     const evtBadge = (tx.eventId && events[tx.eventId]) ? `<span class="event-badge" style="background:${events[tx.eventId].color}22;color:${events[tx.eventId].color};border:1px solid ${events[tx.eventId].color}44;">${esc(events[tx.eventId].name)}</span>` : '';
     const evtBorder = (tx.eventId && events[tx.eventId]) ? `border-left:3px solid ${events[tx.eventId].color};` : '';
     return `
-    <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="tx-${tx.id}" style="${evtBorder}">
+    <div class="txi-wrap" data-txid="${esc(tx.id)}">
+      <div class="txi-actions act-left"><button class="txi-act" onclick="editTx('${esc(tx.id)}')">\u270F\uFE0F Edit</button></div>
+      <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx('${esc(tx.id)}')">\uD83D\uDDD1 Delete</button></div>
+      <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="tx-${tx.id}" style="${evtBorder}">
       <div class="dot ${tx.type}"></div>
       <div class="ti">
         <div class="tn">${esc(tx.desc)}</div>
@@ -1342,7 +1445,7 @@ function renderTxList(){
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
       </div>
-    </div>`;
+    </div></div>`;
   }).join('');
     
   if (hasMore) {
@@ -1461,7 +1564,7 @@ document.addEventListener('keydown', (e) => {
   if (document.getElementById('impMod').classList.contains('op')) { closeMod(); return; }
 });
 
-// Focus trap for open modals — keeps Tab/Shift+Tab inside the active modal
+// Focus trap for open modals - keeps Tab/Shift+Tab inside the active modal
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Tab') return;
   const modals = ['confirmMod', 'eventMod', 'editMod', 'impMod'];
@@ -1488,7 +1591,7 @@ function renderTrend() {
   document.getElementById('trendTip').classList.remove('sh');
   const exp = getActiveTxs().filter(t => t.type === 'expense');
   const area = document.getElementById('trendArea');
-  if(!exp.length){ area.innerHTML='<div class="nd">No expense data</div>'; return; }
+  if(!exp.length){ area.innerHTML='<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No expense data</div><div class="empty-sub">Add some expenses to see your spending trend visualized here</div></div>'; return; }
 
   const groups = {};
   const isMonth = statsMode === 'month';
@@ -1773,7 +1876,7 @@ window.addEventListener('resize', () => {
 
 function renderCats(){
   const exp=getActiveTxs().filter(t=>t.type==='expense'),area=document.getElementById('ctArea');
-  if(!exp.length){area.innerHTML='<div class="nd" style="padding:10px 0">No data yet</div>';return;}
+  if(!exp.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Your expense categories will appear here once you start tracking</div></div>';return;}
   const tot={};
   let totalExp=0;
   exp.forEach(t=>{tot[t.cat||'other']=(tot[t.cat||'other']||0)+t.amount;totalExp+=t.amount;});
@@ -1789,7 +1892,7 @@ function renderCats(){
 
 function renderSplit(){
   const exp=getActiveTxs().filter(t=>t.type==='expense'),area=document.getElementById('spArea');
-  if(!exp.length){area.innerHTML='<div class="nd">No expense data</div>';return;}
+  if(!exp.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div>';return;}
   const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
   const oA=onl.reduce((s,t)=>s+t.amount,0),fA=ofl.reduce((s,t)=>s+t.amount,0),tot=oA+fA;
   const op=tot>0?(oA/tot*100).toFixed(1):0,fp=tot>0?(fA/tot*100).toFixed(1):0;
@@ -1870,7 +1973,7 @@ function renderInsights() {
     insights.push({ icon: CICO[topCat] || '✦', text: `Your top expense this month: <strong>${topCat.charAt(0).toUpperCase() + topCat.slice(1)}</strong> (${fmtS(topAmt)})` });
   }
 
-  // 4. Per-category comparison — find biggest change
+  // 4. Per-category comparison - find biggest change
   if (prevTxs.length > 0) {
     const allCats = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
     let biggestCat = null, biggestPct = 0, biggestDir = '';
@@ -1885,7 +1988,7 @@ function renderInsights() {
           biggestDir = pct > 0 ? 'up' : 'down';
         }
       } else if (cur > 0 && biggestCat === null) {
-        // New category this month — only highlight if no existing category swing found
+        // New category this month - only highlight if no existing category swing found
         biggestPct = 100;
         biggestCat = cat;
         biggestDir = 'up';
@@ -1923,7 +2026,7 @@ function renderInsights() {
 
   if (!insights.length) {
     if (!prevTxs.length && curTxs.length) {
-      area.innerHTML = '<div class="insight-empty">No previous month data to compare — insights will appear next month</div>';
+      area.innerHTML = '<div class="insight-empty">No previous month data to compare - insights will appear next month</div>';
     } else {
       area.innerHTML = '<div class="insight-empty">Spending is roughly the same as last month</div>';
     }
@@ -1937,7 +2040,7 @@ function renderYearly(){
   const area=document.getElementById('yrArea');
   const now=new Date(),todayISO=new Date(now.getTime()-(now.getTimezoneOffset()*60000)).toISOString().slice(0,10),cY=now.getFullYear(),cM=now.getMonth(),cD=now.getDate();
   
-  if(!txs.length){area.innerHTML='<div style="text-align:center;padding:40px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--di);letter-spacing:1px;font-weight:500;">Add transactions to see yearly breakdown</div>';return;}
+  if(!txs.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">📆</div><div class="empty-title">Yearly Overview</div><div class="empty-sub">Add transactions to see your year at a glance</div></div>';return;}
   const yrs=[...new Set([cY,...txs.map(t=>new Date(t.date+'T00:00:00').getFullYear())])].sort((a,b)=>b-a);
   area.innerHTML=yrs.map(yr=>mkYrBlock(yr,txs,todayISO,cY,cM,cD)).join('');
 }
@@ -2497,7 +2600,7 @@ function renderEvents() {
   if (!area) return;
   const evts = Object.values(events);
   if (!evts.length) {
-    area.innerHTML = '<div class="nd" style="padding:12px 0">No events yet</div>';
+    area.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create a special event to track spending for trips, birthdays, or projects</div></div>';
     return;
   }
   area.innerHTML = evts.map(e => `
@@ -2806,6 +2909,229 @@ window.addEventListener('appinstalled', () => {
   if (bar) bar.style.display = 'none';
   _deferredPrompt = null;
 });
+
+// -- Skeleton Loading Placeholders --
+function showSkeletons() {
+  const txList = document.getElementById('txList');
+  if (txList) {
+    txList.innerHTML = Array.from({length: 5}, () =>
+      `<div class="skel-row"><div class="skel skel-circle"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="skel skel-bar w80"></div><div class="skel skel-bar w40" style="height:8px"></div></div><div class="skel skel-amt"></div></div>`
+    ).join('');
+  }
+  const trendArea = document.getElementById('trendArea');
+  if (trendArea) {
+    trendArea.innerHTML = '<div class="skel-block"><div class="skel skel-line tall w80"></div><div class="skel skel-line w60"></div><div class="skel skel-line" style="height:100px"></div></div>';
+  }
+  const ctArea = document.getElementById('ctArea');
+  if (ctArea) {
+    ctArea.innerHTML = '<div class="skel-block"><div class="skel skel-line" style="height:12px;border-radius:6px"></div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      Array.from({length: 4}, () => '<div class="skel skel-line" style="width:80px;height:32px;border-radius:8px"></div>').join('') + '</div></div>';
+  }
+  const spArea = document.getElementById('spArea');
+  if (spArea) {
+    spArea.innerHTML = '<div class="skel-block"><div class="skel skel-line" style="height:12px;border-radius:6px"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="skel skel-line" style="height:80px;border-radius:12px"></div><div class="skel skel-line" style="height:80px;border-radius:12px"></div></div></div>';
+  }
+}
+
+// -- Scroll-to-Top Button --
+function initScrollTop() {
+  const btn = document.getElementById('scrollTopBtn');
+  if (!btn) return;
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      btn.classList.toggle('vis', window.scrollY > 400);
+      ticking = false;
+    });
+  }, { passive: true });
+}
+
+// -- Swipe-to-Action (Mobile Touch) --
+function initSwipeActions() {
+  const txList = document.getElementById('txList');
+  if (!txList || !('ontouchstart' in window)) return;
+  let startX, startY, currentWrap, swiping;
+  const THRESHOLD = 60;
+  function resetAll(except) {
+    document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
+      if (w === except) return;
+      w.classList.remove('swiped-left','swiped-right','swiping');
+      const inner = w.querySelector('.txi');
+      if (inner) inner.style.transform = '';
+    });
+  }
+  txList.addEventListener('touchstart', (e) => {
+    const wrap = e.target.closest('.txi-wrap');
+    if (!wrap) return;
+    resetAll(wrap);
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    currentWrap = wrap;
+    swiping = false;
+  }, { passive: true });
+  txList.addEventListener('touchmove', (e) => {
+    if (!currentWrap) return;
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (!swiping && Math.abs(dy) > Math.abs(dx)) { currentWrap = null; return; }
+    if (Math.abs(dx) > 10) swiping = true;
+    if (!swiping) return;
+    e.preventDefault();
+    currentWrap.classList.add('swiping');
+    const clamped = Math.max(-100, Math.min(100, dx));
+    const inner = currentWrap.querySelector('.txi');
+    if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
+  }, { passive: false });
+  txList.addEventListener('touchend', () => {
+    if (!currentWrap) return;
+    currentWrap.classList.remove('swiping');
+    const inner = currentWrap.querySelector('.txi');
+    if (!inner) { currentWrap = null; return; }
+    const m = inner.style.transform.match(/-?\d+(\.\d+)?/);
+    const dx = m ? parseFloat(m[0]) : 0;
+    if (dx < -THRESHOLD) {
+      inner.style.transform = 'translateX(-80px)';
+      currentWrap.classList.add('swiped-left');
+      currentWrap.classList.remove('swiped-right');
+    } else if (dx > THRESHOLD) {
+      inner.style.transform = 'translateX(80px)';
+      currentWrap.classList.add('swiped-right');
+      currentWrap.classList.remove('swiped-left');
+    } else {
+      inner.style.transform = '';
+      currentWrap.classList.remove('swiped-left','swiped-right');
+    }
+    currentWrap = null;
+  }, { passive: true });
+  document.addEventListener('touchstart', (e) => {
+    if (!e.target.closest('.txi-wrap')) resetAll();
+  }, { passive: true });
+}
+
+// -- Celebration Confetti --
+function launchConfetti() {
+  const canvas = document.createElement('canvas');
+  canvas.id = 'confettiCanvas';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const colors = ['#c8a96e','#5dba8a','#e07070','#6e9dc8','#9d7ac8','#f0c040'];
+  const particles = [];
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: canvas.width / 2, y: canvas.height * 0.4,
+      vx: (Math.random() - 0.5) * 20,
+      vy: Math.random() * -16 - 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: Math.random() * 6 + 3,
+      rot: Math.random() * 360,
+      rotV: (Math.random() - 0.5) * 12,
+      grav: 0.45 + Math.random() * 0.15,
+      alpha: 1,
+      decay: 0.007 + Math.random() * 0.007
+    });
+  }
+  function frame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    particles.forEach(p => {
+      if (p.alpha <= 0) return;
+      alive = true;
+      p.x += p.vx; p.vy += p.grav; p.y += p.vy;
+      p.vx *= 0.98; p.rot += p.rotV; p.alpha -= p.decay;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.globalAlpha = Math.max(0, p.alpha);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+      ctx.restore();
+    });
+    if (alive) requestAnimationFrame(frame);
+    else canvas.remove();
+  }
+  requestAnimationFrame(frame);
+}
+
+// -- Parallax on Summary Cards --
+function initParallax() {
+  if (window.innerWidth < 768) return;
+  const cards = document.querySelectorAll('.sc.card-in');
+  if (!cards.length) return;
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      cards.forEach((card, i) => {
+        const rect = card.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          const offset = (rect.top - window.innerHeight / 2) * 0.03 * (1 + i * 0.12);
+          card.style.setProperty('--py', offset.toFixed(1) + 'px');
+          card.classList.add('parallax-active');
+        }
+      });
+      ticking = false;
+    });
+  }, { passive: true });
+}
+
+// -- Autocomplete for Description Input --
+function initAutocomplete() {
+  const input = document.getElementById('txD');
+  if (!input) return;
+  const wrap = input.parentElement;
+  wrap.style.position = 'relative';
+  const list = document.createElement('div');
+  list.className = 'ac-list';
+  list.id = 'acList';
+  wrap.appendChild(list);
+  let selIdx = -1;
+  function show() {
+    const val = input.value.trim().toLowerCase();
+    if (!val) { list.classList.remove('vis'); return; }
+    const descs = [...new Set(txs.map(t => t.desc))];
+    const matches = descs.filter(d => d.toLowerCase().includes(val)).slice(0, 8);
+    if (!matches.length) { list.classList.remove('vis'); return; }
+    selIdx = -1;
+    list.innerHTML = matches.map((m, i) => {
+      const safe = m.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return '<div class="ac-item" data-idx="' + i + '" data-val="' + safe + '">' + safe + '</div>';
+    }).join('');
+    list.classList.add('vis');
+  }
+  input.addEventListener('input', show);
+  input.addEventListener('focus', show);
+  list.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.ac-item');
+    if (item) { input.value = item.dataset.val; list.classList.remove('vis'); }
+  });
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('vis'), 150));
+  input.addEventListener('keydown', (e) => {
+    const items = list.querySelectorAll('.ac-item');
+    if (!items.length || !list.classList.contains('vis')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      selIdx = Math.min(selIdx + 1, items.length - 1);
+      items.forEach((it, i) => it.classList.toggle('sel', i === selIdx));
+      items[selIdx].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      selIdx = Math.max(selIdx - 1, 0);
+      items.forEach((it, i) => it.classList.toggle('sel', i === selIdx));
+      items[selIdx].scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && selIdx >= 0) {
+      e.preventDefault();
+      input.value = items[selIdx].dataset.val;
+      list.classList.remove('vis');
+    } else if (e.key === 'Escape') {
+      list.classList.remove('vis');
+    }
+  });
+}
 
 </script>
 </body>
