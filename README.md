@@ -11,7 +11,7 @@
 
 Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data sync across devices — no backend code, no build step, no framework.
 
-The entire application ships as one `index.html` file (~2,575 lines) with embedded styles and ES-module scripts.
+The entire application ships as one `index.html` file (~2,700 lines) with embedded styles and ES-module scripts. It is installable as a **Progressive Web App** and works offline.
 
 ---
 
@@ -37,6 +37,7 @@ The entire application ships as one `index.html` file (~2,575 lines) with embedd
 | **Category Breakdown** | Proportional bar + tag-card detail view by expense category |
 | **Online vs. Offline Split** | Percentage bar and side-by-side comparison cards with avg/day |
 | **Yearly Overview** | Collapsible year blocks → month cards with sparkline bars, today callout, progress %, and lazy-loaded TX lists |
+| **Monthly Insights** | Auto-generated text comparing current vs previous month — savings diff, spending % change, top category, per-category swings, exceeded-category count |
 
 ### UI Polish & Micro-interactions
 
@@ -65,6 +66,15 @@ The entire application ships as one `index.html` file (~2,575 lines) with embedd
 - **Events fallback** — if Firestore rules block a dedicated `events` collection, the app automatically falls back to the `transactions` collection
 - **AbortController cleanup** — chart event listeners are properly aborted and re-attached on every re-render to prevent stale handlers
 
+### Progressive Web App (PWA)
+
+| Feature | Details |
+|---|---|
+| **Installable** | `manifest.json` with app name, theme colour, standalone display — "Add to Home Screen" from browser |
+| **Service Worker** | `sw.js` caches HTML + CDN assets; network-first for navigation, cache-first for static resources |
+| **Firestore Offline Persistence** | `enableIndexedDbPersistence` stores data in IndexedDB; reads/writes work offline and sync when back online |
+| **Install Prompt** | In-app banner with `beforeinstallprompt` handling; auto-dismisses after install |
+
 ---
 
 ## Tech Stack
@@ -74,9 +84,10 @@ The entire application ships as one `index.html` file (~2,575 lines) with embedd
 | **Markup & Styling** | HTML5, CSS3 — custom properties, Grid, `color-mix()`, media queries, keyframe animations |
 | **Logic** | Vanilla JavaScript (ES modules, `requestAnimationFrame`, `IntersectionObserver`-style scroll) |
 | **Authentication** | Firebase Auth v11.6 — Google sign-in via popup |
-| **Database** | Cloud Firestore — real-time `onSnapshot` listeners, `writeBatch` for bulk ops |
+| **Database** | Cloud Firestore — real-time `onSnapshot` listeners, `writeBatch` for bulk ops, IndexedDB offline persistence |
 | **Charting** | Canvas 2D API — fully custom-drawn trend chart (no library) |
 | **Import Engine** | SheetJS (xlsx) v0.18.5 — loaded via CDN |
+| **PWA** | Service Worker + Web App Manifest — installable, works offline |
 | **Fonts** | Google Fonts — Playfair Display, DM Mono, DM Sans |
 
 ---
@@ -145,11 +156,15 @@ The app ships with a default Firebase project. To use your own:
 
 ```
 flux-webapp/
-├── index.html    # Entire application — HTML + CSS + JS (single-file architecture)
-└── README.md     # This file
+├── index.html       # Entire application — HTML + CSS + JS (single-file architecture)
+├── manifest.json    # PWA Web App Manifest (name, icons, theme, display mode)
+├── sw.js            # Service Worker (offline caching, asset pre-cache)
+└── README.md        # This file
 ```
 
 No build tools, no `node_modules`, no transpilation. All styles and scripts are embedded.
+
+> **Note:** For the Service Worker to function, serve the project via HTTP (`localhost` or HTTPS). Opening `index.html` as a `file://` URL will register the app but the SW won't activate.
 
 ---
 
@@ -168,4 +183,4 @@ Data Analyst · Frontend Developer · Business Intelligence
 
 ---
 
-<sub>Built as a portfolio project demonstrating vanilla JavaScript application development, Firebase cloud integration, Canvas-based data visualization, micro-interaction design, and responsive UI engineering.</sub>
+<sub>Built as a portfolio project demonstrating vanilla JavaScript application development, Firebase cloud integration, Canvas-based data visualization, micro-interaction design, PWA offline capabilities, and responsive UI engineering.</sub>
