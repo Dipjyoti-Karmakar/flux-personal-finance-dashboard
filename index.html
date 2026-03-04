@@ -2197,9 +2197,10 @@ async function saveEventMod() {
   if (!start) { shake('evtStart'); return; }
   if (!end) { shake('evtEnd'); return; }
   if (start > end) { showToast('Start date must be before end date', 'er'); return; }
+  const evtId = editingEventId;
   closeEventMod();
-  if (editingEventId) {
-    await editEvent(editingEventId, { name, start, end, color });
+  if (evtId) {
+    await editEvent(evtId, { name, start, end, color });
   } else {
     await createEvent({ name, start, end, color });
   }
