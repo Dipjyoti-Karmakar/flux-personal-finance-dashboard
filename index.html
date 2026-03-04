@@ -564,11 +564,6 @@ select option{background:var(--s2)}
     </div>
 
     <div class="pn">
-      <div class="ph"><span class="pt">Spending Breakdown</span></div>
-      <div class="ca" style="padding: 20px 24px;"><div id="piArea"><div class="nd">No expense data</div></div></div>
-    </div>
-
-    <div class="pn">
       <div class="ph"><span class="pt">By Category</span></div>
       <div class="ca" style="padding: 16px 20px;"><div class="ctl" id="ctArea"><div class="nd" style="padding:12px 0">No data yet</div></div></div>
     </div>
@@ -578,12 +573,6 @@ select option{background:var(--s2)}
       <div class="ca" style="padding: 16px 20px;" id="eventList"><div class="nd" style="padding:12px 0">No events yet</div></div>
     </div>
   </div>
-</div>
-
-<!-- New Category Strip Card -->
-<div class="pn" style="margin-top: 24px;">
-  <div class="ph"><span class="pt">Category Distribution</span></div>
-  <div class="ca" style="padding: 24px;" id="catStripArea"><div class="nd">No expense data</div></div>
 </div>
 
 <div class="ys">
@@ -878,7 +867,6 @@ function apTheme(t){
   const label = t==='dark'?'Dark':'Light';
   document.querySelectorAll('.thlbl').forEach(el => el.textContent = label);
   localStorage.setItem('flux_theme',t);
-  renderPie();
   renderTrend(); 
 }
 
@@ -895,10 +883,8 @@ function setStatsMode(m) {
   document.getElementById('stM_all').classList.toggle('act', m === 'all');
   renderStats();
   renderTrend();
-  renderPie();
   renderCats();
   renderSplit();
-  renderCatStrip();
 }
 
 function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="other">✦ Other</option>';}
@@ -937,6 +923,15 @@ function setF(filterVal, btn) {
   btn.classList.add('act');
   const evtWrap = document.getElementById('eventTxFilterWrap');
   if (evtWrap) evtWrap.style.display = filterVal === 'event' ? 'block' : 'none';
+  // Disable/enable date filters when event filter is active
+  const dtBtns = document.querySelectorAll('.ft.dt-flt');
+  const customWrap = document.getElementById('customDtWrap');
+  if (filterVal === 'event') {
+    dtBtns.forEach(b => { b.style.opacity = '0.35'; b.style.pointerEvents = 'none'; });
+    if (customWrap) customWrap.style.display = 'none';
+  } else {
+    dtBtns.forEach(b => { b.style.opacity = ''; b.style.pointerEvents = ''; });
+  }
   renderTxList();
 }
 
@@ -1035,10 +1030,8 @@ function getActiveTxs() {
 function render(){
   renderStats();
   renderTxList();
-  renderPie();
   renderCats();
   renderSplit();
-  renderCatStrip();
   renderTrend();
   renderYearly();
   renderEvents();
@@ -1076,38 +1069,47 @@ function renderTxList(){
   const el=document.getElementById('txList');
   let list=txs;
   
-  const now = new Date();
-  const todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0,10);
-  if (cDtFilt === 'today') {
-    list = list.filter(t => t.date === todayISO);
-  } else if (cDtFilt === 'month') {
-    const monthPrefix = todayISO.slice(0,7);
-    list = list.filter(t => t.date.startsWith(monthPrefix));
-  } else if (cDtFilt === 'custom') {
-    const fromDt = document.getElementById('cDtFrom').value;
-    const toDt = document.getElementById('cDtTo').value;
-    
-    if (!fromDt && !toDt) {
-        list = [];
-    } else {
-        if(fromDt) list = list.filter(t => t.date >= fromDt);
-        if(toDt) list = list.filter(t => t.date <= toDt);
-    }
-  }
+  // When event filter is active, skip date filters entirely
+  const isEventFilter = (cTyFilt === 'event');
+  let activeEvent = null;
 
-  if(cTyFilt === 'income') list = list.filter(t => t.type === 'income');
-  else if(cTyFilt === 'expense') list = list.filter(t => t.type === 'expense');
-  else if(cTyFilt === 'online') list = list.filter(t => t.mode === 'online');
-  else if(cTyFilt === 'offline') list = list.filter(t => t.mode !== 'online');
-  else if(cTyFilt === 'event') {
+  if (isEventFilter) {
+    // Filter by event, not by date
     list = list.filter(t => !!t.eventId);
-    if (cEventFilt !== 'all') list = list.filter(t => t.eventId === cEventFilt);
+    if (cEventFilt !== 'all') {
+      list = list.filter(t => t.eventId === cEventFilt);
+      activeEvent = events[cEventFilt] || null;
+    }
+  } else {
+    // Apply date filters only when NOT in event mode
+    const now = new Date();
+    const todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0,10);
+    if (cDtFilt === 'today') {
+      list = list.filter(t => t.date === todayISO);
+    } else if (cDtFilt === 'month') {
+      const monthPrefix = todayISO.slice(0,7);
+      list = list.filter(t => t.date.startsWith(monthPrefix));
+    } else if (cDtFilt === 'custom') {
+      const fromDt = document.getElementById('cDtFrom').value;
+      const toDt = document.getElementById('cDtTo').value;
+      if (!fromDt && !toDt) {
+          list = [];
+      } else {
+          if(fromDt) list = list.filter(t => t.date >= fromDt);
+          if(toDt) list = list.filter(t => t.date <= toDt);
+      }
+    }
+
+    if(cTyFilt === 'income') list = list.filter(t => t.type === 'income');
+    else if(cTyFilt === 'expense') list = list.filter(t => t.type === 'expense');
+    else if(cTyFilt === 'online') list = list.filter(t => t.mode === 'online');
+    else if(cTyFilt === 'offline') list = list.filter(t => t.mode !== 'online');
   }
 
   document.getElementById('txCnt').textContent = list.length;
 
   // Compute totals for special event / custom range / all-dates filters
-  const showTotals = (cDtFilt === 'custom' || cDtFilt === 'all' || cTyFilt === 'event');
+  const showTotals = (cDtFilt === 'custom' || cDtFilt === 'all' || isEventFilter);
   let filtIncome = 0, filtExpense = 0;
   if (showTotals) {
     list.forEach(t => {
@@ -1165,20 +1167,31 @@ function renderTxList(){
   // Prepend totals bar for special event / custom range / all dates
   if (showTotals && list.length) {
     const net = filtIncome - filtExpense;
-    html = `<div style="display:flex;gap:12px;padding:14px 18px;background:var(--s2);border-bottom:1px solid var(--bd);flex-wrap:wrap;align-items:center;">
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Income</span>
-        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--in);">${fmt(filtIncome)}</span>
-      </div>
-      <div style="width:1px;height:20px;background:var(--bd);"></div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Expense</span>
-        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--ex);">${fmt(filtExpense)}</span>
-      </div>
-      <div style="width:1px;height:20px;background:var(--bd);"></div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Net</span>
-        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${net >= 0 ? 'var(--in)' : 'var(--ex)'};">${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}</span>
+    let evtHeader = '';
+    if (isEventFilter && activeEvent) {
+      evtHeader = `<div style="display:flex;align-items:center;gap:10px;width:100%;margin-bottom:8px;">
+        <div style="width:4px;height:28px;border-radius:2px;background:${activeEvent.color || 'var(--ac)'};flex-shrink:0;"></div>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--tx);">${esc(activeEvent.name)}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);margin-left:auto;">${activeEvent.start || '?'} → ${activeEvent.end || '?'}</span>
+      </div>`;
+    }
+    html = `<div style="padding:14px 18px;background:var(--s2);border-bottom:1px solid var(--bd);">
+      ${evtHeader}
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Income</span>
+          <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--in);">${fmt(filtIncome)}</span>
+        </div>
+        <div style="width:1px;height:20px;background:var(--bd);"></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Expense</span>
+          <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--ex);">${fmt(filtExpense)}</span>
+        </div>
+        <div style="width:1px;height:20px;background:var(--bd);"></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Net</span>
+          <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${net >= 0 ? 'var(--in)' : 'var(--ex)'};">${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}</span>
+        </div>
       </div>
     </div>` + html;
   }
