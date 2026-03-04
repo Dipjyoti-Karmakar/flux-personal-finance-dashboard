@@ -91,9 +91,16 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 /* Right Stack card sizing – override .pn height:100% so cards use natural size */
 .right-stack > .pn { flex: 0 0 auto; height: auto; }
 .right-stack > .pn + .pn { border-top: none; }
-#eventList{overflow-y:auto;min-height:0;max-height:360px;padding-right:4px;}
+#eventList{overflow-y:auto;min-height:0;max-height:260px;padding-right:4px;}
 #eventList::-webkit-scrollbar{width:4px}
 #eventList::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
+
+/* Compact Online vs Offline split cards */
+.right-stack .spcs { gap: 8px; }
+.right-stack .spc { padding: 10px; }
+.right-stack .spcv { font-size: 15px; }
+.right-stack .spcs2 { font-size: 9px; margin-top: 2px; }
+.right-stack .spcl { font-size: 9px; margin-bottom: 4px; }
 
 .pn{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;min-width:0;display:flex;flex-direction:column;height:100%;transition:box-shadow .4s ease, border-color .4s ease;}
 .pn:hover{border-color:var(--bs); box-shadow:var(--sh-hov);}
@@ -557,14 +564,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
   <!-- Right Side: Stacked Vertical Cards -->
   <div class="right-stack">
-    <div class="pn">
-      <div class="ph"><span class="pt">Online vs Offline</span></div>
-      <div class="ca" style="padding: 16px 20px;"><div id="spArea"><div class="nd">No expense data</div></div></div>
-    </div>
-
     <div class="pn" id="eventArea">
       <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
-      <div class="ca" style="padding: 16px 20px;" id="eventList"><div class="nd" style="padding:12px 0">No events yet</div></div>
+      <div class="ca" style="padding: 12px 20px;" id="eventList"><div class="nd" style="padding:12px 0">No events yet</div></div>
+    </div>
+
+    <div class="pn">
+      <div class="ph"><span class="pt">Online vs Offline</span></div>
+      <div class="ca" style="padding: 12px 20px;"><div id="spArea"><div class="nd">No expense data</div></div></div>
     </div>
   </div>
 </div>
