@@ -67,6 +67,12 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .sc:hover{transform:translateY(-5px); border-color:var(--bs); box-shadow:var(--sh-hov);}
 .sc.gl{background:linear-gradient(145deg,var(--sf) 0%,color-mix(in srgb,var(--sf) 92%,var(--ac)) 100%)}
 .sc.gl::before{content:'';position:absolute;top:-50px;right:-50px;width:140px;height:140px;border-radius:50%;background:var(--ag);filter:blur(40px);pointer-events:none;opacity:.8}
+
+/* Balance health glow */
+.sc.gl.glow-pos::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 40px rgba(93,186,138,0.12), 0 0 30px rgba(93,186,138,0.08);transition:box-shadow .6s ease;}
+.sc.gl.glow-neg::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 40px rgba(224,112,112,0.12), 0 0 30px rgba(224,112,112,0.08);animation:glowPulse 2.5s ease-in-out infinite;}
+.sc.gl.glow-neu::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 30px rgba(200,169,110,0.1), 0 0 20px rgba(200,169,110,0.06);transition:box-shadow .6s ease;}
+@keyframes glowPulse{0%,100%{box-shadow:inset 0 0 40px rgba(224,112,112,0.12), 0 0 30px rgba(224,112,112,0.08)}50%{box-shadow:inset 0 0 50px rgba(224,112,112,0.18), 0 0 40px rgba(224,112,112,0.12)}}
 .sl{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:8px;font-weight:600;}
 .sv{font-family:'DM Mono',monospace;font-weight:500;letter-spacing:-.5px;line-height:1;transition:color .3s ease}
 .sv.big{font-size:30px}.sv.med{font-size:22px}
@@ -459,6 +465,29 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .mbw { margin-top: 6px; }
   .mpr { font-size: 9px; margin-top: 3px; }
 }
+
+/* Floating Action Button — mobile only */
+.fab { display:none; }
+
+/* Add TX success micro-interactions */
+.sbtn.success-flash { background:var(--in); transform:scale(1.02); }
+@keyframes txHighlight { 0%{box-shadow:inset 3px 0 0 var(--ac), 0 0 16px rgba(200,169,110,0.15);background:var(--ag)} 100%{box-shadow:none;background:transparent} }
+.txi.tx-new { animation: txHighlight 1.5s ease-out forwards; }
+@media(max-width:520px){
+  .fab {
+    display:flex; align-items:center; justify-content:center;
+    position:fixed; bottom:24px; right:20px; z-index:900;
+    width:56px; height:56px; border-radius:50%; border:none;
+    background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 80%,#fff));
+    color:#0d0f14; font-size:28px; font-weight:300; line-height:1;
+    cursor:pointer;
+    box-shadow:0 6px 24px rgba(200,169,110,0.4), 0 2px 8px rgba(0,0,0,0.3);
+    transition:transform .25s cubic-bezier(0.16,1,0.3,1), box-shadow .25s ease, opacity .3s ease;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .fab:active { transform:scale(0.9); box-shadow:0 2px 8px rgba(200,169,110,0.3); }
+  .fab.hide { opacity:0; pointer-events:none; transform:translateY(20px); }
+}
 </style>
 </head>
 <body>
@@ -508,7 +537,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 </div>
 
 <div class="srow sr1">
-  <div class="sc gl"><div class="sl">Net Balance</div><div class="sv big neu" id="sBal">₹0.00</div><div class="ss" id="sBalSub">—</div></div>
+  <div class="sc gl" id="balCard"><div class="sl">Net Balance</div><div class="sv big neu" id="sBal">₹0.00</div><div class="ss" id="sBalSub">—</div></div>
   <div class="sc"><div class="sl">Total Income</div><div class="sv med pos" id="sInc">₹0.00</div><div class="ss" id="sIncS">0 transactions</div></div>
   <div class="sc"><div class="sl">Total Expenses</div><div class="sv med neg" id="sExp">₹0.00</div><div class="ss" id="sExpS">0 transactions</div></div>
 </div>
@@ -727,13 +756,15 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   </div>
 </div>
 
+<button class="fab" id="fab" onclick="scrollToForm()" aria-label="Add new transaction">＋</button>
+
 <div id="trendTip" class="trend-tip"></div>
 <div class="tst" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',salary:'💼',freelance:'💻',investment:'📈',other:'✦'};
 const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8','#c8c36e','#6e8dc8','#c86e6e','#7ac86e'];
@@ -1010,6 +1041,7 @@ async function addTx() {
   if (eventId) newTx.eventId = eventId;
   const txId = uid();
   
+  const btn = document.querySelector('.fb2 .sbtn');
   try {
     const docRef = doc(db, 'users', userId, 'transactions', txId);
     await setDoc(docRef, newTx);
@@ -1017,6 +1049,18 @@ async function addTx() {
     document.getElementById('txD').value = '';
     document.getElementById('txA').value = '';
     document.getElementById('txDt').valueAsDate = new Date();
+    
+    // Button checkmark animation
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓ Added';
+      btn.classList.add('success-flash');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('success-flash'); }, 1200);
+    }
+    
+    // Mark the new TX for highlight after next render
+    window._highlightTxId = txId;
+    
     showToast('Transaction added', 'ok');
   } catch(e) {
     console.error("Error adding transaction", e);
@@ -1093,6 +1137,26 @@ function debouncedRender() {
   _renderTimer = setTimeout(() => { _renderTimer = null; render(); }, 120);
 }
 
+// Animated number counter — smoothly counts from current to target value
+function animateVal(el, target, formatter, duration) {
+  if (!el) return;
+  duration = duration || 600;
+  // Parse current displayed number (strip currency symbol and commas)
+  const cur = parseFloat(String(el.textContent).replace(/[^0-9.\-]/g, '')) || 0;
+  if (cur === target) { el.textContent = formatter(target); return; }
+  const start = performance.now();
+  const diff = target - cur;
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    // ease-out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    el.textContent = formatter(cur + diff * ease);
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 function renderStats(){
   const sTxs = getActiveTxs();
 
@@ -1100,24 +1164,31 @@ function renderStats(){
   const tI=inc.reduce((s,t)=>s+t.amount,0),tE=exp.reduce((s,t)=>s+t.amount,0),bal=tI-tE;
   
   const bel=document.getElementById('sBal');
-  bel.textContent=fmt(bal);bel.className='sv big '+(bal>0?'pos':bal<0?'neg':'neu');
+  animateVal(bel, Math.abs(bal), fmt);
+  bel.className='sv big '+(bal>0?'pos':bal<0?'neg':'neu');
   document.getElementById('sBalSub').textContent=bal>=0?'↑ In the green':'↓ Overspent';
   
-  document.getElementById('sInc').textContent=fmt(tI);
+  // Update balance card glow
+  const bc=document.getElementById('balCard');
+  bc.classList.remove('glow-pos','glow-neg','glow-neu');
+  bc.classList.add(bal>0?'glow-pos':bal<0?'glow-neg':'glow-neu');
+  
+  animateVal(document.getElementById('sInc'), tI, fmt);
   document.getElementById('sIncS').textContent=inc.length+' transaction'+(inc.length!==1?'s':'');
   
-  document.getElementById('sExp').textContent=fmt(tE);
+  animateVal(document.getElementById('sExp'), tE, fmt);
   document.getElementById('sExpS').textContent=exp.length+' transaction'+(exp.length!==1?'s':'');
   
   const eD=new Set(exp.map(t=>t.date)).size;
-  document.getElementById('sAvg').textContent=eD>0?fmtS(tE/eD):'₹0';
+  animateVal(document.getElementById('sAvg'), eD>0?tE/eD:0, fmtS);
 
-  document.getElementById('sDays').textContent=new Set(sTxs.map(t=>t.date)).size;
+  const aDays=new Set(sTxs.map(t=>t.date)).size;
+  animateVal(document.getElementById('sDays'), aDays, v=>Math.round(v).toString());
   
   const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
-  document.getElementById('sOnl').textContent=fmtS(onl.reduce((s,t)=>s+t.amount,0));
+  animateVal(document.getElementById('sOnl'), onl.reduce((s,t)=>s+t.amount,0), fmtS);
   document.getElementById('sOnlS').textContent=onl.length+' transactions';
-  document.getElementById('sOfl').textContent=fmtS(ofl.reduce((s,t)=>s+t.amount,0));
+  animateVal(document.getElementById('sOfl'), ofl.reduce((s,t)=>s+t.amount,0), fmtS);
   document.getElementById('sOflS').textContent=ofl.length+' transactions';
 }
 
@@ -1258,6 +1329,13 @@ function renderTxList(){
   }
   
   el.innerHTML = html;
+
+  // Highlight newly added transaction
+  if (window._highlightTxId) {
+    const hEl = document.getElementById('tx-' + window._highlightTxId);
+    if (hEl) hEl.classList.add('tx-new');
+    window._highlightTxId = null;
+  }
 }
 
 function updECat(type) {
@@ -1691,7 +1769,7 @@ function mkYrBlock(yr,allTxs,todayISO,cY,cM,cD){
   return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}<div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
 }
 
-function mkMnCard(m,yr,yrExp,isCurYr,cM,cD,todayISO,mMax,yrTot,yrTxs){
+function mkMnCard(m,yr,yrExp,isCurYr,cM,cD,todayISO,mMax,yrTot){
   const isCur=isCurYr&&m===cM,isFut=isCurYr&&m>cM;
   const mE=yrExp.filter(t=>new Date(t.date+'T00:00:00').getMonth()===m);
   const tot=mE.reduce((s,t)=>s+t.amount,0),cnt=mE.length;
@@ -2427,6 +2505,30 @@ function loadMoreTx() {
   renderTxList();
 }
 
+// FAB: scroll to New Transaction form & auto-hide when form is visible
+function scrollToForm() {
+  const form = document.querySelector('.fb2');
+  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+(function initFab() {
+  const fab = document.getElementById('fab');
+  if (!fab) return;
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const form = document.querySelector('.fb2');
+      if (form) {
+        const rect = form.getBoundingClientRect();
+        const visible = rect.top < window.innerHeight && rect.bottom > 0;
+        fab.classList.toggle('hide', visible);
+      }
+      ticking = false;
+    });
+  }, { passive: true });
+})();
+
 function setTxSearch(val) {
   cTxSearch = val;
   txVisibleCount = (cDtFilt === 'today' && cTyFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
@@ -2458,6 +2560,7 @@ window.updCustomDt = updCustomDt;
 window.clearCustomDt = clearCustomDt;
 window.loadMoreTx = loadMoreTx;
 window.setTxSearch = setTxSearch;
+window.scrollToForm = scrollToForm;
 window.setEventFilter = setEventFilter;
 window.showCreateEvent = showCreateEvent;
 window.showEditEvent = showEditEvent;

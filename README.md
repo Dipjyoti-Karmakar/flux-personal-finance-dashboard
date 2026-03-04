@@ -9,51 +9,61 @@
 
 ## Overview
 
-Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data persistence, so transactions sync instantly across devices with zero backend code.
+Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data sync across devices — no backend code, no build step, no framework.
 
-The entire application ships as a single `index.html` file — no build step, no framework, no dependencies beyond Firebase and SheetJS.
+The entire application ships as one `index.html` file (~2,575 lines) with embedded styles and ES-module scripts.
 
 ---
 
 ## Features
 
-### Core
+### Core Functionality
 
 | Capability | Details |
 |---|---|
-| **Transaction CRUD** | Add, edit, and delete income/expense records with category, payment mode, date, and description |
-| **Real-time Cloud Sync** | Firestore `onSnapshot` listeners with debounced rendering and loading state indicators |
-| **Excel / CSV Import** | Drag-and-drop or file-picker import with automatic column mapping, row validation, duplicate detection, and batch writes (450-op batches) |
-| **CSV Export** | One-click export of all transaction history |
-| **Special Events** | Create named events (e.g. "Holiday Trip"), assign date ranges, and tag transactions to track event-level spending |
+| **Transaction CRUD** | Add, edit, delete income/expense records — category, payment mode, date, and description |
+| **Real-time Cloud Sync** | Firestore `onSnapshot` listeners with debounced rendering (120 ms) and tri-state sync indicator |
+| **Excel / CSV Import** | File-picker import with auto column-mapping, row validation, duplicate detection, and 450-op batch writes |
+| **CSV Export** | One-click export of complete transaction history |
+| **Special Events** | Named events with date ranges and colour tags — link transactions to track event-level spending |
 
 ### Analytics Dashboard
 
 | Section | What it shows |
 |---|---|
-| **Summary Cards** | Net balance, total income, total expenses, average spend per day, active days, online vs. offline spend |
-| **Stats Modes** | Toggle between This Month / This Year / All Time across all summary cards |
-| **Expense Trend** | Canvas-rendered line chart with gradient fill, grid lines, crosshair hover, and edge-clamped tooltips |
-| **Category Breakdown** | Proportional bar and tag-based detail view by expense category |
-| **Online vs. Offline Split** | Percentage bar and comparison cards |
-| **Yearly Overview** | Collapsible year blocks with month cards, sparkline bars, today callout, progress indicators, and lazy-loaded transaction lists |
+| **Summary Cards** | Net balance, total income/expenses, avg spend per day, active days, online vs. offline spend |
+| **Stats Modes** | Toggle This Month / This Year / All Time across every summary widget |
+| **Expense Trend** | Canvas line chart — gradient fill, grid lines, crosshair hover, edge-clamped tooltips, theme-aware colours |
+| **Category Breakdown** | Proportional bar + tag-card detail view by expense category |
+| **Online vs. Offline Split** | Percentage bar and side-by-side comparison cards with avg/day |
+| **Yearly Overview** | Collapsible year blocks → month cards with sparkline bars, today callout, progress %, and lazy-loaded TX lists |
+
+### UI Polish & Micro-interactions
+
+| Enhancement | Details |
+|---|---|
+| **Animated Number Counters** | All stat values count up smoothly with ease-out cubic animation on each render |
+| **Balance Health Glow** | Net Balance card pulses green / red / amber based on financial health |
+| **Add TX Flash** | Submit button shows "✓ Added" with a green flash; new transaction highlights with a gold inset glow |
+| **Mobile FAB** | Floating "＋" button on ≤ 520 px screens — auto-hides when the form is in viewport |
 
 ### UX & Accessibility
 
-- **Dark / Light theme** — persisted in `localStorage`, instantly toggles all CSS custom properties
+- **Dark / Light theme** — persisted in `localStorage`, toggles all CSS custom properties instantly
 - **Responsive layout** — CSS Grid with breakpoints at 960 px, 768 px, and 520 px; bottom-sheet modals on mobile
 - **Transaction search** — real-time text filter across descriptions
 - **Advanced filters** — date range (today / month / all / custom), type (income / expense / online / offline), and event-based filtering with totals bar
-- **Keyboard support** — Escape closes modals in z-order priority; Tab/Shift+Tab focus-traps inside active modals
+- **Keyboard navigation** — Escape closes modals in z-order priority; Tab / Shift+Tab focus-traps inside active modals
 - **ARIA labels** — all icon-only buttons carry descriptive `aria-label` attributes
 - **Pagination** — lazy "Load More" with configurable page sizes per filter context
 
 ### Robustness
 
-- **Input validation** — descriptions, amounts (must be > 0), and dates are validated before writes; invalid fields shake with visual feedback
-- **Granular error handling** — Firebase errors (`resource-exhausted`, `unavailable`, `permission-denied`) surface specific user-facing messages with row counts during import
-- **Debounced render** — coalesces rapid Firestore snapshot fires (e.g. during batch imports) with a 120 ms timer
-- **Events fallback** — if Firestore rules block a dedicated `events` collection, the app automatically falls back to storing events inside the `transactions` collection
+- **Input validation** — descriptions, amounts (> 0), and dates validated before writes; invalid fields shake with visual feedback
+- **Granular error handling** — Firebase errors (`resource-exhausted`, `unavailable`, `permission-denied`) surface specific user-facing messages with row counts
+- **Debounced render** — coalesces rapid Firestore snapshot fires (e.g. batch imports) into a single 120 ms render cycle
+- **Events fallback** — if Firestore rules block a dedicated `events` collection, the app automatically falls back to the `transactions` collection
+- **AbortController cleanup** — chart event listeners are properly aborted and re-attached on every re-render to prevent stale handlers
 
 ---
 
@@ -61,12 +71,13 @@ The entire application ships as a single `index.html` file — no build step, no
 
 | Layer | Technology |
 |---|---|
-| **Markup & Styling** | HTML5, CSS3 (custom properties, Grid, media queries, `color-mix()`) |
-| **Logic** | Vanilla JavaScript (ES modules) |
-| **Authentication** | Firebase Auth v11 — Google sign-in |
-| **Database** | Cloud Firestore — real-time listeners, batch writes |
-| **Charting** | Canvas 2D API (custom-drawn, no chart library) |
-| **Import Engine** | SheetJS (xlsx) v0.18 — loaded via CDN |
+| **Markup & Styling** | HTML5, CSS3 — custom properties, Grid, `color-mix()`, media queries, keyframe animations |
+| **Logic** | Vanilla JavaScript (ES modules, `requestAnimationFrame`, `IntersectionObserver`-style scroll) |
+| **Authentication** | Firebase Auth v11.6 — Google sign-in via popup |
+| **Database** | Cloud Firestore — real-time `onSnapshot` listeners, `writeBatch` for bulk ops |
+| **Charting** | Canvas 2D API — fully custom-drawn trend chart (no library) |
+| **Import Engine** | SheetJS (xlsx) v0.18.5 — loaded via CDN |
+| **Fonts** | Google Fonts — Playfair Display, DM Mono, DM Sans |
 
 ---
 
@@ -75,24 +86,24 @@ The entire application ships as a single `index.html` file — no build step, no
 ```
 users/
   {uid}/
-    transactions/        # one document per transaction
+    transactions/             # one doc per transaction
       {txId}
-        ├── type         string   "income" | "expense"
-        ├── mode         string   "online" | "offline"
-        ├── desc         string   description (max 50 chars)
-        ├── category     string   food | transport | salary | …
-        ├── amount       number   > 0
-        ├── date         string   "YYYY-MM-DD"
-        ├── eventId      string   (optional) linked event ID
-        └── _imp         boolean  (optional) imported via file
+        ├── type       string   "income" | "expense"
+        ├── mode       string   "online" | "offline"
+        ├── desc       string   description (max 50 chars)
+        ├── cat        string   food | transport | salary | …
+        ├── amount     number   > 0
+        ├── date       string   "YYYY-MM-DD"
+        ├── eventId    string   (optional) linked event ID
+        └── _imp       boolean  (optional) true if imported via file
 
-    events/              # one document per special event
+    events/                   # one doc per special event
       {eventId}
-        ├── name         string   event name
-        ├── start        string   "YYYY-MM-DD"
-        ├── end          string   "YYYY-MM-DD"
-        ├── color        string   hex colour
-        └── createdAt    number   epoch ms
+        ├── name       string   event name (max 60 chars)
+        ├── start      string   "YYYY-MM-DD"
+        ├── end        string   "YYYY-MM-DD"
+        ├── color      string   hex colour code
+        └── createdAt  number   epoch ms
 ```
 
 ---
@@ -118,15 +129,15 @@ python -m http.server 8000
 npx serve .
 ```
 
-Then visit `http://localhost:8000`.
+Visit `http://localhost:8000`.
 
 ### 3. Firebase Configuration (optional)
 
 The app ships with a default Firebase project. To use your own:
 
-1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+1. Create a project at [console.firebase.google.com](https://console.firebase.google.com)
 2. Enable **Google Authentication** and **Cloud Firestore**
-3. Replace the `firebaseConfig` object inside `index.html` with your project credentials
+3. Replace the `firebaseConfig` object inside `index.html` with your project's credentials
 
 ---
 
@@ -134,26 +145,27 @@ The app ships with a default Firebase project. To use your own:
 
 ```
 flux-webapp/
-├── index.html          # Entire application (HTML + CSS + JS)
-└── README.md           # This file
+├── index.html    # Entire application — HTML + CSS + JS (single-file architecture)
+└── README.md     # This file
 ```
 
-Single-file architecture — all styles and scripts are embedded. No build tools, no `node_modules`, no transpilation.
+No build tools, no `node_modules`, no transpilation. All styles and scripts are embedded.
 
 ---
 
 ## Browser Support
 
-Tested on the latest versions of Chrome, Edge, Firefox, and Safari. Requires ES module support (`<script type="module">`).
+Tested on the latest versions of **Chrome**, **Edge**, **Firefox**, and **Safari**.  
+Requires ES module support (`<script type="module">`).
 
 ---
 
 ## Author
 
-**Dipjyoti Karmakar**
-- Data Analyst · Frontend Developer · Business Intelligence
-- [LinkedIn](https://www.linkedin.com/in/dipjyoti-karmakar-91050a37a)
+**Dipjyoti Karmakar**  
+Data Analyst · Frontend Developer · Business Intelligence  
+[LinkedIn](https://www.linkedin.com/in/dipjyoti-karmakar-91050a37a)
 
 ---
 
-<sub>Built as a portfolio project demonstrating vanilla JavaScript application development, Firebase cloud integration, Canvas-based data visualization, and responsive UI engineering.</sub>
+<sub>Built as a portfolio project demonstrating vanilla JavaScript application development, Firebase cloud integration, Canvas-based data visualization, micro-interaction design, and responsive UI engineering.</sub>
