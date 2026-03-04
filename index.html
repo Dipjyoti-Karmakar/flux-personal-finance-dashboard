@@ -586,6 +586,9 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         </div>
       </div>
     </div>
+    <div style="padding:8px 16px;border-bottom:1px solid var(--bd);">
+      <input type="text" id="txSearch" placeholder="Search transactions…" oninput="setTxSearch(this.value)" style="padding:8px 12px;font-size:12px;width:100%;border-radius:20px;background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;" aria-label="Search transactions by description">
+    </div>
     <div class="txl" id="txList"><div class="txa"><div style="font-size:26px;margin-bottom:8px;opacity:.4">◈</div>No transactions yet</div></div>
   </div>
 
@@ -749,6 +752,7 @@ let statsMode='month';
 let cDtFilt = 'today'; 
 let cTyFilt = 'all';
 let cEventFilt = 'all';
+let cTxSearch = '';
 
 let rawImportRows = [];
 let importHeaders = [];
@@ -863,13 +867,23 @@ onAuthStateChanged(auth, (user) => {
 
 function loadDataFromCloud() {
   if (!userId) return;
+  // Show loading spinner while initial sync is in progress
+  const dot = document.getElementById('cloudDot');
+  dot.className = 'sync-dot';
+  dot.style.background = 'var(--ac)';
+  dot.style.boxShadow = '0 0 8px var(--ac)';
+  dot.style.animation = 'syncPulse 1s ease-in-out infinite';
+  const text = document.getElementById('cloudText');
+  text.textContent = 'Syncing…';
+  text.style.color = 'var(--ac)';
+
   const colRef = collection(db, 'users', userId, 'transactions');
   
   unsubscribeFirestore = onSnapshot(colRef, (snapshot) => {
     const loadedTxs = [];
     snapshot.forEach(doc => {
       const data = doc.data();
-      if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount >= 0) {
+      if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount > 0) {
         loadedTxs.push({ id: doc.id, ...data });
       }
     });
@@ -877,15 +891,17 @@ function loadDataFromCloud() {
     
     const dot = document.getElementById('cloudDot');
     dot.className = 'sync-dot online';
+    dot.style.background = ''; dot.style.boxShadow = ''; dot.style.animation = '';
     const text = document.getElementById('cloudText');
     text.textContent = 'Sync: Completed';
     text.style.color = 'var(--tx)';
     
-    render();
+    debouncedRender();
   }, (err) => {
     console.error("Cloud sync error:", err);
     const dot = document.getElementById('cloudDot');
     dot.className = 'sync-dot offline';
+    dot.style.background = ''; dot.style.boxShadow = ''; dot.style.animation = '';
     const text = document.getElementById('cloudText');
     text.textContent = 'Sync: Offline';
     text.style.color = 'var(--ex)';
@@ -1070,6 +1086,13 @@ function render(){
   renderEvents();
 }
 
+// Debounced render — coalesces rapid Firestore snapshot fires (e.g. during batch imports)
+let _renderTimer = null;
+function debouncedRender() {
+  if (_renderTimer) clearTimeout(_renderTimer);
+  _renderTimer = setTimeout(() => { _renderTimer = null; render(); }, 120);
+}
+
 function renderStats(){
   const sTxs = getActiveTxs();
 
@@ -1139,6 +1162,12 @@ function renderTxList(){
     else if(cTyFilt === 'offline') list = list.filter(t => t.mode !== 'online');
   }
 
+  // Apply text search filter
+  if (cTxSearch) {
+    const q = cTxSearch.toLowerCase();
+    list = list.filter(t => t.desc.toLowerCase().includes(q));
+  }
+
   document.getElementById('txCnt').textContent = list.length;
 
   // Compute totals for special event / custom range / all-dates filters
@@ -1182,10 +1211,10 @@ function renderTxList(){
       </div>
       <span class="ta ${tx.type}">${tx.type==='income'?'+':'−'}${fmt(tx.amount)}</span>
       <div style="display:flex;gap:4px;margin-left:8px">
-        <button class="td" onclick="editTx('${esc(tx.id)}')" title="Edit">
+        <button class="td" onclick="editTx('${esc(tx.id)}')" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
-        <button class="td" onclick="askDelTx('${esc(tx.id)}')" title="Delete">
+        <button class="td" onclick="askDelTx('${esc(tx.id)}')" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
       </div>
@@ -1291,6 +1320,35 @@ async function saveEditTx() {
 }
 
 document.getElementById('editMod').addEventListener('click', function(e) { if(e.target === this) closeEditMod(); });
+
+// Global Escape key handler for all modals
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('confirmMod').classList.contains('op')) { closeConfirm(); return; }
+  if (document.getElementById('eventMod').classList.contains('op')) { closeEventMod(); return; }
+  if (document.getElementById('editMod').classList.contains('op')) { closeEditMod(); return; }
+  if (document.getElementById('impMod').classList.contains('op')) { closeMod(); return; }
+});
+
+// Focus trap for open modals — keeps Tab/Shift+Tab inside the active modal
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab') return;
+  const modals = ['confirmMod', 'eventMod', 'editMod', 'impMod'];
+  let activeModal = null;
+  for (const id of modals) {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('op')) { activeModal = el; break; }
+  }
+  if (!activeModal) return;
+  const focusable = activeModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if (e.shiftKey) {
+    if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+  } else {
+    if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
 
 function renderTrend() {
   if (trendAbort) trendAbort.abort();
@@ -1550,11 +1608,18 @@ function renderTrend() {
           drawBase(closestIdx);
 
           tip.innerHTML = `<div>${closest.label}</div><div class="val">${fmt(closest.val)}</div>`;
-          const displayX = currentRect.left + closest.x;
-          const displayY = currentRect.top + closest.y - 10;
+          // Edge-clamped tooltip positioning
+          let displayX = currentRect.left + closest.x;
+          let displayY = currentRect.top + closest.y - 10;
+          tip.style.left = '0px'; tip.style.top = '0px'; tip.classList.add('sh');
+          const tipRect = tip.getBoundingClientRect();
+          const tipW = tipRect.width, tipH = tipRect.height;
+          // Horizontal clamp: keep within viewport
+          displayX = Math.max(tipW / 2 + 8, Math.min(displayX, window.innerWidth - tipW / 2 - 8));
+          // Vertical: if too close to top, flip below the point
+          if (displayY - tipH < 8) displayY = currentRect.top + closest.y + tipH + 14;
           tip.style.left = displayX + 'px';
           tip.style.top = displayY + 'px';
-          tip.classList.add('sh');
       };
 
       const handleLeave = () => {
@@ -1622,7 +1687,7 @@ function mkYrBlock(yr,allTxs,todayISO,cY,cM,cD){
   const mT=Array.from({length:12},(_,m)=>yrExp.filter(t=>new Date(t.date+'T00:00:00').getMonth()===m).reduce((s,t)=>s+t.amount,0));
   const mMax=Math.max(...mT,1),lastM=isCur?cM:11;
   const sparks=mT.slice(0,lastM+1).map((v,m)=>{const h=Math.max(3,Math.round((v/mMax)*28));return `<div class="spk${isCur&&m===cM?' cm':''}" style="height:${h}px" data-tip="${MN[m]}: ${fmtS(v)}"></div>`;}).join('');
-  const mnHTML=Array.from({length:12},(_,m)=>mkMnCard(m,yr,yrExp,isCur,cM,cD,todayISO,mMax,yrTot,yrTxs)).join('');
+  const mnHTML=Array.from({length:12},(_,m)=>mkMnCard(m,yr,yrExp,isCur,cM,cD,todayISO,mMax,yrTot)).join('');
   return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}<div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
 }
 
@@ -1641,28 +1706,10 @@ function mkMnCard(m,yr,yrExp,isCurYr,cM,cD,todayISO,mMax,yrTot,yrTxs){
   
   if(isCur){const tdS=mE.filter(t=>t.date===todayISO).reduce((s,t)=>s+t.amount,0),tdC=mE.filter(t=>t.date===todayISO).length;tdHTML=`<div class="tdc"><span class="tdcl">Today, ${cD} ${MN[m]}</span><span class="tdcv">${fmt(tdS)} <span style="font-size:10px;opacity:.7">${tdC} tx</span></span></div>`;}
   
-  const mTxs = yrTxs.filter(t => new Date(t.date+'T00:00:00').getMonth() === m).sort((a,b) => new Date(b.date) - new Date(a.date));
-  let txListHTML = '';
-  
-  if(mTxs.length > 0) {
-    const isCapped = mTxs.length > 50;
-    const renderTxs = isCapped ? mTxs.slice(0, 50) : mTxs;
-    
-    txListHTML = `<div class="tx-cnt" onclick="event.stopPropagation();">` +
-      renderTxs.map(t => `
-        <div class="mtx-item">
-          <div class="mtx-dt">${fmtDt(t.date)}</div>
-          <div class="mtx-desc" title="${esc(t.desc)}">${esc(t.desc)}</div>
-          <div class="mtx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${t.type === 'income' ? '+' : '−'}${fmt(t.amount)}</div>
-        </div>
-      `).join('') +
-      (isCapped ? `<div style="text-align:center;color:var(--mu);font-size:10px;padding:8px 0;font-family:'DM Mono',monospace;">+ ${mTxs.length - 50} more items</div>` : '') +
-      `</div>`;
-  } else {
-    txListHTML = `<div class="tx-cnt" onclick="event.stopPropagation();"><div style="text-align:center;color:var(--di);font-size:10px;padding:12px 0;font-family:'DM Mono',monospace;">No transactions for this month</div></div>`;
-  }
+  // Count all txs for this month (not just expenses) for the hint line
+  const mTxCount = txs.filter(t => { const d = new Date(t.date+'T00:00:00'); return d.getFullYear() === yr && d.getMonth() === m; }).length;
 
-  return `<div class="mc${isCur?' cm2':isFut?' ft':''}" onclick="if(!${isFut}) this.classList.toggle('op-tx')">
+  return `<div class="mc${isCur?' cm2':isFut?' ft':''}" onclick="if(!${isFut}) lazyLoadMonthTxs(this, ${yr}, ${m})">
     <div class="mct"><span class="mcn">${MF[m]} ${isCur ? '<span class="now-badge">● NOW</span>' : ''}</span><span class="mcv">${tot>0?fmt(tot):'—'}</span></div>
     <div class="mcs">
       <div class="ms"><span class="msl">Transactions</span><span class="msv${cnt>0?' h':''}">${cnt}</span></div>
@@ -1677,12 +1724,34 @@ function mkMnCard(m,yr,yrExp,isCurYr,cM,cD,todayISO,mMax,yrTot,yrTxs){
     ${tdHTML}
     <div class="mbw"><div class="mbb${isCur?' tp':''}" style="width:${bp}%"></div></div>
     ${isCur?`<div class="mpr">${prog}% of month elapsed</div>`:''}
-    ${!isFut ? `<div class="mc-hint">▼ View ${mTxs.length} Txs</div>` : ''}
-    ${txListHTML}
+    ${!isFut ? `<div class="mc-hint">▼ View ${mTxCount} Txs</div>` : ''}
   </div>`;
 }
 
 function togYr(id){document.getElementById(id).classList.toggle('op');}
+
+// Lazy-load month card transaction list on first click
+function lazyLoadMonthTxs(el, yr, m) {
+  el.classList.toggle('op-tx');
+  if (!el.classList.contains('op-tx')) return;
+  if (el.querySelector('.tx-cnt')) return;
+  const mTxs = txs.filter(t => {
+    const d = new Date(t.date+'T00:00:00');
+    return d.getFullYear() === yr && d.getMonth() === m;
+  }).sort((a,b) => new Date(b.date) - new Date(a.date));
+  let html;
+  if (mTxs.length > 0) {
+    const isCapped = mTxs.length > 50;
+    const renderTxs = isCapped ? mTxs.slice(0, 50) : mTxs;
+    html = `<div class="tx-cnt" onclick="event.stopPropagation();">` +
+      renderTxs.map(t => `<div class="mtx-item"><div class="mtx-dt">${fmtDt(t.date)}</div><div class="mtx-desc" title="${esc(t.desc)}">${esc(t.desc)}</div><div class="mtx-amt ${t.type==='income'?'inc':'exp'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div></div>`).join('') +
+      (isCapped ? `<div style="text-align:center;color:var(--mu);font-size:10px;padding:8px 0;font-family:'DM Mono',monospace;">+ ${mTxs.length - 50} more items</div>` : '') +
+      `</div>`;
+  } else {
+    html = `<div class="tx-cnt" onclick="event.stopPropagation();"><div style="text-align:center;color:var(--di);font-size:10px;padding:12px 0;font-family:'DM Mono',monospace;">No transactions for this month</div></div>`;
+  }
+  el.insertAdjacentHTML('beforeend', html);
+}
 
 const ALI={date:['date','transaction date','txn date','trans date','dt','value date'],desc:['description','desc','particulars','narration','details','merchant','note','notes','remarks','item'],amount:['amount','value','sum','total','amt','transaction amount','price'],income:['credit','deposit','income','cr','in','credits','deposits'],expense:['debit','withdrawal','expense','dr','out','debits','withdrawals'],type:['type','transaction type','txn type','direction','dr/cr','dr cr'],mode:['mode','payment mode','payment method','channel','medium','online/offline','pay mode','upi/cash'],cat:['category','cat','tag']};
 function nH(h){return String(h).toLowerCase().trim().replace(/[\s_\-\/]+/g,' ');}
@@ -2069,7 +2138,18 @@ async function executeImport(mode) {
       }
   } catch (error) {
       console.error("Import error", error);
-      showToast('Error syncing imports to cloud. Check Firestore rules.', 'er');
+      const code = error?.code || '';
+      let msg;
+      if (code === 'resource-exhausted') {
+        msg = `Quota exceeded after ${addedCount} rows. Wait or upgrade Firestore plan.`;
+      } else if (code === 'unavailable' || code === 'deadline-exceeded') {
+        msg = `Network issue after ${addedCount} rows. Check connection and retry.`;
+      } else if (code === 'permission-denied') {
+        msg = 'Permission denied. Check Firestore security rules.';
+      } else {
+        msg = `Import failed after ${addedCount} rows: ${code || error?.message || 'Unknown error'}`;
+      }
+      showToast(msg, 'er');
       btn.disabled = false;
       btn.textContent = "Import Valid Rows";
   }
@@ -2158,13 +2238,13 @@ function renderEvents() {
         <div style="font-size:13px;font-weight:600;margin-bottom:2px;">${esc(e.name)}</div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${e.start || '?'} \u2192 ${e.end || '?'}</div>
       </div>
-      <button class="td" onclick="showEditEvent('${e.id}')" title="Edit" style="opacity:1;transform:none;">
+      <button class="td" onclick="showEditEvent('${e.id}')" title="Edit" aria-label="Edit event: ${esc(e.name)}" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
-      <button class="td" onclick="applyEventToTxs('${e.id}')" title="Apply to transactions" style="opacity:1;transform:none;">
+      <button class="td" onclick="applyEventToTxs('${e.id}')" title="Apply to transactions" aria-label="Apply event ${esc(e.name)} to transactions" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
-      <button class="td" onclick="askDeleteEvent('${e.id}')" title="Delete" style="opacity:1;transform:none;">
+      <button class="td" onclick="askDeleteEvent('${e.id}')" title="Delete" aria-label="Delete event: ${esc(e.name)}" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -2347,6 +2427,12 @@ function loadMoreTx() {
   renderTxList();
 }
 
+function setTxSearch(val) {
+  cTxSearch = val;
+  txVisibleCount = (cDtFilt === 'today' && cTyFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
+  renderTxList();
+}
+
 window.addTx = addTx;
 window.askDelTx = askDelTx; // FIXED: Renamed from delTx to askDelTx so the inline HTML button handler finds it correctly
 window.editTx = editTx;
@@ -2365,11 +2451,13 @@ window.updECat = updECat;
 window.updateMapping = updateMapping;
 window.setImpFilt = setImpFilt;
 window.togYr = togYr;
+window.lazyLoadMonthTxs = lazyLoadMonthTxs;
 window.toggleAuth = toggleAuth;
 window.closeConfirm = closeConfirm;
 window.updCustomDt = updCustomDt;
 window.clearCustomDt = clearCustomDt;
 window.loadMoreTx = loadMoreTx;
+window.setTxSearch = setTxSearch;
 window.setEventFilter = setEventFilter;
 window.showCreateEvent = showCreateEvent;
 window.showEditEvent = showEditEvent;
