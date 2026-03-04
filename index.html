@@ -694,6 +694,7 @@ let confirmActionCallback = null;
 let userId = null;
 let unsubscribeFirestore = null;
 let unsubscribeEvents = null;
+let eventsUseFallback = false;
 let trendAbort = null;
 
 const firebaseConfig = {
@@ -1898,15 +1899,50 @@ document.getElementById('impMod').addEventListener('click',function(e){if(e.targ
 function loadEvents() {
   if (!userId) return;
   if (unsubscribeEvents) unsubscribeEvents();
+  eventsUseFallback = false;
   const evtRef = collection(db, 'users', userId, 'events');
   unsubscribeEvents = onSnapshot(evtRef, (snap) => {
     events = {};
-    snap.forEach(d => { events[d.id] = { id: d.id, ...d.data() }; });
+    snap.forEach(d => { events[d.id] = { id: d.id, _src: 'events', ...d.data() }; });
     populateEventSelects();
     renderEvents();
   }, (err) => {
     console.error('Events sync error:', err);
+    if (err?.code === 'permission-denied') {
+      eventsUseFallback = true;
+      const fallbackQ = query(collection(db, 'users', userId, 'transactions'), where('_metaType', '==', 'event'));
+      unsubscribeEvents = onSnapshot(fallbackQ, (snap2) => {
+        events = {};
+        snap2.forEach(d => {
+          const data = d.data();
+          events[d.id] = {
+            id: d.id,
+            _src: 'transactions',
+            name: data.name,
+            start: data.start,
+            end: data.end,
+            color: data.color,
+            createdAt: data.createdAt
+          };
+        });
+        populateEventSelects();
+        renderEvents();
+      }, (fallbackErr) => {
+        console.error('Events fallback sync error:', fallbackErr);
+        showToast('Events blocked by Firestore rules', 'er');
+      });
+      showToast('Events running in compatibility mode', 'ok');
+    }
   });
+}
+
+function getEventDocRef(eventId, src) {
+  if (!userId) return null;
+  const source = src || (eventsUseFallback ? 'transactions' : 'events');
+  if (source === 'transactions') {
+    return doc(db, 'users', userId, 'transactions', eventId);
+  }
+  return doc(db, 'users', userId, 'events', eventId);
 }
 
 function populateEventSelects() {
@@ -1981,12 +2017,26 @@ async function createEvent(evt) {
   };
   const evtId = uid();
   try {
-    await setDoc(doc(db, 'users', userId, 'events', evtId), cleanEvent);
+    const payload = eventsUseFallback ? { ...cleanEvent, _metaType: 'event' } : cleanEvent;
+    await setDoc(getEventDocRef(evtId), payload);
     showToast('Event created', 'ok');
     const apply = confirm(`Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`);
     if (apply) await assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end);
   } catch(e) {
     console.error('Error creating event', e);
+    if (e?.code === 'permission-denied' && !eventsUseFallback) {
+      try {
+        eventsUseFallback = true;
+        await setDoc(getEventDocRef(evtId, 'transactions'), { ...cleanEvent, _metaType: 'event' });
+        loadEvents();
+        showToast('Event created (compat mode)', 'ok');
+        const apply = confirm(`Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`);
+        if (apply) await assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end);
+        return;
+      } catch (fallbackCreateErr) {
+        console.error('Fallback create failed', fallbackCreateErr);
+      }
+    }
     const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
     showToast(`Error creating event: ${errMsg}`, 'er');
   }
@@ -2008,11 +2058,14 @@ function showEditEvent(evtId) {
 async function editEvent(evtId, data) {
   if (!userId) return;
   try {
-    await setDoc(doc(db, 'users', userId, 'events', evtId), data, { merge: true });
+    const src = events[evtId]?._src;
+    const payload = (src === 'transactions' || eventsUseFallback) ? { ...data, _metaType: 'event' } : data;
+    await setDoc(getEventDocRef(evtId, src), payload, { merge: true });
     showToast('Event updated', 'ok');
   } catch(e) {
     console.error('Error updating event', e);
-    showToast('Error updating event', 'er');
+    const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
+    showToast(`Error updating event: ${errMsg}`, 'er');
   }
 }
 
@@ -2026,11 +2079,12 @@ async function deleteEvent(evtId) {
   if (!userId) return;
   try {
     await removeEventFromTransactions(evtId);
-    await deleteDoc(doc(db, 'users', userId, 'events', evtId));
+    await deleteDoc(getEventDocRef(evtId, events[evtId]?._src));
     showToast('Event deleted', 'ok');
   } catch(e) {
     console.error('Error deleting event', e);
-    showToast('Error deleting event', 'er');
+    const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
+    showToast(`Error deleting event: ${errMsg}`, 'er');
   }
 }
 
