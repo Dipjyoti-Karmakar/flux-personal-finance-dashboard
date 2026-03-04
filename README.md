@@ -21,7 +21,7 @@ The entire application ships as one `index.html` file (~3,100 lines) with embedd
 
 | Capability | Details |
 |---|---|
-| **Transaction CRUD** | Add, edit, delete income/expense records — category, payment mode, date, and description |
+| **Transaction CRUD** | Add, edit, delete income/expense records with 5-second undo on delete - category, payment mode, date, and description |
 | **Real-time Cloud Sync** | Firestore `onSnapshot` listeners with debounced rendering (120 ms) and tri-state sync indicator |
 | **Excel / CSV Import** | File-picker import with auto column-mapping, row validation, duplicate detection, and 450-op batch writes |
 | **CSV Export** | One-click export of complete transaction history |
@@ -32,8 +32,8 @@ The entire application ships as one `index.html` file (~3,100 lines) with embedd
 | Section | What it shows |
 |---|---|
 | **Summary Cards** | Net balance, total income/expenses, avg spend per day, active days, online vs. offline spend |
-| **Stats Modes** | Toggle This Month / This Year / All Time across every summary widget |
-| **Expense Trend** | Canvas line chart — gradient fill, grid lines, crosshair hover, edge-clamped tooltips, theme-aware colours |
+| **Stats Modes** | Toggle This Month / This Year / All Time / Custom Date Range across every summary widget |
+| **Expense Trend** | Canvas line chart with Expense / Income / Both toggle, gradient fill, grid lines, crosshair hover, edge-clamped tooltips, theme-aware colours, and screen-reader aria-label summary |
 | **Category Breakdown** | Proportional bar + tag-card detail view by expense category |
 | **Online vs. Offline Split** | Percentage bar and side-by-side comparison cards with avg/day |
 | **Yearly Overview** | Collapsible year blocks → month cards with sparkline bars, today callout, progress %, and lazy-loaded TX lists |
@@ -64,7 +64,7 @@ The entire application ships as one `index.html` file (~3,100 lines) with embedd
 - **Transaction search** — real-time text filter across descriptions
 - **Advanced filters** — date range (today / month / all / custom), type (income / expense / online / offline), and event-based filtering with totals bar
 - **Keyboard navigation** — Escape closes modals in z-order priority; Tab / Shift+Tab focus-traps inside active modals
-- **ARIA labels** — all icon-only buttons carry descriptive `aria-label` attributes
+- **ARIA labels** — all icon-only buttons carry descriptive `aria-label` attributes; trend chart canvas has a dynamic screen-reader summary of trend direction and totals
 - **Pagination** — lazy "Load More" with configurable page sizes per filter context
 
 ### Robustness
