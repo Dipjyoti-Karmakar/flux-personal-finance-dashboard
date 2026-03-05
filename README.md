@@ -9,7 +9,7 @@
 
 ## Overview
 
-Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data sync across devices — no backend code, no build step, no framework.
+Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data sync across devices - no backend code, no build step, no framework.
 
 The entire application ships as one `index.html` file (~3,100 lines) with embedded styles and ES-module scripts. It is installable as a **Progressive Web App** and works offline.
 
@@ -25,7 +25,7 @@ The entire application ships as one `index.html` file (~3,100 lines) with embedd
 | **Real-time Cloud Sync** | Firestore `onSnapshot` listeners with debounced rendering (120 ms) and tri-state sync indicator |
 | **Excel / CSV Import** | File-picker import with auto column-mapping, row validation, duplicate detection, and 450-op batch writes |
 | **CSV Export** | One-click export of complete transaction history |
-| **Special Events** | Named events with date ranges and colour tags — link transactions to track event-level spending |
+| **Special Events** | Named events with date ranges and colour tags - link transactions to track event-level spending |
 
 ### Analytics Dashboard
 
@@ -37,7 +37,7 @@ The entire application ships as one `index.html` file (~3,100 lines) with embedd
 | **Category Breakdown** | Proportional bar + tag-card detail view by expense category |
 | **Online vs. Offline Split** | Percentage bar and side-by-side comparison cards with avg/day |
 | **Yearly Overview** | Collapsible year blocks → month cards with sparkline bars, today callout, progress %, and lazy-loaded TX lists |
-| **Monthly Insights** | Auto-generated text comparing current vs previous month — savings diff, spending % change, top category, per-category swings, exceeded-category count |
+| **Monthly Insights** | Auto-generated text comparing current vs previous month - savings diff, spending % change, top category, per-category swings, exceeded-category count |
 
 ### UI Polish & Micro-interactions
 
@@ -60,26 +60,26 @@ The entire application ships as one `index.html` file (~3,100 lines) with embedd
 ### UX & Accessibility
 
 - **Dark / Light theme** - persisted in `localStorage`, toggles all CSS custom properties with a circular wipe animation expanding from the toggle button
-- **Responsive layout** — CSS Grid with breakpoints at 960 px, 768 px, and 520 px; bottom-sheet modals on mobile
-- **Transaction search** — real-time text filter across descriptions
-- **Advanced filters** — date range (today / month / all / custom), type (income / expense / online / offline), and event-based filtering with totals bar
-- **Keyboard navigation** — Escape closes modals in z-order priority; Tab / Shift+Tab focus-traps inside active modals
-- **ARIA labels** — all icon-only buttons carry descriptive `aria-label` attributes; trend chart canvas has a dynamic screen-reader summary of trend direction and totals
-- **Pagination** — lazy "Load More" with configurable page sizes per filter context
+- **Responsive layout** - CSS Grid with breakpoints at 960 px, 768 px, and 520 px; bottom-sheet modals on mobile
+- **Transaction search** - real-time text filter across descriptions
+- **Advanced filters** - date range (today / month / all / custom), type (income / expense / online / offline), and event-based filtering with totals bar
+- **Keyboard navigation** - Escape closes modals in z-order priority; Tab / Shift+Tab focus-traps inside active modals
+- **ARIA labels** - all icon-only buttons carry descriptive `aria-label` attributes; trend chart canvas has a dynamic screen-reader summary of trend direction and totals
+- **Pagination** - lazy "Load More" with configurable page sizes per filter context
 
 ### Robustness
 
-- **Input validation** — descriptions, amounts (> 0), and dates validated before writes; invalid fields shake with visual feedback
-- **Granular error handling** — Firebase errors (`resource-exhausted`, `unavailable`, `permission-denied`) surface specific user-facing messages with row counts
-- **Debounced render** — coalesces rapid Firestore snapshot fires (e.g. batch imports) into a single 120 ms render cycle
-- **Events fallback** — if Firestore rules block a dedicated `events` collection, the app automatically falls back to the `transactions` collection
-- **AbortController cleanup** — chart event listeners are properly aborted and re-attached on every re-render to prevent stale handlers
+- **Input validation** - descriptions, amounts (> 0), and dates validated before writes; invalid fields shake with visual feedback
+- **Granular error handling** - Firebase errors (`resource-exhausted`, `unavailable`, `permission-denied`) surface specific user-facing messages with row counts
+- **Debounced render** - coalesces rapid Firestore snapshot fires (e.g. batch imports) into a single 120 ms render cycle
+- **Events fallback** - if Firestore rules block a dedicated `events` collection, the app automatically falls back to the `transactions` collection
+- **AbortController cleanup** - chart event listeners are properly aborted and re-attached on every re-render to prevent stale handlers
 
 ### Progressive Web App (PWA)
 
 | Feature | Details |
 |---|---|
-| **Installable** | `manifest.json` with app name, theme colour, standalone display — "Add to Home Screen" from browser |
+| **Installable** | `manifest.json` with app name, theme colour, standalone display - "Add to Home Screen" from browser |
 | **Service Worker** | `sw.js` caches HTML + CDN assets; network-first for navigation, cache-first for static resources |
 | **Firestore Offline Persistence** | `enableIndexedDbPersistence` stores data in IndexedDB; reads/writes work offline and sync when back online |
 | **Install Prompt** | In-app banner with `beforeinstallprompt` handling; auto-dismisses after install |
@@ -90,14 +90,14 @@ The entire application ships as one `index.html` file (~3,100 lines) with embedd
 
 | Layer | Technology |
 |---|---|
-| **Markup & Styling** | HTML5, CSS3 — custom properties, Grid, `color-mix()`, media queries, keyframe animations |
+| **Markup & Styling** | HTML5, CSS3 - custom properties, Grid, `color-mix()`, media queries, keyframe animations |
 | **Logic** | Vanilla JavaScript (ES modules, `requestAnimationFrame`, `IntersectionObserver`-style scroll) |
-| **Authentication** | Firebase Auth v11.6 — Google sign-in via popup |
-| **Database** | Cloud Firestore — real-time `onSnapshot` listeners, `writeBatch` for bulk ops, IndexedDB offline persistence |
-| **Charting** | Canvas 2D API — fully custom-drawn trend chart (no library) |
-| **Import Engine** | SheetJS (xlsx) v0.18.5 — loaded via CDN |
-| **PWA** | Service Worker + Web App Manifest — installable, works offline |
-| **Fonts** | Google Fonts — Playfair Display, DM Mono, DM Sans |
+| **Authentication** | Firebase Auth v11.6 - Google sign-in via popup |
+| **Database** | Cloud Firestore - real-time `onSnapshot` listeners, `writeBatch` for bulk ops, IndexedDB offline persistence |
+| **Charting** | Canvas 2D API - fully custom-drawn trend chart (no library) |
+| **Import Engine** | SheetJS (xlsx) v0.18.5 - loaded via CDN |
+| **PWA** | Service Worker + Web App Manifest - installable, works offline |
+| **Fonts** | Google Fonts - Playfair Display, DM Mono, DM Sans |
 
 ---
 
@@ -165,7 +165,7 @@ The app ships with a default Firebase project. To use your own:
 
 ```
 flux-webapp/
-├── index.html       # Entire application — HTML + CSS + JS (single-file architecture)
+├── index.html       # Entire application - HTML + CSS + JS (single-file architecture)
 ├── manifest.json    # PWA Web App Manifest (name, icons, theme, display mode)
 ├── sw.js            # Service Worker (offline caching, asset pre-cache)
 └── README.md        # This file
