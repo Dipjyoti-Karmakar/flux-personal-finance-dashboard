@@ -128,14 +128,17 @@ users/
 
 ---
 
-## Getting Started
-
-### 1. Clone
+## How to get the code
 
 ```bash
-git clone https://github.com/yourusername/flux-webapp.git
-cd flux-webapp
+# Clone the repository (HTTPS)
+git clone https://github.com/Dipjyoti-Karmakar/flux-personal-finance-dashboard.git
+
+# Or using SSH
+git clone git@github.com:Dipjyoti-Karmakar/flux-personal-finance-dashboard.git
 ```
+
+## Getting Started
 
 ### 2. Run
 
