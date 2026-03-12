@@ -65,7 +65,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .thtog::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--ac);transition:transform .3s cubic-bezier(0.16, 1, 0.3, 1);box-shadow:0 2px 8px rgba(200,169,110,0.3)}
 [data-theme="light"] .thtog::after{transform:translateX(22px)}
 .thlbl{font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);letter-spacing:1px;text-transform:uppercase}
-.srow{display:grid;gap:16px;margin-bottom:16px}
+.srow{display:grid;gap:16px;margin-bottom:16px;position:relative;z-index:1;overflow:visible}
 .sr1{grid-template-columns:repeat(3,1fr)}
 .sr2{grid-template-columns:repeat(4,1fr);margin-bottom:32px}
 .sc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:22px 24px;position:relative;overflow:hidden;transition:transform .35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .35s ease, border-color .35s ease;box-shadow:var(--sh-card)}
@@ -700,7 +700,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   </div>
 </header>
 
-<div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:relative; z-index:10;">
+<div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding:12px 0; margin:-12px 0 12px 0;">
   <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Summary</div>
   <div class="fltr" style="padding:0; border:none; margin:0;">
     <button class="ft act" id="stM_month" onclick="setStatsMode('month')">This Month</button>
