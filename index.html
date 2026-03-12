@@ -229,6 +229,10 @@ select option{background:var(--s2)}
     border-bottom: 1px solid var(--bd); 
     min-width: 0; 
 }
+.fltr-sections { flex-direction: column; gap: 12px; }
+.fltr-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
+.fltr-label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mu); font-weight: 600; flex-shrink: 0; }
+.fltr-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 
 /* Yearly Overview */
 .ys{margin-top:32px;min-width:0}
@@ -421,13 +425,15 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   #customDtWrap > div { flex: 1 1 100%; min-width: 0; }
   #customDtWrap input[type="date"] { width: 100%; max-width: 100%; box-sizing: border-box; }
   
-  /* Transaction List */
+  /* Transaction List – prevent overlap: hide desktop edit/delete on touch, rely on swipe */
   .txl{padding:4px 12px 12px;}
-  .txi{padding:16px 14px; align-items:center; border-radius:12px; margin-bottom:8px;}
+  .txi{padding:16px 14px; align-items:center; border-radius:12px; margin-bottom:8px; overflow:hidden;}
   .txi:hover{transform:none; box-shadow:none;}
-  .ti { margin-bottom:0; }
-  .tn { font-size: 14px; margin-bottom: 4px; }
-  .tm { gap: 6px; }
+  .txi .td{display:none;}
+  .ti { margin-bottom:0; min-width:0; flex:1; overflow:hidden; }
+  .tn { font-size: 14px; margin-bottom: 4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tm { gap: 6px; flex-wrap: wrap; }
+  .ta{ flex-shrink: 0; margin-left: auto; }
   .tdcv{font-size:12px}
   .logo{font-size:26px}
   
@@ -579,12 +585,12 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 /* -- Swipe-to-Action (Touch) -- */
 .txi-wrap{position:relative;overflow:hidden;border-radius:var(--rs);margin-bottom:6px;}
-.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--bg);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;}
+.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;}
 .txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
 .txi-wrap.swiping .txi{transition:none;}
-.txi-actions{position:absolute;top:0;bottom:0;display:flex;align-items:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
-.txi-actions.act-left{left:0;padding-left:16px;color:var(--in);}
-.txi-actions.act-right{right:0;padding-right:16px;color:var(--ex);}
+.txi-actions{position:absolute;top:0;bottom:0;width:84px;min-width:84px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;z-index:1;pointer-events:auto;}
+.txi-actions.act-left{left:0;color:var(--in);}
+.txi-actions.act-right{right:0;color:var(--ex);}
 .txi-act{background:none;border:none;color:inherit;cursor:pointer;font:inherit;padding:8px 14px;border-radius:8px;transition:background .2s;}
 .txi-act:active{background:rgba(255,255,255,0.08);}
 
@@ -772,13 +778,24 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         </div>
         <button class="btn" onclick="clearCustomDt()" style="padding:8px 12px; height:35px; flex: 1 1 100%;">Clear</button>
       </div>
-      <div class="fltr-scroll">
-        <button class="ft ty-flt act" onclick="setF('all', this)">All Types</button>
-        <button class="ft ty-flt" onclick="setF('income', this)">Income</button>
-        <button class="ft ty-flt" onclick="setF('expense', this)">Expense</button>
-        <button class="ft ty-flt" onclick="setF('online', this)">Online</button>
-        <button class="ft ty-flt" onclick="setF('offline', this)">Offline</button>
-        <button class="ft ty-flt" onclick="setF('event', this)">Special Event</button>
+      <div class="fltr-scroll fltr-sections">
+        <div class="fltr-row">
+          <span class="fltr-label">Type</span>
+          <div class="fltr-btns">
+            <button class="ft ty-flt act" onclick="setF('all', this)">All Types</button>
+            <button class="ft ty-flt" onclick="setF('income', this)">Income</button>
+            <button class="ft ty-flt" onclick="setF('expense', this)">Expense</button>
+          </div>
+        </div>
+        <div class="fltr-row">
+          <span class="fltr-label">Mode</span>
+          <div class="fltr-btns">
+            <button class="ft mode-flt act" onclick="setModeFilt('all', this)">All</button>
+            <button class="ft mode-flt" onclick="setModeFilt('online', this)">Online</button>
+            <button class="ft mode-flt" onclick="setModeFilt('offline', this)">Offline</button>
+            <button class="ft mode-flt" onclick="setModeFilt('event', this)">Special Event</button>
+          </div>
+        </div>
       </div>
       <div id="eventTxFilterWrap" style="display:none; padding:10px 16px 12px; border-top:1px solid var(--bd); background:var(--s2);">
         <div style="display:flex;flex-direction:column;gap:6px;">
@@ -961,8 +978,9 @@ let cType='income', cMode='online';
 let theme=localStorage.getItem('flux_theme')||'dark';
 let statsMode='month'; 
 
-let cDtFilt = 'today'; 
+let cDtFilt = 'today';
 let cTyFilt = 'all';
+let cModeFilt = 'all';
 let cEventFilt = 'all';
 let cTxSearch = '';
 
@@ -1221,12 +1239,19 @@ function clearCustomDt() {
 
 function setF(filterVal, btn) {
   cTyFilt = filterVal;
-  txVisibleCount = (cDtFilt === 'today' && filterVal !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
+  txVisibleCount = (cDtFilt === 'today' && cModeFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
   document.querySelectorAll('.ft.ty-flt').forEach(b => b.classList.remove('act'));
+  btn.classList.add('act');
+  renderTxList();
+}
+
+function setModeFilt(filterVal, btn) {
+  cModeFilt = filterVal;
+  txVisibleCount = (cDtFilt === 'today' && filterVal !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
+  document.querySelectorAll('.ft.mode-flt').forEach(b => b.classList.remove('act'));
   btn.classList.add('act');
   const evtWrap = document.getElementById('eventTxFilterWrap');
   if (evtWrap) evtWrap.style.display = filterVal === 'event' ? 'block' : 'none';
-  // Disable/enable date filters when event filter is active
   const dtBtns = document.querySelectorAll('.ft.dt-flt');
   const customWrap = document.getElementById('customDtWrap');
   if (filterVal === 'event') {
@@ -1242,7 +1267,7 @@ function setF(filterVal, btn) {
 function setEventFilter(eventId) {
   cEventFilt = eventId || 'all';
   txVisibleCount = TX_PAGE_SIZE;
-  if (cTyFilt === 'event') renderTxList();
+  if (cModeFilt === 'event') renderTxList();
 }
 
 async function addTx() {
@@ -1474,19 +1499,17 @@ function renderTxList(){
   const el=document.getElementById('txList');
   let list=txs;
   
-  // When event filter is active, skip date filters entirely
-  const isEventFilter = (cTyFilt === 'event');
+  // When mode filter is "Special Event", filter by event (date filters skipped for event view)
+  const isEventFilter = (cModeFilt === 'event');
   let activeEvent = null;
 
   if (isEventFilter) {
-    // Filter by event, not by date
     list = list.filter(t => !!t.eventId);
     if (cEventFilt !== 'all') {
       list = list.filter(t => t.eventId === cEventFilt);
       activeEvent = events[cEventFilt] || null;
     }
   } else {
-    // Apply date filters only when NOT in event mode
     const now = new Date();
     const todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0,10);
     if (cDtFilt === 'today') {
@@ -1504,11 +1527,16 @@ function renderTxList(){
           if(toDt) list = list.filter(t => t.date <= toDt);
       }
     }
+  }
 
-    if(cTyFilt === 'income') list = list.filter(t => t.type === 'income');
-    else if(cTyFilt === 'expense') list = list.filter(t => t.type === 'expense');
-    else if(cTyFilt === 'online') list = list.filter(t => t.mode === 'online');
-    else if(cTyFilt === 'offline') list = list.filter(t => t.mode !== 'online');
+  // Type: All Types / Income / Expense
+  if (cTyFilt === 'income') list = list.filter(t => t.type === 'income');
+  else if (cTyFilt === 'expense') list = list.filter(t => t.type === 'expense');
+
+  // Mode: All / Online / Offline / Special Event (event already applied above when isEventFilter)
+  if (!isEventFilter) {
+    if (cModeFilt === 'online') list = list.filter(t => t.mode === 'online');
+    else if (cModeFilt === 'offline') list = list.filter(t => t.mode !== 'online');
   }
 
   // Apply text search filter
@@ -2905,7 +2933,7 @@ async function removeEventFromTransactions(evtId) {
 }
 
 function loadMoreTx() {
-  txVisibleCount += (cDtFilt === 'today' && cTyFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
+  txVisibleCount += (cDtFilt === 'today' && cModeFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
   renderTxList();
 }
 
@@ -2935,7 +2963,7 @@ function scrollToForm() {
 
 function setTxSearch(val) {
   cTxSearch = val;
-  txVisibleCount = (cDtFilt === 'today' && cTyFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
+  txVisibleCount = (cDtFilt === 'today' && cModeFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
   renderTxList();
 }
 
@@ -2957,6 +2985,7 @@ window.setType = setType;
 window.setMode = setMode;
 window.setDt = setDt;
 window.setF = setF;
+window.setModeFilt = setModeFilt;
 window.updECat = updECat;
 window.updateMapping = updateMapping;
 window.setImpFilt = setImpFilt;
@@ -3063,12 +3092,13 @@ function initScrollTop() {
   }, { passive: true });
 }
 
-// -- Swipe-to-Action (Mobile Touch) --
+// -- Swipe-to-Action (Mobile Touch) -- panel width must match CSS .txi-actions width
+const SWIPE_ACTION_PX = 84;
 function initSwipeActions() {
   const txList = document.getElementById('txList');
   if (!txList || !('ontouchstart' in window)) return;
   let startX, startY, currentWrap, swiping;
-  const THRESHOLD = 60;
+  const THRESHOLD = 50;
   function resetAll(except) {
     document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
       if (w === except) return;
@@ -3095,7 +3125,7 @@ function initSwipeActions() {
     if (!swiping) return;
     e.preventDefault();
     currentWrap.classList.add('swiping');
-    const clamped = Math.max(-100, Math.min(100, dx));
+    const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, dx));
     const inner = currentWrap.querySelector('.txi');
     if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
   }, { passive: false });
@@ -3107,11 +3137,11 @@ function initSwipeActions() {
     const m = inner.style.transform.match(/-?\d+(\.\d+)?/);
     const dx = m ? parseFloat(m[0]) : 0;
     if (dx < -THRESHOLD) {
-      inner.style.transform = 'translateX(-80px)';
+      inner.style.transform = 'translateX(-' + SWIPE_ACTION_PX + 'px)';
       currentWrap.classList.add('swiped-left');
       currentWrap.classList.remove('swiped-right');
     } else if (dx > THRESHOLD) {
-      inner.style.transform = 'translateX(80px)';
+      inner.style.transform = 'translateX(' + SWIPE_ACTION_PX + 'px)';
       currentWrap.classList.add('swiped-right');
       currentWrap.classList.remove('swiped-left');
     } else {
