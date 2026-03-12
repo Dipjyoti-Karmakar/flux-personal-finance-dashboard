@@ -354,8 +354,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 /* Mobile Adjustments */
 @media (hover: none) {
-  .td { opacity: 1; background: var(--s2); border: 1px solid var(--bd); padding: 8px; border-radius: 8px; margin-left: 4px; transform:none;}
-  .td svg { width: 14px; height: 14px; }
+  /* Hide inline edit/delete buttons on touch devices - swipe-to-action is used instead */
+  .txi .td { display: none !important; }
 }
 @media(max-width:960px){
   .app{padding:24px 20px;}
@@ -584,7 +584,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .theme-wipe.expand{clip-path:circle(150% at var(--cx,50%) var(--cy,50%));transition:clip-path .55s cubic-bezier(0.4,0,0.2,1);}
 
 /* -- Swipe-to-Action (Touch) -- */
-.txi-wrap{position:relative;overflow:hidden;border-radius:var(--rs);margin-bottom:6px;}
+.txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;}
 .txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;}
 .txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
 .txi-wrap.swiping .txi{transition:none;}
@@ -1548,7 +1548,7 @@ function renderTxList(){
   document.getElementById('txCnt').textContent = list.length;
 
   // Compute totals for special event / custom range / all-dates filters
-  const showTotals = (cDtFilt === 'custom' || cDtFilt === 'all' || isEventFilter);
+  const showTotals = (cDtFilt === 'custom' || cDtFilt === 'all' || isEventFilter || cTyFilt !== 'all' || cModeFilt !== 'all');
   let filtIncome = 0, filtExpense = 0;
   if (showTotals) {
     list.forEach(t => {
