@@ -1,17 +1,17 @@
-# Dossier.ai - GitHub Profile Intelligence Dashboard
+# Flux - Personal Finance Dashboard
 
-> Turn any GitHub profile into a full developer intelligence report, powered by Google Gemini AI. No backend. No server. Just open it and go.
+> Track income, expenses, and insights in a single-page finance dashboard built with vanilla JavaScript, Firebase, and a PWA-first workflow.
 
-![HTML](https://img.shields.io/badge/Built%20With-HTML%20%2F%20CSS%20%2F%20JS-orange?style=flat-square)
-![AI](https://img.shields.io/badge/AI-Google%20Gemini-blue?style=flat-square)
-![API](https://img.shields.io/badge/Data-GitHub%20REST%20API-black?style=flat-square)
-![Deploy](https://img.shields.io/badge/Deployed%20on-GitHub%20Pages-brightgreen?style=flat-square)
+![HTML5](https://img.shields.io/badge/HTML5-Frontend-orange?style=for-the-badge&logo=html5)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-yellow?style=for-the-badge&logo=javascript)
+![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%26%20Auth-ffca28?style=for-the-badge&logo=firebase)
+![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
 
 ---
 
 ## Live Demo
 
-**[View Dossier.ai on GitHub Pages](https://dipjyoti-karmakar.github.io/dossair.ai)**
+**[View Flux on GitHub Pages](https://dipjyoti-karmakar.github.io/flux-personal-finance-dashboard/)**
 
 ---
 
