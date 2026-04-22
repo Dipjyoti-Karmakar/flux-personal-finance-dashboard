@@ -43,9 +43,9 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // FIXED: Added parentheses to fix operator precedence. Without them, the &&
-  // bound tighter than ||, making the googleapis.com/v1/ check unreachable
-  // when firebaseio.com matched first. Now all three conditions are distinct.
+  // Parentheses are used solely for readability and clarity, since && already
+  // binds tighter than ||, and the expression A || B && C || D || E evaluates
+  // as A || (B && C) || D || E.
   if (
     url.hostname.includes('firebaseio.com') ||
     (url.hostname.includes('googleapis.com') && url.pathname.includes('/v1/')) ||
