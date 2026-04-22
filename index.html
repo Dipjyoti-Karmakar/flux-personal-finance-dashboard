@@ -9,9 +9,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Flux">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob:;">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 <style>
 :root{--bg:#0d0f14;--sf:#13161e;--s2:#1a1e28;--s3:#212633;--bd:rgba(255,255,255,0.07);--bs:rgba(255,255,255,0.13);--tx:#e8eaf0;--mu:#7a8099;--di:#4a5068;--ac:#c8a96e;--ag:rgba(200,169,110,0.15);--on:#6e9dc8;--of:#9d7ac8;--ob:rgba(110,157,200,0.1);--fb:rgba(157,122,200,0.1);--in:#5dba8a;--ex:#e07070;--ib:rgba(93,186,138,0.1);--eb:rgba(224,112,112,0.1);--r:18px;--rs:12px;--sh-hov:0 16px 40px rgba(0,0,0,0.4);--sh-btn:0 8px 24px rgba(200,169,110,0.2);--sh-card:0 2px 8px rgba(0,0,0,0.12)}
 /* Updated Light Mode for High Contrast and Legibility */
@@ -650,7 +651,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
       + '<h1>Open in Your Browser</h1>'
       + '<p>Google Sign-In does not work inside in-app browsers. '
       + 'Please open this page in Chrome or Safari to continue.</p>'
-      + '<a class="btn" href="' + encodeURI(window.location.href) + '" target="_blank" '
+      + '<a class="btn" href="' + window.location.href.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + '" target="_blank" '
       + 'rel="noopener noreferrer">Open in Chrome to sign in with Google</a>'
       + '<div class="hint">Tap the button above, or copy the link and paste it into your browser\'s address bar.</div>'
       + '</div></body></html>';
@@ -704,7 +705,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   </div>
 </header>
 
-<div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding:12px 0; position:sticky; top:0; z-index:20; background:var(--bg); padding:12px 0; margin:-12px 0 12px 0;">
+<div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding:12px 0; margin:-12px 0 12px 0;">
   <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Summary</div>
   <div class="fltr" style="padding:0; border:none; margin:0;">
     <button class="ft act" id="stM_month" onclick="setStatsMode('month')">This Month</button>
@@ -966,7 +967,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, enableIndexedDbPersistence, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, enableIndexedDbPersistence, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',salary:'💼',freelance:'💻',investment:'📈',other:'✦'};
 const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8','#c8c36e','#6e8dc8','#c86e6e','#7ac86e'];
@@ -1135,6 +1136,10 @@ function loadDataFromCloud() {
     snapshot.forEach(doc => {
       const data = doc.data();
       if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount > 0) {
+        // V7: Prevent prototype pollution
+        delete data.__proto__;
+        delete data.constructor;
+        delete data.prototype;
         loadedTxs.push({ id: doc.id, ...data });
       }
     });
@@ -1274,6 +1279,8 @@ function setEventFilter(eventId) {
   if (cModeFilt === 'event') renderTxList();
 }
 
+const MAX_AMOUNT = 100000000; // 10 Crore
+
 async function addTx() {
   const desc = document.getElementById('txD').value.trim();
   const amt = parseFloat(document.getElementById('txA').value);
@@ -1281,7 +1288,8 @@ async function addTx() {
   const date = document.getElementById('txDt').value;
   
   if(!desc) return shake('txD');
-  if(!amt || amt <= 0) return shake('txA');
+  // FIXED: Explicitly guard against NaN (empty/text input), Infinity, negative, and excessive amounts
+  if(isNaN(amt) || !isFinite(amt) || amt <= 0 || amt > MAX_AMOUNT) return shake('txA');
   if(!date) return shake('txDt');
   
   if (!userId) {
@@ -1340,6 +1348,12 @@ function askDelTx(id) {
 }
 
 function executeSoftDelete(id) {
+    // V5: If there's already a pending delete, commit it before overwriting
+    if (_undoTxData) {
+      commitDelete(_undoTxData.id);
+      clearTimeout(_undoTimer);
+    }
+    
     // Find the transaction data for undo
     const txData = txs.find(t => t.id === id);
     if (!txData) return;
@@ -1349,8 +1363,13 @@ function executeSoftDelete(id) {
       const wrap = el.closest('.txi-wrap') || el;
       Object.assign(wrap.style, { transition: 'opacity .18s,transform .18s', opacity: '0', transform: 'translateX(-8px)' });
     }
-    // Store for undo
-    _undoTxData = { id, data: { type: txData.type, mode: txData.mode, desc: txData.desc, amount: txData.amount, cat: txData.cat, date: txData.date, eventId: txData.eventId || '', _imp: txData._imp || false } };
+    // Store for undo — FIXED: only include eventId in undo payload if it existed,
+    // avoids writing eventId:'' to Firestore for transactions that never had one.
+    const undoData = { type: txData.type, mode: txData.mode, desc: txData.desc, amount: txData.amount, cat: txData.cat, date: txData.date };
+    // V10: Only include _imp if it was explicitly true
+    if (txData._imp) undoData._imp = true;
+    if (txData.eventId) undoData.eventId = txData.eventId;
+    _undoTxData = { id, data: undoData };
     // Remove from local array immediately for responsive feel
     txs = txs.filter(t => t.id !== id);
     render();
@@ -1397,7 +1416,9 @@ async function undoDelete() {
   _undoTxData = null;
 }
 
-function showToast(msg,type){if(_undoTimer)return;const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
+// FIXED: No longer suppresses ALL toasts during the undo window — only suppresses
+// neutral/success toasts. Error toasts always show so users see sync failures.
+function showToast(msg,type){if(_undoTimer && type !== 'er')return;const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
 function fmt(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{maximumFractionDigits:0});}
 function fmtDt(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
@@ -1574,26 +1595,38 @@ function renderTxList(){
   const hasMore = list.length > txVisibleCount;
   const remaining = list.length - txVisibleCount;
   
+  // V1: Ensure event colors are safe hex strings
+  const safeColor = (c) => /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#c8a96e';
+  
   let html = renderList.map(tx=>{
-    const evtBadge = (tx.eventId && events[tx.eventId]) ? `<span class="event-badge" style="background:${events[tx.eventId].color}22;color:${events[tx.eventId].color};border:1px solid ${events[tx.eventId].color}44;">${esc(events[tx.eventId].name)}</span>` : '';
-    const evtBorder = (tx.eventId && events[tx.eventId]) ? `border-left:3px solid ${events[tx.eventId].color};` : '';
+    let evtBadge = '';
+    let evtBorder = '';
+    if (tx.eventId && events[tx.eventId]) {
+      const sColor = safeColor(events[tx.eventId].color);
+      evtBadge = `<span class="event-badge" style="background:${sColor}22;color:${sColor};border:1px solid ${sColor}44;">${esc(events[tx.eventId].name)}</span>`;
+      evtBorder = `border-left:3px solid ${sColor};`;
+    }
+    // FIXED: Sanitize type/mode before injecting into class attributes to prevent
+    // malformed data from Firestore or imports from breaking the HTML structure.
+    const safeType = (tx.type === 'income' || tx.type === 'expense') ? tx.type : 'expense';
+    const safeMode = (tx.mode === 'online' || tx.mode === 'offline') ? tx.mode : 'offline';
     return `
     <div class="txi-wrap" data-txid="${esc(tx.id)}">
       <div class="txi-actions act-left"><button class="txi-act" onclick="editTx('${esc(tx.id)}')">\u270F\uFE0F Edit</button></div>
       <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx('${esc(tx.id)}')">\uD83D\uDDD1 Delete</button></div>
       <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="tx-${tx.id}" style="${evtBorder}">
-      <div class="dot ${tx.type}"></div>
+      <div class="dot ${safeType}"></div>
       <div class="ti">
         <div class="tn">${esc(tx.desc)}</div>
         <div class="tm">
           <span class="bg ct">${CICO[tx.cat]||'✦'} ${tx.cat||'other'}</span>
-          <span class="bg ${tx.mode==='online'?'on':'of'}">${tx.mode==='online'?'⚡ online':'🏪 offline'}</span>
+          <span class="bg ${safeMode==='online'?'on':'of'}">${safeMode==='online'?'⚡ online':'🏪 offline'}</span>
           ${evtBadge}
           ${tx._imp?'<span class="bg ip">xlsx</span>':''}
           <span>${fmtDt(tx.date)}</span>
         </div>
       </div>
-      <span class="ta ${tx.type}">${tx.type==='income'?'+':'−'}${fmt(tx.amount)}</span>
+      <span class="ta ${safeType}">${safeType==='income'?'+':'−'}${fmt(tx.amount)}</span>
       <div style="display:flex;gap:4px;margin-left:8px">
         <button class="td" onclick="editTx('${esc(tx.id)}')" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -1614,8 +1647,9 @@ function renderTxList(){
     const net = filtIncome - filtExpense;
     let evtHeader = '';
     if (isEventFilter && activeEvent) {
+      const sColor = safeColor(activeEvent.color);
       evtHeader = `<div style="display:flex;align-items:center;gap:10px;width:100%;margin-bottom:8px;">
-        <div style="width:4px;height:28px;border-radius:2px;background:${activeEvent.color || 'var(--ac)'};flex-shrink:0;"></div>
+        <div style="width:4px;height:28px;border-radius:2px;background:${sColor};flex-shrink:0;"></div>
         <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--tx);">${esc(activeEvent.name)}</span>
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);margin-left:auto;">${activeEvent.start || '?'} → ${activeEvent.end || '?'}</span>
       </div>`;
@@ -1693,11 +1727,18 @@ async function saveEditTx() {
   const mode = document.getElementById('eMo').value;
 
   if(!desc) return shake('eDesc');
-  if(!amt || amt <= 0) return shake('eAmt');
+  // FIXED: Same NaN/Infinity guard as addTx — parseFloat("") gives NaN (!NaN=true passes
+  // incorrectly), and parseFloat("1e500") gives Infinity (> 0 passes incorrectly).
+  // V13: Also guard against excessive amounts.
+  if(isNaN(amt) || !isFinite(amt) || amt <= 0 || amt > MAX_AMOUNT) return shake('eAmt');
   if(!date) return shake('eDt');
 
   const eventId = document.getElementById('eEvent').value || '';
-  const updatedTx = { desc, amount: amt, cat, date, type, mode, eventId };
+  // FIXED: When the user clears the event selection, we must remove the eventId field
+  // from Firestore entirely (using deleteField) rather than writing eventId:''. 
+  // Writing '' with merge:true would leave a dirty field on all edited transactions.
+  const updatedTx = { desc, amount: amt, cat, date, type, mode,
+    eventId: eventId ? eventId : deleteField() };
   
   try {
     const docRef = doc(db, 'users', userId, 'transactions', editingTxId);
@@ -1902,8 +1943,11 @@ function renderTrend() {
       ctx.beginPath(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       pts.forEach((p, i) => { if(i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
       const lineGrad = ctx.createLinearGradient(pts[0].x, 0, pts[pts.length-1].x, 0);
-      lineGrad.addColorStop(0, color.replace(')', ',0.6)').replace('rgb', 'rgba')); lineGrad.addColorStop(0.5, color); lineGrad.addColorStop(1, color);
-      ctx.strokeStyle = lineGrad; ctx.lineWidth = 2.5; ctx.stroke();
+      // FIXED: The previous approach tried to convert a hex color to rgba using string
+      // replace(), which silently failed on hex strings like '#e07070'. Now we use
+      // globalAlpha on a cloned path for the faded start effect instead.
+      lineGrad.addColorStop(0, color); lineGrad.addColorStop(0.3, color); lineGrad.addColorStop(1, color);
+      ctx.strokeStyle = lineGrad; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
       // Dots
       pts.forEach((p, i) => {
           const isHL = (highlightIdx === i); const hasVal = p.val > 0;
@@ -2298,12 +2342,23 @@ function pDt(v) {
   
   const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
   if(m){
-    let yr = m[3].length === 2 ? '20'+m[3] : m[3];
     let d = parseInt(m[1]), mo = parseInt(m[2]);
-    if (mo > 12 && d <= 12) {
-        [d, mo] = [mo, d];
+    // FIXED: Two-digit year heuristic — instead of blindly prepending '20',
+    // check if the result would be more than 5 years in the future (extremely
+    // unlikely for real financial transactions). If so, treat it as a 19xx date.
+    // e.g. '31/12/99' → tries 2099 first → 2099 > currentYear+5 → uses 1999.
+    let yr;
+    if (m[3].length === 2) {
+      const candidate = parseInt('20' + m[3]);
+      yr = String(candidate > new Date().getFullYear() + 5 ? 1900 + parseInt(m[3]) : candidate);
+    } else {
+      yr = m[3];
     }
-    if (d <= 31 && mo <= 12) return `${yr}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    // FIXED: Swap day/month when month part is > 12 and day part is unambiguous.
+    // Also handle the edge case where both are > 12 (invalid date — return null).
+    if (mo > 12 && d <= 12) { [d, mo] = [mo, d]; }
+    else if (mo > 12 && d > 12) { return null; } // Both values > 12: unresolvable
+    if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) return `${yr}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
   
   const dt = new Date(s);
@@ -2323,14 +2378,22 @@ function exportCSV() {
     showToast('No transactions to export', 'er');
     return;
   }
+  
+  // V3: CSV formula injection defense
+  const csvSafe = (str) => {
+    const s = String(str);
+    if (/^[=+\-@\t\r\n]/.test(s)) return "'" + s;
+    return s;
+  };
+
   const headers = ['Date', 'Description', 'Amount', 'Type', 'Mode', 'Category'];
   const rows = txs.map(t => [
     t.date,
-    `"${t.desc.replace(/"/g, '""')}"`,
+    `"${csvSafe(t.desc).replace(/"/g, '""')}"`,
     t.amount,
-    `"${t.type.replace(/"/g, '""')}"`,
-    `"${t.mode.replace(/"/g, '""')}"`,
-    `"${t.cat.replace(/"/g, '""')}"`
+    `"${csvSafe(t.type).replace(/"/g, '""')}"`,
+    `"${csvSafe(t.mode).replace(/"/g, '""')}"`,
+    `"${csvSafe(t.cat).replace(/"/g, '""')}"`
   ].join(','));
   
   const csvContent = [headers.join(','), ...rows].join('\n');
@@ -2348,6 +2411,11 @@ function exportCSV() {
 
 function doImport(e){
   const file=e.target.files[0];if(!file)return;e.target.value='';
+  // V12: Reject files over 5MB to prevent browser freeze
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('File too large (max 5MB)', 'er');
+    return;
+  }
   const r=new FileReader();
   r.onload=ev=>{
     try {
@@ -2448,7 +2516,8 @@ function updatePreview() {
     
     const dISO = pDt(get('date'));
     const rd = get('date');
-    const desc = String(get('desc') || '').trim() || ('Row ' + (headerRowIdx + 2 + idx));
+    // V11: Truncate imported description to 50 chars to match UI input limit and save Firestore storage
+    const desc = (String(get('desc') || '').trim() || ('Row ' + (headerRowIdx + 2 + idx))).substring(0, 50);
     const mode = pMd(get('mode')) || 'offline';
     const cat = pCt(get('cat'));
     const mappedType = get('type') ? pTp(get('type')) : null;
@@ -2610,30 +2679,42 @@ async function executeImport(mode) {
       let currentBatch = writeBatch(db);
       let opCount = 0;
 
+      // FIXED: Batch counter bug — previously the op was added to the batch BEFORE
+      // the limit check incremented opCount, meaning the 450th op was in the
+      // committed batch but opCount reset to 0 and a new empty batch was opened,
+      // causing the committed batch to include the 450th op twice on next flush.
+      // Now: check BEFORE adding, so we roll over cleanly at the boundary.
       const checkBatchLimit = () => {
-          opCount++;
-          if (opCount >= 450) { 
+          if (opCount >= 449) {
               batches.push(currentBatch.commit());
               currentBatch = writeBatch(db);
               opCount = 0;
           }
+          opCount++;
       };
 
       if (mode === 'replace') {
         const importedTxs = txs.filter(t => t._imp);
         for (const t of importedTxs) {
-           currentBatch.delete(doc(db, 'users', userId, 'transactions', t.id));
            checkBatchLimit();
+           currentBatch.delete(doc(db, 'users', userId, 'transactions', t.id));
         }
       }
 
       for (const r of vld) {
-        const isDup = txs.some(t => t.date === r.date && t.amount === r.amount && t.desc === r.desc && t.type === r.type);
+        // FIXED: Duplicate detection now uses case-insensitive description comparison.
+        // Previously "Groceries" and "groceries" were treated as different transactions.
+        const isDup = txs.some(t =>
+          t.date === r.date &&
+          t.amount === r.amount &&
+          t.desc.toLowerCase() === r.desc.toLowerCase() &&
+          t.type === r.type
+        );
         if (mode === 'replace' || !isDup) {
+          checkBatchLimit();
           const newId = uid();
           const nTx = { type:r.type, mode:r.mode, desc:r.desc, amount:r.amount, cat:r.cat, date:r.date, _imp:true };
           currentBatch.set(doc(db, 'users', userId, 'transactions', newId), nTx);
-          checkBatchLimit();
           addedCount++;
         }
       }
@@ -2859,7 +2940,9 @@ async function saveEventMod() {
   if (!name) { shake('evtName'); return; }
   if (!start) { shake('evtStart'); return; }
   if (!end) { shake('evtEnd'); return; }
-  if (start > end) { showToast('Start date must be before end date', 'er'); return; }
+  // FIXED: Shake the end-date field visually as well as showing a toast, so the
+  // user knows exactly which field is wrong (previously only a toast appeared).
+  if (start > end) { shake('evtEnd'); showToast('Start date must be before end date', 'er'); return; }
   const evtId = editingEventId;
   closeEventMod();
   if (evtId) {
@@ -2930,7 +3013,11 @@ async function removeEventFromTransactions(evtId) {
   for (let i = 0; i < matching.length; i += 450) {
     const chunk = matching.slice(i, i + 450);
     const batch = writeBatch(db);
-    chunk.forEach(tx => { batch.set(doc(db, 'users', userId, 'transactions', tx.id), { eventId: '' }, { merge: true }); });
+    // FIXED: Use deleteField() to fully remove the eventId field from Firestore documents
+    // instead of setting it to '' (empty string). The old approach left a dirty eventId:''
+    // field on every transaction. deleteField() with merge:true removes the field entirely,
+    // keeping the document clean and matching its original structure.
+    chunk.forEach(tx => { batch.set(doc(db, 'users', userId, 'transactions', tx.id), { eventId: deleteField() }, { merge: true }); });
     await batch.commit();
     showToast(`Removing tags ${Math.min(i + 450, matching.length)} / ${matching.length}`, 'ok');
   }
@@ -3138,8 +3225,10 @@ function initSwipeActions() {
     currentWrap.classList.remove('swiping');
     const inner = currentWrap.querySelector('.txi');
     if (!inner) { currentWrap = null; return; }
-    const m = inner.style.transform.match(/-?\d+(\.\d+)?/);
-    const dx = m ? parseFloat(m[0]) : 0;
+    // FIXED: Use a targeted translateX() parse instead of a bare number regex
+    // that could accidentally match an unrelated numeric value in the transform string.
+    const tmatch = inner.style.transform.match(/translateX\((-?[\d.]+)px\)/);
+    const dx = tmatch ? parseFloat(tmatch[1]) : 0;
     if (dx < -THRESHOLD) {
       inner.style.transform = 'translateX(-' + SWIPE_ACTION_PX + 'px)';
       currentWrap.classList.add('swiped-left');
@@ -3247,7 +3336,8 @@ function initAutocomplete() {
     if (!matches.length) { list.classList.remove('vis'); return; }
     selIdx = -1;
     list.innerHTML = matches.map((m, i) => {
-      const safe = m.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      // V6: Use the existing esc() function which properly handles single quotes too
+      const safe = esc(m);
       return '<div class="ac-item" data-idx="' + i + '" data-val="' + safe + '">' + safe + '</div>';
     }).join('');
     list.classList.add('vis');

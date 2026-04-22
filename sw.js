@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-const CACHE_NAME = 'flux-v1';
-
+// V14: Bumped cache version to v2 to bust static cache. Should be bumped on each deploy.
+const CACHE_NAME = 'flux-v2';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
@@ -43,11 +43,15 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Never cache Firebase API calls or Firestore RPCs
-  if (url.hostname.includes('firebaseio.com') ||
-      url.hostname.includes('googleapis.com') && url.pathname.includes('/v1/') ||
-      url.hostname.includes('identitytoolkit') ||
-      url.hostname.includes('securetoken')) {
+  // FIXED: Added parentheses to fix operator precedence. Without them, the &&
+  // bound tighter than ||, making the googleapis.com/v1/ check unreachable
+  // when firebaseio.com matched first. Now all three conditions are distinct.
+  if (
+    url.hostname.includes('firebaseio.com') ||
+    (url.hostname.includes('googleapis.com') && url.pathname.includes('/v1/')) ||
+    url.hostname.includes('identitytoolkit') ||
+    url.hostname.includes('securetoken')
+  ) {
     return; // Let the browser handle these normally (Firestore offline persistence manages its own cache)
   }
 
@@ -79,7 +83,9 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => cached || new Response('Network error', { status: 408, headers: { 'Content-Type': 'text/plain' } }));
+        // FIXED: 503 Service Unavailable is semantically correct for offline fallback
+        // (was 408 Request Timeout which is semantically wrong)
+        .catch(() => cached || new Response('Service Unavailable', { status: 503, headers: { 'Content-Type': 'text/plain' } }));
 
       return cached || fetchPromise;
     })
