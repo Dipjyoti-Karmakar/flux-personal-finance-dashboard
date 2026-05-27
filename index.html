@@ -1755,7 +1755,7 @@ function renderTxList(){
           <span>${fmtDt(tx.date)}</span>
         </div>
       </div>
-      <span class="ta ${safeType}">${safeType==='income'?'+':'−'}${fmt(tx.amount)}</span>
+      <span class="ta ${safeType}">${fmt(tx.amount)}</span>
       <div style="display:flex;gap:4px;margin-left:8px">
         <button class="td" onclick="editTx('${esc(tx.id)}')" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -1811,7 +1811,7 @@ function renderTxList(){
         <div style="width:1px;height:20px;background:var(--bd);"></div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Net</span>
-          <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${net >= 0 ? 'var(--in)' : 'var(--ex)'};">${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${net >= 0 ? 'var(--in)' : 'var(--ex)'};">${fmt(Math.abs(net))}</span>
         </div>
         ${savRateHtml}
       </div>
@@ -2272,7 +2272,7 @@ function renderCatTxList(passedTxs) {
             <span>${fmtDt(tx.date)}</span>
           </div>
         </div>
-        <span class="ta ${safeType}">${safeType==='income'?'+':'−'}${fmt(tx.amount)}</span>
+        <span class="ta ${safeType}">${fmt(tx.amount)}</span>
         <div style="display:flex;gap:4px;margin-left:8px">
           <button class="td" onclick="editTx('${esc(tx.id)}')" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -2586,9 +2586,8 @@ function mkYrBlock(yr,yrMonths,todayISO,cY,cM,cD){
   const sparks=mT.slice(0,lastM+1).map((v,m)=>{const h=Math.max(3,Math.round((v/mMax)*28));return `<div class="spk${isCur&&m===cM?' cm':''}" style="height:${h}px" data-tip="${MN[m]}: ${fmtS(v)}"></div>`;}).join('');
   const mnHTML=Array.from({length:12},(_,m)=>mkMnCard(m,yr,yrMonths,isCur,cM,cD,todayISO,mMax,yrTot)).join('');
   const netClr=yrNet>=0?'var(--in)':'var(--ex)';
-  const netSign=yrNet>0?'+':yrNet<0?'−':'';
   const savRateHtml=yrSavRate!==null?`<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate>=0?'var(--in)':'var(--ex)'}">${yrSavRate}%</span></div>`:'';
-  return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}<div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${netSign}${fmt(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
+  return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}<div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmt(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
 }
 
 function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
@@ -2615,7 +2614,7 @@ function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
   const mTxCount = mAll.length;
   const netClr=mNet>=0?'var(--in)':'var(--ex)';
   const incRow=mInc>0?`<div class="ms"><span class="msl">Income</span><span class="msv h" style="color:var(--in)">${fmtS(mInc)}</span></div>`:'';
-  const netRow=mInc>0||tot>0?`<div class="ms"><span class="msl">Net</span><span class="msv" style="color:${netClr}">${mNet>0?'+':mNet<0?'−':''}${fmtS(Math.abs(mNet))}</span></div>`:'';
+  const netRow=mInc>0||tot>0?`<div class="ms"><span class="msl">Net</span><span class="msv" style="color:${netClr}">${fmtS(Math.abs(mNet))}</span></div>`:'';
   const savRateRow=mSavRate!==null?`<div class="ms"><span class="msl">Savings Rate</span><span class="msv h" style="color:${mSavRate>=0?'var(--in)':'var(--ex)'}">${mSavRate}%</span></div>`:'';
 
   return `<div class="mc${isCur?' cm2':isFut?' ft':''}" onclick="if(!${isFut}) lazyLoadMonthTxs(this, ${yr}, ${m})">
@@ -2654,7 +2653,7 @@ function lazyLoadMonthTxs(el, yr, m) {
     const isCapped = mTxs.length > 50;
     const renderTxs = isCapped ? mTxs.slice(0, 50) : mTxs;
     html = `<div class="tx-cnt" onclick="event.stopPropagation();">` +
-      renderTxs.map(t => `<div class="mtx-item"><div class="mtx-dt">${fmtDt(t.date)}</div><div class="mtx-desc" title="${esc(t.desc)}">${esc(t.desc)}</div><div class="mtx-amt ${t.type==='income'?'inc':'exp'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div></div>`).join('') +
+      renderTxs.map(t => `<div class="mtx-item"><div class="mtx-dt">${fmtDt(t.date)}</div><div class="mtx-desc" title="${esc(t.desc)}">${esc(t.desc)}</div><div class="mtx-amt ${t.type==='income'?'inc':'exp'}">${fmt(t.amount)}</div></div>`).join('') +
       (isCapped ? `<div style="text-align:center;color:var(--mu);font-size:10px;padding:10px 0;font-family:'DM Mono',monospace;letter-spacing:.5px;border-top:1px solid var(--bd);margin-top:4px;">Showing latest 50 of ${mTxs.length} transactions</div>` : '') +
       `</div>`;
   } else {
