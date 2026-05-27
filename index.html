@@ -205,7 +205,7 @@ select option{background:var(--s2)}
 .cat-tag.cat-tag-active .cat-arrow { transform:rotate(180deg); color:var(--ac); }
 
 /* Category Drill-Down Panel */
-.cat-tx-panel { max-height:0; opacity:0; overflow:hidden; transition:max-height .4s cubic-bezier(0.16,1,0.3,1), opacity .3s ease, margin .3s ease; margin-top:0; }
+.cat-tx-panel { width: 100%; max-height:0; opacity:0; overflow:hidden; transition:max-height .4s cubic-bezier(0.16,1,0.3,1), opacity .3s ease, margin .3s ease; margin-top:0; }
 .cat-tx-panel.cat-tx-open { max-height:600px; opacity:1; margin-top:20px; overflow:visible; }
 .cat-tx-inner { background:var(--s2); border:1px solid var(--bd); border-radius:var(--r); overflow:hidden; animation:fdI .3s cubic-bezier(0.16,1,0.3,1); }
 .cat-tx-hdr { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--bd); background:linear-gradient(180deg,color-mix(in srgb,var(--sf) 95%,var(--s2)) 0%,var(--sf) 100%); }
@@ -2205,10 +2205,15 @@ function renderCats(passedTxs){
   cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
   barHtml+='</div>';
   let detHtml=`<div class="cat-tag-list${activeCatFilter?' is-extended':''}">`;
-  cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);const isActive=activeCatFilter===cat;detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;});
+  cats.forEach(([cat,val],i)=>{
+    const pct=Math.round((val/totalExp)*100);
+    const isActive=activeCatFilter===cat;
+    detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
+    if (isActive) {
+      detHtml+='<div class="cat-tx-panel cat-tx-open" id="catTxPanel"></div>';
+    }
+  });
   detHtml+='</div>';
-  // Drill-down panel container
-  detHtml+='<div class="cat-tx-panel'+(activeCatFilter?' cat-tx-open':'')+'" id="catTxPanel"></div>';
   area.innerHTML=barHtml+detHtml;
   if(activeCatFilter) renderCatTxList(aTxs);
 }
@@ -2221,13 +2226,6 @@ function toggleCatFilter(cat) {
     catTxVisibleCount = CAT_TX_PAGE_SIZE;
   }
   renderCats();
-  // Smooth scroll panel into view on mobile
-  if (activeCatFilter) {
-    setTimeout(() => {
-      const panel = document.getElementById('catTxPanel');
-      if (panel) panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
-    }, 100);
-  }
 }
 
 function renderCatTxList(passedTxs) {
