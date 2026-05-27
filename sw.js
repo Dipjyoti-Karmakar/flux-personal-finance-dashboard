@@ -1,11 +1,13 @@
 // Flux Service Worker — Offline-first caching strategy
-// V14: Bumped cache version to v2 to bust static cache. Should be bumped on each deploy.
-const CACHE_NAME = 'flux-v2';
+// V15: Bumped to v3 for new app icons
+const CACHE_NAME = 'flux-v3';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
   './index.html',
   './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 ];
