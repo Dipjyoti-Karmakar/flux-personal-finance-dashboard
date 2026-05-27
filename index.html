@@ -1752,6 +1752,19 @@ function renderTxList(){
         <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);margin-left:auto;">${activeEvent.start || '?'} → ${activeEvent.end || '?'}</span>
       </div>`;
     }
+
+    let savRateHtml = '';
+    if ((isEventFilter || cDtFilt !== 'today') && filtIncome > 0) {
+      const savRate = Math.round((net / filtIncome) * 100);
+      savRateHtml = `
+        <div style="width:1px;height:20px;background:var(--bd);"></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Savings Rate</span>
+          <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${savRate >= 0 ? 'var(--in)' : 'var(--ex)'};">${savRate}%</span>
+        </div>
+      `;
+    }
+
     html = `<div style="padding:14px 18px;background:var(--s2);border-bottom:1px solid var(--bd);">
       ${evtHeader}
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
@@ -1769,6 +1782,7 @@ function renderTxList(){
           <span style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mu);font-weight:600;">Net</span>
           <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${net >= 0 ? 'var(--in)' : 'var(--ex)'};">${net >= 0 ? '+' : '−'}${fmt(Math.abs(net))}</span>
         </div>
+        ${savRateHtml}
       </div>
     </div>` + html;
   }
