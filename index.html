@@ -804,6 +804,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
       <div class="fltr-scroll">
         <button class="ft dt-flt act" onclick="setDt('today', this)">Today</button>
         <button class="ft dt-flt" onclick="setDt('month', this)">This Month</button>
+        <button class="ft dt-flt" onclick="setDt('year', this)">This Year</button>
         <button class="ft dt-flt" onclick="setDt('all', this)">All Dates</button>
         <button class="ft dt-flt" onclick="setDt('custom', this)">Custom Range</button>
       </div>
@@ -1583,6 +1584,9 @@ function renderTxList(){
     } else if (cDtFilt === 'month') {
       const monthPrefix = todayISO.slice(0,7);
       list = list.filter(t => t.date.startsWith(monthPrefix));
+    } else if (cDtFilt === 'year') {
+      const yearPrefix = todayISO.slice(0,4);
+      list = list.filter(t => t.date.startsWith(yearPrefix));
     } else if (cDtFilt === 'custom') {
       const fromDt = document.getElementById('cDtFrom').value;
       const toDt = document.getElementById('cDtTo').value;
