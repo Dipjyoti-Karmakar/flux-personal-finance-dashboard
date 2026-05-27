@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V15: Bumped to v3 for new app icons
-const CACHE_NAME = 'flux-v3';
+// V16: Bumped to v4 to deploy latest bug fixes and Occasions category
+const CACHE_NAME = 'flux-v4';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
