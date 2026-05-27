@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V29: Bumped to v17 to implement inline accordion panel and remove aggressive scroll
-const CACHE_NAME = 'flux-v17';
+// V30: Bumped to v18 to implement master-detail layout and truncate category names
+const CACHE_NAME = 'flux-v18';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',

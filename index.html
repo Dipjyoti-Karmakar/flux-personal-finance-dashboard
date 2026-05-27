@@ -101,11 +101,12 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 /* Transactions & Special Events – same fixed height, internal scroll */
 .mg > .pn-fixed { display:flex; flex-direction:column; overflow:hidden; }
 .mg > .pn-fixed .txl { flex:1; min-height:0; overflow-y:auto; }
-/* Transactions & By Category fixed max height */
 #txPanel, #catAreaWrap { max-height: 620px; }
+#catAreaWrap .ca { display: flex; flex-direction: column; overflow: hidden; padding: 12px 16px; flex: 1; min-height: 0; }
 .cat-tag-list { display: flex; flex-wrap: wrap; flex-direction: row; gap: 8px; justify-content: flex-start; }
 .cat-tag-list.is-extended .cat-tag { width: calc(50% - 4px); }
 .cat-tag-list.is-extended .cat-tag:last-child:nth-child(odd) { width: 100%; }
+.cat-tag-name { font-family:'DM Mono',monospace; font-size:12px; font-weight:600; color:var(--tx); text-transform:capitalize; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
 .cat-tag-amt { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; color: var(--mu); margin-left: auto; text-align: right; min-width: 60px; }
 .cat-tag-pct { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; color: var(--di); text-align: right; min-width: 32px; margin-left: 4px; }
 
@@ -205,9 +206,10 @@ select option{background:var(--s2)}
 .cat-tag.cat-tag-active .cat-arrow { transform:rotate(180deg); color:var(--ac); }
 
 /* Category Drill-Down Panel */
-.cat-tx-panel { width: 100%; max-height:0; opacity:0; overflow:hidden; transition:max-height .4s cubic-bezier(0.16,1,0.3,1), opacity .3s ease, margin .3s ease; margin-top:0; }
-.cat-tx-panel.cat-tx-open { max-height:600px; opacity:1; margin-top:20px; overflow:visible; }
-.cat-tx-inner { background:var(--s2); border:1px solid var(--bd); border-radius:var(--r); overflow:hidden; animation:fdI .3s cubic-bezier(0.16,1,0.3,1); }
+.cat-tx-panel { flex-grow: 0; min-height: 0; opacity: 0; overflow: hidden; transition: flex-grow .4s cubic-bezier(0.16,1,0.3,1), opacity .3s ease, margin .3s ease; margin-top: 0; display: flex; flex-direction: column; }
+.cat-tx-panel.cat-tx-open { flex-grow: 1; opacity: 1; margin-top: 20px; }
+.cat-tx-inner { display: flex; flex-direction: column; height: 100%; background:var(--s2); border:1px solid var(--bd); border-radius:var(--r); overflow:hidden; animation:fdI .3s cubic-bezier(0.16,1,0.3,1); }
+.cat-tx-inner .cat-tx-list { flex: 1; overflow-y: auto; min-height: 0; }
 .cat-tx-hdr { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--bd); background:linear-gradient(180deg,color-mix(in srgb,var(--sf) 95%,var(--s2)) 0%,var(--sf) 100%); }
 .cat-tx-hdr-info { flex:1; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .cat-tx-hdr-name { font-family:'DM Mono',monospace; font-size:13px; font-weight:600; text-transform:capitalize; color:var(--tx); display:flex; align-items:center; gap:6px; }
@@ -2208,12 +2210,12 @@ function renderCats(passedTxs){
   cats.forEach(([cat,val],i)=>{
     const pct=Math.round((val/totalExp)*100);
     const isActive=activeCatFilter===cat;
-    detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
-    if (isActive) {
-      detHtml+='<div class="cat-tx-panel cat-tx-open" id="catTxPanel"></div>';
-    }
+    detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span class="cat-tag-name">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
   });
   detHtml+='</div>';
+  if (activeCatFilter) {
+    detHtml+='<div class="cat-tx-panel cat-tx-open" id="catTxPanel"></div>';
+  }
   area.innerHTML=barHtml+detHtml;
   if(activeCatFilter) renderCatTxList(aTxs);
 }
