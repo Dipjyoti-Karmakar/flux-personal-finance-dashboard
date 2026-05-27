@@ -196,8 +196,28 @@ select option{background:var(--s2)}
 .tx-event{transition:border-left .2s ease;}
 
 /* New Category Strip Tag */
-.cat-tag { display:flex; align-items:center; gap:10px; background:var(--s2); padding:12px 16px; border-radius:var(--rs); border:1px solid var(--bd); transition:all .25s cubic-bezier(0.16, 1, 0.3, 1); cursor:default; }
+.cat-tag { display:flex; align-items:center; gap:10px; background:var(--s2); padding:12px 16px; border-radius:var(--rs); border:1px solid var(--bd); transition:all .25s cubic-bezier(0.16, 1, 0.3, 1); cursor:pointer; user-select:none; }
 .cat-tag:hover { transform:translateY(-3px); border-color:var(--bs); box-shadow:0 8px 20px rgba(0,0,0,0.12); }
+.cat-tag.cat-tag-active { border-color:var(--ac); background:var(--ag); transform:translateY(0); box-shadow:inset 0 1px 4px rgba(200,169,110,0.15); }
+.cat-tag .cat-arrow { font-size:10px; color:var(--di); transition:transform .3s ease, color .3s ease; margin-left:auto; }
+.cat-tag.cat-tag-active .cat-arrow { transform:rotate(180deg); color:var(--ac); }
+
+/* Category Drill-Down Panel */
+.cat-tx-panel { max-height:0; opacity:0; overflow:hidden; transition:max-height .4s cubic-bezier(0.16,1,0.3,1), opacity .3s ease, margin .3s ease; margin-top:0; }
+.cat-tx-panel.cat-tx-open { max-height:600px; opacity:1; margin-top:20px; overflow:visible; }
+.cat-tx-inner { background:var(--s2); border:1px solid var(--bd); border-radius:var(--r); overflow:hidden; animation:fdI .3s cubic-bezier(0.16,1,0.3,1); }
+.cat-tx-hdr { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--bd); background:linear-gradient(180deg,color-mix(in srgb,var(--sf) 95%,var(--s2)) 0%,var(--sf) 100%); }
+.cat-tx-hdr-info { flex:1; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.cat-tx-hdr-name { font-family:'DM Mono',monospace; font-size:13px; font-weight:600; text-transform:capitalize; color:var(--tx); display:flex; align-items:center; gap:6px; }
+.cat-tx-hdr-stats { display:flex; align-items:center; gap:12px; font-family:'DM Mono',monospace; font-size:12px; }
+.cat-tx-hdr-amt { font-weight:600; color:var(--ex); }
+.cat-tx-hdr-cnt { color:var(--mu); font-size:11px; }
+.cat-tx-close { background:var(--s2); border:1px solid var(--bd); color:var(--mu); cursor:pointer; font-size:16px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:8px; line-height:1; transition:all .2s ease; flex-shrink:0; }
+.cat-tx-close:hover { color:var(--ex); background:var(--eb); border-color:rgba(224,112,112,0.3); }
+.cat-tx-list { max-height:400px; overflow-y:auto; overflow-x:hidden; padding:8px 12px; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
+.cat-tx-list::-webkit-scrollbar { width:6px; }
+.cat-tx-list::-webkit-scrollbar-thumb { background:var(--s3); border-radius:6px; }
+.cat-tx-list::-webkit-scrollbar-thumb:hover { background:var(--di); }
 
 /* Trend Tooltip */
 .trend-tip {
@@ -495,6 +515,16 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .mtx-amt { font-size: 12px; }
   .mbw { margin-top: 6px; }
   .mpr { font-size: 9px; margin-top: 3px; }
+
+  /* Category Drill-Down – mobile */
+  .cat-tx-panel.cat-tx-open { max-height:500px; }
+  .cat-tx-hdr { padding:12px 14px; gap:8px; flex-wrap:wrap; }
+  .cat-tx-hdr-name { font-size:12px; }
+  .cat-tx-hdr-stats { font-size:11px; gap:8px; }
+  .cat-tx-list { max-height:320px; padding:4px 10px; }
+  .cat-tx-list .txi { padding:14px 12px; }
+  .cat-tx-list .txi:hover { transform:none; box-shadow:none; }
+  .cat-tx-close { width:34px; height:34px; font-size:18px; }
 }
 
 /* ── Insights Card ── */
@@ -1008,6 +1038,9 @@ let unsubscribeEvents = null;
 let eventsUseFallback = false;
 let trendAbort = null;
 let trendMode = 'expense'; // 'expense' | 'income' | 'both'
+let activeCatFilter = null;       // Currently selected category key or null
+let catTxVisibleCount = 20;       // Paginated count for category drill-down
+const CAT_TX_PAGE_SIZE = 20;      // Page size for category transaction list
 let _undoTimer = null;
 let _undoTxData = null;
 
@@ -1203,6 +1236,8 @@ toggles.forEach(id => {
 
 function setStatsMode(m) {
   statsMode = m;
+  activeCatFilter = null; // reset category drill-down on filter change
+  catTxVisibleCount = CAT_TX_PAGE_SIZE;
   document.getElementById('stM_month').classList.toggle('act', m === 'month');
   document.getElementById('stM_yr').classList.toggle('act', m === 'year');
   document.getElementById('stM_all').classList.toggle('act', m === 'all');
@@ -1215,7 +1250,7 @@ function setStatsMode(m) {
   renderSplit();
 }
 
-function updStatsDt() { if (statsMode === 'custom') { renderStats(); renderTrend(); renderCats(); renderSplit(); } }
+function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); renderTrend(); renderCats(); renderSplit(); } }
 function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; updStatsDt(); }
 
 function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="other">✦ Other</option>';}
@@ -2054,19 +2089,127 @@ window.addEventListener('resize', () => {
 });
 
 function renderCats(passedTxs){
-  const exp=(passedTxs || getActiveTxs()).filter(t=>t.type==='expense'),area=document.getElementById('ctArea');
-  if(!exp.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Your expense categories will appear here once you start tracking</div></div>';return;}
+  const aTxs = passedTxs || getActiveTxs();
+  const exp=aTxs.filter(t=>t.type==='expense'),area=document.getElementById('ctArea');
+  if(!exp.length){activeCatFilter=null;area.innerHTML='<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Your expense categories will appear here once you start tracking</div></div>';return;}
   const tot={};
   let totalExp=0;
   exp.forEach(t=>{tot[t.cat||'other']=(tot[t.cat||'other']||0)+t.amount;totalExp+=t.amount;});
   const cats=Object.entries(tot).sort((a,b)=>b[1]-a[1]);
+  // If the active filter no longer exists in the data, close it
+  if(activeCatFilter && !tot[activeCatFilter]) activeCatFilter=null;
   let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:24px;">';
   cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
   barHtml+='</div>';
   let detHtml='<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
-  cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);detHtml+=`<div class="cat-tag"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mu);margin-left:4px;">${fmtS(val)}</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--di);">${pct}%</span></div>`;});
+  cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);const isActive=activeCatFilter===cat;detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mu);margin-left:4px;">${fmtS(val)}</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--di);">${pct}%</span><span class="cat-arrow">▼</span></div>`;});
   detHtml+='</div>';
+  // Drill-down panel container
+  detHtml+='<div class="cat-tx-panel'+(activeCatFilter?' cat-tx-open':'')+'" id="catTxPanel"></div>';
   area.innerHTML=barHtml+detHtml;
+  if(activeCatFilter) renderCatTxList(aTxs);
+}
+
+function toggleCatFilter(cat) {
+  if (activeCatFilter === cat) {
+    activeCatFilter = null;
+  } else {
+    activeCatFilter = cat;
+    catTxVisibleCount = CAT_TX_PAGE_SIZE;
+  }
+  renderCats();
+  // Smooth scroll panel into view on mobile
+  if (activeCatFilter) {
+    setTimeout(() => {
+      const panel = document.getElementById('catTxPanel');
+      if (panel) panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    }, 100);
+  }
+}
+
+function renderCatTxList(passedTxs) {
+  const panel = document.getElementById('catTxPanel');
+  if (!panel || !activeCatFilter) return;
+  const aTxs = passedTxs || getActiveTxs();
+  const list = aTxs.filter(t => t.type === 'expense' && (t.cat || 'other') === activeCatFilter)
+    .sort((a,b) => new Date(b.date) - new Date(a.date));
+  const totalAmt = list.reduce((s,t) => s+t.amount, 0);
+  const renderList = list.slice(0, catTxVisibleCount);
+  const hasMore = list.length > catTxVisibleCount;
+  const remaining = list.length - catTxVisibleCount;
+
+  const safeColor = (c) => /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#c8a96e';
+
+  let txHtml = '';
+  if (!list.length) {
+    txHtml = '<div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🔍</div><div class="empty-title">No transactions</div><div class="empty-sub">No expense transactions in this category for the selected period</div></div>';
+  } else {
+    txHtml = renderList.map(tx => {
+      let evtBadge = '';
+      let evtBorder = '';
+      if (tx.eventId && events[tx.eventId]) {
+        const sColor = safeColor(events[tx.eventId].color);
+        evtBadge = `<span class="event-badge" style="background:${sColor}22;color:${sColor};border:1px solid ${sColor}44;">${esc(events[tx.eventId].name)}</span>`;
+        evtBorder = `border-left:3px solid ${sColor};`;
+      }
+      const safeType = (tx.type === 'income' || tx.type === 'expense') ? tx.type : 'expense';
+      const safeMode = (tx.mode === 'online' || tx.mode === 'offline') ? tx.mode : 'offline';
+      return `
+      <div class="txi-wrap" data-txid="${esc(tx.id)}">
+        <div class="txi-actions act-left"><button class="txi-act" onclick="editTx('${esc(tx.id)}')">✏️ Edit</button></div>
+        <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx('${esc(tx.id)}')">🗑 Delete</button></div>
+        <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="cat-tx-${tx.id}" style="${evtBorder}">
+        <div class="dot ${safeType}"></div>
+        <div class="ti">
+          <div class="tn">${esc(tx.desc)}</div>
+          <div class="tm">
+            <span class="bg ${safeMode==='online'?'on':'of'}">${safeMode==='online'?'⚡ online':'🏪 offline'}</span>
+            ${evtBadge}
+            ${tx._imp?'<span class="bg ip">xlsx</span>':''}
+            <span>${fmtDt(tx.date)}</span>
+          </div>
+        </div>
+        <span class="ta ${safeType}">${safeType==='income'?'+':'−'}${fmt(tx.amount)}</span>
+        <div style="display:flex;gap:4px;margin-left:8px">
+          <button class="td" onclick="editTx('${esc(tx.id)}')" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+          </button>
+          <button class="td" onclick="askDelTx('${esc(tx.id)}')" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div></div>`;
+    }).join('');
+    if (hasMore) {
+      txHtml += `<div style="text-align:center;padding:12px;"><button class="sbtn" onclick="loadMoreCatTx()" style="background:var(--s2);color:var(--ac);border:1px solid var(--ac);font-size:11px;padding:10px 16px;">▼ Load ${Math.min(CAT_TX_PAGE_SIZE, remaining)} More (${remaining} remaining)</button></div>`;
+    }
+  }
+
+  panel.innerHTML = `<div class="cat-tx-inner">
+    <div class="cat-tx-hdr">
+      <div class="cat-tx-hdr-info">
+        <span class="cat-tx-hdr-name">${CICO[activeCatFilter]||'✦'} ${activeCatFilter}</span>
+        <div class="cat-tx-hdr-stats">
+          <span class="cat-tx-hdr-amt">${fmt(totalAmt)}</span>
+          <span class="cat-tx-hdr-cnt">${list.length} transaction${list.length!==1?'s':''}</span>
+        </div>
+      </div>
+      <button class="cat-tx-close" onclick="closeCatPanel()" title="Close" aria-label="Close category transactions">×</button>
+    </div>
+    <div class="cat-tx-list" id="catTxListInner">${txHtml}</div>
+  </div>`;
+  // Attach swipe actions to the category tx list
+  attachSwipeToContainer(document.getElementById('catTxListInner'));
+}
+
+function loadMoreCatTx() {
+  catTxVisibleCount += CAT_TX_PAGE_SIZE;
+  renderCatTxList();
+}
+
+function closeCatPanel() {
+  activeCatFilter = null;
+  renderCats();
 }
 
 function renderSplit(passedTxs){
@@ -3111,6 +3254,9 @@ window.closeEventMod = closeEventMod;
 window.saveEventMod = saveEventMod;
 window.installPWA = installPWA;
 window.dismissPWA = dismissPWA;
+window.toggleCatFilter = toggleCatFilter;
+window.closeCatPanel = closeCatPanel;
+window.loadMoreCatTx = loadMoreCatTx;
 
 // ── PWA: Service Worker Registration & Install Prompt ──
 let _deferredPrompt = null;
@@ -3198,20 +3344,21 @@ function initScrollTop() {
 
 // -- Swipe-to-Action (Mobile Touch) -- panel width must match CSS .txi-actions width
 const SWIPE_ACTION_PX = 84;
-function initSwipeActions() {
-  const txList = document.getElementById('txList');
-  if (!txList || !('ontouchstart' in window)) return;
+
+// Reusable swipe-to-action attachment for any container with .txi-wrap items
+function attachSwipeToContainer(container) {
+  if (!container || !('ontouchstart' in window)) return;
   let startX, startY, currentWrap, swiping;
   const THRESHOLD = 50;
   function resetAll(except) {
-    document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
+    container.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
       if (w === except) return;
       w.classList.remove('swiped-left','swiped-right','swiping');
       const inner = w.querySelector('.txi');
       if (inner) inner.style.transform = '';
     });
   }
-  txList.addEventListener('touchstart', (e) => {
+  container.addEventListener('touchstart', (e) => {
     const wrap = e.target.closest('.txi-wrap');
     if (!wrap) return;
     resetAll(wrap);
@@ -3220,7 +3367,7 @@ function initSwipeActions() {
     currentWrap = wrap;
     swiping = false;
   }, { passive: true });
-  txList.addEventListener('touchmove', (e) => {
+  container.addEventListener('touchmove', (e) => {
     if (!currentWrap) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
@@ -3233,13 +3380,11 @@ function initSwipeActions() {
     const inner = currentWrap.querySelector('.txi');
     if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
   }, { passive: false });
-  txList.addEventListener('touchend', () => {
+  container.addEventListener('touchend', () => {
     if (!currentWrap) return;
     currentWrap.classList.remove('swiping');
     const inner = currentWrap.querySelector('.txi');
     if (!inner) { currentWrap = null; return; }
-    // FIXED: Use a targeted translateX() parse instead of a bare number regex
-    // that could accidentally match an unrelated numeric value in the transform string.
     const tmatch = inner.style.transform.match(/translateX\((-?[\d.]+)px\)/);
     const dx = tmatch ? parseFloat(tmatch[1]) : 0;
     if (dx < -THRESHOLD) {
@@ -3256,8 +3401,21 @@ function initSwipeActions() {
     }
     currentWrap = null;
   }, { passive: true });
+}
+
+function initSwipeActions() {
+  if (!('ontouchstart' in window)) return;
+  const txList = document.getElementById('txList');
+  if (txList) attachSwipeToContainer(txList);
+  // Global reset when tapping outside any swipe wrap
   document.addEventListener('touchstart', (e) => {
-    if (!e.target.closest('.txi-wrap')) resetAll();
+    if (!e.target.closest('.txi-wrap')) {
+      document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
+        w.classList.remove('swiped-left','swiped-right','swiping');
+        const inner = w.querySelector('.txi');
+        if (inner) inner.style.transform = '';
+      });
+    }
   }, { passive: true });
 }
 
