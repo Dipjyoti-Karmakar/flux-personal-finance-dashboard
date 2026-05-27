@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V25: Bumped to v13 to fix By Category height and amount alignment
-const CACHE_NAME = 'flux-v13';
+// V26: Bumped to v14 to deploy responsive category fixes
+const CACHE_NAME = 'flux-v14';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',

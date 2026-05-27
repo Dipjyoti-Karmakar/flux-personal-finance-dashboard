@@ -101,14 +101,11 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 /* Transactions & Special Events – same fixed height, internal scroll */
 .mg > .pn-fixed { display:flex; flex-direction:column; overflow:hidden; }
 .mg > .pn-fixed .txl { flex:1; min-height:0; overflow-y:auto; }
-/* Transactions card drives the height */
-#txPanel, #catAreaWrap { max-height: 620px; }
-/* Events card follows Transactions height via grid stretch, scrolls internally */
-#eventArea { height: 100%; }
-#eventArea .ca { flex:1; min-height:0; overflow:hidden; }
-#eventList { overflow-y:auto; min-height:0; height:100%; max-height:none; padding-right:4px; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
-#eventList::-webkit-scrollbar{width:4px}
-#eventList::-webkit-scrollbar-thumb{background:var(--s3);border-radius:4px}
+/* Transactions & By Category fixed height */
+#txPanel, #catAreaWrap { height: 620px; max-height: 620px; }
+.cat-tag-list { display: flex; flex-direction: column; gap: 8px; justify-content: flex-start; }
+.cat-tag-amt { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; color: var(--mu); margin-left: auto; text-align: right; min-width: 60px; }
+.cat-tag-pct { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; color: var(--di); text-align: right; min-width: 32px; margin-left: 4px; }
 
 .pn{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;min-width:0;display:flex;flex-direction:column;height:100%;transition:box-shadow .4s ease, border-color .4s ease;box-shadow:var(--sh-card)}
 .pn:hover{border-color:var(--bs); box-shadow:var(--sh-hov);}
@@ -384,6 +381,11 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 @media(max-width:960px){
   .app{padding:24px 20px;}
   .mg{grid-template-columns: minmax(0, 1fr);}
+  #txPanel { height: auto; max-height: 620px; }
+  #catAreaWrap { height: auto; max-height: none; }
+  #catAreaWrap .ca { flex: unset; overflow-y: visible; }
+  .cat-tag-list { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .cat-tag-amt, .cat-tag-pct { min-width: auto; }
   .sr1{grid-template-columns:repeat(3,1fr)}
   .sr2{grid-template-columns:repeat(2,1fr)}
   .cw{flex-direction:column}
@@ -2199,8 +2201,8 @@ function renderCats(passedTxs){
   let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:24px;">';
   cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
   barHtml+='</div>';
-  let detHtml='<div style="display:flex;flex-direction:column;gap:8px;justify-content:flex-start;">';
-  cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);const isActive=activeCatFilter===cat;detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mu);margin-left:auto;">${fmtS(val)}</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--di);">${pct}%</span><span class="cat-arrow">▼</span></div>`;});
+  let detHtml='<div class="cat-tag-list">';
+  cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);const isActive=activeCatFilter===cat;detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;});
   detHtml+='</div>';
   // Drill-down panel container
   detHtml+='<div class="cat-tx-panel'+(activeCatFilter?' cat-tx-open':'')+'" id="catTxPanel"></div>';
