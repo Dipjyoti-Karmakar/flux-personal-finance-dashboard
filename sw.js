@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V20: Bumped to v8 to deploy savings rate in transaction totals bar
-const CACHE_NAME = 'flux-v8';
+// V21: Bumped to v9 to deploy premium category styling and stationery category
+const CACHE_NAME = 'flux-v9';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',

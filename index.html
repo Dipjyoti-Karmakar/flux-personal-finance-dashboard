@@ -649,6 +649,30 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .ac-list.vis{display:block;}
 .ac-item{padding:8px 12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;color:var(--tx);transition:background .15s;}
 .ac-item:hover,.ac-item.sel{background:var(--s2);color:var(--ac);}
+
+/* -- Premium Category Badges -- */
+.bg.ct {
+  position: relative; overflow: hidden; border: none; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15); font-weight: 700;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.bg.ct:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.25); }
+.bg.ct::before {
+  content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%); pointer-events: none;
+}
+.bg.ct[data-cat="food"] { background: linear-gradient(135deg, #FF7E5F, #FEB47B); }
+.bg.ct[data-cat="transport"] { background: linear-gradient(135deg, #654ea3, #eaafc8); }
+.bg.ct[data-cat="housing"] { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0d0f14; text-shadow: none; }
+.bg.ct[data-cat="entertainment"] { background: linear-gradient(135deg, #f83600, #f9d423); }
+.bg.ct[data-cat="health"] { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.bg.ct[data-cat="shopping"] { background: linear-gradient(135deg, #ff0844, #ffb199); }
+.bg.ct[data-cat="utilities"] { background: linear-gradient(135deg, #f6d365, #fda085); color: #0d0f14; text-shadow: none; }
+.bg.ct[data-cat="occasions"] { background: linear-gradient(135deg, #d4fc79, #96e6a1); color: #0d0f14; text-shadow: none; }
+.bg.ct[data-cat="salary"] { background: linear-gradient(135deg, #5EE7DF, #B490CA); }
+.bg.ct[data-cat="freelance"] { background: linear-gradient(135deg, #30cfd0, #330867); }
+.bg.ct[data-cat="investment"] { background: linear-gradient(135deg, #b224ef, #7579ff); }
+.bg.ct[data-cat="stationery"] { background: linear-gradient(135deg, #FFE000, #799F0C); color: #0d0f14; text-shadow: none; }
+.bg.ct[data-cat="other"], .bg.ct:not([data-cat]) { background: linear-gradient(135deg, #89f7fe, #66a6ff); color: #0d0f14; text-shadow: none; }
 </style>
 </head>
 <body>
@@ -1006,7 +1030,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',other:'✦'};
+const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
 const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8','#c8c36e','#6e8dc8','#c86e6e','#7ac86e'];
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1262,7 +1286,7 @@ function setStatsMode(m) {
 function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); renderTrend(); renderCats(); renderSplit(); } }
 function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; updStatsDt(); }
 
-function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="other">✦ Other</option>';}
+function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✦ Other</option>';}
 function setMode(m){cMode=m;document.getElementById('bOnl').className='tb'+(m==='online'?' ao':'');document.getElementById('bOfl').className='tb'+(m==='offline'?' af':'');}
 
 function setDt(filterVal, btn) {
@@ -1717,7 +1741,7 @@ function renderTxList(){
       <div class="ti">
         <div class="tn">${esc(tx.desc)}</div>
         <div class="tm">
-          <span class="bg ct">${CICO[tx.cat]||'✦'} ${tx.cat||'other'}</span>
+          <span class="bg ct" data-cat="${tx.cat||'other'}">${CICO[tx.cat]||'✦'} ${tx.cat||'other'}</span>
           <span class="bg ${safeMode==='online'?'on':'of'}">${safeMode==='online'?'⚡ online':'🏪 offline'}</span>
           ${evtBadge}
           ${tx._imp?'<span class="bg ip">xlsx</span>':''}
@@ -1801,7 +1825,7 @@ function updECat(type) {
   const el = document.getElementById('eCat');
   el.innerHTML = type === 'income' ? 
     '<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>' : 
-    '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="other">✦ Other</option>';
+    '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✦ Other</option>';
 }
 
 function editTx(id) {
@@ -2431,7 +2455,7 @@ function renderInsights() {
   if (curCatEntries.length > 0) {
     const [topCat, topAmt] = curCatEntries[0];
     const pct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 0;
-    insights.push({ icon: CICO[topCat] || '✦', text: `Top expense: <strong>${topCat.charAt(0).toUpperCase() + topCat.slice(1)}</strong> at <strong>${fmtS(topAmt)}</strong> (${pct}% of total spending)` });
+    insights.push({ icon: CICO[topCat] || '✦', text: `Top expense: <strong class="bg ct" data-cat="${topCat}">${topCat.charAt(0).toUpperCase() + topCat.slice(1)}</strong> at <strong>${fmtS(topAmt)}</strong> (${pct}% of total spending)` });
   }
 
   // ── 8. Per-category biggest swing ──
