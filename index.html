@@ -2599,6 +2599,7 @@ function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
   const tot=mE.reduce((s,t)=>s+t.amount,0),cnt=mE.length;
   const mInc=mI.reduce((s,t)=>s+t.amount,0);
   const mNet=mInc-tot;
+  const mSavRate=mInc>0?Math.round((mNet/mInc)*100):null;
   const days=new Set(mE.map(t=>t.date)).size;
   // Calculate true average daily spend over elapsed days in this month
   const dim=new Date(yr,m+1,0).getDate();
@@ -2615,6 +2616,7 @@ function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
   const netClr=mNet>=0?'var(--in)':'var(--ex)';
   const incRow=mInc>0?`<div class="ms"><span class="msl">Income</span><span class="msv h" style="color:var(--in)">${fmtS(mInc)}</span></div>`:'';
   const netRow=mInc>0||tot>0?`<div class="ms"><span class="msl">Net</span><span class="msv" style="color:${netClr}">${mNet>0?'+':mNet<0?'−':''}${fmtS(Math.abs(mNet))}</span></div>`:'';
+  const savRateRow=mSavRate!==null?`<div class="ms"><span class="msl">Savings Rate</span><span class="msv h" style="color:${mSavRate>=0?'var(--in)':'var(--ex)'}">${mSavRate}%</span></div>`:'';
 
   return `<div class="mc${isCur?' cm2':isFut?' ft':''}" onclick="if(!${isFut}) lazyLoadMonthTxs(this, ${yr}, ${m})">
     <div class="mct"><span class="mcn">${MF[m]} ${isCur ? '<span class="now-badge">● NOW</span>' : ''}</span><span class="mcv">${tot>0?fmt(tot):'—'}</span></div>
@@ -2623,7 +2625,7 @@ function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
       <div class="ms"><span class="msl">Active Days</span><span class="msv${days>0?' h':''}">${days}/${dim}</span></div>
       <div class="ms"><span class="msl">Avg/Day</span><span class="msv${avg>0?' h':''}">${avg>0?fmtS(avg):'—'}</span></div>
       <div class="ms"><span class="msl">% of Year</span><span class="msv${ys2>0?' h':''}">${ys2>0?ys2+'%':'—'}</span></div>
-      ${incRow}${netRow}
+      ${incRow}${netRow}${savRateRow}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:${isCur?'6px':'0'}">
       <div class="ms"><span class="msl">⚡ Online</span><span class="msv" style="color:var(--on)">${onl>0?fmtS(onl):'—'}</span></div>
