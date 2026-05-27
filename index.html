@@ -101,7 +101,8 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 /* Transactions & Special Events – same fixed height, internal scroll */
 .mg > .pn-fixed { display:flex; flex-direction:column; overflow:hidden; }
 .mg > .pn-fixed .txl { flex:1; min-height:0; overflow-y:auto; }
-#txPanel, #catAreaWrap { max-height: 620px; }
+#txPanel { max-height: 620px; }
+#catAreaWrap { max-height: 620px; height: auto; }
 #catAreaWrap .ca { display: flex; flex-direction: column; overflow: hidden; padding: 12px 16px; flex: 1; min-height: 0; }
 .cat-tag-list { display: flex; flex-wrap: wrap; flex-direction: row; gap: 8px; justify-content: flex-start; }
 .cat-tag-list.is-extended .cat-tag { width: calc(50% - 4px); }
@@ -207,7 +208,7 @@ select option{background:var(--s2)}
 
 /* Category Drill-Down Panel */
 .cat-tx-panel { flex-grow: 0; min-height: 0; opacity: 0; overflow: hidden; transition: flex-grow .4s cubic-bezier(0.16,1,0.3,1), opacity .3s ease, margin .3s ease; margin-top: 0; display: flex; flex-direction: column; }
-.cat-tx-panel.cat-tx-open { flex-grow: 1; opacity: 1; margin-top: 20px; }
+.cat-tx-panel.cat-tx-open { flex-grow: 1; opacity: 1; margin-top: 10px; }
 .cat-tx-inner { display: flex; flex-direction: column; height: 100%; background:var(--s2); border:1px solid var(--bd); border-radius:var(--r); overflow:hidden; animation:fdI .3s cubic-bezier(0.16,1,0.3,1); }
 .cat-tx-inner .cat-tx-list { flex: 1; overflow-y: auto; min-height: 0; }
 .cat-tx-hdr { display:flex; align-items:center; gap:12px; padding:14px 18px; border-bottom:1px solid var(--bd); background:linear-gradient(180deg,color-mix(in srgb,var(--sf) 95%,var(--s2)) 0%,var(--sf) 100%); }
@@ -2203,7 +2204,7 @@ function renderCats(passedTxs){
   const cats=Object.entries(tot).sort((a,b)=>b[1]-a[1]);
   // If the active filter no longer exists in the data, close it
   if(activeCatFilter && !tot[activeCatFilter]) activeCatFilter=null;
-  let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:24px;">';
+  let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:12px;">';
   cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
   barHtml+='</div>';
   let detHtml=`<div class="cat-tag-list${activeCatFilter?' is-extended':''}">`;

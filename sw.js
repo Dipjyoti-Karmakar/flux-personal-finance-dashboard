@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V30: Bumped to v18 to implement master-detail layout and truncate category names
-const CACHE_NAME = 'flux-v18';
+// V31: Bumped to v19 to fix excessive vertical margins and awkward stretching
+const CACHE_NAME = 'flux-v19';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
