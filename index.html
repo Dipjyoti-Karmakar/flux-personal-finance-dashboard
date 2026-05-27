@@ -103,7 +103,9 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .mg > .pn-fixed .txl { flex:1; min-height:0; overflow-y:auto; }
 /* Transactions & By Category fixed max height */
 #txPanel, #catAreaWrap { max-height: 620px; }
-.cat-tag-list { display: flex; flex-direction: column; gap: 8px; justify-content: flex-start; }
+.cat-tag-list { display: flex; flex-wrap: wrap; flex-direction: row; gap: 8px; justify-content: flex-start; }
+.cat-tag-list.is-extended .cat-tag { width: calc(50% - 4px); }
+.cat-tag-list.is-extended .cat-tag:last-child:nth-child(odd) { width: 100%; }
 .cat-tag-amt { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; color: var(--mu); margin-left: auto; text-align: right; min-width: 60px; }
 .cat-tag-pct { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; color: var(--di); text-align: right; min-width: 32px; margin-left: 4px; }
 
@@ -196,7 +198,7 @@ select option{background:var(--s2)}
 .tx-event{transition:border-left .2s ease;}
 
 /* New Category Strip Tag */
-.cat-tag { display:flex; align-items:center; gap:10px; background:var(--s2); padding:12px 16px; border-radius:var(--rs); border:1px solid var(--bd); transition:all .25s cubic-bezier(0.16, 1, 0.3, 1); cursor:pointer; user-select:none; }
+.cat-tag { display:flex; align-items:center; gap:10px; background:var(--s2); padding:12px 16px; border-radius:var(--rs); border:1px solid var(--bd); transition:all .25s cubic-bezier(0.16, 1, 0.3, 1), width .3s ease; cursor:pointer; user-select:none; width: 100%; box-sizing: border-box; }
 .cat-tag:hover { transform:translateY(-3px); border-color:var(--bs); box-shadow:0 8px 20px rgba(0,0,0,0.12); }
 .cat-tag.cat-tag-active { border-color:var(--ac); background:var(--ag); transform:translateY(0); box-shadow:inset 0 1px 4px rgba(200,169,110,0.15); }
 .cat-tag .cat-arrow { font-size:10px; color:var(--di); transition:transform .3s ease, color .3s ease; margin-left:8px; }
@@ -385,6 +387,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   #catAreaWrap { height: auto; max-height: none; }
   #catAreaWrap .ca { flex: unset; overflow-y: visible; }
   .cat-tag-list { flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .cat-tag { width: auto !important; }
   .cat-tag-amt, .cat-tag-pct { min-width: auto; }
   .sr1{grid-template-columns:repeat(3,1fr)}
   .sr2{grid-template-columns:repeat(2,1fr)}
@@ -2201,7 +2204,7 @@ function renderCats(passedTxs){
   let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:24px;">';
   cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
   barHtml+='</div>';
-  let detHtml='<div class="cat-tag-list">';
+  let detHtml=`<div class="cat-tag-list${activeCatFilter?' is-extended':''}">`;
   cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);const isActive=activeCatFilter===cat;detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;});
   detHtml+='</div>';
   // Drill-down panel container
