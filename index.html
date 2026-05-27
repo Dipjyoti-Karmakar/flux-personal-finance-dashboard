@@ -1068,6 +1068,18 @@ const provider = new GoogleAuthProvider();
 document.addEventListener('DOMContentLoaded', () => {
   apTheme(theme);
   document.getElementById('txDt').valueAsDate=new Date();
+  
+  // Auto-rollover date at midnight if left on "today"
+  let _lastToday = new Date().toISOString().slice(0, 10);
+  setInterval(() => {
+    const _now = new Date().toISOString().slice(0, 10);
+    if (_now !== _lastToday) {
+      const dtEl = document.getElementById('txDt');
+      if (dtEl && dtEl.value === _lastToday) dtEl.valueAsDate = new Date();
+      _lastToday = _now;
+    }
+  }, 60000);
+
   render();
   initScrollTop();
   initSwipeActions();
