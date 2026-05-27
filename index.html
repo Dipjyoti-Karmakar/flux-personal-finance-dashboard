@@ -277,7 +277,7 @@ select option{background:var(--s2)}
 .yspk{display:flex;align-items:flex-end;gap:3px;height:32px;margin-left:auto}
 .spk{width:10px;border-radius:3px 3px 0 0;background:var(--eb);border:1px solid rgba(224,112,112,0.2);transition:background .2s, transform .2s;position:relative;cursor:default}
 .spk:hover{background:var(--ex);transform:scaleY(1.1);transform-origin:bottom;}
-.spk.cm{background:rgba(224,112,112,0.5);border-color:var(--ex)}
+.spk.cm{background:rgba(224,112,112,0.45);border-color:var(--ex);opacity:0.7;border-top:2px dashed rgba(224,112,112,0.85);}
 .spk::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--s3);border:1px solid var(--bs);color:var(--tx);font-family:'DM Mono',monospace;font-size:10px;padding:4px 8px;border-radius:6px;white-space:nowrap;pointer-events:none;z-index:10;display:none;box-shadow:0 6px 16px rgba(0,0,0,0.2)}
 .spk:hover::after{display:block;animation:fdI .15s ease-out;}
 .mng{display:none;padding:0 20px 20px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
@@ -1716,8 +1716,8 @@ function renderTxList(){
   
   el.innerHTML = html;
 
-  // Highlight newly added transaction
-  if (window._highlightTxId) {
+  // Highlight newly added transaction — skip if edit modal is open (would cause visual overlap)
+  if (window._highlightTxId && !document.getElementById('editMod').classList.contains('op')) {
     const hEl = document.getElementById('tx-' + window._highlightTxId);
     if (hEl) hEl.classList.add('tx-new');
     window._highlightTxId = null;
@@ -1735,7 +1735,8 @@ function editTx(id) {
   const tx = txs.find(t => t.id === id);
   if(!tx) return;
   editingTxId = id;
-  
+  window._highlightTxId = null; // clear any pending new-tx highlight to avoid visual overlap
+
   document.getElementById('eTy').value = tx.type;
   updECat(tx.type); 
   document.getElementById('eCat').value = tx.cat;
@@ -2228,15 +2229,14 @@ function renderInsights() {
   if (!area) return;
 
   const now = new Date();
-  const cY = now.getFullYear(), cM = now.getMonth();
-  // Current month prefix
+  const cY = now.getFullYear(), cM = now.getMonth(), cD = now.getDate();
   const curPrefix = `${cY}-${String(cM + 1).padStart(2, '0')}`;
-  // Previous month prefix
   const pDate = new Date(cY, cM - 1, 1);
   const pY = pDate.getFullYear(), pM = pDate.getMonth();
   const prevPrefix = `${pY}-${String(pM + 1).padStart(2, '0')}`;
+  const daysInMonth = new Date(cY, cM + 1, 0).getDate();
 
-  if (periodEl) periodEl.textContent = `${MN[cM]} vs ${MN[pM]}`;
+  if (periodEl) periodEl.textContent = `${MF[cM]} ${cY}`;
 
   const curTxs = txs.filter(t => t.date.startsWith(curPrefix));
   const prevTxs = txs.filter(t => t.date.startsWith(prevPrefix));
@@ -2248,12 +2248,20 @@ function renderInsights() {
 
   const insights = [];
 
-  // I4 FIX: Single-pass accumulator instead of 4 separate filter+reduce passes
+  // Single-pass accumulator
   let curInc = 0, curExp = 0, prevInc = 0, prevExp = 0;
-  const curCats = {}, prevCats = {};
+  const curCats = {}, prevCats = {}, curDayExp = {};
+  const curExpDays = new Set();
+
   curTxs.forEach(t => {
     if (t.type === 'income') curInc += t.amount;
-    else { curExp += t.amount; const c = t.cat || 'other'; curCats[c] = (curCats[c] || 0) + t.amount; }
+    else {
+      curExp += t.amount;
+      const c = t.cat || 'other';
+      curCats[c] = (curCats[c] || 0) + t.amount;
+      curDayExp[t.date] = (curDayExp[t.date] || 0) + t.amount;
+      curExpDays.add(t.date);
+    }
   });
   prevTxs.forEach(t => {
     if (t.type === 'income') prevInc += t.amount;
@@ -2262,7 +2270,34 @@ function renderInsights() {
   const curSav = curInc - curExp;
   const prevSav = prevInc - prevExp;
 
-  // 1. Savings comparison
+  // ── 1. Budget pacing (current month only) ──
+  if (cD > 2 && curExp > 0) {
+    const projected = Math.round((curExp / cD) * daysInMonth);
+    if (prevExp > 0) {
+      const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
+      if (overPct >= 10) {
+        insights.push({ icon: '⚠️', text: `At your current pace, you'll spend <strong>${fmtS(projected)}</strong> by month-end — <span class="up">${overPct}% over</span> last month's ${fmtS(prevExp)}` });
+      } else if (overPct <= -10) {
+        insights.push({ icon: '🎯', text: `On track to spend <strong>${fmtS(projected)}</strong> by month-end — <span class="down">${Math.abs(overPct)}% under</span> last month's ${fmtS(prevExp)}` });
+      }
+    } else {
+      insights.push({ icon: '📐', text: `Projected spend by month-end: <strong>${fmtS(projected)}</strong> (based on ${cD} days so far)` });
+    }
+  }
+
+  // ── 2. Savings rate ──
+  if (curInc > 0) {
+    const savRate = Math.round((curSav / curInc) * 100);
+    if (savRate >= 20) {
+      insights.push({ icon: '🏆', text: `Excellent! You're saving <strong><span class="down">${savRate}%</span></strong> of your income this month` });
+    } else if (savRate > 0) {
+      insights.push({ icon: '💵', text: `You're saving <strong>${savRate}%</strong> of income this month (${fmtS(curSav)})` });
+    } else if (savRate < 0) {
+      insights.push({ icon: '🔴', text: `You're spending <strong><span class="up">${fmtS(Math.abs(curSav))}</span></strong> more than your income this month` });
+    }
+  }
+
+  // ── 3. Savings comparison vs last month ──
   if (prevTxs.length > 0) {
     const savDiff = curSav - prevSav;
     if (Math.abs(savDiff) > 0) {
@@ -2274,7 +2309,7 @@ function renderInsights() {
     }
   }
 
-  // 2. Total expense comparison
+  // ── 4. Total expense comparison ──
   if (prevExp > 0) {
     const expPctChange = ((curExp - prevExp) / prevExp) * 100;
     if (Math.abs(expPctChange) >= 5) {
@@ -2286,14 +2321,42 @@ function renderInsights() {
     }
   }
 
-  // 3. Top expense category this month
+  // ── 5. Biggest spending day ──
+  const dayEntries = Object.entries(curDayExp).sort((a, b) => b[1] - a[1]);
+  if (dayEntries.length > 0) {
+    const [topDay, topDayAmt] = dayEntries[0];
+    const topDayFmt = fmtDt(topDay);
+    insights.push({ icon: '📅', text: `Your biggest spending day was <strong>${topDayFmt}</strong> — <strong>${fmtS(topDayAmt)}</strong> spent` });
+  }
+
+  // ── 6. Spending frequency ──
+  if (cD > 0 && curExpDays.size > 0) {
+    const daysSinceLastExp = (() => {
+      const todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+      const expDaysSorted = [...curExpDays].sort().reverse();
+      if (!expDaysSorted.length) return null;
+      const last = new Date(expDaysSorted[0] + 'T00:00:00');
+      const today = new Date(todayISO + 'T00:00:00');
+      return Math.floor((today - last) / 86400000);
+    })();
+    if (daysSinceLastExp !== null && daysSinceLastExp >= 2) {
+      insights.push({ icon: '😴', text: `No expenses for <strong>${daysSinceLastExp} days</strong> — great restraint!` });
+    } else if (curExpDays.size >= Math.min(cD, 7) && cD >= 7) {
+      insights.push({ icon: '🔁', text: `You've spent on <strong>${curExpDays.size} of ${cD} days</strong> this month — daily spending pattern detected` });
+    } else if (curExpDays.size > 0) {
+      insights.push({ icon: '📆', text: `Active on <strong>${curExpDays.size} days</strong> this month with expenses` });
+    }
+  }
+
+  // ── 7. Top expense category ──
   const curCatEntries = Object.entries(curCats).sort((a, b) => b[1] - a[1]);
   if (curCatEntries.length > 0) {
     const [topCat, topAmt] = curCatEntries[0];
-    insights.push({ icon: CICO[topCat] || '✦', text: `Your top expense this month: <strong>${topCat.charAt(0).toUpperCase() + topCat.slice(1)}</strong> (${fmtS(topAmt)})` });
+    const pct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 0;
+    insights.push({ icon: CICO[topCat] || '✦', text: `Top expense: <strong>${topCat.charAt(0).toUpperCase() + topCat.slice(1)}</strong> at <strong>${fmtS(topAmt)}</strong> (${pct}% of total spending)` });
   }
 
-  // 4. Per-category comparison - find biggest change
+  // ── 8. Per-category biggest swing ──
   if (prevTxs.length > 0) {
     const allCats = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
     let biggestCat = null, biggestPct = 0, biggestDir = '';
@@ -2303,15 +2366,8 @@ function renderInsights() {
       if (prev > 0) {
         const pct = ((cur - prev) / prev) * 100;
         if (Math.abs(pct) > Math.abs(biggestPct) && Math.abs(pct) >= 10) {
-          biggestPct = pct;
-          biggestCat = cat;
-          biggestDir = pct > 0 ? 'up' : 'down';
+          biggestPct = pct; biggestCat = cat; biggestDir = pct > 0 ? 'up' : 'down';
         }
-      } else if (cur > 0 && biggestCat === null) {
-        // New category this month - only highlight if no existing category swing found
-        biggestPct = 100;
-        biggestCat = cat;
-        biggestDir = 'up';
       }
     });
     if (biggestCat) {
@@ -2321,7 +2377,16 @@ function renderInsights() {
     }
   }
 
-  // 5. Count categories that exceeded last month
+  // ── 9. New category this month ──
+  if (prevTxs.length > 0) {
+    const newCats = Object.keys(curCats).filter(c => !prevCats[c]);
+    if (newCats.length > 0) {
+      const nc = newCats[0];
+      insights.push({ icon: '🆕', text: `New spending category this month: <strong>${nc.charAt(0).toUpperCase() + nc.slice(1)}</strong> (${fmtS(curCats[nc])})` });
+    }
+  }
+
+  // ── 10. Categories that exceeded last month ──
   if (prevTxs.length > 0) {
     let exceeded = 0;
     Object.keys(curCats).forEach(cat => {
@@ -2332,21 +2397,33 @@ function renderInsights() {
     }
   }
 
-  // 6. Income comparison
+  // ── 11. Transaction count comparison ──
+  if (prevTxs.length > 0) {
+    const diff = curTxs.length - prevTxs.length;
+    if (Math.abs(diff) >= 3) {
+      if (diff > 0) {
+        insights.push({ icon: '🧾', text: `<strong>${diff} more transactions</strong> than last month (${curTxs.length} vs ${prevTxs.length})` });
+      } else {
+        insights.push({ icon: '🧾', text: `<strong>${Math.abs(diff)} fewer transactions</strong> than last month (${curTxs.length} vs ${prevTxs.length})` });
+      }
+    }
+  }
+
+  // ── 12. Income comparison ──
   if (prevInc > 0) {
     const incPctChange = ((curInc - prevInc) / prevInc) * 100;
     if (Math.abs(incPctChange) >= 5) {
       if (incPctChange > 0) {
-        insights.push({ icon: '📈', text: `Income is <span class="down">up ${Math.round(Math.abs(incPctChange))}%</span> vs last month` });
+        insights.push({ icon: '📈', text: `Income is <span class="down">up ${Math.round(Math.abs(incPctChange))}%</span> vs last month (<strong>${fmtS(curInc)}</strong> vs ${fmtS(prevInc)})` });
       } else {
-        insights.push({ icon: '📉', text: `Income is <span class="up">down ${Math.round(Math.abs(incPctChange))}%</span> vs last month` });
+        insights.push({ icon: '📉', text: `Income is <span class="up">down ${Math.round(Math.abs(incPctChange))}%</span> vs last month (<strong>${fmtS(curInc)}</strong> vs ${fmtS(prevInc)})` });
       }
     }
   }
 
   if (!insights.length) {
     if (!prevTxs.length && curTxs.length) {
-      area.innerHTML = '<div class="insight-empty">No previous month data to compare - insights will appear next month</div>';
+      area.innerHTML = '<div class="insight-empty">No previous month data to compare — insights will appear next month</div>';
     } else {
       area.innerHTML = '<div class="insight-empty">Spending is roughly the same as last month</div>';
     }
@@ -2355,6 +2432,7 @@ function renderInsights() {
 
   area.innerHTML = insights.map(i => `<div class="insight-item"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
 }
+
 
 function renderYearly(){
   const area=document.getElementById('yrArea');
@@ -2378,16 +2456,16 @@ function renderYearly(){
 
 function mkYrBlock(yr,yrMonths,todayISO,cY,cM,cD){
   const isCur=yr===cY;
-  // I1 FIX: Use pre-computed month index instead of filtering all txs with new Date()
   const yrTxs = Object.values(yrMonths).flat();
   const yrExp=yrTxs.filter(t=>t.type==='expense');
   const yrInc=yrTxs.filter(t=>t.type==='income');
   const yrTot=yrExp.reduce((s,t)=>s+t.amount,0);
   const yrTotInc=yrInc.reduce((s,t)=>s+t.amount,0);
+  const yrNet=yrTotInc-yrTot;
+  const yrSavRate=yrTotInc>0?Math.round((yrNet/yrTotInc)*100):null;
   const yrD=new Set(yrExp.map(t=>t.date)).size,yrAvg=yrD>0?yrTot/yrD:0;
   const yrO=yrExp.filter(t=>t.mode==='online').reduce((s,t)=>s+t.amount,0);
   const yrF=yrExp.filter(t=>t.mode!=='online').reduce((s,t)=>s+t.amount,0);
-  // Use pre-computed month buckets for sparkline totals
   const mT=Array.from({length:12},(_,m)=>{
     const mExp=(yrMonths[m]||[]).filter(t=>t.type==='expense');
     return mExp.reduce((s,t)=>s+t.amount,0);
@@ -2395,14 +2473,20 @@ function mkYrBlock(yr,yrMonths,todayISO,cY,cM,cD){
   const mMax=Math.max(...mT,1),lastM=isCur?cM:11;
   const sparks=mT.slice(0,lastM+1).map((v,m)=>{const h=Math.max(3,Math.round((v/mMax)*28));return `<div class="spk${isCur&&m===cM?' cm':''}" style="height:${h}px" data-tip="${MN[m]}: ${fmtS(v)}"></div>`;}).join('');
   const mnHTML=Array.from({length:12},(_,m)=>mkMnCard(m,yr,yrMonths,isCur,cM,cD,todayISO,mMax,yrTot)).join('');
-  return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}<div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
+  const netClr=yrNet>=0?'var(--in)':'var(--ex)';
+  const netSign=yrNet>=0?'+':'';
+  const savRateHtml=yrSavRate!==null?`<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate>=0?'var(--in)':'var(--ex)'}">${yrSavRate}%</span></div>`:'';
+  return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}<div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${netSign}${fmt(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
 }
 
 function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
   const isCur=isCurYr&&m===cM,isFut=isCurYr&&m>cM;
-  // I1 FIX: Use pre-computed month bucket
-  const mE=(yrMonths[m]||[]).filter(t=>t.type==='expense');
+  const mAll=(yrMonths[m]||[]);
+  const mE=mAll.filter(t=>t.type==='expense');
+  const mI=mAll.filter(t=>t.type==='income');
   const tot=mE.reduce((s,t)=>s+t.amount,0),cnt=mE.length;
+  const mInc=mI.reduce((s,t)=>s+t.amount,0);
+  const mNet=mInc-tot;
   const days=new Set(mE.map(t=>t.date)).size,avg=days>0?tot/days:0;
   const onl=mE.filter(t=>t.mode==='online').reduce((s,t)=>s+t.amount,0);
   const ofl=mE.filter(t=>t.mode!=='online').reduce((s,t)=>s+t.amount,0);
@@ -2411,19 +2495,20 @@ function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
   const bp=mMax>0?Math.round((tot/mMax)*100):0;
   const ys2=yrTot>0?Math.round(tot/yrTot*100):0;
   let tdHTML='';
-  
   if(isCur){const tdS=mE.filter(t=>t.date===todayISO).reduce((s,t)=>s+t.amount,0),tdC=mE.filter(t=>t.date===todayISO).length;tdHTML=`<div class="tdc"><span class="tdcl">Today, ${cD} ${MN[m]}</span><span class="tdcv">${fmt(tdS)} <span style="font-size:10px;opacity:.7">${tdC} tx</span></span></div>`;}
-  
-  // Count all txs for this month (not just expenses) for the hint line
-  const mTxCount = (yrMonths[m]||[]).length;
+  const mTxCount = mAll.length;
+  const netClr=mNet>=0?'var(--in)':'var(--ex)';
+  const incRow=mInc>0?`<div class="ms"><span class="msl">Income</span><span class="msv h" style="color:var(--in)">${fmtS(mInc)}</span></div>`:'';
+  const netRow=mInc>0||tot>0?`<div class="ms"><span class="msl">Net</span><span class="msv" style="color:${netClr}">${mNet>=0?'+':''}${fmtS(Math.abs(mNet))}</span></div>`:'';
 
   return `<div class="mc${isCur?' cm2':isFut?' ft':''}" onclick="if(!${isFut}) lazyLoadMonthTxs(this, ${yr}, ${m})">
     <div class="mct"><span class="mcn">${MF[m]} ${isCur ? '<span class="now-badge">● NOW</span>' : ''}</span><span class="mcv">${tot>0?fmt(tot):'—'}</span></div>
     <div class="mcs">
-      <div class="ms"><span class="msl">Transactions</span><span class="msv${cnt>0?' h':''}">${cnt}</span></div>
+      <div class="ms"><span class="msl">Transactions</span><span class="msv${cnt>0?' h':''}">${mTxCount}</span></div>
       <div class="ms"><span class="msl">Active Days</span><span class="msv${days>0?' h':''}">${days}/${dim}</span></div>
       <div class="ms"><span class="msl">Avg/Day</span><span class="msv${avg>0?' h':''}">${avg>0?fmtS(avg):'—'}</span></div>
       <div class="ms"><span class="msl">% of Year</span><span class="msv${ys2>0?' h':''}">${ys2>0?ys2+'%':'—'}</span></div>
+      ${incRow}${netRow}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:${isCur?'6px':'0'}">
       <div class="ms"><span class="msl">⚡ Online</span><span class="msv" style="color:var(--on)">${onl>0?fmtS(onl):'—'}</span></div>
@@ -2453,7 +2538,7 @@ function lazyLoadMonthTxs(el, yr, m) {
     const renderTxs = isCapped ? mTxs.slice(0, 50) : mTxs;
     html = `<div class="tx-cnt" onclick="event.stopPropagation();">` +
       renderTxs.map(t => `<div class="mtx-item"><div class="mtx-dt">${fmtDt(t.date)}</div><div class="mtx-desc" title="${esc(t.desc)}">${esc(t.desc)}</div><div class="mtx-amt ${t.type==='income'?'inc':'exp'}">${t.type==='income'?'+':'−'}${fmt(t.amount)}</div></div>`).join('') +
-      (isCapped ? `<div style="text-align:center;color:var(--mu);font-size:10px;padding:8px 0;font-family:'DM Mono',monospace;">+ ${mTxs.length - 50} more items</div>` : '') +
+      (isCapped ? `<div style="text-align:center;color:var(--mu);font-size:10px;padding:10px 0;font-family:'DM Mono',monospace;letter-spacing:.5px;border-top:1px solid var(--bd);margin-top:4px;">Showing latest 50 of ${mTxs.length} transactions</div>` : '') +
       `</div>`;
   } else {
     html = `<div class="tx-cnt" onclick="event.stopPropagation();"><div style="text-align:center;color:var(--di);font-size:10px;padding:12px 0;font-family:'DM Mono',monospace;">No transactions for this month</div></div>`;
