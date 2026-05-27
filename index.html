@@ -157,9 +157,8 @@ select option{background:var(--s2)}
 .tm{display:flex;align-items:center;gap:4px;font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);flex-wrap:wrap;font-weight:500;}
 .bg{padding:2px 6px;border-radius:4px;font-size:9px}
 .bg.ct{background:var(--s3)}
-.bg.on{background: linear-gradient(135deg, #00c6ff, #0072ff); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 2px 6px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15); font-weight: 700; position: relative; overflow: hidden; border: none;}
-.bg.of{background: linear-gradient(135deg, #f43b47, #453a94); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.3); box-shadow: 0 2px 6px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15); font-weight: 700; position: relative; overflow: hidden; border: none;}
-.bg.on::before, .bg.of::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%); pointer-events: none; }
+.bg.on{background:var(--ob);color:var(--on)}
+.bg.of{background:var(--fb);color:var(--of)}
 .bg.ip{background:var(--ag);color:var(--ac)}
 .ta{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;flex-shrink:0}
 .ta.income{color:var(--in)}.ta.expense{color:var(--ex)}
@@ -1790,7 +1789,7 @@ function renderTxList(){
       `;
     }
 
-    html = `<div style="position:sticky;top:0;z-index:10;padding:14px 18px;background:var(--s2);border-bottom:1px solid var(--bd);">
+    html = `<div style="position:sticky;top:-12px;z-index:10;margin:-12px -14px 12px -14px;padding:14px 18px;background:var(--s2);border-bottom:1px solid var(--bd);">
       ${evtHeader}
       <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
         <div style="display:flex;align-items:center;gap:6px;">
@@ -2201,7 +2200,7 @@ function renderCats(passedTxs){
   cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
   barHtml+='</div>';
   let detHtml='<div style="display:flex;flex-direction:column;gap:8px;justify-content:flex-start;">';
-  cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);const isActive=activeCatFilter===cat;detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><span class="bg ct" data-cat="${cat}" style="margin-right:auto;text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mu);margin-left:4px;">${fmtS(val)}</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--di);">${pct}%</span><span class="cat-arrow">▼</span></div>`;});
+  cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);const isActive=activeCatFilter===cat;detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mu);margin-left:auto;">${fmtS(val)}</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--di);">${pct}%</span><span class="cat-arrow">▼</span></div>`;});
   detHtml+='</div>';
   // Drill-down panel container
   detHtml+='<div class="cat-tx-panel'+(activeCatFilter?' cat-tx-open':'')+'" id="catTxPanel"></div>';
@@ -2317,7 +2316,7 @@ function renderSplit(passedTxs){
   const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
   const oA=onl.reduce((s,t)=>s+t.amount,0),fA=ofl.reduce((s,t)=>s+t.amount,0),tot=oA+fA;
   const op=tot>0?(oA/tot*100).toFixed(1):0,fp=tot>0?(fA/tot*100).toFixed(1):0;
-  area.innerHTML=`<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="bg on" style="font-size:11px;padding:4px 8px;border-radius:10px;">⚡ Online ${op}%</span><span class="bg of" style="font-size:11px;padding:4px 8px;border-radius:10px;">🏪 Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl"><span class="bg on" style="font-size:11px;padding:2px 8px;border-radius:6px;">⚡ Online</span></div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length>0?fmtS(oA/new Set(onl.map(t=>t.date)).size)+' avg/day':'—'}</div></div><div class="spc"><div class="spcl"><span class="bg of" style="font-size:11px;padding:2px 8px;border-radius:6px;">🏪 Offline</span></div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length>0?fmtS(fA/new Set(ofl.map(t=>t.date)).size)+' avg/day':'—'}</div></div></div>`;
+  area.innerHTML=`<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">⚡ Online ${op}%</span><span class="splb" style="color:var(--of)">🏪 Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length>0?fmtS(oA/new Set(onl.map(t=>t.date)).size)+' avg/day':'—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)">Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length>0?fmtS(fA/new Set(ofl.map(t=>t.date)).size)+' avg/day':'—'}</div></div></div>`;
 }
 
 // ── Month-over-Month Insights ──
