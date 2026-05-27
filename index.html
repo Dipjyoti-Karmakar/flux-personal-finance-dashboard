@@ -94,15 +94,15 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
-  align-items: stretch; /* Cards in a row perfectly match height */
+  align-items: start; /* Let cards be their natural height */
   min-width: 0;
 }
 
 /* Transactions & Special Events – same fixed height, internal scroll */
 .mg > .pn-fixed { display:flex; flex-direction:column; overflow:hidden; }
 .mg > .pn-fixed .txl { flex:1; min-height:0; overflow-y:auto; }
-/* Transactions & By Category fixed height */
-#txPanel, #catAreaWrap { height: 620px; max-height: 620px; }
+/* Transactions & By Category fixed max height */
+#txPanel, #catAreaWrap { max-height: 620px; }
 .cat-tag-list { display: flex; flex-direction: column; gap: 8px; justify-content: flex-start; }
 .cat-tag-amt { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; color: var(--mu); margin-left: auto; text-align: right; min-width: 60px; }
 .cat-tag-pct { font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600; color: var(--di); text-align: right; min-width: 32px; margin-left: 4px; }

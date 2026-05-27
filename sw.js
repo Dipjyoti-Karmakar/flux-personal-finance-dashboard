@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V26: Bumped to v14 to deploy responsive category fixes
-const CACHE_NAME = 'flux-v14';
+// V27: Bumped to v15 to fix awkward desktop grid extension
+const CACHE_NAME = 'flux-v15';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
