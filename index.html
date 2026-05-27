@@ -1576,8 +1576,34 @@ function renderStats(sTxs){
   animateVal(document.getElementById('sExp'), tE, fmt);
   document.getElementById('sExpS').textContent=exp.length+' transaction'+(exp.length!==1?'s':'');
   
-  const eD=new Set(exp.map(t=>t.date)).size;
-  animateVal(document.getElementById('sAvg'), eD>0?tE/eD:0, fmtS);
+  // Calculate true elapsed days based on the current date filter
+  let elapsedDays = 1;
+  const now = new Date();
+  const todayStr = getTodayStr();
+  const todayDate = new Date(todayStr + 'T00:00:00');
+
+  if (statsMode === 'today') {
+    elapsedDays = 1;
+  } else if (statsMode === 'month') {
+    elapsedDays = now.getDate();
+  } else if (statsMode === 'year') {
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    elapsedDays = Math.max(1, Math.floor((todayDate - startOfYear) / 86400000) + 1);
+  } else if (statsMode === 'all' && sTxs.length > 0) {
+    const dates = sTxs.map(t => t.date).sort();
+    const firstDt = new Date(dates[0] + 'T00:00:00');
+    elapsedDays = Math.max(1, Math.floor((todayDate - firstDt) / 86400000) + 1);
+  } else if (statsMode === 'custom' && sTxs.length > 0) {
+    const from = document.getElementById('statsFrom').value;
+    const to = document.getElementById('statsTo').value;
+    const dates = sTxs.map(t => t.date).sort();
+    const firstDt = new Date((from || dates[0]) + 'T00:00:00');
+    // If 'to' is not provided, use today's date or the last transaction date, whichever is smaller, to prevent future txs from inflating elapsed days
+    const lastDt = new Date((to || (dates[dates.length-1] > todayStr ? todayStr : dates[dates.length-1])) + 'T00:00:00');
+    elapsedDays = Math.max(1, Math.floor((lastDt - firstDt) / 86400000) + 1);
+  }
+
+  animateVal(document.getElementById('sAvg'), elapsedDays > 0 ? tE / elapsedDays : 0, fmtS);
 
   const aDays=new Set(sTxs.map(t=>t.date)).size;
   animateVal(document.getElementById('sDays'), aDays, v=>Math.round(v).toString());
@@ -2304,8 +2330,12 @@ function renderInsights() {
   const prevSav = prevInc - prevExp;
 
   // ── 1. Budget pacing (current month only) ──
-  if (cD > 2 && curExp > 0) {
-    const projected = Math.round((curExp / cD) * daysInMonth);
+  // Filter out future expenses so they don't artificially inflate pacing
+  const todayISO = getTodayStr();
+  const pastAndCurrentExp = curTxs.filter(t => t.type === 'expense' && t.date <= todayISO).reduce((s, t) => s + t.amount, 0);
+
+  if (cD > 2 && pastAndCurrentExp > 0) {
+    const projected = Math.round((pastAndCurrentExp / cD) * daysInMonth);
     if (prevExp > 0) {
       const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
       if (overPct >= 10) {
@@ -2365,8 +2395,9 @@ function renderInsights() {
   // ── 6. Spending frequency ──
   if (cD > 0 && curExpDays.size > 0) {
     const daysSinceLastExp = (() => {
-      const todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
-      const expDaysSorted = [...curExpDays].sort().reverse();
+      const todayISO = getTodayStr();
+      // Filter out future dates so they don't cause negative streaks
+      const expDaysSorted = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
       if (!expDaysSorted.length) return null;
       const last = new Date(expDaysSorted[0] + 'T00:00:00');
       const today = new Date(todayISO + 'T00:00:00');
@@ -2496,7 +2527,12 @@ function mkYrBlock(yr,yrMonths,todayISO,cY,cM,cD){
   const yrTotInc=yrInc.reduce((s,t)=>s+t.amount,0);
   const yrNet=yrTotInc-yrTot;
   const yrSavRate=yrTotInc>0?Math.round((yrNet/yrTotInc)*100):null;
-  const yrD=new Set(yrExp.map(t=>t.date)).size,yrAvg=yrD>0?yrTot/yrD:0;
+  const yrD=new Set(yrExp.map(t=>t.date)).size;
+  // Calculate true average daily spend over elapsed days, not just active days
+  const startDt = new Date(yr, 0, 1);
+  const endDt = isCur ? new Date(todayISO + 'T00:00:00') : new Date(yr, 11, 31);
+  const yrElapsedDays = Math.max(1, Math.floor((endDt - startDt) / 86400000) + 1);
+  const yrAvg=yrElapsedDays>0?yrTot/yrElapsedDays:0;
   const yrO=yrExp.filter(t=>t.mode==='online').reduce((s,t)=>s+t.amount,0);
   const yrF=yrExp.filter(t=>t.mode!=='online').reduce((s,t)=>s+t.amount,0);
   const mT=Array.from({length:12},(_,m)=>{
@@ -2520,10 +2556,13 @@ function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
   const tot=mE.reduce((s,t)=>s+t.amount,0),cnt=mE.length;
   const mInc=mI.reduce((s,t)=>s+t.amount,0);
   const mNet=mInc-tot;
-  const days=new Set(mE.map(t=>t.date)).size,avg=days>0?tot/days:0;
+  const days=new Set(mE.map(t=>t.date)).size;
+  // Calculate true average daily spend over elapsed days in this month
+  const dim=new Date(yr,m+1,0).getDate();
+  const elapsedM = isCur ? cD : isFut ? 0 : dim;
+  const avg=elapsedM>0?tot/elapsedM:0;
   const onl=mE.filter(t=>t.mode==='online').reduce((s,t)=>s+t.amount,0);
   const ofl=mE.filter(t=>t.mode!=='online').reduce((s,t)=>s+t.amount,0);
-  const dim=new Date(yr,m+1,0).getDate();
   const prog=isCur?Math.round((cD/dim)*100):isFut?0:100;
   const bp=mMax>0?Math.round((tot/mMax)*100):0;
   const ys2=yrTot>0?Math.round(tot/yrTot*100):0;

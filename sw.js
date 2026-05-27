@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V17: Bumped to v5 to deploy UTC timezone bug fix for midnight rollover
-const CACHE_NAME = 'flux-v5';
+// V18: Bumped to v6 to deploy mathematical fixes for averages and pacing
+const CACHE_NAME = 'flux-v6';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
