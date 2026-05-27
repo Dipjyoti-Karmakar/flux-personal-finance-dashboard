@@ -1573,8 +1573,8 @@ function renderTxList(){
 
   document.getElementById('txCnt').textContent = list.length;
 
-  // Compute totals for special event / custom range / all-dates filters
-  const showTotals = (cDtFilt === 'custom' || cDtFilt === 'all' || isEventFilter || cTyFilt !== 'all' || cModeFilt !== 'all');
+  // Compute totals for all date filters (today, month, all, custom) and event/type/mode filters
+  const showTotals = true;
   let filtIncome = 0, filtExpense = 0;
   if (showTotals) {
     list.forEach(t => {
