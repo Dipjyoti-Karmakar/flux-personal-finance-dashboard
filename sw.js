@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V34: Bumped to v22 to remove plus and minus signs from all components
-const CACHE_NAME = 'flux-v22';
+// V35: Bumped to v23 to add plus signs for positive savings rates
+const CACHE_NAME = 'flux-v23';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
