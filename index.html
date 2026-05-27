@@ -1067,15 +1067,15 @@ const provider = new GoogleAuthProvider();
 
 document.addEventListener('DOMContentLoaded', () => {
   apTheme(theme);
-  document.getElementById('txDt').valueAsDate=new Date();
+  document.getElementById('txDt').value = getTodayStr();
   
   // Auto-rollover date at midnight if left on "today"
-  let _lastToday = new Date().toISOString().slice(0, 10);
+  let _lastToday = getTodayStr();
   setInterval(() => {
-    const _now = new Date().toISOString().slice(0, 10);
+    const _now = getTodayStr();
     if (_now !== _lastToday) {
       const dtEl = document.getElementById('txDt');
-      if (dtEl && dtEl.value === _lastToday) dtEl.valueAsDate = new Date();
+      if (dtEl && dtEl.value === _lastToday) dtEl.value = _now;
       _lastToday = _now;
     }
   }, 60000);
@@ -1354,7 +1354,7 @@ async function addTx() {
     
     document.getElementById('txD').value = '';
     document.getElementById('txA').value = '';
-    document.getElementById('txDt').valueAsDate = new Date();
+    document.getElementById('txDt').value = getTodayStr();
     
     // Button checkmark animation
     if (btn) {
@@ -1483,6 +1483,11 @@ function getLegibleColor(c) {
     r = r * (1 - mix); g = g * (1 - mix); b = b * (1 - mix);
   }
   return '#' + [r,g,b].map(x => Math.round(x).toString(16).padStart(2,'0')).join('');
+}
+
+function getTodayStr() {
+  const now = new Date();
+  return new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
 }
 
 function getActiveTxs() {
