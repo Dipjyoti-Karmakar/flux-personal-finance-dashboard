@@ -1136,11 +1136,9 @@ function loadDataFromCloud() {
     snapshot.forEach(doc => {
       const data = doc.data();
       if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount > 0) {
-        // V7: Prevent prototype pollution
-        delete data.__proto__;
-        delete data.constructor;
-        delete data.prototype;
-        loadedTxs.push({ id: doc.id, ...data });
+        // V7: Use clean object to prevent prototype pollution (delete __proto__ is a no-op)
+        const clean = Object.assign(Object.create(null), data);
+        loadedTxs.push({ id: doc.id, ...clean });
       }
     });
     txs = loadedTxs.sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -1448,11 +1446,13 @@ function getActiveTxs() {
 }
 
 function render(){
-  renderStats();
+  // I2 FIX: Compute active transactions once and pass to all sub-renderers
+  const aTxs = getActiveTxs();
+  renderStats(aTxs);
   renderTxList();
-  renderCats();
-  renderSplit();
-  renderTrend();
+  renderCats(aTxs);
+  renderSplit(aTxs);
+  renderTrend(aTxs);
   renderYearly();
   renderEvents();
   renderInsights();
@@ -1485,14 +1485,15 @@ function animateVal(el, target, formatter, duration) {
   requestAnimationFrame(tick);
 }
 
-function renderStats(){
-  const sTxs = getActiveTxs();
+function renderStats(sTxs){
+  if (!sTxs) sTxs = getActiveTxs();
 
   const inc=sTxs.filter(t=>t.type==='income'),exp=sTxs.filter(t=>t.type==='expense');
   const tI=inc.reduce((s,t)=>s+t.amount,0),tE=exp.reduce((s,t)=>s+t.amount,0),bal=tI-tE;
   
   const bel=document.getElementById('sBal');
-  animateVal(bel, Math.abs(bal), fmt);
+  // B1 FIX: Pass signed balance so animation transitions correctly across sign changes
+  animateVal(bel, bal, (v) => fmt(v));
   bel.className='sv big '+(bal>0?'pos':bal<0?'neg':'neu');
   document.getElementById('sBalSub').textContent=bal>=0?'↑ In the green':'↓ Overspent';
   
@@ -1515,9 +1516,9 @@ function renderStats(){
   
   const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
   animateVal(document.getElementById('sOnl'), onl.reduce((s,t)=>s+t.amount,0), fmtS);
-  document.getElementById('sOnlS').textContent=onl.length+' transactions';
+  document.getElementById('sOnlS').textContent=onl.length+' transaction'+(onl.length!==1?'s':'');
   animateVal(document.getElementById('sOfl'), ofl.reduce((s,t)=>s+t.amount,0), fmtS);
-  document.getElementById('sOflS').textContent=ofl.length+' transactions';
+  document.getElementById('sOflS').textContent=ofl.length+' transaction'+(ofl.length!==1?'s':'');
 }
 
 function renderTxList(){
@@ -1790,12 +1791,12 @@ function setTrendMode(m) {
   renderTrend();
 }
 
-function renderTrend() {
+function renderTrend(passedTxs) {
   if (trendAbort) trendAbort.abort();
   trendAbort = new AbortController();
   const signal = trendAbort.signal;
   document.getElementById('trendTip').classList.remove('sh');
-  const aTxs = getActiveTxs();
+  const aTxs = passedTxs || getActiveTxs();
   const showExp = trendMode === 'expense' || trendMode === 'both';
   const showInc = trendMode === 'income' || trendMode === 'both';
   const exp = showExp ? aTxs.filter(t => t.type === 'expense') : [];
@@ -1831,22 +1832,10 @@ function renderTrend() {
           let k = `${y}-${String(m).padStart(2, '0')}`;
           allGroups[k] = true;
       }
-  } else if (statsMode !== 'custom') {
+  } else {
+      // I6 FIX: Merged identical gap-filling for 'all' and 'custom' modes
       let keys = Object.keys(allGroups).sort();
       if (keys.length > 1) {
-          let [sY, sM] = keys[0].split('-').map(Number);
-          let [eY, eM] = keys[keys.length - 1].split('-').map(Number);
-          let curY = sY, curM = sM;
-          while (curY < eY || (curY === eY && curM <= eM)) {
-              let k = `${curY}-${String(curM).padStart(2, '0')}`;
-              allGroups[k] = true;
-              curM++; if (curM > 12) { curM = 1; curY++; }
-          }
-      }
-  } else {
-      // Custom mode - fill month gaps
-      let keys = Object.keys(allGroups).sort();
-      if (keys.length > 1 && !isMonth) {
           let [sY, sM] = keys[0].split('-').map(Number);
           let [eY, eM] = keys[keys.length - 1].split('-').map(Number);
           let curY = sY, curM = sM;
@@ -2061,8 +2050,8 @@ window.addEventListener('resize', () => {
     window._resizeT = setTimeout(() => { renderTrend(); }, 200);
 });
 
-function renderCats(){
-  const exp=getActiveTxs().filter(t=>t.type==='expense'),area=document.getElementById('ctArea');
+function renderCats(passedTxs){
+  const exp=(passedTxs || getActiveTxs()).filter(t=>t.type==='expense'),area=document.getElementById('ctArea');
   if(!exp.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Your expense categories will appear here once you start tracking</div></div>';return;}
   const tot={};
   let totalExp=0;
@@ -2077,8 +2066,8 @@ function renderCats(){
   area.innerHTML=barHtml+detHtml;
 }
 
-function renderSplit(){
-  const exp=getActiveTxs().filter(t=>t.type==='expense'),area=document.getElementById('spArea');
+function renderSplit(passedTxs){
+  const exp=(passedTxs || getActiveTxs()).filter(t=>t.type==='expense'),area=document.getElementById('spArea');
   if(!exp.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div>';return;}
   const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
   const oA=onl.reduce((s,t)=>s+t.amount,0),fA=ofl.reduce((s,t)=>s+t.amount,0),tot=oA+fA;
@@ -2113,21 +2102,19 @@ function renderInsights() {
 
   const insights = [];
 
-  // Helper: category totals for expenses
-  const catTotals = (list) => {
-    const m = {};
-    list.filter(t => t.type === 'expense').forEach(t => { m[t.cat || 'other'] = (m[t.cat || 'other'] || 0) + t.amount; });
-    return m;
-  };
-
-  const curInc = curTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const prevInc = prevTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-  const curExp = curTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-  const prevExp = prevTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+  // I4 FIX: Single-pass accumulator instead of 4 separate filter+reduce passes
+  let curInc = 0, curExp = 0, prevInc = 0, prevExp = 0;
+  const curCats = {}, prevCats = {};
+  curTxs.forEach(t => {
+    if (t.type === 'income') curInc += t.amount;
+    else { curExp += t.amount; const c = t.cat || 'other'; curCats[c] = (curCats[c] || 0) + t.amount; }
+  });
+  prevTxs.forEach(t => {
+    if (t.type === 'income') prevInc += t.amount;
+    else { prevExp += t.amount; const c = t.cat || 'other'; prevCats[c] = (prevCats[c] || 0) + t.amount; }
+  });
   const curSav = curInc - curExp;
   const prevSav = prevInc - prevExp;
-  const curCats = catTotals(curTxs);
-  const prevCats = catTotals(prevTxs);
 
   // 1. Savings comparison
   if (prevTxs.length > 0) {
@@ -2228,13 +2215,25 @@ function renderYearly(){
   const now=new Date(),todayISO=new Date(now.getTime()-(now.getTimezoneOffset()*60000)).toISOString().slice(0,10),cY=now.getFullYear(),cM=now.getMonth(),cD=now.getDate();
   
   if(!txs.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">📆</div><div class="empty-title">Yearly Overview</div><div class="empty-sub">Add transactions to see your year at a glance</div></div>';return;}
-  const yrs=[...new Set([cY,...txs.map(t=>new Date(t.date+'T00:00:00').getFullYear())])].sort((a,b)=>b-a);
-  area.innerHTML=yrs.map(yr=>mkYrBlock(yr,txs,todayISO,cY,cM,cD)).join('');
+  // I1 FIX: Pre-compute year/month index to avoid thousands of redundant new Date() calls
+  const txByYM = {}; // { year: { month: [txs] } }
+  const yearSet = new Set([cY]);
+  txs.forEach(t => {
+    const d = new Date(t.date+'T00:00:00');
+    const y = d.getFullYear(), m = d.getMonth();
+    yearSet.add(y);
+    if (!txByYM[y]) txByYM[y] = {};
+    if (!txByYM[y][m]) txByYM[y][m] = [];
+    txByYM[y][m].push(t);
+  });
+  const yrs=[...yearSet].sort((a,b)=>b-a);
+  area.innerHTML=yrs.map(yr=>mkYrBlock(yr,txByYM[yr]||{},todayISO,cY,cM,cD)).join('');
 }
 
-function mkYrBlock(yr,allTxs,todayISO,cY,cM,cD){
+function mkYrBlock(yr,yrMonths,todayISO,cY,cM,cD){
   const isCur=yr===cY;
-  const yrTxs=allTxs.filter(t=>new Date(t.date+'T00:00:00').getFullYear()===yr);
+  // I1 FIX: Use pre-computed month index instead of filtering all txs with new Date()
+  const yrTxs = Object.values(yrMonths).flat();
   const yrExp=yrTxs.filter(t=>t.type==='expense');
   const yrInc=yrTxs.filter(t=>t.type==='income');
   const yrTot=yrExp.reduce((s,t)=>s+t.amount,0);
@@ -2242,16 +2241,21 @@ function mkYrBlock(yr,allTxs,todayISO,cY,cM,cD){
   const yrD=new Set(yrExp.map(t=>t.date)).size,yrAvg=yrD>0?yrTot/yrD:0;
   const yrO=yrExp.filter(t=>t.mode==='online').reduce((s,t)=>s+t.amount,0);
   const yrF=yrExp.filter(t=>t.mode!=='online').reduce((s,t)=>s+t.amount,0);
-  const mT=Array.from({length:12},(_,m)=>yrExp.filter(t=>new Date(t.date+'T00:00:00').getMonth()===m).reduce((s,t)=>s+t.amount,0));
+  // Use pre-computed month buckets for sparkline totals
+  const mT=Array.from({length:12},(_,m)=>{
+    const mExp=(yrMonths[m]||[]).filter(t=>t.type==='expense');
+    return mExp.reduce((s,t)=>s+t.amount,0);
+  });
   const mMax=Math.max(...mT,1),lastM=isCur?cM:11;
   const sparks=mT.slice(0,lastM+1).map((v,m)=>{const h=Math.max(3,Math.round((v/mMax)*28));return `<div class="spk${isCur&&m===cM?' cm':''}" style="height:${h}px" data-tip="${MN[m]}: ${fmtS(v)}"></div>`;}).join('');
-  const mnHTML=Array.from({length:12},(_,m)=>mkMnCard(m,yr,yrExp,isCur,cM,cD,todayISO,mMax,yrTot)).join('');
+  const mnHTML=Array.from({length:12},(_,m)=>mkMnCard(m,yr,yrMonths,isCur,cM,cD,todayISO,mMax,yrTot)).join('');
   return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}<div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
 }
 
-function mkMnCard(m,yr,yrExp,isCurYr,cM,cD,todayISO,mMax,yrTot){
+function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
   const isCur=isCurYr&&m===cM,isFut=isCurYr&&m>cM;
-  const mE=yrExp.filter(t=>new Date(t.date+'T00:00:00').getMonth()===m);
+  // I1 FIX: Use pre-computed month bucket
+  const mE=(yrMonths[m]||[]).filter(t=>t.type==='expense');
   const tot=mE.reduce((s,t)=>s+t.amount,0),cnt=mE.length;
   const days=new Set(mE.map(t=>t.date)).size,avg=days>0?tot/days:0;
   const onl=mE.filter(t=>t.mode==='online').reduce((s,t)=>s+t.amount,0);
@@ -2265,7 +2269,7 @@ function mkMnCard(m,yr,yrExp,isCurYr,cM,cD,todayISO,mMax,yrTot){
   if(isCur){const tdS=mE.filter(t=>t.date===todayISO).reduce((s,t)=>s+t.amount,0),tdC=mE.filter(t=>t.date===todayISO).length;tdHTML=`<div class="tdc"><span class="tdcl">Today, ${cD} ${MN[m]}</span><span class="tdcv">${fmt(tdS)} <span style="font-size:10px;opacity:.7">${tdC} tx</span></span></div>`;}
   
   // Count all txs for this month (not just expenses) for the hint line
-  const mTxCount = txs.filter(t => { const d = new Date(t.date+'T00:00:00'); return d.getFullYear() === yr && d.getMonth() === m; }).length;
+  const mTxCount = (yrMonths[m]||[]).length;
 
   return `<div class="mc${isCur?' cm2':isFut?' ft':''}" onclick="if(!${isFut}) lazyLoadMonthTxs(this, ${yr}, ${m})">
     <div class="mct"><span class="mcn">${MF[m]} ${isCur ? '<span class="now-badge">● NOW</span>' : ''}</span><span class="mcv">${tot>0?fmt(tot):'—'}</span></div>
@@ -2333,8 +2337,10 @@ function pDt(v) {
       return z.toISOString().slice(0,10);
   }
   if(typeof v === 'number') {
+      // B7 FIX: Apply timezone correction so Excel serial dates don't shift by one day
       const dt = new Date((v - 25569) * 86400 * 1000);
-      return dt.toISOString().slice(0,10);
+      const z = new Date(dt.getTime() - (dt.getTimezoneOffset() * 60000));
+      return z.toISOString().slice(0,10);
   }
   
   const s = String(v).trim();
@@ -2827,8 +2833,12 @@ function renderEvents() {
     area.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create a special event to track spending for trips, birthdays, or projects</div></div>';
     return;
   }
-  area.innerHTML = evts.map(e => `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--rs);background:var(--s2);border:1px solid var(--bd);margin-bottom:8px;border-left:3px solid ${e.color || 'var(--ac)'};">
+  // B9 FIX: validate event colors before injecting into style attributes
+  const safeColor = (c) => /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#c8a96e';
+  area.innerHTML = evts.map(e => {
+    const sColor = safeColor(e.color);
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--rs);background:var(--s2);border:1px solid var(--bd);margin-bottom:8px;border-left:3px solid ${sColor};">
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;margin-bottom:2px;">${esc(e.name)}</div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${e.start || '?'} \u2192 ${e.end || '?'}</div>
@@ -2843,7 +2853,7 @@ function renderEvents() {
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     </div>
-  `).join('');
+  `; }).join('');
 }
 
 let editingEventId = null;
