@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V18: Bumped to v6 to deploy mathematical fixes for averages and pacing
-const CACHE_NAME = 'flux-v6';
+// V19: Bumped to v7 to update Avg/Day UI text label
+const CACHE_NAME = 'flux-v7';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
