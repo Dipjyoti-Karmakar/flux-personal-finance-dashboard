@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V31: Bumped to v19 to fix excessive vertical margins and awkward stretching
-const CACHE_NAME = 'flux-v19';
+// V32: Bumped to v20 to restore symmetric grid height and remove forced panel stretching
+const CACHE_NAME = 'flux-v20';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
