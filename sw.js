@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V24: Bumped to v12 to revert funky icons and fix sticky gap
-const CACHE_NAME = 'flux-v12';
+// V25: Bumped to v13 to fix By Category height and amount alignment
+const CACHE_NAME = 'flux-v13';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
