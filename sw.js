@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V21: Bumped to v9 to deploy premium category styling and stationery category
-const CACHE_NAME = 'flux-v9';
+// V22: Bumped to v10 to swap By Category and Special Events layout
+const CACHE_NAME = 'flux-v10';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',

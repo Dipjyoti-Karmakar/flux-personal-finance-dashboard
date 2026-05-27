@@ -878,10 +878,10 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
     <div class="txl" id="txList"><div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">No transactions yet</div><div class="empty-sub">Sign in and add your first transaction to get started</div></div></div>
   </div>
 
-  <!-- Special Events (same height as Transactions) -->
-  <div class="pn pn-fixed" id="eventArea">
-    <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
-    <div class="ca" style="padding: 12px 20px;" id="eventList"><div class="empty-state" style="padding:20px 12px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div></div>
+  <!-- By Category (same height as Transactions) -->
+  <div class="pn pn-fixed" id="catAreaWrap">
+    <div class="ph"><span class="pt">By Category</span></div>
+    <div class="ca" style="padding: 12px 16px; flex:1; min-height:0; overflow-y:auto;" id="ctArea"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Category breakdown appears once you track expenses</div></div></div>
   </div>
 </div>
 
@@ -891,10 +891,10 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   <div class="ca" style="padding: 24px;"><div id="spArea"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div></div></div>
 </div>
 
-<!-- By Category Strip Card -->
-<div class="pn section-in" style="margin-top: 16px; animation-delay:.2s;">
-  <div class="ph"><span class="pt">By Category</span></div>
-  <div class="ca" style="padding: 24px;" id="ctArea"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Category breakdown appears once you track expenses</div></div></div>
+<!-- Special Events Strip Card -->
+<div class="pn section-in" style="margin-top: 16px; animation-delay:.2s;" id="eventArea">
+  <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
+  <div class="ca" style="padding: 24px;" id="eventList"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div></div>
 </div>
 
 <!-- Month-over-Month Insights -->
@@ -2199,7 +2199,7 @@ function renderCats(passedTxs){
   let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:24px;">';
   cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
   barHtml+='</div>';
-  let detHtml='<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
+  let detHtml='<div style="display:flex;flex-direction:column;gap:8px;justify-content:flex-start;">';
   cats.forEach(([cat,val],i)=>{const pct=Math.round((val/totalExp)*100);const isActive=activeCatFilter===cat;detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--tx);text-transform:capitalize;">${CICO[cat]||'✦'} ${cat}</span><span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--mu);margin-left:4px;">${fmtS(val)}</span><span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--di);">${pct}%</span><span class="cat-arrow">▼</span></div>`;});
   detHtml+='</div>';
   // Drill-down panel container
@@ -3176,10 +3176,10 @@ function renderEvents() {
   }
   // B9 FIX: validate event colors before injecting into style attributes and ensure legibility
   const safeColor = getLegibleColor;
-  area.innerHTML = evts.map(e => {
+  const itemsHtml = evts.map(e => {
     const sColor = safeColor(e.color);
     return `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--rs);background:var(--s2);border:1px solid var(--bd);margin-bottom:8px;border-left:3px solid ${sColor};">
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--rs);background:var(--s2);border:1px solid var(--bd);border-left:3px solid ${sColor};">
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:600;margin-bottom:2px;">${esc(e.name)}</div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${e.start || '?'} \u2192 ${e.end || '?'}</div>
@@ -3195,6 +3195,7 @@ function renderEvents() {
       </button>
     </div>
   `; }).join('');
+  area.innerHTML = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">' + itemsHtml + '</div>';
 }
 
 let editingEventId = null;
