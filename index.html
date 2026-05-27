@@ -1006,7 +1006,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',salary:'💼',freelance:'💻',investment:'📈',other:'✦'};
+const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',other:'✦'};
 const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8','#c8c36e','#6e8dc8','#c86e6e','#7ac86e'];
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1250,7 +1250,7 @@ function setStatsMode(m) {
 function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); renderTrend(); renderCats(); renderSplit(); } }
 function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; updStatsDt(); }
 
-function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="other">✦ Other</option>';}
+function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="other">✦ Other</option>';}
 function setMode(m){cMode=m;document.getElementById('bOnl').className='tb'+(m==='online'?' ao':'');document.getElementById('bOfl').className='tb'+(m==='offline'?' af':'');}
 
 function setDt(filterVal, btn) {
@@ -1457,6 +1457,22 @@ function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{maximumFractio
 function fmtDt(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
+function getLegibleColor(c) {
+  if (!/^#[0-9a-fA-F]{3,8}$/.test(c)) return '#c8a96e';
+  let hex = c.replace(/^#/, '');
+  if(hex.length === 3) hex = hex.split('').map(x=>x+x).join('');
+  let r = parseInt(hex.substring(0,2), 16), g = parseInt(hex.substring(2,4), 16), b = parseInt(hex.substring(4,6), 16);
+  let lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+  if (theme === 'dark' && lum < 0.45) {
+    const mix = (0.45 - lum) / (1 - lum);
+    r = r + (255 - r) * mix; g = g + (255 - g) * mix; b = b + (255 - b) * mix;
+  } else if (theme === 'light' && lum > 0.55) {
+    const mix = (lum - 0.55) / lum;
+    r = r * (1 - mix); g = g * (1 - mix); b = b * (1 - mix);
+  }
+  return '#' + [r,g,b].map(x => Math.round(x).toString(16).padStart(2,'0')).join('');
+}
+
 function getActiveTxs() {
   const now = new Date();
   const localISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
@@ -1634,8 +1650,8 @@ function renderTxList(){
   const hasMore = list.length > txVisibleCount;
   const remaining = list.length - txVisibleCount;
   
-  // V1: Ensure event colors are safe hex strings
-  const safeColor = (c) => /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#c8a96e';
+  // V1: Ensure event colors are safe hex strings and highly legible
+  const safeColor = getLegibleColor;
   
   let html = renderList.map(tx=>{
     let evtBadge = '';
@@ -1728,7 +1744,7 @@ function updECat(type) {
   const el = document.getElementById('eCat');
   el.innerHTML = type === 'income' ? 
     '<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>' : 
-    '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="other">✦ Other</option>';
+    '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="other">✦ Other</option>';
 }
 
 function editTx(id) {
@@ -2149,7 +2165,7 @@ function renderCatTxList(passedTxs) {
       let evtBadge = '';
       let evtBorder = '';
       if (tx.eventId && events[tx.eventId]) {
-        const sColor = safeColor(events[tx.eventId].color);
+        const sColor = getLegibleColor(events[tx.eventId].color);
         evtBadge = `<span class="event-badge" style="background:${sColor}22;color:${sColor};border:1px solid ${sColor}44;">${esc(events[tx.eventId].name)}</span>`;
         evtBorder = `border-left:3px solid ${sColor};`;
       }
@@ -3064,8 +3080,8 @@ function renderEvents() {
     area.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create a special event to track spending for trips, birthdays, or projects</div></div>';
     return;
   }
-  // B9 FIX: validate event colors before injecting into style attributes
-  const safeColor = (c) => /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#c8a96e';
+  // B9 FIX: validate event colors before injecting into style attributes and ensure legibility
+  const safeColor = getLegibleColor;
   area.innerHTML = evts.map(e => {
     const sColor = safeColor(e.color);
     return `
