@@ -102,6 +102,8 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .mg > .pn-fixed { display:flex; flex-direction:column; overflow:hidden; }
 .mg > .pn-fixed .txl { flex:1; min-height:0; overflow-y:auto; }
 #txPanel, #catAreaWrap { max-height: 620px; }
+/* Desktop: expand tx panel when event filter is active */
+#txPanel.tx-event-expand { max-height: 716px; transition: max-height .35s cubic-bezier(0.16,1,0.3,1); }
 #catAreaWrap .ca { display: flex; flex-direction: column; overflow: hidden; padding: 12px 16px; flex: 1; min-height: 0; }
 .cat-tag-list { display: flex; flex-wrap: wrap; flex-direction: row; gap: 8px; justify-content: flex-start; }
 .cat-tag-list.is-extended .cat-tag { width: calc(50% - 4px); }
@@ -491,7 +493,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .pn { border-radius: 16px; }
 
   /* ── Transaction panel: taller on mobile for better browsing ── */
-  #txPanel { max-height: 640px; }
+  #txPanel { max-height: 760px; }
+  #txPanel.tx-event-expand { max-height: 856px; }
 
   /* ── Yearly Overview: compact on mobile ── */
   .ys { margin-top: 24px; }
@@ -556,11 +559,27 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .insight-text { font-size:12px; }
 }
 
-/* ── PWA Install Banner ── */
-.pwa-install-bar { display:none; align-items:center; gap:12px; padding:12px 20px; margin-bottom:20px; background:var(--ag); border:1px solid var(--ac); border-radius:var(--rs); cursor:pointer; transition:all .2s ease; }
-.pwa-install-bar:hover { transform:translateY(-2px); box-shadow:var(--sh-btn); }
-.pwa-install-bar .pwa-text { flex:1; font-family:'DM Mono',monospace; font-size:12px; color:var(--ac); letter-spacing:.5px; font-weight:600; }
-.pwa-install-bar .pwa-dismiss { background:none; border:none; color:var(--mu); font-size:16px; cursor:pointer; padding:4px; line-height:1; }
+/* ── Split/Events Toggle ── */
+.split-toggle { display:flex; gap:4px; margin-left:auto; }
+.split-toggle .st-btn { padding:4px 12px; border-radius:8px; border:1px solid var(--bd); background:transparent; color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; cursor:pointer; transition:all .2s; font-weight:600; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap; }
+.split-toggle .st-btn:hover { border-color:var(--bs); color:var(--tx); }
+.split-toggle .st-btn.act { border-color:var(--ac); color:var(--ac); background:color-mix(in srgb,var(--sf) 90%,var(--ac)); }
+.split-events-body { min-height:120px; }
+@keyframes splitFade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.split-fade-in { animation: splitFade .3s cubic-bezier(0.16,1,0.3,1); }
+
+/* ── PWA Install Snackbar (bottom floating) ── */
+.pwa-snackbar { display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); z-index:950; align-items:center; gap:12px; padding:14px 22px; background:var(--sf); border:1px solid var(--bs); border-radius:16px; cursor:pointer; transition:transform .4s cubic-bezier(0.16,1,0.3,1), opacity .4s ease; opacity:0; box-shadow:0 12px 40px rgba(0,0,0,0.35); backdrop-filter:blur(12px); max-width:420px; width:calc(100% - 40px); }
+.pwa-snackbar.vis { display:flex; transform:translateX(-50%) translateY(0); opacity:1; }
+.pwa-snackbar .pwa-icon { font-size:20px; flex-shrink:0; }
+.pwa-snackbar .pwa-body { flex:1; min-width:0; }
+.pwa-snackbar .pwa-title { font-family:'DM Mono',monospace; font-size:12px; font-weight:700; color:var(--ac); letter-spacing:.5px; text-transform:uppercase; margin-bottom:2px; }
+.pwa-snackbar .pwa-sub { font-family:'DM Sans',sans-serif; font-size:11px; color:var(--mu); line-height:1.3; }
+.pwa-snackbar .pwa-action { padding:7px 16px; border-radius:8px; border:1px solid var(--ac); background:var(--ag); color:var(--ac); font-family:'DM Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; transition:all .2s; white-space:nowrap; flex-shrink:0; }
+.pwa-snackbar .pwa-action:hover { background:var(--ac); color:var(--bg); }
+.pwa-snackbar .pwa-dismiss { background:none; border:none; color:var(--di); font-size:16px; cursor:pointer; padding:4px; line-height:1; flex-shrink:0; transition:color .2s; }
+.pwa-snackbar .pwa-dismiss:hover { color:var(--mu); }
+@media(max-width:520px) { .pwa-snackbar { bottom:80px; max-width:calc(100% - 24px); padding:12px 16px; gap:10px; border-radius:14px; } }
 
 /* ── Skeleton Loading Placeholders ── */
 .skel { position:relative; overflow:hidden; background:var(--s2); border-radius:var(--rs); }
@@ -766,12 +785,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 <div class="app">
 
-<!-- PWA Install Banner -->
-<div class="pwa-install-bar" id="pwaInstall" onclick="installPWA()">
-  <span style="font-size:20px;">📲</span>
-  <span class="pwa-text">Install Flux for offline access</span>
-  <button class="pwa-dismiss" onclick="event.stopPropagation();dismissPWA()" aria-label="Dismiss install prompt">×</button>
-</div>
+
 
 <header>
   <div class="header-top">
@@ -934,16 +948,22 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   </div>
 </div>
 
-<!-- Online vs Offline Strip Card -->
-<div class="pn section-in" style="margin-top: 24px; animation-delay:.1s;">
-  <div class="ph"><span class="pt">Online vs Offline</span></div>
-  <div class="ca" style="padding: 24px;"><div id="spArea"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div></div></div>
-</div>
-
-<!-- Special Events Strip Card -->
-<div class="pn section-in" style="margin-top: 16px; animation-delay:.2s;" id="eventArea">
-  <div class="ph"><span class="pt">Special Events</span><button class="pb" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;">＋ New</button></div>
-  <div class="ca" style="padding: 24px;" id="eventList"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div></div>
+<!-- Online vs Offline / Special Events — merged with toggle -->
+<div class="pn section-in" style="margin-top: 24px; animation-delay:.1s;" id="splitEventCard">
+  <div class="ph">
+    <span class="pt" id="splitEventTitle">Online vs Offline</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="split-toggle">
+        <button class="st-btn act" id="stSplit" onclick="setSplitView('split')">Online/Offline</button>
+        <button class="st-btn" id="stEvents" onclick="setSplitView('events')">Events</button>
+      </div>
+      <button class="pb" id="eventNewBtn" onclick="showCreateEvent()" style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;display:none;">＋ New</button>
+    </div>
+  </div>
+  <div class="ca split-events-body" style="padding: 24px;">
+    <div id="spArea"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div></div>
+    <div id="eventList" style="display:none"><div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div></div>
+  </div>
 </div>
 
 <!-- Month-over-Month Insights -->
@@ -1092,6 +1112,17 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 <div id="trendTip" class="trend-tip"></div>
 <div class="tst" id="toast"></div>
+
+<!-- PWA Install Snackbar -->
+<div class="pwa-snackbar" id="pwaSnackbar">
+  <span class="pwa-icon">⚡</span>
+  <div class="pwa-body">
+    <div class="pwa-title">Install Flux</div>
+    <div class="pwa-sub">Use offline &amp; launch from home screen</div>
+  </div>
+  <button class="pwa-action" onclick="installPWA()">Install</button>
+  <button class="pwa-dismiss" onclick="event.stopPropagation();dismissPWA()" aria-label="Dismiss">&times;</button>
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1398,6 +1429,9 @@ function setModeFilt(filterVal, btn) {
   btn.classList.add('act');
   const evtWrap = document.getElementById('eventTxFilterWrap');
   if (evtWrap) evtWrap.style.display = filterVal === 'event' ? 'block' : 'none';
+  // Toggle tx panel height expansion for event mode
+  const txPanel = document.getElementById('txPanel');
+  if (txPanel) txPanel.classList.toggle('tx-event-expand', filterVal === 'event');
   const dtBtns = document.querySelectorAll('.ft.dt-flt');
   const customWrap = document.getElementById('customDtWrap');
   if (filterVal === 'event') {
@@ -1488,10 +1522,12 @@ function askDelTx(id) {
 }
 
 function executeSoftDelete(id) {
-    // V5: If there's already a pending delete, commit it before overwriting
+    // V5+: If there's already a pending delete, commit it before overwriting
+    // FIXED: Clear timer FIRST to prevent the old timer callback from double-committing
     if (_undoTxData) {
+      if (_undoTimer) { clearTimeout(_undoTimer); _undoTimer = null; }
       commitDelete(_undoTxData.id);
-      clearTimeout(_undoTimer);
+      _undoTxData = null;
     }
     
     // Find the transaction data for undo
@@ -2415,12 +2451,11 @@ function renderSplit(passedTxs){
   area.innerHTML=`<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">⚡ Online ${op}%</span><span class="splb" style="color:var(--of)">🏪 Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length>0?fmtS(oA/new Set(onl.map(t=>t.date)).size)+' avg/day':'—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)">Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length>0?fmtS(fA/new Set(ofl.map(t=>t.date)).size)+' avg/day':'—'}</div></div></div>`;
 }
 
-// ── Month-over-Month Insights ──
+// ── Month-over-Month Insights (max 8, high-impact) ──
 function renderInsights() {
   const area = document.getElementById('insightList');
   const periodEl = document.getElementById('insightPeriod');
   if (!area) return;
-
   const now = new Date();
   const cY = now.getFullYear(), cM = now.getMonth(), cD = now.getDate();
   const curPrefix = `${cY}-${String(cM + 1).padStart(2, '0')}`;
@@ -2428,208 +2463,110 @@ function renderInsights() {
   const pY = pDate.getFullYear(), pM = pDate.getMonth();
   const prevPrefix = `${pY}-${String(pM + 1).padStart(2, '0')}`;
   const daysInMonth = new Date(cY, cM + 1, 0).getDate();
-
   if (periodEl) periodEl.textContent = `${MF[cM]} ${cY}`;
-
   const curTxs = txs.filter(t => t.date.startsWith(curPrefix));
   const prevTxs = txs.filter(t => t.date.startsWith(prevPrefix));
-
-  if (!curTxs.length && !prevTxs.length) {
-    area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>';
-    return;
-  }
-
+  if (!curTxs.length && !prevTxs.length) { area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>'; return; }
   const insights = [];
-
-  // Single-pass accumulator
   let curInc = 0, curExp = 0, prevInc = 0, prevExp = 0;
   const curCats = {}, prevCats = {}, curDayExp = {};
   const curExpDays = new Set();
-
-  curTxs.forEach(t => {
-    if (t.type === 'income') curInc += t.amount;
-    else {
-      curExp += t.amount;
-      const c = t.cat || 'other';
-      curCats[c] = (curCats[c] || 0) + t.amount;
-      curDayExp[t.date] = (curDayExp[t.date] || 0) + t.amount;
-      curExpDays.add(t.date);
-    }
-  });
-  prevTxs.forEach(t => {
-    if (t.type === 'income') prevInc += t.amount;
-    else { prevExp += t.amount; const c = t.cat || 'other'; prevCats[c] = (prevCats[c] || 0) + t.amount; }
-  });
-  const curSav = curInc - curExp;
-  const prevSav = prevInc - prevExp;
-
-  // ── 1. Budget pacing (current month only) ──
-  // Filter out future expenses so they don't artificially inflate pacing
+  curTxs.forEach(t => { if (t.type === 'income') curInc += t.amount; else { curExp += t.amount; const c = t.cat || 'other'; curCats[c] = (curCats[c] || 0) + t.amount; curDayExp[t.date] = (curDayExp[t.date] || 0) + t.amount; curExpDays.add(t.date); } });
+  prevTxs.forEach(t => { if (t.type === 'income') prevInc += t.amount; else { prevExp += t.amount; const c = t.cat || 'other'; prevCats[c] = (prevCats[c] || 0) + t.amount; } });
+  const curSav = curInc - curExp, prevSav = prevInc - prevExp;
   const todayISO = getTodayStr();
-  const pastAndCurrentExp = curTxs.filter(t => t.type === 'expense' && t.date <= todayISO).reduce((s, t) => s + t.amount, 0);
 
-  if (cD > 2 && pastAndCurrentExp > 0) {
-    const projected = Math.round((pastAndCurrentExp / cD) * daysInMonth);
+  // 1. Budget pacing with daily burn rate
+  const pastExp = curTxs.filter(t => t.type === 'expense' && t.date <= todayISO).reduce((s, t) => s + t.amount, 0);
+  if (cD > 2 && pastExp > 0) {
+    const dailyBurn = Math.round(pastExp / cD);
+    const projected = Math.round((pastExp / cD) * daysInMonth);
+    const rem = daysInMonth - cD;
     if (prevExp > 0) {
       const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
-      if (overPct >= 10) {
-        insights.push({ icon: '⚠️', text: `At your current pace, you'll spend <strong>${fmtS(projected)}</strong> by month-end — <span class="up">${overPct}% over</span> last month's ${fmtS(prevExp)}` });
-      } else if (overPct <= -10) {
-        insights.push({ icon: '🎯', text: `On track to spend <strong>${fmtS(projected)}</strong> by month-end — <span class="down">${Math.abs(overPct)}% under</span> last month's ${fmtS(prevExp)}` });
-      }
+      if (overPct >= 10) insights.push({ icon: '⚠️', text: `At <strong>${fmtS(dailyBurn)}/day</strong>, projected <strong>${fmtS(projected)}</strong> by month-end — <span class="up">${overPct}% over</span> last month. ${rem} days to adjust.` });
+      else if (overPct <= -10) insights.push({ icon: '🎯', text: `Great pace! <strong>${fmtS(dailyBurn)}/day</strong> → <strong>${fmtS(projected)}</strong> by month-end — <span class="down">${Math.abs(overPct)}% under</span> ${MF[pM]}'s ${fmtS(prevExp)}` });
     } else {
-      insights.push({ icon: '📐', text: `Projected spend by month-end: <strong>${fmtS(projected)}</strong> (based on ${cD} days so far)` });
+      insights.push({ icon: '📐', text: `Burning <strong>${fmtS(dailyBurn)}/day</strong> — projected <strong>${fmtS(projected)}</strong> by month-end (${rem} days left)` });
     }
   }
 
-  // ── 2. Savings rate ──
+  // 2. Savings rate with benchmark context
   if (curInc > 0) {
     const savRate = Math.round((curSav / curInc) * 100);
-    if (savRate >= 20) {
-      insights.push({ icon: '🏆', text: `Excellent! You're saving <strong><span class="down">+${savRate}%</span></strong> of your income this month` });
-    } else if (savRate > 0) {
-      insights.push({ icon: '💵', text: `You're saving <strong>+${savRate}%</strong> of income this month (${fmtS(curSav)})` });
-    } else if (savRate < 0) {
-      insights.push({ icon: '🔴', text: `You're spending <strong><span class="up">${fmtS(Math.abs(curSav))}</span></strong> more than your income this month` });
-    }
+    if (savRate >= 20) insights.push({ icon: '🏆', text: `Saving <strong><span class="down">${savRate}%</span></strong> of income — <strong>${fmtS(curSav)}</strong> kept. Above the 20% benchmark!` });
+    else if (savRate > 0) { const gap = fmtS(curInc * 0.2 - curSav); insights.push({ icon: '💵', text: `Saving <strong>${savRate}%</strong> of income (<strong>${fmtS(curSav)}</strong>). ${gap} more to hit the 20% target.` }); }
+    else if (savRate < 0) insights.push({ icon: '🔴', text: `Overspending by <strong><span class="up">${fmtS(Math.abs(curSav))}</span></strong> — expenses exceed income by ${Math.abs(savRate)}%` });
   }
 
-  // ── 3. Savings comparison vs last month ──
+  // 3. Savings momentum vs last month
   if (prevTxs.length > 0) {
     const savDiff = curSav - prevSav;
     if (Math.abs(savDiff) > 0) {
-      if (savDiff > 0) {
-        insights.push({ icon: '💰', text: `You saved <strong>${fmtS(Math.abs(savDiff))}</strong> <span class="down">more</span> than last month` });
-      } else {
-        insights.push({ icon: '📉', text: `You saved <strong>${fmtS(Math.abs(savDiff))}</strong> <span class="up">less</span> than last month` });
-      }
+      if (savDiff > 0) insights.push({ icon: '💰', text: `Savings <span class="down">improved</span> by <strong>${fmtS(Math.abs(savDiff))}</strong> vs ${MF[pM]} (${fmtS(prevSav)} → ${fmtS(curSav)})` });
+      else insights.push({ icon: '📉', text: `Savings <span class="up">dropped</span> by <strong>${fmtS(Math.abs(savDiff))}</strong> vs ${MF[pM]} (${fmtS(prevSav)} → ${fmtS(curSav)})` });
     }
   }
 
-  // ── 4. Total expense comparison ──
+  // 4. Total expense comparison
   if (prevExp > 0) {
-    const expPctChange = ((curExp - prevExp) / prevExp) * 100;
-    if (Math.abs(expPctChange) >= 5) {
-      if (expPctChange > 0) {
-        insights.push({ icon: '📊', text: `Total spending is <span class="up">up ${Math.round(Math.abs(expPctChange))}%</span> vs last month (<strong>${fmtS(curExp)}</strong> vs ${fmtS(prevExp)})` });
-      } else {
-        insights.push({ icon: '✅', text: `Total spending is <span class="down">down ${Math.round(Math.abs(expPctChange))}%</span> vs last month (<strong>${fmtS(curExp)}</strong> vs ${fmtS(prevExp)})` });
-      }
+    const expPct = ((curExp - prevExp) / prevExp) * 100;
+    if (Math.abs(expPct) >= 5) {
+      if (expPct > 0) insights.push({ icon: '📊', text: `Spending <span class="up">up ${Math.round(Math.abs(expPct))}%</span> vs ${MF[pM]} — <strong>${fmtS(curExp)}</strong> vs ${fmtS(prevExp)} (+${fmtS(curExp - prevExp)})` });
+      else insights.push({ icon: '✅', text: `Spending <span class="down">down ${Math.round(Math.abs(expPct))}%</span> vs ${MF[pM]} — <strong>${fmtS(curExp)}</strong> vs ${fmtS(prevExp)} (saved ${fmtS(prevExp - curExp)})` });
     }
   }
 
-  // ── 5. Biggest spending day ──
+  // 5. Peak spending day + no-spend streak
   const dayEntries = Object.entries(curDayExp).sort((a, b) => b[1] - a[1]);
   if (dayEntries.length > 0) {
     const [topDay, topDayAmt] = dayEntries[0];
-    const topDayFmt = fmtDt(topDay);
-    insights.push({ icon: '📅', text: `Your biggest spending day was <strong>${topDayFmt}</strong> — <strong>${fmtS(topDayAmt)}</strong> spent` });
+    const avgDay = curExp / Math.max(1, curExpDays.size);
+    const ratio = topDayAmt / avgDay;
+    let extra = ratio >= 2 ? ` — <span class="up">${ratio.toFixed(1)}x daily avg</span>` : '';
+    const sorted = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
+    let streak = '';
+    if (sorted.length > 0) { const gap = Math.floor((new Date(todayISO+'T00:00:00') - new Date(sorted[0]+'T00:00:00'))/86400000); if (gap >= 2) streak = ` No-spend streak: <strong>${gap} days</strong> 🔥`; }
+    insights.push({ icon: '📅', text: `Peak spend: <strong>${fmtDt(topDay)}</strong> at <strong>${fmtS(topDayAmt)}</strong>${extra}.${streak}` });
   }
 
-  // ── 6. Spending frequency ──
-  if (cD > 0 && curExpDays.size > 0) {
-    const daysSinceLastExp = (() => {
-      const todayISO = getTodayStr();
-      // Filter out future dates so they don't cause negative streaks
-      const expDaysSorted = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
-      if (!expDaysSorted.length) return null;
-      const last = new Date(expDaysSorted[0] + 'T00:00:00');
-      const today = new Date(todayISO + 'T00:00:00');
-      return Math.floor((today - last) / 86400000);
-    })();
-    if (daysSinceLastExp !== null && daysSinceLastExp >= 2) {
-      insights.push({ icon: '😴', text: `No expenses for <strong>${daysSinceLastExp} days</strong> — great restraint!` });
-    } else if (curExpDays.size >= Math.min(cD, 7) && cD >= 7) {
-      insights.push({ icon: '🔁', text: `You've spent on <strong>${curExpDays.size} of ${cD} days</strong> this month — daily spending pattern detected` });
-    } else if (curExpDays.size > 0) {
-      insights.push({ icon: '📆', text: `Active on <strong>${curExpDays.size} days</strong> this month with expenses` });
-    }
-  }
-
-  // ── 7. Top expense category ──
-  const curCatEntries = Object.entries(curCats).sort((a, b) => b[1] - a[1]);
-  if (curCatEntries.length > 0) {
-    const [topCat, topAmt] = curCatEntries[0];
+  // 6. Top expense category
+  const catEntries = Object.entries(curCats).sort((a, b) => b[1] - a[1]);
+  if (catEntries.length > 0) {
+    const [topCat, topAmt] = catEntries[0];
     const pct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 0;
-    insights.push({ icon: CICO[topCat] || '✦', text: `Top expense: <strong class="bg ct" data-cat="${topCat}">${topCat.charAt(0).toUpperCase() + topCat.slice(1)}</strong> at <strong>${fmtS(topAmt)}</strong> (${pct}% of total spending)` });
+    const prevA = prevCats[topCat] || 0;
+    let vsLast = '';
+    if (prevA > 0) { const cc = Math.round(((topAmt - prevA) / prevA) * 100); if (Math.abs(cc) >= 10) vsLast = ` (<span class="${cc > 0 ? 'up' : 'down'}">${cc > 0 ? '+' : ''}${cc}%</span> vs last month)`; }
+    insights.push({ icon: CICO[topCat] || '✦', text: `Top expense: <strong>${topCat.charAt(0).toUpperCase() + topCat.slice(1)}</strong> at <strong>${fmtS(topAmt)}</strong> (${pct}%)${vsLast}` });
   }
 
-  // ── 8. Per-category biggest swing ──
+  // 7. Biggest category swing with amounts
   if (prevTxs.length > 0) {
-    const allCats = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
-    let biggestCat = null, biggestPct = 0, biggestDir = '';
-    allCats.forEach(cat => {
-      const cur = curCats[cat] || 0;
-      const prev = prevCats[cat] || 0;
-      if (prev > 0) {
-        const pct = ((cur - prev) / prev) * 100;
-        if (Math.abs(pct) > Math.abs(biggestPct) && Math.abs(pct) >= 10) {
-          biggestPct = pct; biggestCat = cat; biggestDir = pct > 0 ? 'up' : 'down';
-        }
-      }
-    });
-    if (biggestCat) {
-      const catName = biggestCat.charAt(0).toUpperCase() + biggestCat.slice(1);
-      const icon = biggestDir === 'up' ? '🔺' : '🔻';
-      insights.push({ icon, text: `<strong>${catName}</strong> spending is <span class="${biggestDir === 'up' ? 'up' : 'down'}">${biggestDir} ${Math.round(Math.abs(biggestPct))}%</span> vs last month` });
-    }
+    const allC = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
+    let bCat = null, bPct = 0, bDir = '', bCur = 0, bPrev = 0;
+    allC.forEach(cat => { const cur = curCats[cat]||0, prev = prevCats[cat]||0; if (prev > 0) { const p = ((cur-prev)/prev)*100; if (Math.abs(p)>Math.abs(bPct)&&Math.abs(p)>=10){bPct=p;bCat=cat;bDir=p>0?'up':'down';bCur=cur;bPrev=prev;}} });
+    if (bCat) { const cn = bCat.charAt(0).toUpperCase()+bCat.slice(1); insights.push({ icon: bDir==='up'?'🔺':'🔻', text: `<strong>${cn}</strong> <span class="${bDir==='up'?'up':'down'}">${bDir} ${Math.round(Math.abs(bPct))}%</span> — ${fmtS(bPrev)} → ${fmtS(bCur)}` }); }
   }
 
-  // ── 9. New category this month ──
-  if (prevTxs.length > 0) {
-    const newCats = Object.keys(curCats).filter(c => !prevCats[c]);
-    if (newCats.length > 0) {
-      const nc = newCats[0];
-      insights.push({ icon: '🆕', text: `New spending category this month: <strong>${nc.charAt(0).toUpperCase() + nc.slice(1)}</strong> (${fmtS(curCats[nc])})` });
-    }
-  }
-
-  // ── 10. Categories that exceeded last month ──
-  if (prevTxs.length > 0) {
-    let exceeded = 0;
-    Object.keys(curCats).forEach(cat => {
-      if ((prevCats[cat] || 0) > 0 && curCats[cat] > prevCats[cat]) exceeded++;
-    });
-    if (exceeded > 0) {
-      insights.push({ icon: '⚠️', text: `<strong>${exceeded}</strong> ${exceeded === 1 ? 'category' : 'categories'} exceeded last month's spending` });
-    }
-  }
-
-  // ── 11. Transaction count comparison ──
-  if (prevTxs.length > 0) {
-    const diff = curTxs.length - prevTxs.length;
-    if (Math.abs(diff) >= 3) {
-      if (diff > 0) {
-        insights.push({ icon: '🧾', text: `<strong>${diff} more transactions</strong> than last month (${curTxs.length} vs ${prevTxs.length})` });
-      } else {
-        insights.push({ icon: '🧾', text: `<strong>${Math.abs(diff)} fewer transactions</strong> than last month (${curTxs.length} vs ${prevTxs.length})` });
-      }
-    }
-  }
-
-  // ── 12. Income comparison ──
+  // 8. Income comparison
   if (prevInc > 0) {
-    const incPctChange = ((curInc - prevInc) / prevInc) * 100;
-    if (Math.abs(incPctChange) >= 5) {
-      if (incPctChange > 0) {
-        insights.push({ icon: '📈', text: `Income is <span class="down">up ${Math.round(Math.abs(incPctChange))}%</span> vs last month (<strong>${fmtS(curInc)}</strong> vs ${fmtS(prevInc)})` });
-      } else {
-        insights.push({ icon: '📉', text: `Income is <span class="up">down ${Math.round(Math.abs(incPctChange))}%</span> vs last month (<strong>${fmtS(curInc)}</strong> vs ${fmtS(prevInc)})` });
-      }
+    const iPct = ((curInc - prevInc) / prevInc) * 100;
+    if (Math.abs(iPct) >= 5) {
+      if (iPct > 0) insights.push({ icon: '📈', text: `Income <span class="down">up ${Math.round(Math.abs(iPct))}%</span> vs ${MF[pM]} — <strong>${fmtS(curInc)}</strong> (+${fmtS(curInc-prevInc)})` });
+      else insights.push({ icon: '📉', text: `Income <span class="up">down ${Math.round(Math.abs(iPct))}%</span> vs ${MF[pM]} — <strong>${fmtS(curInc)}</strong> (-${fmtS(prevInc-curInc)})` });
     }
   }
 
   if (!insights.length) {
-    if (!prevTxs.length && curTxs.length) {
-      area.innerHTML = '<div class="insight-empty">No previous month data to compare — insights will appear next month</div>';
-    } else {
-      area.innerHTML = '<div class="insight-empty">Spending is roughly the same as last month</div>';
-    }
+    area.innerHTML = !prevTxs.length && curTxs.length ? '<div class="insight-empty">No previous month data to compare — insights will appear next month</div>' : '<div class="insight-empty">Spending is roughly the same as last month</div>';
     return;
   }
-
   area.innerHTML = insights.map(i => `<div class="insight-item"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
 }
+
+
+
 
 
 function renderYearly(){
@@ -3269,10 +3206,9 @@ function renderEvents() {
   if (!area) return;
   const evts = Object.values(events);
   if (!evts.length) {
-    area.innerHTML = '<div class="empty-state"><div class="empty-icon">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create a special event to track spending for trips, birthdays, or projects</div></div>';
+    area.innerHTML = '<div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div>';
     return;
   }
-  // B9 FIX: validate event colors before injecting into style attributes and ensure legibility
   const safeColor = getLegibleColor;
   const itemsHtml = evts.map(e => {
     const sColor = safeColor(e.color);
@@ -3293,7 +3229,29 @@ function renderEvents() {
       </button>
     </div>
   `; }).join('');
-  area.innerHTML = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">' + itemsHtml + '</div>';
+  area.innerHTML = '<div class="split-fade-in" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">' + itemsHtml + '</div>';
+}
+
+function setSplitView(view) {
+  document.getElementById('stSplit').classList.toggle('act', view === 'split');
+  document.getElementById('stEvents').classList.toggle('act', view === 'events');
+  
+  const spArea = document.getElementById('spArea');
+  const evArea = document.getElementById('eventList');
+  const title = document.getElementById('splitEventTitle');
+  const newBtn = document.getElementById('eventNewBtn');
+  
+  if (view === 'events') {
+    if (spArea) spArea.style.display = 'none';
+    if (evArea) evArea.style.display = 'block';
+    if (title) title.textContent = 'Special Events';
+    if (newBtn) newBtn.style.display = 'block';
+  } else {
+    if (evArea) evArea.style.display = 'none';
+    if (spArea) spArea.style.display = 'block';
+    if (title) title.textContent = 'Online vs Offline';
+    if (newBtn) newBtn.style.display = 'none';
+  }
 }
 
 let editingEventId = null;
@@ -3510,12 +3468,22 @@ function setTxSearch(val) {
 
 /* ── Activity Log Logic ── */
 const LOG_KEY = 'flux_activity_log';
+const LOG_MAX = 500;
 
 function writeLog(action, msg) {
   try {
     let logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
     logs.unshift({ t: Date.now(), a: action, m: msg });
-    localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+    // Cap at LOG_MAX to prevent unbounded localStorage growth
+    if (logs.length > LOG_MAX) logs = logs.slice(0, LOG_MAX);
+    try {
+      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
+    } catch (quotaErr) {
+      // QuotaExceededError: trim aggressively and retry once
+      logs = logs.slice(0, Math.floor(LOG_MAX / 2));
+      try { localStorage.setItem(LOG_KEY, JSON.stringify(logs)); } catch(_) {}
+      console.warn('Activity log trimmed due to storage quota');
+    }
     if (document.getElementById('logView').style.display !== 'none') {
       renderLogs();
     }
@@ -3625,6 +3593,7 @@ window.switchTab = switchTab;
 window.renderLogs = renderLogs;
 window.askClearLogs = askClearLogs;
 window.clearLogs = clearLogs;
+window.setSplitView = setSplitView;
 
 // ── PWA: Service Worker Registration & Install Prompt ──
 let _deferredPrompt = null;
@@ -3640,10 +3609,16 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   _deferredPrompt = e;
-  // Show install banner unless user previously dismissed it
+  // Show install snackbar unless user previously dismissed it
   if (!sessionStorage.getItem('flux_pwa_dismissed')) {
-    const bar = document.getElementById('pwaInstall');
-    if (bar) bar.style.display = 'flex';
+    const bar = document.getElementById('pwaSnackbar');
+    if (bar) {
+      bar.classList.add('vis');
+      // Auto-dismiss after 15 seconds
+      setTimeout(() => {
+        if (bar.classList.contains('vis')) dismissPWA();
+      }, 15000);
+    }
   }
 });
 
@@ -3655,20 +3630,20 @@ function installPWA() {
       showToast('Flux installed! Find it on your home screen.', 'ok');
     }
     _deferredPrompt = null;
-    const bar = document.getElementById('pwaInstall');
-    if (bar) bar.style.display = 'none';
+    const bar = document.getElementById('pwaSnackbar');
+    if (bar) bar.classList.remove('vis');
   });
 }
 
 function dismissPWA() {
-  const bar = document.getElementById('pwaInstall');
-  if (bar) bar.style.display = 'none';
+  const bar = document.getElementById('pwaSnackbar');
+  if (bar) bar.classList.remove('vis');
   sessionStorage.setItem('flux_pwa_dismissed', '1');
 }
 
 window.addEventListener('appinstalled', () => {
-  const bar = document.getElementById('pwaInstall');
-  if (bar) bar.style.display = 'none';
+  const bar = document.getElementById('pwaSnackbar');
+  if (bar) bar.classList.remove('vis');
   _deferredPrompt = null;
 });
 
