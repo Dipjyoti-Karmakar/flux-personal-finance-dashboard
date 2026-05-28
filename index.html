@@ -71,7 +71,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .thlbl{font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);letter-spacing:1px;text-transform:uppercase}
 .srow{display:grid;gap:16px;margin-bottom:16px;position:relative;z-index:1;overflow:visible}
 .sr1{grid-template-columns:repeat(3,1fr)}
-.sr2{grid-template-columns:repeat(4,1fr);margin-bottom:32px}
+.sr2{grid-template-columns:repeat(2,1fr);margin-bottom:32px}
 .sc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:22px 24px;position:relative;overflow:hidden;transition:transform .35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow .35s ease, border-color .35s ease;box-shadow:var(--sh-card)}
 .sc:hover{transform:translateY(-5px); border-color:var(--bs); box-shadow:var(--sh-hov);}
 .sc.gl{background:linear-gradient(145deg,var(--sf) 0%,color-mix(in srgb,var(--sf) 92%,var(--ac)) 100%)}
@@ -392,7 +392,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .cat-tag { width: auto !important; }
   .cat-tag-amt, .cat-tag-pct { min-width: auto; }
   .sr1{grid-template-columns:repeat(3,1fr)}
-  .sr2{grid-template-columns:repeat(2,1fr)}
+  .sr2{grid-template-columns:repeat(2,1fr);gap:10px}
   .cw{flex-direction:column}
 }
 @media(max-width:768px){
@@ -796,8 +796,6 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <div class="srow sr2">
   <div class="sc card-in"><div class="sl">Avg / Day</div><div class="sv med neu" id="sAvg">₹0</div><div class="ss">average spend per day</div></div>
   <div class="sc card-in"><div class="sl">Active Days</div><div class="sv med neu" id="sDays">0</div><div class="ss">days with ≥1 transaction</div></div>
-  <div class="sc card-in"><div class="sl">Online Spend</div><div class="sv med onc" id="sOnl">₹0</div><div class="ss" id="sOnlS">0 transactions</div></div>
-  <div class="sc card-in"><div class="sl">Offline Spend</div><div class="sv med ofc" id="sOfl">₹0</div><div class="ss" id="sOflS">0 transactions</div></div>
 </div>
 
 <!-- 2-Column Main Dashboard Grid -->
@@ -1495,7 +1493,7 @@ async function undoDelete() {
 // FIXED: No longer suppresses ALL toasts during the undo window — only suppresses
 // neutral/success toasts. Error toasts always show so users see sync failures.
 function showToast(msg,type){if(_undoTimer && type !== 'er')return;const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
-function fmt(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmt(n){return (n < 0 ? '-' : '') + '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{maximumFractionDigits:0});}
 function fmtDt(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -1525,6 +1523,10 @@ function getActiveTxs() {
   const now = new Date();
   const localISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
   
+  if (statsMode === 'today') {
+    const todayPrefix = localISO.slice(0, 10);
+    return txs.filter(t => t.date === todayPrefix);
+  }
   if (statsMode === 'month') {
     const prefix = localISO.slice(0, 7); 
     return txs.filter(t => t.date.startsWith(prefix));
@@ -1638,12 +1640,6 @@ function renderStats(sTxs){
 
   const aDays=new Set(sTxs.map(t=>t.date)).size;
   animateVal(document.getElementById('sDays'), aDays, v=>Math.round(v).toString());
-  
-  const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
-  animateVal(document.getElementById('sOnl'), onl.reduce((s,t)=>s+t.amount,0), fmtS);
-  document.getElementById('sOnlS').textContent=onl.length+' transaction'+(onl.length!==1?'s':'');
-  animateVal(document.getElementById('sOfl'), ofl.reduce((s,t)=>s+t.amount,0), fmtS);
-  document.getElementById('sOflS').textContent=ofl.length+' transaction'+(ofl.length!==1?'s':'');
 }
 
 function renderTxList(){
