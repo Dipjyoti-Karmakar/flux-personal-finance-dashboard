@@ -1664,8 +1664,8 @@ function renderStats(sTxs){
   const tI=inc.reduce((s,t)=>s+t.amount,0),tE=exp.reduce((s,t)=>s+t.amount,0),bal=tI-tE;
   
   const bel=document.getElementById('sBal');
-  // B1 FIX: Pass signed balance so animation transitions correctly across sign changes
-  animateVal(bel, bal, (v) => fmt(v));
+  // Pass signed balance to animation loop, but apply absolute value before formatting
+  animateVal(bel, bal, (v) => fmt(Math.abs(v)));
   bel.className='sv big '+(bal>0?'pos':bal<0?'neg':'neu');
   document.getElementById('sBalSub').textContent=bal>=0?'↑ In the green':'↓ Overspent';
   
