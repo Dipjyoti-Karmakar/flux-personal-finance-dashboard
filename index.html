@@ -609,7 +609,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 /* Add TX success micro-interactions */
 .sbtn.success-flash { background:var(--in); transform:scale(1.02); }
-@keyframes txHighlight { 0%{box-shadow:inset 3px 0 0 var(--ac), 0 0 16px rgba(200,169,110,0.15);background:var(--ag)} 100%{box-shadow:none;background:transparent} }
+@keyframes txHighlight { 0%{box-shadow:inset 3px 0 0 var(--ac), 0 0 16px rgba(200,169,110,0.15);background:var(--ag)} 100%{box-shadow:none;background:var(--sf)} }
 .txi.tx-new { animation: txHighlight 1.5s ease-out forwards; }
 @media(max-width:520px){
   .fab {
@@ -1415,7 +1415,7 @@ function setEventFilter(eventId) {
   if (cModeFilt === 'event') renderTxList();
 }
 
-const MAX_AMOUNT = 100000000; // 10 Crore
+const MAX_AMOUNT = 900000000000000; // 900 Trillion
 
 async function addTx() {
   const desc = document.getElementById('txD').value.trim();
