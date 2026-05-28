@@ -103,7 +103,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .mg > .pn-fixed .txl { flex:1; min-height:0; overflow-y:auto; }
 #txPanel, #catAreaWrap { max-height: 620px; }
 /* Desktop: expand tx panel when event filter is active */
-#txPanel.tx-event-expand { max-height: 716px; transition: max-height .35s cubic-bezier(0.16,1,0.3,1); }
+#txPanel.tx-event-expand, #catAreaWrap.tx-event-expand { max-height: 716px; transition: max-height .35s cubic-bezier(0.16,1,0.3,1); }
 #catAreaWrap .ca { display: flex; flex-direction: column; overflow: hidden; padding: 12px 16px; flex: 1; min-height: 0; }
 .cat-tag-list { display: flex; flex-wrap: wrap; flex-direction: row; gap: 8px; justify-content: flex-start; }
 .cat-tag-list.is-extended .cat-tag { width: calc(50% - 4px); }
@@ -1431,7 +1431,9 @@ function setModeFilt(filterVal, btn) {
   if (evtWrap) evtWrap.style.display = filterVal === 'event' ? 'block' : 'none';
   // Toggle tx panel height expansion for event mode
   const txPanel = document.getElementById('txPanel');
+  const catAreaWrap = document.getElementById('catAreaWrap');
   if (txPanel) txPanel.classList.toggle('tx-event-expand', filterVal === 'event');
+  if (catAreaWrap) catAreaWrap.classList.toggle('tx-event-expand', filterVal === 'event');
   const dtBtns = document.querySelectorAll('.ft.dt-flt');
   const customWrap = document.getElementById('customDtWrap');
   if (filterVal === 'event') {
