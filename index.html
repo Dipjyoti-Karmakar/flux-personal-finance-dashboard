@@ -692,7 +692,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 #logView { max-width: 960px; margin: 0 auto; }
 .log-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
 .log-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx); }
-.log-clear-btn { padding:6px 14px; border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.5px; text-transform:uppercase; font-weight:600; border-radius:var(--rs); cursor:pointer; transition:all .2s; }
+.log-clear-btn { padding:6px 14px; border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.5px; text-transform:uppercase; font-weight:600; border-radius:var(--rs); cursor:pointer; transition:all .2s; white-space:nowrap; }
 .log-clear-btn:hover { border-color:var(--ex); color:var(--ex); }
 .log-entry { display:flex; gap:12px; padding:14px 16px; background:var(--sf); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:8px; transition:all .2s; align-items:flex-start; }
 .log-entry:hover { border-color:var(--bs); background:var(--s2); }
@@ -1531,15 +1531,18 @@ function showUndoToast(txId) {
 }
 
 async function commitDelete(id) {
+  // Capture the undo data before it potentially gets cleared by the timeout synchronously
+  const logData = (_undoTxData && _undoTxData.id === id) ? _undoTxData.data : null;
+  
+  // Log deletion synchronously to ensure it's captured immediately when the undo window expires
+  if (logData) {
+    writeLog('DELETE', `Deleted <strong>"${esc(logData.desc)}"</strong> — ${fmt(logData.amount)}, ${logData.cat||'other'}, ${fmtDt(logData.date)}, ${logData.mode}`);
+  }
+  
   if (!userId) return;
+  
   try {
     await deleteDoc(doc(db, 'users', userId, 'transactions', id));
-    
-    // Log deletion if we have the undo data
-    if (_undoTxData && _undoTxData.id === id) {
-      const d = _undoTxData.data;
-      writeLog('DELETE', `Deleted <strong>"${esc(d.desc)}"</strong> — ${fmt(d.amount)}, ${d.cat||'other'}, ${fmtDt(d.date)}, ${d.mode}`);
-    }
   } catch(e) {
     console.error('Error deleting', e);
     showToast('Error deleting from cloud', 'er');
