@@ -3502,6 +3502,8 @@ function setTxSearch(val) {
   cTxSearch = val;
   txVisibleCount = (cDtFilt === 'today' && cModeFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
   renderTxList();
+}
+
 /* ── Activity Log Logic ── */
 const LOG_KEY = 'flux_activity_log';
 
