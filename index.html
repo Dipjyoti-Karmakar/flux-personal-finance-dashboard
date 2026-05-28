@@ -682,13 +682,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .bg.ct[data-cat="other"], .bg.ct:not([data-cat]) { background: linear-gradient(135deg, #89f7fe, #66a6ff); color: #0d0f14; text-shadow: none; }
 
 /* ── App Tab Navigation ── */
-.app-tabs { display:flex; gap:4px; margin-bottom:20px; padding:4px; background:var(--s2); border-radius:var(--rs); border:1px solid var(--bd); }
+.app-tabs { display:flex; gap:4px; margin: 0 auto 24px auto; max-width:960px; padding:4px; background:var(--s2); border-radius:var(--rs); border:1px solid var(--bd); }
 .app-tab { flex:1; padding:10px 16px; border:none; background:none; color:var(--mu); font-family:'DM Mono',monospace; font-size:12px; letter-spacing:.5px; font-weight:600; cursor:pointer; border-radius:calc(var(--rs) - 2px); transition:all .25s cubic-bezier(0.16,1,0.3,1); text-transform:uppercase; position:relative; }
 .app-tab:hover { color:var(--tx); background:var(--sf); }
 .app-tab.act { background:var(--sf); color:var(--ac); box-shadow:0 2px 8px rgba(0,0,0,0.15); }
 .app-tab .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--ac); color:var(--bg); font-size:9px; font-weight:700; margin-left:6px; vertical-align:middle; }
 
 /* ── Activity Log ── */
+#logView { max-width: 960px; margin: 0 auto; }
 .log-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
 .log-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx); }
 .log-clear-btn { padding:6px 14px; border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.5px; text-transform:uppercase; font-weight:600; border-radius:var(--rs); cursor:pointer; transition:all .2s; }
