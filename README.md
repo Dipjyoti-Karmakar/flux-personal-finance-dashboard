@@ -1,3 +1,5 @@
+<div align="center">
+
 # Flux - Personal Finance Dashboard
 
 > Track income, expenses, and insights in a single-page finance dashboard built with vanilla JavaScript, Firebase, and a PWA-first workflow.
@@ -6,6 +8,8 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-yellow?style=for-the-badge&logo=javascript)
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%26%20Auth-ffca28?style=for-the-badge&logo=firebase)
 ![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
+
+</div>
 
 ---
 
@@ -17,9 +21,9 @@
 
 ## Overview
 
-Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data sync across devices - no backend code, no build step, no framework.
+Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data sync across devices without backend code, build steps, or frameworks.
 
-The entire application ships as one `index.html` file (~4.000 lines) with embedded styles and ES-module scripts. It is installable as a **Progressive Web App** and works offline.
+The entire application ships as one `index.html` file (~4,900 lines) with embedded styles and ES-module scripts. It is installable as a **Progressive Web App** and works offline.
 
 ---
 
@@ -29,14 +33,14 @@ The entire application ships as one `index.html` file (~4.000 lines) with embedd
 
 | Capability | Details |
 |---|---|
-| **Transaction CRUD** | Add, edit, delete income/expense records with 5-second undo on delete - category, payment mode, date, and description |
-| **Recurring Transactions** | Manage subscriptions and recurring costs (monthly, weekly, yearly, daily) with auto-creation on due dates |
-| **PDF Reports** | Generate rich A4 PDF reports (monthly, annual, or custom date/event) with category donuts and auto-calculated insights |
+| **Transaction CRUD** | Add, edit, delete income/expense records with 5-second undo on delete. Track category, payment mode, date, and description |
+| **Recurring Transactions** | Manage subscriptions with monthly, weekly, yearly, daily, or custom days intervals. Auto-creates transactions on due dates with visual tags |
+| **PDF Reports** | Generate rich A4 PDF reports for months, years, or custom dates and events. Includes category donuts, online vs offline splits, and insights |
 | **Real-time Cloud Sync** | Firestore `onSnapshot` listeners with debounced rendering (120 ms) and tri-state sync indicator |
 | **Excel / CSV Import** | File-picker import with auto column-mapping, row validation, duplicate detection, and 450-op batch writes |
 | **CSV Export** | One-click export of complete transaction history |
-| **Special Events** | Named events with date ranges and colour tags - link transactions to track event-level spending |
-| **Cloud-Synced Activity Log** | Real-time global audit trail of additions, edits, deletions, and imports synced across all devices via Firestore |
+| **Special Events** | Named events with date ranges and colour tags. Link transactions to track event-level spending |
+| **Cloud-Synced Activity Log** | Real-time global audit trail of additions, edits, deletions, and imports synced across all devices |
 
 ### Analytics Dashboard
 
@@ -70,21 +74,21 @@ The entire application ships as one `index.html` file (~4.000 lines) with embedd
 
 ### UX & Accessibility
 
-- **Dark / Light theme** - persisted in `localStorage`, toggles all CSS custom properties with a circular wipe animation expanding from the toggle button
-- **Responsive layout** - CSS Grid with breakpoints at 960 px, 768 px, and 520 px; bottom-sheet modals on mobile
-- **Transaction search** - real-time text filter across descriptions
-- **Advanced filters** - date range (today / month / all / custom), type (income / expense / online / offline), and event-based filtering with totals bar
-- **Keyboard navigation** - Escape closes modals in z-order priority; Tab / Shift+Tab focus-traps inside active modals
-- **ARIA labels** - all icon-only buttons carry descriptive `aria-label` attributes; trend chart canvas has a dynamic screen-reader summary of trend direction and totals
-- **Pagination** - lazy "Load More" with configurable page sizes per filter context
+* **Dark and Light theme**: Persisted in `localStorage`, toggles all CSS custom properties with a circular wipe animation expanding from the toggle button
+* **Responsive layout**: CSS Grid with breakpoints at 960 px, 768 px, and 520 px. Bottom-sheet modals on mobile
+* **Transaction search**: Real-time text filter across descriptions
+* **Advanced filters**: Date range, type, and event-based filtering with totals bar
+* **Keyboard navigation**: Escape closes modals in z-order priority. Tab or Shift+Tab focus-traps inside active modals
+* **ARIA labels**: All icon-only buttons carry descriptive `aria-label` attributes. Trend chart canvas has a dynamic screen-reader summary of trend direction and totals
+* **Pagination**: Lazy "Load More" with configurable page sizes per filter context
 
 ### Robustness
 
-- **Input validation** - descriptions, amounts (> 0), and dates validated before writes; invalid fields shake with visual feedback
-- **Granular error handling** - Firebase errors (`resource-exhausted`, `unavailable`, `permission-denied`) surface specific user-facing messages with row counts
-- **Debounced render** - coalesces rapid Firestore snapshot fires (e.g. batch imports) into a single 120 ms render cycle
-- **Events fallback** - if Firestore rules block a dedicated `events` collection, the app automatically falls back to the `transactions` collection
-- **AbortController cleanup** - chart event listeners are properly aborted and re-attached on every re-render to prevent stale handlers
+* **Input validation**: Descriptions, amounts, and dates validated before writes. Invalid fields shake with visual feedback
+* **Granular error handling**: Firebase errors surface specific user-facing messages with row counts
+* **Debounced render**: Coalesces rapid Firestore snapshot fires into a single 120 ms render cycle
+* **Events fallback**: If Firestore rules block a dedicated `events` collection, the app automatically falls back to the `transactions` collection
+* **AbortController cleanup**: Chart event listeners are properly aborted and re-attached on every re-render to prevent stale handlers
 
 ### Progressive Web App (PWA)
 
@@ -101,14 +105,14 @@ The entire application ships as one `index.html` file (~4.000 lines) with embedd
 
 | Layer | Technology |
 |---|---|
-| **Markup & Styling** | HTML5, CSS3 - custom properties, Grid, `color-mix()`, media queries, keyframe animations |
-| **Logic** | Vanilla JavaScript (ES modules, `requestAnimationFrame`, `IntersectionObserver`-style scroll) |
-| **Authentication** | Firebase Auth v11.6 - Google sign-in via popup |
-| **Database** | Cloud Firestore - real-time `onSnapshot` listeners, `writeBatch` for bulk ops, IndexedDB offline persistence |
-| **Charting** | Canvas 2D API - fully custom-drawn trend chart (no library) |
-| **Import Engine** | SheetJS (xlsx) v0.18.5 - loaded via CDN |
-| **PWA** | Service Worker + Web App Manifest - installable, works offline |
-| **Fonts** | Google Fonts - Playfair Display, DM Mono, DM Sans |
+| **Markup and Styling** | HTML5, CSS3 with custom properties, Grid, media queries, and keyframe animations |
+| **Logic** | Vanilla JavaScript with ES modules and scroll observers |
+| **Authentication** | Firebase Auth v11.6 using Google sign-in popup |
+| **Database** | Cloud Firestore with real-time listeners, bulk writes, and IndexedDB offline persistence |
+| **Charting** | Canvas 2D API for custom trend chart |
+| **Import Engine** | SheetJS xlsx loaded via CDN |
+| **PWA** | Service Worker and Web App Manifest for installable and offline support |
+| **Fonts** | Google Fonts including Playfair Display, DM Mono, and DM Sans |
 
 ---
 
@@ -126,7 +130,8 @@ users/
         ├── amount     number   > 0
         ├── date       string   "YYYY-MM-DD"
         ├── eventId    string   (optional) linked event ID
-        └── _imp       boolean  (optional) true if imported via file
+        ├── _imp       boolean  (optional) true if imported via file
+        └── _recurring boolean  (optional) true if auto-generated by subscription
 
     events/                   # one doc per special event
       {eventId}
@@ -142,7 +147,8 @@ users/
         ├── amount     number   > 0
         ├── cat        string   category
         ├── type       string   "income" | "expense"
-        ├── freq       string   "monthly" | "weekly" | "yearly" | "daily"
+        ├── freq       string   "monthly" | "weekly" | "yearly" | "daily" | "custom"
+        ├── customDays number   (optional) custom days interval
         └── nextDue    string   "YYYY-MM-DD"
 
     activities/               # one doc per activity log entry (auto-pruned to 200)

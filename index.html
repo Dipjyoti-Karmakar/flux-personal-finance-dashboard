@@ -80,10 +80,10 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .sc.gl::before{content:'';position:absolute;top:-50px;right:-50px;width:140px;height:140px;border-radius:50%;background:var(--ag);filter:blur(40px);pointer-events:none;opacity:.8}
 
 /* Balance health glow */
-.sc.gl.glow-pos::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 40px rgba(93,186,138,0.12), 0 0 30px rgba(93,186,138,0.08);transition:box-shadow .6s ease;}
-.sc.gl.glow-neg::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 40px rgba(224,112,112,0.12), 0 0 30px rgba(224,112,112,0.08);animation:glowPulse 2.5s ease-in-out infinite;}
-.sc.gl.glow-neu::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 30px rgba(200,169,110,0.1), 0 0 20px rgba(200,169,110,0.06);transition:box-shadow .6s ease;}
-@keyframes glowPulse{0%,100%{box-shadow:inset 0 0 40px rgba(224,112,112,0.12), 0 0 30px rgba(224,112,112,0.08)}50%{box-shadow:inset 0 0 50px rgba(224,112,112,0.18), 0 0 40px rgba(224,112,112,0.12)}}
+.sc.gl.glow-pos::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 40px rgba(93,186,138,0.2), 0 0 30px rgba(93,186,138,0.15);transition:box-shadow .6s ease;}
+.sc.gl.glow-neg::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 40px rgba(224,112,112,0.2), 0 0 30px rgba(224,112,112,0.15);animation:glowPulse 2.5s ease-in-out infinite;}
+.sc.gl.glow-neu::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 30px rgba(200,169,110,0.15), 0 0 20px rgba(200,169,110,0.1);transition:box-shadow .6s ease;}
+@keyframes glowPulse{0%,100%{box-shadow:inset 0 0 40px rgba(224,112,112,0.2), 0 0 30px rgba(224,112,112,0.15)}50%{box-shadow:inset 0 0 60px rgba(224,112,112,0.35), 0 0 50px rgba(224,112,112,0.25)}}
 .sl{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);margin-bottom:8px;font-weight:600;}
 .sv{font-family:'DM Mono',monospace;font-weight:500;letter-spacing:-.5px;line-height:1;transition:color .3s ease}
 .sv.big{font-size:30px}.sv.med{font-size:22px}
@@ -713,14 +713,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 #subView { max-width:960px; margin:0 auto; }
 .sub-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
 .sub-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx); }
-.sub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+.sub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
 .sub-card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); padding:18px; transition:all .25s cubic-bezier(0.16,1,0.3,1); box-shadow:var(--sh-card); }
 .sub-card:hover { border-color:var(--bs); box-shadow:var(--sh-hov); transform:translateY(-2px); }
 .sub-card.sub-paused { opacity:0.6; }
 .sub-due-section { margin-bottom:24px; }
 .sub-section-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--mu); font-weight:600; margin-bottom:12px; }
-.sub-summary-bar { display:flex; gap:12px; padding:16px 20px; background:var(--s2); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:20px; flex-wrap:wrap; }
-.sub-summary-item { display:flex; flex-direction:column; gap:3px; }
+.sub-summary-bar { display:flex; gap:16px; padding:16px 20px; background:var(--s2); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:20px; flex-wrap:wrap; justify-content:space-around; }
+.sub-summary-item { display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; min-width:90px; flex:1; }
 .sub-summary-val { font-family:'DM Mono',monospace; font-size:18px; font-weight:700; }
 .sub-summary-lbl { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mu); font-weight:600; }
 @media(max-width:520px) { .sub-grid { grid-template-columns:1fr; } }
@@ -2080,6 +2080,7 @@ function renderTxList(){
         <div class="tm">
           <span class="bg ct" data-cat="${tx.cat||'other'}">${CICO[tx.cat]||'✦'} ${tx.cat||'other'}</span>
           <span class="bg ${safeMode==='online'?'on':'of'}">${safeMode==='online'?'⚡ online':'🏪 offline'}</span>
+          ${tx._recurring ? '<span class="bg" style="background:var(--s2);color:var(--tx);border:1px solid var(--bd);">🔁 subs</span>' : ''}
           ${evtBadge}
           ${tx._imp?'<span class="bg ip">xlsx</span>':''}
           <span>${fmtDt(tx.date)}</span>
@@ -3828,6 +3829,7 @@ function loadRecurring() {
   }, err => console.error('Recurring sync error:', err));
 }
 
+const triggeringRecs = new Set();
 async function checkAndTriggerRecurring() {
   if (!userId || !recurringList.length) return;
   const today = new Date().toISOString().slice(0, 10);
@@ -3838,8 +3840,12 @@ async function checkAndTriggerRecurring() {
     if (!rec.nextDue || today < rec.nextDue) continue;
     // For monthly: skip if already triggered this month
     if (rec.freq === 'monthly' && rec.lastTriggered === monthKey) continue;
-    // For weekly/daily: skip if lastTriggered is today
-    if ((rec.freq === 'weekly' || rec.freq === 'daily') && rec.lastTriggered === today) continue;
+    // For others: skip if lastTriggered is today
+    if (rec.freq !== 'monthly' && rec.lastTriggered === today) continue;
+    
+    if (triggeringRecs.has(rec.id)) continue;
+    triggeringRecs.add(rec.id);
+    
     try {
       const txId = uid();
       await setDoc(doc(db, 'users', userId, 'transactions', txId), {
@@ -3853,7 +3859,11 @@ async function checkAndTriggerRecurring() {
       }, { merge: true });
       triggered.push(rec.name);
       writeLog('ADD', `Auto-added recurring: ${rec.name} (₹${rec.amount})`);
-    } catch(e) { console.error('Failed to trigger recurring:', rec.name, e); }
+    } catch(e) { 
+      console.error('Failed to trigger recurring:', rec.name, e); 
+    } finally {
+      triggeringRecs.delete(rec.id);
+    }
   }
   if (triggered.length) showToast(`✓ Auto-added: ${triggered.join(', ')}`, 'ok');
 }
@@ -4054,7 +4064,7 @@ document.getElementById('rptMonth').value = now.getMonth() + 1;
   document.getElementById('rptTo').value = now.toISOString().slice(0,10);
   
   const evtOpts = ['<option value="">-- All Transactions --</option>'];
-  events.forEach(e => evtOpts.push(`<option value="${e.id}">${e.name}</option>`));
+  Object.values(events).forEach(e => evtOpts.push(`<option value="${e.id}">${e.name}</option>`));
   document.getElementById('rptEvent').innerHTML = evtOpts.join('');
 
   setReportPeriod('month');
@@ -4114,7 +4124,7 @@ async function generatePDF() {
 
     const rptEventId = document.getElementById('rptEvent').value;
     if (rptEventId) {
-      const evt = events.find(e => e.id === rptEventId);
+      const evt = events[rptEventId];
       if (evt) reportTitle = `Event: ${evt.name}`;
     }
 
