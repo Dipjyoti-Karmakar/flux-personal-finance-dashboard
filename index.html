@@ -4313,19 +4313,23 @@ async function generatePDF() {
       ];
 
       const chartPanelTop = curY;
-      const colW = (W - pL - 15) / 2 - 3;
+      const sideColW = (W - pL - 15) / 2 - 3;
+      const fullW = W - pL - 15;
+      
+      const catFullWidth = catEntries.length > 5;
+      const catW = catFullWidth ? fullW : sideColW;
 
       // ── LEFT: CATEGORY DISTRIBUTION ──────────────────────────────────────
       const leftX = pL;
       const catChartTitle = 'CATEGORY DISTRIBUTION';
       // Panel background
-      doc.setFillColor(...panel2); doc.roundedRect(leftX, chartPanelTop, colW, 90, 3, 3, 'F');
-      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, colW, 90, 3, 3, 'S');
+      doc.setFillColor(...panel2); doc.roundedRect(leftX, chartPanelTop, catW, 90, 3, 3, 'F');
+      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, catW, 90, 3, 3, 'S');
       // Title
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
-      doc.text(catChartTitle, leftX + colW/2, chartPanelTop + 8, {align:'center'});
+      doc.text(catChartTitle, leftX + catW/2, chartPanelTop + 8, {align:'center'});
 
-      const catCX = leftX + 28, catCY = chartPanelTop + 48;
+      const catCX = leftX + (catFullWidth ? 45 : 28), catCY = chartPanelTop + 48;
       const catR = 22, catInnerR = 13;
 
       if (catEntries.length > 0) {
@@ -4343,38 +4347,53 @@ async function generatePDF() {
         doc.text(fmtPDFS(totalExp), catCX, catCY + 4, {align:'center'});
 
         // Legend
-        const legendX = leftX + catR * 2 + 10;
-        const maxLegendItems = Math.min(catEntries.length, 6);
-        const startY = catCY - ((maxLegendItems - 1) * 10) / 2;
+        const maxLegendItems = catFullWidth ? Math.min(catEntries.length, 12) : Math.min(catEntries.length, 6);
+        const cols = catFullWidth ? 2 : 1;
+        const itemsPerCol = Math.ceil(maxLegendItems / cols);
+        const startY = catCY - ((itemsPerCol - 1) * 10) / 2;
         
         catEntries.slice(0, maxLegendItems).forEach(([cat, amt], idx) => {
-          const ly = startY + idx * 10 + 3; // +3 for text baseline alignment
+          const c = Math.floor(idx / itemsPerCol);
+          const r = idx % itemsPerCol;
+          const legendX = leftX + (catFullWidth ? 100 + c * 45 : catR * 2 + 10);
+          
+          const ly = startY + r * 10 + 3; // +3 for text baseline alignment
           const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(0) : '0';
           const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+          
           doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 4, 5, 5, 0.5, 0.5, 'F');
           doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...white);
           doc.text(`${label}`, legendX + 7, ly);
           doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-          doc.text(`${pct}%`, leftX + colW - 4, ly, {align:'right'});
+          const pctX = catFullWidth ? legendX + 40 : leftX + catW - 4;
+          doc.text(`${pct}%`, pctX, ly, {align:'right'});
         });
         if (catEntries.length > maxLegendItems) {
-          const ly = startY + maxLegendItems * 10 + 3;
+          const ly = startY + itemsPerCol * 10 + 3;
+          const legendX = leftX + (catFullWidth ? 100 : catR * 2 + 10);
           doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
           doc.text(`+${catEntries.length - maxLegendItems} more`, legendX, ly);
         }
       } else {
         doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
-        doc.text('No expense data', leftX + colW/2, chartPanelTop + 48, {align:'center'});
+        doc.text('No expense data', leftX + catW/2, chartPanelTop + 48, {align:'center'});
       }
 
       // ── RIGHT: ONLINE vs OFFLINE ──────────────────────────────────────────
-      const rightX = leftX + colW + 6;
-      doc.setFillColor(...panel2); doc.roundedRect(rightX, chartPanelTop, colW, 90, 3, 3, 'F');
-      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(rightX, chartPanelTop, colW, 90, 3, 3, 'S');
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
-      doc.text('PAYMENT CHANNEL SPLIT', rightX + colW/2, chartPanelTop + 8, {align:'center'});
+      if (catFullWidth) {
+        curY = chartPanelTop + 90 + 10;
+        checkBreak(100);
+      }
+      const splitPanelTop = catFullWidth ? curY : chartPanelTop;
+      const rightX = catFullWidth ? leftX : leftX + sideColW + 6;
+      const splitW = catFullWidth ? fullW : sideColW;
 
-      const oCX = rightX + 28, oCY = chartPanelTop + 48;
+      doc.setFillColor(...panel2); doc.roundedRect(rightX, splitPanelTop, splitW, 90, 3, 3, 'F');
+      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(rightX, splitPanelTop, splitW, 90, 3, 3, 'S');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
+      doc.text('PAYMENT CHANNEL SPLIT', rightX + splitW/2, splitPanelTop + 8, {align:'center'});
+
+      const oCX = rightX + (catFullWidth ? 45 : 28), oCY = splitPanelTop + 48;
       const oR = 22, oInnerR = 13;
       const onlinePctVal = totalExp > 0 ? onlineExp / totalExp : 0;
       const offlinePctVal = 1 - onlinePctVal;
@@ -4392,7 +4411,7 @@ async function generatePDF() {
         doc.text(fmtPDFS(totalExp), oCX, oCY + 4, {align:'center'});
 
         // Legend items
-        const oLegendX = rightX + oR * 2 + 10;
+        const oLegendX = rightX + (catFullWidth ? 110 : oR * 2 + 10);
         const oItems = [
           { label:'Online', pct:(onlinePctVal*100).toFixed(1), amt:onlineExp, color:[110,157,200] },
           { label:'Offline', pct:(offlinePctVal*100).toFixed(1), amt:offlineExp, color:[157,122,200] },
@@ -4410,10 +4429,10 @@ async function generatePDF() {
         });
       } else {
         doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
-        doc.text('No expense data', rightX + colW/2, chartPanelTop + 48, {align:'center'});
+        doc.text('No expense data', rightX + splitW/2, splitPanelTop + 48, {align:'center'});
       }
 
-      curY = chartPanelTop + 90 + 10;
+      curY = splitPanelTop + 90 + 10;
     }
 
     // ── CATEGORY BREAKDOWN ───────────────────────────────────────────────
@@ -4455,7 +4474,7 @@ async function generatePDF() {
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5 },
         alternateRowStyles:{ fillColor:[28,32,42] },
-        columnStyles:{ 0:{cellWidth:25}, 1:{}, 2:{cellWidth:25}, 3:{cellWidth:32,halign:'right'}, 4:{cellWidth:16,halign:'center'} },
+        columnStyles:{ 0:{cellWidth:22}, 1:{}, 2:{}, 3:{cellWidth:25,halign:'right'}, 4:{cellWidth:15,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
