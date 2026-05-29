@@ -4319,14 +4319,14 @@ async function generatePDF() {
       const leftX = pL;
       const catChartTitle = 'CATEGORY DISTRIBUTION';
       // Panel background
-      doc.setFillColor(...panel2); doc.roundedRect(leftX, chartPanelTop, colW, 76, 3, 3, 'F');
-      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, colW, 76, 3, 3, 'S');
+      doc.setFillColor(...panel2); doc.roundedRect(leftX, chartPanelTop, colW, 90, 3, 3, 'F');
+      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, colW, 90, 3, 3, 'S');
       // Title
-      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...gold);
-      doc.text(catChartTitle, leftX + colW/2, chartPanelTop + 7.5, {align:'center'});
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
+      doc.text(catChartTitle, leftX + colW/2, chartPanelTop + 8, {align:'center'});
 
-      const catCX = leftX + 24, catCY = chartPanelTop + 40;
-      const catR = 19, catInnerR = 11;
+      const catCX = leftX + 28, catCY = chartPanelTop + 48;
+      const catR = 22, catInnerR = 13;
 
       if (catEntries.length > 0) {
         let catAngle = 0;
@@ -4337,45 +4337,45 @@ async function generatePDF() {
         });
         // Center hole label
         doc.setFillColor(...panel); doc.circle(catCX, catCY, catInnerR - 0.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...muted);
-        doc.text('EXP', catCX, catCY - 1.5, {align:'center'});
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...red);
-        doc.text(fmtPDFS(totalExp), catCX, catCY + 3.5, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...muted);
+        doc.text('EXP', catCX, catCY - 2, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...red);
+        doc.text(fmtPDFS(totalExp), catCX, catCY + 4, {align:'center'});
 
         // Legend
-        const legendX = leftX + catR * 2 + 12;
-        const maxLegendItems = Math.min(catEntries.length, 7);
-        const startY = catCY - ((maxLegendItems - 1) * 8.5) / 2;
+        const legendX = leftX + catR * 2 + 10;
+        const maxLegendItems = Math.min(catEntries.length, 6);
+        const startY = catCY - ((maxLegendItems - 1) * 10) / 2;
         
         catEntries.slice(0, maxLegendItems).forEach(([cat, amt], idx) => {
-          const ly = startY + idx * 8.5 + 2.5; // +2.5 for text baseline alignment
+          const ly = startY + idx * 10 + 3; // +3 for text baseline alignment
           const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(0) : '0';
           const label = cat.charAt(0).toUpperCase() + cat.slice(1);
-          doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 3.5, 4, 4, 0.5, 0.5, 'F');
-          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...white);
-          doc.text(`${label}`, legendX + 6, ly);
-          doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+          doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 4, 5, 5, 0.5, 0.5, 'F');
+          doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...white);
+          doc.text(`${label}`, legendX + 7, ly);
+          doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...muted);
           doc.text(`${pct}%`, leftX + colW - 4, ly, {align:'right'});
         });
         if (catEntries.length > maxLegendItems) {
-          const ly = startY + maxLegendItems * 8.5 + 2.5;
-          doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+          const ly = startY + maxLegendItems * 10 + 3;
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
           doc.text(`+${catEntries.length - maxLegendItems} more`, legendX, ly);
         }
       } else {
-        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-        doc.text('No expense data', leftX + colW/2, chartPanelTop + 40, {align:'center'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
+        doc.text('No expense data', leftX + colW/2, chartPanelTop + 48, {align:'center'});
       }
 
       // ── RIGHT: ONLINE vs OFFLINE ──────────────────────────────────────────
       const rightX = leftX + colW + 6;
-      doc.setFillColor(...panel2); doc.roundedRect(rightX, chartPanelTop, colW, 76, 3, 3, 'F');
-      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(rightX, chartPanelTop, colW, 76, 3, 3, 'S');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...gold);
-      doc.text('PAYMENT CHANNEL SPLIT', rightX + colW/2, chartPanelTop + 7.5, {align:'center'});
+      doc.setFillColor(...panel2); doc.roundedRect(rightX, chartPanelTop, colW, 90, 3, 3, 'F');
+      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(rightX, chartPanelTop, colW, 90, 3, 3, 'S');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
+      doc.text('PAYMENT CHANNEL SPLIT', rightX + colW/2, chartPanelTop + 8, {align:'center'});
 
-      const oCX = rightX + 24, oCY = chartPanelTop + 40;
-      const oR = 19, oInnerR = 11;
+      const oCX = rightX + 28, oCY = chartPanelTop + 48;
+      const oR = 22, oInnerR = 13;
       const onlinePctVal = totalExp > 0 ? onlineExp / totalExp : 0;
       const offlinePctVal = 1 - onlinePctVal;
 
@@ -4386,39 +4386,39 @@ async function generatePDF() {
         if (onlineSlice < 359) drawDonutSlice(oCX, oCY, oR, oInnerR, onlineSlice, 360, [157,122,200]);
         // Center hole
         doc.setFillColor(...panel); doc.circle(oCX, oCY, oInnerR - 0.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...muted);
-        doc.text('SPLIT', oCX, oCY - 1.5, {align:'center'});
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...red);
-        doc.text(fmtPDFS(totalExp), oCX, oCY + 3.5, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...muted);
+        doc.text('SPLIT', oCX, oCY - 2, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...red);
+        doc.text(fmtPDFS(totalExp), oCX, oCY + 4, {align:'center'});
 
         // Legend items
-        const oLegendX = rightX + oR * 2 + 12;
+        const oLegendX = rightX + oR * 2 + 10;
         const oItems = [
           { label:'Online', pct:(onlinePctVal*100).toFixed(1), amt:onlineExp, color:[110,157,200] },
           { label:'Offline', pct:(offlinePctVal*100).toFixed(1), amt:offlineExp, color:[157,122,200] },
         ];
-        const oStartY = oCY - 11;
+        const oStartY = oCY - 13;
         oItems.forEach((item, idx) => {
-          const ly = oStartY + idx * 18;
-          doc.setFillColor(...item.color); doc.roundedRect(oLegendX, ly - 4, 4, 4, 0.5, 0.5, 'F');
-          doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...item.color);
-          doc.text(`${item.pct}%`, oLegendX + 6.5, ly);
-          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
-          doc.text(item.label, oLegendX + 6.5, ly + 5);
-          doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...white);
-          doc.text(fmtPDFS(item.amt), oLegendX + 6.5, ly + 10);
+          const ly = oStartY + idx * 22;
+          doc.setFillColor(...item.color); doc.roundedRect(oLegendX, ly - 5, 5, 5, 0.5, 0.5, 'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...item.color);
+          doc.text(`${item.pct}%`, oLegendX + 8, ly);
+          doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
+          doc.text(item.label, oLegendX + 8, ly + 6);
+          doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...white);
+          doc.text(fmtPDFS(item.amt), oLegendX + 8, ly + 12);
         });
       } else {
-        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-        doc.text('No expense data', rightX + colW/2, chartPanelTop + 40, {align:'center'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
+        doc.text('No expense data', rightX + colW/2, chartPanelTop + 48, {align:'center'});
       }
 
-      curY = chartPanelTop + 76 + 10;
+      curY = chartPanelTop + 90 + 10;
     }
 
     // ── CATEGORY BREAKDOWN ───────────────────────────────────────────────
     if (incCat && catEntries.length > 0) {
-      checkBreak(20);
+      checkBreak(50); // Ensure enough space for title + header + a few rows
       sectionTitle('CATEGORY BREAKDOWN (EXPENSES)');
       const catRows = catEntries.map(([cat,amt]) => {
         const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(1)+'%' : '0%';
@@ -4439,7 +4439,7 @@ async function generatePDF() {
 
     // ── TRANSACTION LIST ─────────────────────────────────────────────────
     if (incList && filtered.length) {
-      checkBreak(24);
+      checkBreak(60); // Ensure enough space for title + header + at least 5 rows
       sectionTitle('TRANSACTION LIST');
       const txRows = filtered.map(t => {
         const d = new Date(t.date + 'T00:00:00');
