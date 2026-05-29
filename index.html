@@ -1127,7 +1127,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',utility:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
 const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8','#c8c36e','#6e8dc8','#c86e6e','#7ac86e'];
@@ -1162,7 +1162,9 @@ let confirmActionCallback = null;
 let userId = null;
 let unsubscribeFirestore = null;
 let unsubscribeEvents = null;
+let unsubscribeActivityLog = null;
 let eventsUseFallback = false;
+let activityLogs = [];
 let trendAbort = null;
 let trendMode = 'expense'; // 'expense' | 'income' | 'both'
 let activeCatFilter = null;       // Currently selected category key or null
@@ -1262,9 +1264,13 @@ onAuthStateChanged(auth, (user) => {
     userId = user.uid;
     if (unsubscribeFirestore) unsubscribeFirestore();
     if (unsubscribeEvents) unsubscribeEvents();
+    if (unsubscribeActivityLog) unsubscribeActivityLog();
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Sign Out`;
     loadDataFromCloud();
     loadEvents();
+    loadActivityLog();
+    // Clear stale localStorage activity log (migrated to Firestore)
+    try { localStorage.removeItem('flux_activity_log'); } catch(_) {}
     showSkeletons();
   } else {
     userId = null;
@@ -1272,6 +1278,8 @@ onAuthStateChanged(auth, (user) => {
     events = {};
     if(unsubscribeFirestore) unsubscribeFirestore();
     if(unsubscribeEvents) unsubscribeEvents();
+    if(unsubscribeActivityLog) unsubscribeActivityLog();
+    activityLogs = [];
     
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> Sign In`;
     
@@ -3468,41 +3476,51 @@ function setTxSearch(val) {
   renderTxList();
 }
 
-/* ── Activity Log Logic ── */
-const LOG_KEY = 'flux_activity_log';
-const LOG_MAX = 500;
+/* ── Activity Log Logic (Firestore-synced) ── */
+const ACTIVITY_LOG_LIMIT = 200;
 
 function writeLog(action, msg) {
+  if (!userId) return;
   try {
-    let logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
-    logs.unshift({ t: Date.now(), a: action, m: msg });
-    // Cap at LOG_MAX to prevent unbounded localStorage growth
-    if (logs.length > LOG_MAX) logs = logs.slice(0, LOG_MAX);
-    try {
-      localStorage.setItem(LOG_KEY, JSON.stringify(logs));
-    } catch (quotaErr) {
-      // QuotaExceededError: trim aggressively and retry once
-      logs = logs.slice(0, Math.floor(LOG_MAX / 2));
-      try { localStorage.setItem(LOG_KEY, JSON.stringify(logs)); } catch(_) {}
-      console.warn('Activity log trimmed due to storage quota');
-    }
+    addDoc(collection(db, 'users', userId, 'activities'), {
+      a: action, m: msg, t: serverTimestamp()
+    }).catch(e => {
+      console.warn('Activity log write failed:', e);
+    });
+  } catch (e) {
+    console.error('Failed to write activity log', e);
+  }
+}
+
+function loadActivityLog() {
+  if (!userId) return;
+  if (unsubscribeActivityLog) unsubscribeActivityLog();
+  const actRef = collection(db, 'users', userId, 'activities');
+  const actQuery = query(actRef, orderBy('t', 'desc'), limit(ACTIVITY_LOG_LIMIT));
+  unsubscribeActivityLog = onSnapshot(actQuery, (snap) => {
+    activityLogs = [];
+    snap.forEach(d => {
+      const data = d.data();
+      activityLogs.push({ id: d.id, ...data });
+    });
     if (document.getElementById('logView').style.display !== 'none') {
       renderLogs();
     }
-  } catch (e) {
-    console.error('Failed to write log', e);
-  }
+  }, (err) => {
+    console.error('Activity log sync error:', err);
+    // If permission-denied, show a one-time toast
+    if (err?.code === 'permission-denied') {
+      showToast('Activity log needs Firestore rules update', 'er');
+    }
+  });
 }
 
 function renderLogs() {
   const listEl = document.getElementById('logList');
   if (!listEl) return;
   const filter = document.getElementById('logFilter').value;
-  let logs = [];
-  try {
-    logs = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
-  } catch(e) {}
-  
+  let logs = [...activityLogs];
+
   if (filter !== 'all') {
     logs = logs.filter(l => l.a === filter);
   }
@@ -3515,7 +3533,9 @@ function renderLogs() {
   const actIcons = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
   
   listEl.innerHTML = logs.map(l => {
-    const d = new Date(l.t);
+    const ts = l.t;
+    // Handle Firestore Timestamp objects, plain numbers, and null (pending serverTimestamp)
+    const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
     const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
     return `<div class="log-entry card-in">
       <div class="log-icon">${actIcons[l.a] || '•'}</div>
@@ -3539,13 +3559,28 @@ function switchTab(tab) {
 }
 
 function askClearLogs() {
-  showConfirm('Clear Activity Log', 'Are you sure? This will delete all local activity history. This cannot be undone.', () => clearLogs(), true);
+  showConfirm('Clear Activity Log', 'Are you sure? This will delete all activity history across all devices. This cannot be undone.', () => clearLogs(), true);
 }
 
-function clearLogs() {
-  localStorage.removeItem(LOG_KEY);
-  renderLogs();
-  showToast('Activity log cleared', 'ok');
+async function clearLogs() {
+  if (!userId) { showToast('Sign in to clear logs', 'er'); return; }
+  try {
+    const actRef = collection(db, 'users', userId, 'activities');
+    const snap = await getDocs(actRef);
+    if (snap.empty) { showToast('No logs to clear', 'ok'); return; }
+    for (let i = 0; i < snap.docs.length; i += 450) {
+      const chunk = snap.docs.slice(i, i + 450);
+      const batch = writeBatch(db);
+      chunk.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    activityLogs = [];
+    renderLogs();
+    showToast('Activity log cleared', 'ok');
+  } catch (e) {
+    console.error('Error clearing activity log:', e);
+    showToast('Failed to clear logs: ' + (e?.code || e?.message || 'Unknown error'), 'er');
+  }
 }
 
 window.addTx = addTx;

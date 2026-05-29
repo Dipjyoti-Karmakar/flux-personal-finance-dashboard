@@ -34,6 +34,7 @@ The entire application ships as one `index.html` file (~3,100 lines) with embedd
 | **Excel / CSV Import** | File-picker import with auto column-mapping, row validation, duplicate detection, and 450-op batch writes |
 | **CSV Export** | One-click export of complete transaction history |
 | **Special Events** | Named events with date ranges and colour tags - link transactions to track event-level spending |
+| **Cloud-Synced Activity Log** | Real-time global audit trail of additions, edits, deletions, and imports synced across all devices via Firestore |
 
 ### Analytics Dashboard
 
@@ -132,6 +133,12 @@ users/
         ├── end        string   "YYYY-MM-DD"
         ├── color      string   hex colour code
         └── createdAt  number   epoch ms
+
+    activities/               # one doc per activity log entry (auto-pruned to 200)
+      {activityId}
+        ├── a          string   action ("ADD" | "EDIT" | "DELETE" | "IMPORT")
+        ├── m          string   formatted message / diff
+        └── t          number   Firestore serverTimestamp
 ```
 
 ---
