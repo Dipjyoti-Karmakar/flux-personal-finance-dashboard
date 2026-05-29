@@ -30,6 +30,8 @@ The entire application ships as one `index.html` file (~4.000 lines) with embedd
 | Capability | Details |
 |---|---|
 | **Transaction CRUD** | Add, edit, delete income/expense records with 5-second undo on delete - category, payment mode, date, and description |
+| **Recurring Transactions** | Manage subscriptions and recurring costs (monthly, weekly, yearly, daily) with auto-creation on due dates |
+| **PDF Reports** | Generate rich A4 PDF reports (monthly, annual, or custom date/event) with category donuts and auto-calculated insights |
 | **Real-time Cloud Sync** | Firestore `onSnapshot` listeners with debounced rendering (120 ms) and tri-state sync indicator |
 | **Excel / CSV Import** | File-picker import with auto column-mapping, row validation, duplicate detection, and 450-op batch writes |
 | **CSV Export** | One-click export of complete transaction history |
@@ -133,6 +135,15 @@ users/
         ├── end        string   "YYYY-MM-DD"
         ├── color      string   hex colour code
         └── createdAt  number   epoch ms
+
+    recurring/                # one doc per subscription
+      {recId}
+        ├── name       string   subscription name
+        ├── amount     number   > 0
+        ├── cat        string   category
+        ├── type       string   "income" | "expense"
+        ├── freq       string   "monthly" | "weekly" | "yearly" | "daily"
+        └── nextDue    string   "YYYY-MM-DD"
 
     activities/               # one doc per activity log entry (auto-pruned to 200)
       {activityId}

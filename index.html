@@ -1287,6 +1287,10 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
             </div>
           </div>
         </div>
+        <div class="fd" style="margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Filter by Event (Optional)</label>
+          <select id="rptEvent" style="width:100%;box-sizing:border-box;"><option value="">-- All Transactions --</option></select>
+        </div>
         <div style="margin-bottom:16px;padding:14px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);">
           <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Include in Report</label>
           <div style="display:flex;flex-direction:column;gap:8px;">
@@ -4035,6 +4039,11 @@ document.getElementById('rptMonth').value = now.getMonth() + 1;
   document.getElementById('rptYearOnly').value = now.getFullYear();
   document.getElementById('rptFrom').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
   document.getElementById('rptTo').value = now.toISOString().slice(0,10);
+  
+  const evtOpts = ['<option value="">-- All Transactions --</option>'];
+  events.forEach(e => evtOpts.push(`<option value="${e.id}">${e.name}</option>`));
+  document.getElementById('rptEvent').innerHTML = evtOpts.join('');
+
   setReportPeriod('month');
   document.getElementById('reportMod').classList.add('op');
 }
@@ -4045,26 +4054,16 @@ function closeReportMod() {
 
 function setReportPeriod(mode) {
   reportPeriodMode = mode;
-  ['Month','Year','Custom'].forEach(m => {
-    document.getElementById('rptPeriod' + m).classList.toggle('act', mode === m.toLowerCase());
-  });
-  document.getElementById('rptMonthYearRow').style.display = mode === 'month' ? 'grid' : 'none';
-  document.getElementById('rptYearOnlyRow').style.display = mode === 'year' ? 'block' : 'none';
-  document.getElementById('rptCustomRow').style.display = mode === 'custom' ? 'block' : 'none';
-}
-
-async function generatePDF() {
-  if (typeof window.jspdf === 'undefined') { showToast('PDF library not loaded yet, try again', 'er'); return; }
-  const btn = document.getElementById('pdfGenBtn');
-  btn.disabled = true; btn.textContent = 'Generating...';
-  try {
-    // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
+  ['Month','Year','Custom'].forEach(m =>    // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
     const fmtPDF = (n, showSign = false) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
-      const sign = showSign ? (n >= 0 ? '+' : '-') : '';
+      const sign = n < 0 ? '- ' : (showSign && n > 0 ? '+ ' : '');
       return `${sign}Rs. ${abs}`;
     };
-    const fmtPDFS = (n) => 'Rs. ' + Math.abs(n).toLocaleString('en-IN', {maximumFractionDigits:0});
+    const fmtPDFS = (n) => {
+      const abs = Math.abs(n).toLocaleString('en-IN', {maximumFractionDigits:0});
+      return (n < 0 ? '- ' : '') + 'Rs. ' + abs;
+    };
 
     // Determine date range
     let fromDate, toDate, reportTitle;
@@ -4087,13 +4086,21 @@ async function generatePDF() {
       reportTitle = `${fromDate} to ${toDate}  Finance Report`;
     }
 
+    const rptEventId = document.getElementById('rptEvent').value;
+    if (rptEventId) {
+      const evt = events.find(e => e.id === rptEventId);
+      if (evt) reportTitle = `Event: ${evt.name}`;
+    }
+
     const incInc = document.getElementById('rptIncome').checked;
     const incExp = document.getElementById('rptExpenses').checked;
     const incCat = document.getElementById('rptCatBreakdown').checked;
     const incList = document.getElementById('rptTxList').checked;
 
     // Filter transactions (use ALL txs for insight calc, filtered for display)
-    const allInPeriod = txs.filter(t => t.date >= fromDate && t.date <= toDate);
+    let allInPeriod = txs.filter(t => t.date >= fromDate && t.date <= toDate);
+    if (rptEventId) allInPeriod = allInPeriod.filter(t => t.eventId === rptEventId);
+    
     let filtered = [...allInPeriod];
     if (!incInc) filtered = filtered.filter(t => t.type !== 'income');
     if (!incExp) filtered = filtered.filter(t => t.type !== 'expense');
@@ -4124,9 +4131,9 @@ async function generatePDF() {
     const pL = 15, pR = W - 15;
 
     // Colour palette
-    const gold = [200, 169, 110], dark = [13, 15, 20], panel = [19, 22, 30];
-    const panel2 = [26, 30, 40], white = [232, 234, 240], white2 = [200, 204, 218];
-    const green = [93, 186, 138], red = [224, 112, 112], muted = [122, 128, 153];
+    const gold = [200, 169, 110], dark = [13, 15, 20], panel = [24, 28, 38];
+    const panel2 = [30, 35, 46], white = [232, 234, 240], darkText = [75, 80, 95];
+    const green = [73, 166, 118], red = [204, 92, 92], muted = [142, 148, 173];
     const bd = [45, 50, 65];
 
     let curY = 0;
@@ -4139,34 +4146,34 @@ async function generatePDF() {
     const sectionTitle = (title) => {
       checkBreak(14);
       doc.setFillColor(...gold); doc.rect(pL, curY, 3, 8, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
-      doc.text(title, pL + 6, curY + 5.5);
-      curY += 13;
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...gold);
+      doc.text(title, pL + 6, curY + 6);
+      curY += 14;
     };
 
     // ── PAGE 1: HEADER BANNER ──────────────────────────────────────────────
-    doc.setFillColor(...dark); doc.rect(0, 0, W, 46, 'F');
-    doc.setFillColor(...gold); doc.rect(0, 43, W, 2.5, 'F');
+    doc.setFillColor(...dark); doc.rect(0, 0, W, 48, 'F');
+    doc.setFillColor(...gold); doc.rect(0, 45, W, 3, 'F');
 
     // Brand
-    doc.setFont('helvetica','bold'); doc.setFontSize(28); doc.setTextColor(...gold);
-    doc.text('Flux', pL, 22);
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
-    doc.text('PERSONAL FINANCE', pL, 29);
+    doc.setFont('helvetica','bold'); doc.setFontSize(30); doc.setTextColor(...gold);
+    doc.text('Flux', pL, 24);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
+    doc.text('PERSONAL FINANCE', pL, 31);
 
     // Report title
-    doc.setFont('helvetica','bold'); doc.setFontSize(11.5); doc.setTextColor(...white);
-    doc.text(reportTitle, pL, 38);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...white);
+    doc.text(reportTitle, pL, 41);
 
     // Generated date (right-aligned)
     const genDate = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
-    doc.text(`Generated: ${genDate}`, pR, 38, { align:'right' });
-    curY = 52;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
+    doc.text(`Generated: ${genDate}`, pR, 41, { align:'right' });
+    curY = 56;
 
     // ── SUMMARY CARDS (2x2 grid for more room) ───────────────────────────
     const cardW = (W - 30 - 5) / 2;
-    const cardH = 26;
+    const cardH = 30;
     const cardGap = 5;
     const summaryCards = [
       { label:'NET BALANCE',    val: fmtPDF(netBal, true),  color: netBal >= 0 ? green : red,  sub: netBal>=0 ? 'Positive cash flow' : 'Spending exceeds income' },
@@ -4179,23 +4186,23 @@ async function generatePDF() {
       const cx = pL + col * (cardW + cardGap);
       const cy = curY + row * (cardH + 4);
       doc.setFillColor(...panel2); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'F');
-      doc.setDrawColor(...gold); doc.setLineWidth(0.25); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
+      doc.setDrawColor(...gold); doc.setLineWidth(0.3); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
       // Label
-      doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(...muted);
-      doc.text(c.label, cx + 5, cy + 6);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...muted);
+      doc.text(c.label, cx + 6, cy + 7.5);
       // Value
-      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...c.color);
-      doc.text(c.val, cx + 5, cy + 15);
+      doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...c.color);
+      doc.text(c.val, cx + 6, cy + 17.5);
       // Sub-label
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...muted);
-      doc.text(c.sub, cx + 5, cy + 21);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
+      doc.text(c.sub, cx + 6, cy + 24.5);
     });
     curY += (cardH + 4) * 2 + 6;
 
     // Tx count summary line
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
-    doc.text(`${txCount} transactions   ${allInPeriod.filter(t=>t.type==='income').length} income   ${expTxs.length} expenses   Period: ${fromDate} to ${toDate}`, pL, curY);
-    curY += 10;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...darkText);
+    doc.text(`${txCount} transactions   ${allInPeriod.filter(t=>t.type==='income').length} income   ${expTxs.length} expenses`, pL, curY);
+    curY += 12;
 
     // ── INSIGHTS ─────────────────────────────────────────────────────────
     if (txCount > 0) {
@@ -4216,13 +4223,13 @@ async function generatePDF() {
       insights.forEach((ins, idx) => {
         checkBreak(10);
         // bullet
-        doc.setFillColor(...gold); doc.circle(pL + 2, curY - 0.5, 1, 'F');
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...white2);
+        doc.setFillColor(...gold); doc.circle(pL + 2, curY - 0.5, 1.2, 'F');
+        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...darkText);
         const lines = doc.splitTextToSize(ins, W - pL - 15 - 10);
-        doc.text(lines, pL + 7, curY);
-        curY += lines.length * 5 + 3;
+        doc.text(lines, pL + 8, curY);
+        curY += lines.length * 6 + 4;
       });
-      curY += 4;
+      curY += 6;
     }
 
     // ── CHARTS: Category Donut + Online/Offline Donut ────────────────────
@@ -4265,14 +4272,14 @@ async function generatePDF() {
       const leftX = pL;
       const catChartTitle = 'CATEGORY DISTRIBUTION';
       // Panel background
-      doc.setFillColor(...panel2); doc.roundedRect(leftX, chartPanelTop, colW, 72, 3, 3, 'F');
-      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, colW, 72, 3, 3, 'S');
+      doc.setFillColor(...panel2); doc.roundedRect(leftX, chartPanelTop, colW, 76, 3, 3, 'F');
+      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, colW, 76, 3, 3, 'S');
       // Title
-      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...gold);
-      doc.text(catChartTitle, leftX + colW/2, chartPanelTop + 6, {align:'center'});
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...gold);
+      doc.text(catChartTitle, leftX + colW/2, chartPanelTop + 7.5, {align:'center'});
 
-      const catCX = leftX + 22, catCY = chartPanelTop + 38;
-      const catR = 18, catInnerR = 10;
+      const catCX = leftX + 24, catCY = chartPanelTop + 40;
+      const catR = 19, catInnerR = 11;
 
       if (catEntries.length > 0) {
         let catAngle = 0;
@@ -4283,43 +4290,43 @@ async function generatePDF() {
         });
         // Center hole label
         doc.setFillColor(...panel); doc.circle(catCX, catCY, catInnerR - 0.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(...muted);
-        doc.text('EXP', catCX, catCY - 1, {align:'center'});
-        doc.setFont('helvetica','bold'); doc.setFontSize(5.5); doc.setTextColor(...red);
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...muted);
+        doc.text('EXP', catCX, catCY - 1.5, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...red);
         doc.text(fmtPDFS(totalExp), catCX, catCY + 3.5, {align:'center'});
 
         // Legend
-        const legendX = leftX + catR * 2 + 10;
+        const legendX = leftX + catR * 2 + 12;
         const maxLegendItems = Math.min(catEntries.length, 7);
         catEntries.slice(0, maxLegendItems).forEach(([cat, amt], idx) => {
-          const ly = chartPanelTop + 12 + idx * 8.5;
+          const ly = chartPanelTop + 14 + idx * 8.5;
           const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(0) : '0';
           const label = cat.charAt(0).toUpperCase() + cat.slice(1);
-          doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 3, 3.5, 3.5, 0.5, 0.5, 'F');
-          doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...white);
-          doc.text(`${label}`, legendX + 5.5, ly);
-          doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(...muted);
+          doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 3.5, 4, 4, 0.5, 0.5, 'F');
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...white);
+          doc.text(`${label}`, legendX + 6, ly);
+          doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...muted);
           doc.text(`${pct}%`, leftX + colW - 4, ly, {align:'right'});
         });
         if (catEntries.length > maxLegendItems) {
-          const ly = chartPanelTop + 12 + maxLegendItems * 8.5;
-          doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(...muted);
+          const ly = chartPanelTop + 14 + maxLegendItems * 8.5;
+          doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
           doc.text(`+${catEntries.length - maxLegendItems} more`, legendX, ly);
         }
       } else {
-        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...muted);
-        doc.text('No expense data', leftX + colW/2, chartPanelTop + 38, {align:'center'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+        doc.text('No expense data', leftX + colW/2, chartPanelTop + 40, {align:'center'});
       }
 
       // ── RIGHT: ONLINE vs OFFLINE ──────────────────────────────────────────
       const rightX = leftX + colW + 6;
-      doc.setFillColor(...panel2); doc.roundedRect(rightX, chartPanelTop, colW, 72, 3, 3, 'F');
-      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(rightX, chartPanelTop, colW, 72, 3, 3, 'S');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...gold);
-      doc.text('PAYMENT CHANNEL SPLIT', rightX + colW/2, chartPanelTop + 6, {align:'center'});
+      doc.setFillColor(...panel2); doc.roundedRect(rightX, chartPanelTop, colW, 76, 3, 3, 'F');
+      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(rightX, chartPanelTop, colW, 76, 3, 3, 'S');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...gold);
+      doc.text('PAYMENT CHANNEL SPLIT', rightX + colW/2, chartPanelTop + 7.5, {align:'center'});
 
-      const oCX = rightX + 22, oCY = chartPanelTop + 38;
-      const oR = 18, oInnerR = 10;
+      const oCX = rightX + 24, oCY = chartPanelTop + 40;
+      const oR = 19, oInnerR = 11;
       const onlinePctVal = totalExp > 0 ? onlineExp / totalExp : 0;
       const offlinePctVal = 1 - onlinePctVal;
 
@@ -4330,31 +4337,31 @@ async function generatePDF() {
         if (onlineSlice < 359) drawDonutSlice(oCX, oCY, oR, oInnerR, onlineSlice, 360, [157,122,200]);
         // Center hole
         doc.setFillColor(...panel); doc.circle(oCX, oCY, oInnerR - 0.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(...muted);
-        doc.text('SPLIT', oCX, oCY - 1, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...muted);
+        doc.text('SPLIT', oCX, oCY - 1.5, {align:'center'});
 
         // Legend items
-        const oLegendX = rightX + oR * 2 + 10;
+        const oLegendX = rightX + oR * 2 + 12;
         const oItems = [
           { label:'Online', pct:(onlinePctVal*100).toFixed(1), amt:onlineExp, color:[110,157,200] },
           { label:'Offline', pct:(offlinePctVal*100).toFixed(1), amt:offlineExp, color:[157,122,200] },
         ];
         oItems.forEach((item, idx) => {
-          const ly = chartPanelTop + 28 + idx * 18;
-          doc.setFillColor(...item.color); doc.roundedRect(oLegendX, ly - 3.5, 3.5, 3.5, 0.5, 0.5, 'F');
-          doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...item.color);
-          doc.text(`${item.pct}%`, oLegendX + 6, ly);
-          doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...muted);
-          doc.text(item.label, oLegendX + 6, ly + 5);
-          doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...white);
-          doc.text(fmtPDFS(item.amt), oLegendX + 6, ly + 10);
+          const ly = chartPanelTop + 30 + idx * 18;
+          doc.setFillColor(...item.color); doc.roundedRect(oLegendX, ly - 4, 4, 4, 0.5, 0.5, 'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...item.color);
+          doc.text(`${item.pct}%`, oLegendX + 6.5, ly);
+          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
+          doc.text(item.label, oLegendX + 6.5, ly + 5);
+          doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...white);
+          doc.text(fmtPDFS(item.amt), oLegendX + 6.5, ly + 10);
         });
       } else {
-        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...muted);
-        doc.text('No expense data', rightX + colW/2, chartPanelTop + 38, {align:'center'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+        doc.text('No expense data', rightX + colW/2, chartPanelTop + 40, {align:'center'});
       }
 
-      curY = chartPanelTop + 72 + 8;
+      curY = chartPanelTop + 76 + 10;
     }
 
     // ── CATEGORY BREAKDOWN ───────────────────────────────────────────────
@@ -4369,13 +4376,13 @@ async function generatePDF() {
       doc.autoTable({
         startY: curY, head:[['Category','Amount','Share of Expenses']], body: catRows,
         margin:{left:pL, right:15}, theme:'grid',
-        headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:8, cellPadding:3.5 },
-        bodyStyles:{ fillColor:panel, textColor:white, fontSize:8, cellPadding:3.5 },
-        alternateRowStyles:{ fillColor:[22,26,36] },
+        headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9.5, cellPadding:4 },
+        bodyStyles:{ fillColor:panel, textColor:white, fontSize:9, cellPadding:4 },
+        alternateRowStyles:{ fillColor:[28,32,42] },
         columnStyles:{ 0:{cellWidth:90}, 1:{cellWidth:50,halign:'right'}, 2:{cellWidth:35,halign:'right'} },
         tableLineColor: bd, tableLineWidth: 0.15,
       });
-      curY = doc.lastAutoTable.finalY + 10;
+      curY = doc.lastAutoTable.finalY + 12;
     }
 
     // ── TRANSACTION LIST ─────────────────────────────────────────────────
@@ -4388,19 +4395,26 @@ async function generatePDF() {
         const amtStr = fmtPDF(t.type==='income' ? t.amount : -t.amount, true);
         const desc = t.desc || '(no description)';
         const catLabel = (t.cat||'other').charAt(0).toUpperCase()+(t.cat||'other').slice(1);
-        return [dateStr, desc, catLabel, amtStr, (t.mode||'online')];
+        return [dateStr, desc, catLabel, amtStr, (t.mode||'online'), t.id]; // pass id for matching
       });
       doc.autoTable({
         startY: curY, head:[['Date','Description','Category','Amount','Mode']], body: txRows,
         margin:{left:pL, right:15}, theme:'grid',
-        headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:7.5, cellPadding:2.8 },
-        bodyStyles:{ fillColor:panel, textColor:white, fontSize:7.5, cellPadding:2.8 },
-        alternateRowStyles:{ fillColor:[22,26,36] },
+        headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
+        bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5 },
+        alternateRowStyles:{ fillColor:[28,32,42] },
         columnStyles:{ 0:{cellWidth:28}, 1:{cellWidth:68}, 2:{cellWidth:26}, 3:{cellWidth:38,halign:'right'}, 4:{cellWidth:18,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
-          if (d.section==='body' && d.column.index===3) {
-            d.cell.styles.textColor = d.cell.raw.startsWith('+') ? green : red;
+          if (d.section==='body') {
+            const isLargest = largestTx && d.row.raw[5] === largestTx.id;
+            if (isLargest) {
+              d.cell.styles.fillColor = [40, 46, 60]; // highlight color
+              d.cell.styles.fontStyle = 'bold';
+            }
+            if (d.column.index===3) {
+              d.cell.styles.textColor = d.cell.raw.startsWith('+') ? green : red;
+            }
           }
         }
       });
@@ -4410,9 +4424,9 @@ async function generatePDF() {
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
-      doc.setFillColor(...dark); doc.rect(0, H - 11, W, 11, 'F');
-      doc.setDrawColor(...gold); doc.setLineWidth(0.2); doc.line(pL, H - 11, pR, H - 11);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...muted);
+      doc.setFillColor(...dark); doc.rect(0, H - 12, W, 12, 'F');
+      doc.setDrawColor(...gold); doc.setLineWidth(0.2); doc.line(pL, H - 12, pR, H - 12);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
       doc.text('Flux - Personal Finance Dashboard', pL, H - 5);
       doc.text(`Page ${i} of ${totalPages}`, pR, H - 5, {align:'right'});
     }
@@ -4424,9 +4438,9 @@ async function generatePDF() {
     showToast('PDF downloaded', 'ok');
   } catch(e) {
     console.error('PDF generation error:', e);
-    showToast('PDF generation failed: ' + (e?.message||'Unknown error'), 'er');
+    showToast('PDF failed: ' + (e?.message||'Unknown error'), 'er');
   } finally {
-    btn.disabled = false; btn.innerHTML = '📄 Generate &amp; Download PDF';
+    btn.disabled = false; btn.innerHTML = '📄 Generate & Download PDF';
   }
 }
 
