@@ -3651,10 +3651,10 @@ window.addEventListener('beforeinstallprompt', (e) => {
     const bar = document.getElementById('pwaSnackbar');
     if (bar) {
       bar.classList.add('vis');
-      // Auto-dismiss after 15 seconds
+      // Auto-dismiss after 5 seconds
       setTimeout(() => {
         if (bar.classList.contains('vis')) dismissPWA();
-      }, 15000);
+      }, 5000);
     }
   }
 });
