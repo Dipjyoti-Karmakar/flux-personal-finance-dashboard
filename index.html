@@ -4281,7 +4281,8 @@ async function generatePDF() {
 
     // ── CHARTS: Category Donut + Online/Offline Donut ────────────────────
     if (catEntries.length > 0 || totalExp > 0) {
-      checkBreak(78);
+      doc.addPage();
+      curY = 40; // Graceful top margin so the page doesn't look empty
 
       // Helper: draw a donut slice using polygon arc approximation
       const drawDonutSlice = (cx, cy, r, innerR, startDeg, endDeg, fillColor) => {
@@ -4382,7 +4383,6 @@ async function generatePDF() {
       // ── RIGHT: ONLINE vs OFFLINE ──────────────────────────────────────────
       if (catFullWidth) {
         curY = chartPanelTop + 110 + 10;
-        checkBreak(120);
       }
       const splitPanelTop = catFullWidth ? curY : chartPanelTop;
       const rightX = catFullWidth ? leftX : leftX + sideColW + 6;
@@ -4448,7 +4448,7 @@ async function generatePDF() {
         startY: curY, head:[['Category','Amount','Share of Expenses']], body: catRows,
         margin:{left:pL, right:15}, theme:'grid',
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9.5, cellPadding:4 },
-        bodyStyles:{ fillColor:panel, textColor:white, fontSize:9, cellPadding:4 },
+        bodyStyles:{ fillColor:panel, textColor:white, fontSize:9, cellPadding:4, valign:'middle' },
         alternateRowStyles:{ fillColor:[28,32,42] },
         columnStyles:{ 0:{}, 1:{cellWidth:40,halign:'right'}, 2:{cellWidth:35,halign:'right'} },
         tableLineColor: bd, tableLineWidth: 0.15,
@@ -4458,11 +4458,16 @@ async function generatePDF() {
 
     // ── TRANSACTION LIST ─────────────────────────────────────────────────
     if (incList && filtered.length) {
-      checkBreak(60); // Ensure enough space for title + header + at least 5 rows
+      if (incCat && catEntries.length > 6) {
+        doc.addPage();
+        curY = 20;
+      } else {
+        checkBreak(60); // Ensure enough space for title + header + at least 5 rows
+      }
       sectionTitle('TRANSACTION LIST');
       const txRows = filtered.map(t => {
         const d = new Date(t.date + 'T00:00:00');
-        const dateStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})} ${d.getFullYear()}`;
+        const dateStr = `${d.getDate()}\u00A0${d.toLocaleString('default',{month:'short'})}\u00A0${d.getFullYear()}`;
         const amtStr = fmtPDF(t.type==='income' ? t.amount : -t.amount, true);
         const desc = t.desc || '(no description)';
         const catLabel = (t.cat||'other').charAt(0).toUpperCase()+(t.cat||'other').slice(1);
@@ -4472,7 +4477,7 @@ async function generatePDF() {
         startY: curY, head:[['Date','Description','Category','Amount','Mode']], body: txRows,
         margin:{left:pL, right:15}, theme:'grid',
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
-        bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5 },
+        bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor:[28,32,42] },
         columnStyles:{ 0:{}, 1:{}, 2:{}, 3:{cellWidth:25,halign:'right'}, 4:{cellWidth:15,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
