@@ -3155,6 +3155,10 @@ function loadEvents() {
     snap.forEach(d => { events[d.id] = { id: d.id, _src: 'events', ...d.data() }; });
     populateEventSelects();
     renderEvents();
+    // After loading the real events collection, silently check if any events
+    // are still stranded in the old fallback location (transactions collection)
+    // and migrate them across automatically.
+    migrateStrandedEvents();
   }, (err) => {
     console.error('Events sync error:', err);
     if (err?.code === 'permission-denied') {
@@ -3183,6 +3187,42 @@ function loadEvents() {
       showToast('Events running in compatibility mode', 'ok');
     }
   });
+}
+
+// Migrates events stranded in the transactions fallback collection into the
+// proper events subcollection. Runs silently after every successful events load.
+async function migrateStrandedEvents() {
+  if (!userId) return;
+  try {
+    const fallbackQ = query(
+      collection(db, 'users', userId, 'transactions'),
+      where('_metaType', '==', 'event')
+    );
+    const snap = await getDocs(fallbackQ);
+    if (snap.empty) return; // Nothing to migrate
+    console.log(`[Events] Migrating ${snap.size} stranded event(s) from transactions → events`);
+    const batch = writeBatch(db);
+    snap.forEach(d => {
+      const data = d.data();
+      const cleanEvent = {
+        name: data.name || '',
+        start: data.start || '',
+        end: data.end || '',
+        color: data.color || '#c8a96e',
+        createdAt: data.createdAt || Date.now()
+      };
+      // Write to the proper events collection
+      batch.set(doc(db, 'users', userId, 'events', d.id), cleanEvent);
+      // Delete the stale copy from transactions
+      batch.delete(d.ref);
+    });
+    await batch.commit();
+    showToast(`Restored ${snap.size} saved event(s)`, 'ok');
+    console.log('[Events] Migration complete');
+  } catch (e) {
+    // Non-fatal — if migration fails (e.g. rules not yet updated), just log it
+    console.warn('[Events] Migration skipped:', e?.code || e?.message);
+  }
 }
 
 function getEventDocRef(eventId, src) {
