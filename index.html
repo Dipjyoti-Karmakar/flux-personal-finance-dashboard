@@ -410,7 +410,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   /* Action Bar Fix for Mobile Headers */
   .hr { 
     display: grid; 
-    grid-template-columns: 1fr 1fr; 
+    grid-template-columns: repeat(3, 1fr); 
     gap: 8px; 
     margin: 0; 
     padding: 0; 
@@ -418,14 +418,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
     align-items: stretch;
   }
   #cloudStatus { 
-    grid-column: span 2; 
+    grid-column: span 3; 
     justify-content: center; 
     margin-right: 0; 
     padding: 10px; 
     border-radius: 12px;
   }
   #authBtn {
-    grid-column: span 2;
+    grid-column: span 3;
   }
   .ib { 
     width: 100%; 
@@ -1222,11 +1222,16 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         </div>
         <div style="margin-bottom:14px;">
           <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Frequency</label>
-          <div class="freq-grid">
+          <div class="freq-grid" style="grid-template-columns:repeat(5,1fr);">
             <button class="freq-btn act" id="freqMonthly" onclick="setRecFreq('monthly')">Monthly</button>
             <button class="freq-btn" id="freqWeekly" onclick="setRecFreq('weekly')">Weekly</button>
             <button class="freq-btn" id="freqYearly" onclick="setRecFreq('yearly')">Yearly</button>
             <button class="freq-btn" id="freqDaily" onclick="setRecFreq('daily')">Daily</button>
+            <button class="freq-btn" id="freqCustom" onclick="setRecFreq('custom')">Custom</button>
+          </div>
+          <div id="recCustomDaysRow" style="display:none; margin-top:10px;">
+            <label style="font-size:9px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;">Custom Days Interval</label>
+            <input type="number" id="recCustomDays" placeholder="e.g. 28" min="1" step="1" style="width:100%; box-sizing:border-box;">
           </div>
         </div>
         <div class="fd full-mob" style="margin-bottom:4px;">
@@ -3798,12 +3803,13 @@ function renderLogs() {
 
 /* \u2500\u2500 Recurring Transactions (Subscriptions) \u2500\u2500 */
 
-function computeNextDue(fromDate, freq) {
+function computeNextDue(fromDate, freq, customDays) {
   const d = new Date(fromDate + 'T00:00:00');
   if (freq === 'daily')   d.setDate(d.getDate() + 1);
   else if (freq === 'weekly')  d.setDate(d.getDate() + 7);
   else if (freq === 'monthly') d.setMonth(d.getMonth() + 1);
   else if (freq === 'yearly')  d.setFullYear(d.getFullYear() + 1);
+  else if (freq === 'custom' && customDays) d.setDate(d.getDate() + parseInt(customDays, 10));
   return d.toISOString().slice(0, 10);
 }
 
@@ -3843,7 +3849,7 @@ async function checkAndTriggerRecurring() {
       });
       const nextKey = (rec.freq === 'monthly') ? monthKey : today;
       await setDoc(doc(db, 'users', userId, 'recurring', rec.id), {
-        nextDue: computeNextDue(today, rec.freq), lastTriggered: nextKey
+        nextDue: computeNextDue(today, rec.freq, rec.customDays), lastTriggered: nextKey
       }, { merge: true });
       triggered.push(rec.name);
       writeLog('ADD', `Auto-added recurring: ${rec.name} (₹${rec.amount})`);
@@ -3908,7 +3914,7 @@ function renderRecurring() {
         <div style="width:44px;height:44px;border-radius:12px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--bd)">${catIcon}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:14px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rec.name)}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);letter-spacing:.5px">${FREQ[rec.freq]||rec.freq} · Next: ${rec.nextDue || '—'}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);letter-spacing:.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rec.freq === 'custom' ? rec.customDays + ' Days' : (FREQ[rec.freq]||rec.freq)} · Next: ${rec.nextDue || '—'}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:17px;color:${amtColor}">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</div>
@@ -3952,6 +3958,7 @@ function openEditRecurring(id) {
   document.getElementById('recAmount').value = rec.amount || '';
   document.getElementById('recCat').value = rec.cat || 'other';
   document.getElementById('recNextDue').value = rec.nextDue || '';
+  if (rec.freq === 'custom') document.getElementById('recCustomDays').value = rec.customDays || '';
   setRecType(currentRecType);
   setRecFreq(currentRecFreq);
   document.getElementById('recurringMod').classList.add('op');
@@ -3969,10 +3976,13 @@ function setRecType(type) {
 
 function setRecFreq(freq) {
   currentRecFreq = freq;
-  ['Monthly','Weekly','Yearly','Daily'].forEach(f => {
+  ['Monthly','Weekly','Yearly','Daily','Custom'].forEach(f => {
     const btn = document.getElementById('freq' + f);
     if (btn) btn.classList.toggle('act', freq === f.toLowerCase());
   });
+  if (document.getElementById('recCustomDaysRow')) {
+    document.getElementById('recCustomDaysRow').style.display = freq === 'custom' ? 'block' : 'none';
+  }
 }
 
 async function saveRecurringMod() {
@@ -3980,10 +3990,13 @@ async function saveRecurringMod() {
   const amount = parseFloat(document.getElementById('recAmount').value);
   const cat = document.getElementById('recCat').value;
   const nextDue = document.getElementById('recNextDue').value;
+  const customDays = parseInt(document.getElementById('recCustomDays').value, 10);
   if (!name) { shake('recName'); return; }
   if (!amount || amount <= 0) { shake('recAmount'); return; }
+  if (currentRecFreq === 'custom' && (!customDays || customDays <= 0)) { shake('recCustomDays'); return; }
   if (!nextDue) { shake('recNextDue'); return; }
   const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, active: true };
+  if (currentRecFreq === 'custom') data.customDays = customDays;
   closeRecurringMod();
   if (editingRecurringId) {
     try {
@@ -4054,7 +4067,20 @@ function closeReportMod() {
 
 function setReportPeriod(mode) {
   reportPeriodMode = mode;
-  ['Month','Year','Custom'].forEach(m =>    // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
+  ['Month','Year','Custom'].forEach(m => {
+    document.getElementById('rptPeriod' + m).classList.toggle('act', mode === m.toLowerCase());
+  });
+  document.getElementById('rptMonthYearRow').style.display = mode === 'month' ? 'grid' : 'none';
+  document.getElementById('rptYearOnlyRow').style.display = mode === 'year' ? 'block' : 'none';
+  document.getElementById('rptCustomRow').style.display = mode === 'custom' ? 'block' : 'none';
+}
+
+async function generatePDF() {
+  if (typeof window.jspdf === 'undefined') { showToast('PDF library not loaded yet, try again', 'er'); return; }
+  const btn = document.getElementById('pdfGenBtn');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  try {
+    // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
     const fmtPDF = (n, showSign = false) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
       const sign = n < 0 ? '- ' : (showSign && n > 0 ? '+ ' : '');
