@@ -12,10 +12,12 @@
 <meta name="apple-mobile-web-app-title" content="Flux">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob:; worker-src blob:;">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
 <style>
 :root{--bg:#0d0f14;--sf:#13161e;--s2:#1a1e28;--s3:#212633;--bd:rgba(255,255,255,0.07);--bs:rgba(255,255,255,0.13);--tx:#e8eaf0;--mu:#7a8099;--di:#4a5068;--ac:#c8a96e;--ag:rgba(200,169,110,0.15);--on:#6e9dc8;--of:#9d7ac8;--ob:rgba(110,157,200,0.1);--fb:rgba(157,122,200,0.1);--in:#5dba8a;--ex:#e07070;--ib:rgba(93,186,138,0.1);--eb:rgba(224,112,112,0.1);--r:18px;--rs:12px;--sh-hov:0 16px 40px rgba(0,0,0,0.4);--sh-btn:0 8px 24px rgba(200,169,110,0.2);--sh-card:0 2px 8px rgba(0,0,0,0.12)}
 /* Updated Light Mode for High Contrast and Legibility */
@@ -707,6 +709,41 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .app-tab.act { background:var(--sf); color:var(--ac); box-shadow:0 2px 8px rgba(0,0,0,0.15); }
 .app-tab .tab-badge { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:var(--ac); color:var(--bg); font-size:9px; font-weight:700; margin-left:6px; vertical-align:middle; }
 
+/* ── Subscriptions Tab ── */
+#subView { max-width:960px; margin:0 auto; }
+.sub-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+.sub-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx); }
+.sub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; }
+.sub-card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); padding:18px; transition:all .25s cubic-bezier(0.16,1,0.3,1); box-shadow:var(--sh-card); }
+.sub-card:hover { border-color:var(--bs); box-shadow:var(--sh-hov); transform:translateY(-2px); }
+.sub-card.sub-paused { opacity:0.6; }
+.sub-due-section { margin-bottom:24px; }
+.sub-section-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--mu); font-weight:600; margin-bottom:12px; }
+.sub-summary-bar { display:flex; gap:12px; padding:16px 20px; background:var(--s2); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:20px; flex-wrap:wrap; }
+.sub-summary-item { display:flex; flex-direction:column; gap:3px; }
+.sub-summary-val { font-family:'DM Mono',monospace; font-size:18px; font-weight:700; }
+.sub-summary-lbl { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mu); font-weight:600; }
+@media(max-width:520px) { .sub-grid { grid-template-columns:1fr; } }
+
+/* ── Recurring Modal ── */
+#recurringMod .mo { max-width:480px; }
+.freq-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.freq-btn { padding:9px 4px; border-radius:var(--rs); border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; transition:all .2s; text-align:center; font-weight:600; }
+.freq-btn:hover { border-color:var(--bs); color:var(--tx); }
+.freq-btn.act { background:var(--ag); border-color:var(--ac); color:var(--ac); }
+
+/* ── PDF Report Modal ── */
+#reportMod .mo { max-width:500px; }
+.report-period-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:16px; }
+.rpt-tab { padding:9px; border-radius:var(--rs); border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; transition:all .2s; text-align:center; font-weight:600; }
+.rpt-tab:hover { border-color:var(--bs); color:var(--tx); }
+.rpt-tab.act { background:var(--ag); border-color:var(--ac); color:var(--ac); }
+.report-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+.report-custom { margin-bottom:14px; }
+.pdf-gen-btn { width:100%; padding:13px; border-radius:var(--rs); border:none; background:linear-gradient(135deg,var(--ac),color-mix(in srgb,var(--ac) 80%,#fff)); color:#0d0f14; font-family:'DM Mono',monospace; font-size:12px; letter-spacing:2px; text-transform:uppercase; font-weight:700; cursor:pointer; transition:all .3s cubic-bezier(0.16,1,0.3,1); margin-top:4px; }
+.pdf-gen-btn:hover { transform:translateY(-2px); box-shadow:var(--sh-btn); }
+.pdf-gen-btn:disabled { opacity:0.5; cursor:wait; }
+
 /* ── Activity Log ── */
 #logView { max-width: 960px; margin: 0 auto; }
 .log-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
@@ -813,6 +850,10 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 10.5v1.5h10v-1.5M7 9V1M4 4l3-3 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       CSV
     </button>
+    <button class="ib" onclick="openReportMod()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      PDF
+    </button>
     <button class="ib" onclick="document.getElementById('xlIn').click()">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 10.5v1.5h10v-1.5M7 1v8M4 6l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       Import
@@ -824,6 +865,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <!-- App Tab Navigation -->
 <div class="app-tabs">
   <button class="app-tab act" id="tabDash" onclick="switchTab('dashboard')">Dashboard</button>
+  <button class="app-tab" id="tabSub" onclick="switchTab('subscriptions')">🔁 Subscriptions</button>
   <button class="app-tab" id="tabLog" onclick="switchTab('log')">Activity Log</button>
 </div>
 
@@ -981,6 +1023,36 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 </div><!-- /dashboardView -->
 
 <!-- Activity Log View -->
+<!-- Subscriptions View -->
+<div id="subView" style="display:none">
+  <div class="sub-header">
+    <div class="sub-title">Subscriptions</div>
+    <button class="ib" onclick="openAddRecurring()" style="font-size:11px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add Subscription
+    </button>
+  </div>
+  <div class="sub-summary-bar" id="subSummaryBar">
+    <div class="sub-summary-item">
+      <div class="sub-summary-val" id="subTotalMonthly" style="color:var(--ex)">₹0</div>
+      <div class="sub-summary-lbl">Monthly Cost</div>
+    </div>
+    <div class="sub-summary-item">
+      <div class="sub-summary-val" id="subTotalYearly" style="color:var(--mu)">₹0</div>
+      <div class="sub-summary-lbl">Yearly Cost</div>
+    </div>
+    <div class="sub-summary-item">
+      <div class="sub-summary-val" id="subDueCount" style="color:var(--ac)">0</div>
+      <div class="sub-summary-lbl">Due / Upcoming</div>
+    </div>
+    <div class="sub-summary-item">
+      <div class="sub-summary-val" id="subActiveCount" style="color:var(--in)">0</div>
+      <div class="sub-summary-lbl">Active</div>
+    </div>
+  </div>
+  <div id="subList" class="sub-grid"></div>
+</div>
+
 <div id="logView" style="display:none">
   <div class="log-header">
     <div class="log-title">Activity Log</div>
@@ -1107,6 +1179,129 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   </div>
 </div>
 
+<!-- Recurring Transaction Modal -->
+<div class="bk" id="recurringMod">
+  <div class="mo" style="max-width:480px;">
+    <div class="mh"><span class="mti" id="recurringModTitle">New Subscription</span><button class="mc2" onclick="closeRecurringMod()">×</button></div>
+    <div class="mb">
+      <div class="fb2" style="padding:0">
+        <div class="fd full-mob" style="margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Name</label>
+          <input type="text" id="recName" placeholder="e.g. Netflix, Rent, Salary" maxlength="60" style="width:100%;box-sizing:border-box;">
+        </div>
+        <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div class="fd">
+            <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Amount (₹)</label>
+            <input type="number" id="recAmount" placeholder="0.00" min="0.01" step="0.01" style="width:100%;box-sizing:border-box;">
+          </div>
+          <div class="fd">
+            <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Category</label>
+            <select id="recCat" style="width:100%;box-sizing:border-box;">
+              <option value="food">🍜 Food</option>
+              <option value="transport">🚗 Transport</option>
+              <option value="housing">🏠 Housing</option>
+              <option value="entertainment">🎮 Entertainment</option>
+              <option value="health">💊 Health</option>
+              <option value="shopping">🛍 Shopping</option>
+              <option value="utilities">⚡ Utilities</option>
+              <option value="occasions">🎉 Occasions</option>
+              <option value="salary">💼 Salary</option>
+              <option value="freelance">💻 Freelance</option>
+              <option value="investment">📈 Investment</option>
+              <option value="stationery">📝 Stationery</option>
+              <option value="other">✦ Other</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Type</label>
+          <div class="tg" style="grid-template-columns:1fr 1fr;">
+            <button class="tb" id="recTypeExp" onclick="setRecType('expense')">Expense</button>
+            <button class="tb" id="recTypeInc" onclick="setRecType('income')">Income</button>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Frequency</label>
+          <div class="freq-grid">
+            <button class="freq-btn act" id="freqMonthly" onclick="setRecFreq('monthly')">Monthly</button>
+            <button class="freq-btn" id="freqWeekly" onclick="setRecFreq('weekly')">Weekly</button>
+            <button class="freq-btn" id="freqYearly" onclick="setRecFreq('yearly')">Yearly</button>
+            <button class="freq-btn" id="freqDaily" onclick="setRecFreq('daily')">Daily</button>
+          </div>
+        </div>
+        <div class="fd full-mob" style="margin-bottom:4px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Next Due Date</label>
+          <input type="date" id="recNextDue" style="width:100%;box-sizing:border-box;">
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="closeRecurringMod()">Cancel</button>
+      <button class="btn pr" id="recurringModSaveBtn" onclick="saveRecurringMod()">Create Subscription</button>
+    </div>
+  </div>
+</div>
+
+<!-- PDF Report Modal -->
+<div class="bk" id="reportMod">
+  <div class="mo" style="max-width:500px;">
+    <div class="mh"><span class="mti">Generate PDF Report</span><button class="mc2" onclick="closeReportMod()">×</button></div>
+    <div class="mb">
+      <div class="fb2" style="padding:0">
+        <div style="margin-bottom:16px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Report Period</label>
+          <div class="report-period-tabs">
+            <button class="rpt-tab act" id="rptPeriodMonth" onclick="setReportPeriod('month')">Month</button>
+            <button class="rpt-tab" id="rptPeriodYear" onclick="setReportPeriod('year')">Year</button>
+            <button class="rpt-tab" id="rptPeriodCustom" onclick="setReportPeriod('custom')">Custom</button>
+          </div>
+        </div>
+        <div id="rptMonthYearRow" class="report-row">
+          <div class="fd">
+            <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Month</label>
+            <select id="rptMonth" style="width:100%;box-sizing:border-box;">
+              <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+              <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="fd">
+            <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Year</label>
+            <select id="rptYear" style="width:100%;box-sizing:border-box;"></select>
+          </div>
+        </div>
+        <div id="rptYearOnlyRow" style="display:none;margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Year</label>
+          <select id="rptYearOnly" style="width:100%;box-sizing:border-box;"></select>
+        </div>
+        <div id="rptCustomRow" class="report-custom" style="display:none;">
+          <div class="report-row" style="margin-bottom:0;">
+            <div class="fd">
+              <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">From</label>
+              <input type="date" id="rptFrom" style="width:100%;box-sizing:border-box;">
+            </div>
+            <div class="fd">
+              <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">To</label>
+              <input type="date" id="rptTo" style="width:100%;box-sizing:border-box;">
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;padding:14px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Include in Report</label>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rptIncome" checked> Income transactions</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rptExpenses" checked> Expense transactions</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rptCatBreakdown" checked> Category breakdown</label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;text-transform:none;letter-spacing:0;"><input type="checkbox" id="rptTxList" checked> Full transaction list</label>
+          </div>
+        </div>
+        <button class="pdf-gen-btn" id="pdfGenBtn" onclick="generatePDF()">📄 Generate &amp; Download PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <button class="fab" id="fab" onclick="scrollToForm()" aria-label="Add new transaction">＋</button>
 <button class="scroll-top" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Scroll to top">↑</button>
 
@@ -1163,8 +1358,14 @@ let userId = null;
 let unsubscribeFirestore = null;
 let unsubscribeEvents = null;
 let unsubscribeActivityLog = null;
+let unsubscribeRecurring = null;
 let eventsUseFallback = false;
 let activityLogs = [];
+let recurringList = [];
+let editingRecurringId = null;
+let currentRecType = 'expense';
+let currentRecFreq = 'monthly';
+let reportPeriodMode = 'month';
 let trendAbort = null;
 let trendMode = 'expense'; // 'expense' | 'income' | 'both'
 let activeCatFilter = null;       // Currently selected category key or null
@@ -1269,6 +1470,7 @@ onAuthStateChanged(auth, (user) => {
     loadDataFromCloud();
     loadEvents();
     loadActivityLog();
+    loadRecurring();
     // Clear stale localStorage activity log (migrated to Firestore)
     try { localStorage.removeItem('flux_activity_log'); } catch(_) {}
     showSkeletons();
@@ -1279,7 +1481,9 @@ onAuthStateChanged(auth, (user) => {
     if(unsubscribeFirestore) unsubscribeFirestore();
     if(unsubscribeEvents) unsubscribeEvents();
     if(unsubscribeActivityLog) unsubscribeActivityLog();
+    if(unsubscribeRecurring) unsubscribeRecurring();
     activityLogs = [];
+    recurringList = [];
     
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> Sign In`;
     
@@ -3587,15 +3791,444 @@ function renderLogs() {
   }).join('');
 }
 
+
+/* \u2500\u2500 Recurring Transactions (Subscriptions) \u2500\u2500 */
+
+function computeNextDue(fromDate, freq) {
+  const d = new Date(fromDate + 'T00:00:00');
+  if (freq === 'daily')   d.setDate(d.getDate() + 1);
+  else if (freq === 'weekly')  d.setDate(d.getDate() + 7);
+  else if (freq === 'monthly') d.setMonth(d.getMonth() + 1);
+  else if (freq === 'yearly')  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function getMonthKey() { return new Date().toISOString().slice(0, 7); }
+
+function loadRecurring() {
+  if (!userId) return;
+  if (unsubscribeRecurring) unsubscribeRecurring();
+  const recRef = collection(db, 'users', userId, 'recurring');
+  unsubscribeRecurring = onSnapshot(recRef, (snap) => {
+    recurringList = [];
+    snap.forEach(d => recurringList.push({ id: d.id, ...d.data() }));
+    recurringList.sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
+    if (document.getElementById('subView').style.display !== 'none') renderRecurring();
+    checkAndTriggerRecurring();
+  }, err => console.error('Recurring sync error:', err));
+}
+
+async function checkAndTriggerRecurring() {
+  if (!userId || !recurringList.length) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const monthKey = getMonthKey();
+  const triggered = [];
+  for (const rec of recurringList) {
+    if (!rec.active) continue;
+    if (!rec.nextDue || today < rec.nextDue) continue;
+    // For monthly: skip if already triggered this month
+    if (rec.freq === 'monthly' && rec.lastTriggered === monthKey) continue;
+    // For weekly/daily: skip if lastTriggered is today
+    if ((rec.freq === 'weekly' || rec.freq === 'daily') && rec.lastTriggered === today) continue;
+    try {
+      const txId = uid();
+      await setDoc(doc(db, 'users', userId, 'transactions', txId), {
+        type: rec.type, mode: rec.mode || 'online',
+        desc: rec.name, cat: rec.cat,
+        amount: rec.amount, date: today, _recurring: true
+      });
+      const nextKey = (rec.freq === 'monthly') ? monthKey : today;
+      await setDoc(doc(db, 'users', userId, 'recurring', rec.id), {
+        nextDue: computeNextDue(today, rec.freq), lastTriggered: nextKey
+      }, { merge: true });
+      triggered.push(rec.name);
+      writeLog('ADD', `Auto-added recurring: ${rec.name} (₹${rec.amount})`);
+    } catch(e) { console.error('Failed to trigger recurring:', rec.name, e); }
+  }
+  if (triggered.length) showToast(`✓ Auto-added: ${triggered.join(', ')}`, 'ok');
+}
+
+function renderRecurring() {
+  const area = document.getElementById('subList');
+  if (!area) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const FREQ = { daily:'Daily', weekly:'Weekly', monthly:'Monthly', yearly:'Yearly' };
+  // Update summary bar
+  let monthlyTotal = 0, yearlyTotal = 0, dueCount = 0, activeCount = 0;
+  recurringList.forEach(r => {
+    if (!r.active) return;
+    activeCount++;
+    const amt = r.type === 'expense' ? r.amount : 0;
+    if (r.freq === 'monthly') monthlyTotal += amt;
+    else if (r.freq === 'yearly') yearlyTotal += amt / 12;
+    else if (r.freq === 'weekly') monthlyTotal += amt * 4.33;
+    else if (r.freq === 'daily') monthlyTotal += amt * 30;
+    if (r.nextDue && r.nextDue <= today) dueCount++;
+    else if (r.nextDue) {
+      const days = Math.ceil((new Date(r.nextDue) - new Date(today)) / 86400000);
+      if (days <= 7) dueCount++;
+    }
+  });
+  const el = (id) => document.getElementById(id);
+  if (el('subTotalMonthly')) el('subTotalMonthly').textContent = '₹' + (monthlyTotal).toLocaleString('en-IN', {maximumFractionDigits:0});
+  if (el('subTotalYearly')) el('subTotalYearly').textContent = '₹' + (monthlyTotal * 12 + yearlyTotal * 12).toLocaleString('en-IN', {maximumFractionDigits:0});
+  if (el('subDueCount')) el('subDueCount').textContent = dueCount;
+  if (el('subActiveCount')) el('subActiveCount').textContent = activeCount;
+
+  if (!recurringList.length) {
+    area.innerHTML = `<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)">
+      <div class="empty-icon" style="font-size:36px;margin-bottom:12px">🔁</div>
+      <div class="empty-title">No subscriptions yet</div>
+      <div class="empty-sub">Add recurring transactions like rent, Netflix, or salary to auto-track them every month.</div>
+    </div>`;
+    return;
+  }
+  area.innerHTML = recurringList.map(rec => {
+    const isDue = rec.nextDue && rec.nextDue <= today;
+    const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue) - new Date(today)) / 86400000) : null;
+    let statusHtml;
+    if (!rec.active) {
+      statusHtml = `<span style="font-size:10px;color:var(--mu);background:var(--s3);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">PAUSED</span>`;
+    } else if (isDue) {
+      statusHtml = `<span style="font-size:10px;color:var(--ac);background:var(--ag);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">⚡ DUE</span>`;
+    } else if (daysUntil !== null && daysUntil <= 3) {
+      statusHtml = `<span style="font-size:10px;color:var(--ex);background:var(--eb);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">In ${daysUntil}d</span>`;
+    } else {
+      statusHtml = `<span style="font-size:10px;color:var(--in);background:var(--ib);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">✓ Active</span>`;
+    }
+    const amtColor = rec.type === 'income' ? 'var(--in)' : 'var(--ex)';
+    const amtSign = rec.type === 'income' ? '+' : '-';
+    const catIcon = CICO[rec.cat] || '✦';
+    return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--bd)">${catIcon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rec.name)}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);letter-spacing:.5px">${FREQ[rec.freq]||rec.freq} · Next: ${rec.nextDue || '—'}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:17px;color:${amtColor}">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</div>
+          <div style="margin-top:5px">${statusHtml}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">${rec.active ? '⏸ Pause' : '▶ Resume'}</button>
+        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px" onclick="openEditRecurring('${rec.id}')">✏ Edit</button>
+        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px;color:var(--ex)" onclick="askDeleteRecurring('${rec.id}')">🗑 Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddRecurring() {
+  if (!userId) { showToast('Sign in to add subscriptions', 'er'); return; }
+  editingRecurringId = null;
+  currentRecType = 'expense';
+  currentRecFreq = 'monthly';
+  document.getElementById('recurringModTitle').textContent = 'New Subscription';
+  document.getElementById('recurringModSaveBtn').textContent = 'Create Subscription';
+  document.getElementById('recName').value = '';
+  document.getElementById('recAmount').value = '';
+  document.getElementById('recCat').value = 'entertainment';
+  document.getElementById('recNextDue').value = new Date().toISOString().slice(0,10);
+  setRecType('expense');
+  setRecFreq('monthly');
+  document.getElementById('recurringMod').classList.add('op');
+}
+
+function openEditRecurring(id) {
+  const rec = recurringList.find(r => r.id === id);
+  if (!rec) return;
+  editingRecurringId = id;
+  currentRecType = rec.type || 'expense';
+  currentRecFreq = rec.freq || 'monthly';
+  document.getElementById('recurringModTitle').textContent = 'Edit Subscription';
+  document.getElementById('recurringModSaveBtn').textContent = 'Save Changes';
+  document.getElementById('recName').value = rec.name || '';
+  document.getElementById('recAmount').value = rec.amount || '';
+  document.getElementById('recCat').value = rec.cat || 'other';
+  document.getElementById('recNextDue').value = rec.nextDue || '';
+  setRecType(currentRecType);
+  setRecFreq(currentRecFreq);
+  document.getElementById('recurringMod').classList.add('op');
+}
+
+function closeRecurringMod() {
+  document.getElementById('recurringMod').classList.remove('op');
+}
+
+function setRecType(type) {
+  currentRecType = type;
+  document.getElementById('recTypeExp').className = 'tb' + (type === 'expense' ? ' ae' : '');
+  document.getElementById('recTypeInc').className = 'tb' + (type === 'income' ? ' ai' : '');
+}
+
+function setRecFreq(freq) {
+  currentRecFreq = freq;
+  ['Monthly','Weekly','Yearly','Daily'].forEach(f => {
+    const btn = document.getElementById('freq' + f);
+    if (btn) btn.classList.toggle('act', freq === f.toLowerCase());
+  });
+}
+
+async function saveRecurringMod() {
+  const name = document.getElementById('recName').value.trim();
+  const amount = parseFloat(document.getElementById('recAmount').value);
+  const cat = document.getElementById('recCat').value;
+  const nextDue = document.getElementById('recNextDue').value;
+  if (!name) { shake('recName'); return; }
+  if (!amount || amount <= 0) { shake('recAmount'); return; }
+  if (!nextDue) { shake('recNextDue'); return; }
+  const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, active: true };
+  closeRecurringMod();
+  if (editingRecurringId) {
+    try {
+      await setDoc(doc(db, 'users', userId, 'recurring', editingRecurringId), data, { merge: true });
+      showToast('Subscription updated', 'ok');
+    } catch(e) { showToast('Error updating: ' + (e?.code || e?.message), 'er'); }
+  } else {
+    try {
+      data.createdAt = Date.now();
+      await setDoc(doc(db, 'users', userId, 'recurring', uid()), data);
+      showToast('Subscription created', 'ok');
+      writeLog('ADD', `Created recurring subscription: ${name}`);
+    } catch(e) { showToast('Error creating: ' + (e?.code || e?.message), 'er'); }
+  }
+}
+
+async function toggleRecurringActive(id, active) {
+  if (!userId) return;
+  try {
+    await setDoc(doc(db, 'users', userId, 'recurring', id), { active }, { merge: true });
+    showToast(active ? 'Subscription resumed' : 'Subscription paused', 'ok');
+  } catch(e) { showToast('Error: ' + (e?.code || e?.message), 'er'); }
+}
+
+function askDeleteRecurring(id) {
+  const rec = recurringList.find(r => r.id === id);
+  if (!rec) return;
+  showConfirm('Delete Subscription', `Delete "${rec.name}"? Future transactions won't be auto-added, but past ones remain.`, () => deleteRecurring(id), true);
+}
+
+async function deleteRecurring(id) {
+  if (!userId) return;
+  try {
+    await deleteDoc(doc(db, 'users', userId, 'recurring', id));
+    showToast('Subscription deleted', 'ok');
+  } catch(e) { showToast('Error deleting: ' + (e?.code || e?.message), 'er'); }
+}
+
+document.getElementById('recurringMod').addEventListener('click', function(e) { if (e.target === this) closeRecurringMod(); });
+
+/* \u2500\u2500 PDF Monthly Reports \u2500\u2500 */
+
+function openReportMod() {
+  const now = new Date();
+  // Populate year selectors with all years present in transactions + current year
+  const years = [...new Set(txs.map(t => t.date?.slice(0,4)).filter(Boolean))].sort((a,b) => b-a);
+  if (!years.includes(String(now.getFullYear()))) years.unshift(String(now.getFullYear()));
+  const yearOpts = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  document.getElementById('rptYear').innerHTML = yearOpts;
+  document.getElementById('rptYearOnly').innerHTML = yearOpts;
+  document.getElementById('rptMonth').value = now.getMonth() + 1;
+  document.getElementById('rptYear').value = now.getFullYear();
+  document.getElementById('rptYearOnly').value = now.getFullYear();
+  document.getElementById('rptFrom').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  document.getElementById('rptTo').value = now.toISOString().slice(0,10);
+  setReportPeriod('month');
+  document.getElementById('reportMod').classList.add('op');
+}
+
+function closeReportMod() {
+  document.getElementById('reportMod').classList.remove('op');
+}
+
+function setReportPeriod(mode) {
+  reportPeriodMode = mode;
+  ['Month','Year','Custom'].forEach(m => {
+    document.getElementById('rptPeriod' + m).classList.toggle('act', mode === m.toLowerCase());
+  });
+  document.getElementById('rptMonthYearRow').style.display = mode === 'month' ? 'grid' : 'none';
+  document.getElementById('rptYearOnlyRow').style.display = mode === 'year' ? 'block' : 'none';
+  document.getElementById('rptCustomRow').style.display = mode === 'custom' ? 'block' : 'none';
+}
+
+async function generatePDF() {
+  if (typeof window.jspdf === 'undefined') { showToast('PDF library not loaded yet, try again', 'er'); return; }
+  const btn = document.getElementById('pdfGenBtn');
+  btn.disabled = true; btn.textContent = 'Generating…';
+  try {
+    // Determine date range
+    let fromDate, toDate, reportTitle;
+    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    if (reportPeriodMode === 'month') {
+      const m = parseInt(document.getElementById('rptMonth').value);
+      const y = parseInt(document.getElementById('rptYear').value);
+      fromDate = `${y}-${String(m).padStart(2,'0')}-01`;
+      const lastDay = new Date(y, m, 0).getDate();
+      toDate = `${y}-${String(m).padStart(2,'0')}-${lastDay}`;
+      reportTitle = `${MONTHS[m-1]} ${y} — Finance Report`;
+    } else if (reportPeriodMode === 'year') {
+      const y = parseInt(document.getElementById('rptYearOnly').value);
+      fromDate = `${y}-01-01`; toDate = `${y}-12-31`;
+      reportTitle = `${y} — Annual Finance Report`;
+    } else {
+      fromDate = document.getElementById('rptFrom').value;
+      toDate = document.getElementById('rptTo').value;
+      if (!fromDate || !toDate || fromDate > toDate) { showToast('Invalid date range', 'er'); btn.disabled = false; btn.innerHTML = '📄 Generate & Download PDF'; return; }
+      reportTitle = `${fromDate} to ${toDate} — Finance Report`;
+    }
+
+    const incInc = document.getElementById('rptIncome').checked;
+    const incExp = document.getElementById('rptExpenses').checked;
+    const incCat = document.getElementById('rptCatBreakdown').checked;
+    const incList = document.getElementById('rptTxList').checked;
+
+    // Filter transactions
+    let filtered = txs.filter(t => t.date >= fromDate && t.date <= toDate);
+    if (!incInc) filtered = filtered.filter(t => t.type !== 'income');
+    if (!incExp) filtered = filtered.filter(t => t.type !== 'expense');
+    filtered.sort((a,b) => a.date.localeCompare(b.date));
+
+    const totalInc = filtered.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    const totalExp = filtered.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const netBal = totalInc - totalExp;
+    const savRate = totalInc > 0 ? ((netBal/totalInc)*100).toFixed(1) : '0.0';
+
+    // Init PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const W = doc.internal.pageSize.getWidth();
+    const pL = 18, pR = W - 18;
+
+    const gold = [200, 169, 110], dark = [13, 15, 20], white = [232, 234, 240];
+    const green = [93, 186, 138], red = [224, 112, 112], muted = [122, 128, 153];
+
+    let y = 0;
+
+    // \u2500 Header banner
+    doc.setFillColor(...dark); doc.rect(0, 0, W, 42, 'F');
+    doc.setFillColor(...gold); doc.rect(0, 38, W, 3, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor(...gold);
+    doc.text('Flux', pL, 20);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
+    doc.text('PERSONAL FINANCE', pL, 27);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(...white);
+    doc.text(reportTitle, pL, 35);
+    const genDate = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
+    doc.text(`Generated: ${genDate}`, pR, 35, { align:'right' });
+    y = 52;
+
+    // \u2500 Summary cards row
+    const cardW = (W - 36 - 9) / 4, cardH = 22;
+    const cards = [
+      { label:'NET BALANCE', val: (netBal>=0?'+':'-')+'₹'+Math.abs(netBal).toLocaleString('en-IN',{maximumFractionDigits:0}), color: netBal>=0 ? green : red },
+      { label:'TOTAL INCOME', val:'₹'+totalInc.toLocaleString('en-IN',{maximumFractionDigits:0}), color: green },
+      { label:'TOTAL EXPENSES', val:'₹'+totalExp.toLocaleString('en-IN',{maximumFractionDigits:0}), color: red },
+      { label:'SAVINGS RATE', val:`${savRate}%`, color: parseFloat(savRate)>=20 ? green : muted },
+    ];
+    cards.forEach((c, i) => {
+      const cx = pL + i * (cardW + 3);
+      doc.setFillColor(26, 30, 40); doc.roundedRect(cx, y, cardW, cardH, 3, 3, 'F');
+      doc.setDrawColor(...gold); doc.setLineWidth(0.3); doc.roundedRect(cx, y, cardW, cardH, 3, 3, 'S');
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+      doc.text(c.label, cx + cardW/2, y+7, {align:'center'});
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...c.color);
+      const valTxt = doc.splitTextToSize(c.val, cardW - 4);
+      doc.text(valTxt[0], cx + cardW/2, y+16, {align:'center'});
+    });
+    y += cardH + 12;
+
+    // \u2500 Transactions count row
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
+    doc.text(`${filtered.length} transactions · ${filtered.filter(t=>t.type==='income').length} income · ${filtered.filter(t=>t.type==='expense').length} expenses`, pL, y);
+    y += 10;
+
+    // \u2500 Category Breakdown
+    if (incCat && filtered.some(t=>t.type==='expense')) {
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...gold);
+      doc.text('CATEGORY BREAKDOWN', pL, y); y += 6;
+      const catMap = {};
+      filtered.filter(t=>t.type==='expense').forEach(t => { catMap[t.cat||'other'] = (catMap[t.cat||'other']||0) + t.amount; });
+      const catRows = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([cat,amt]) => {
+        const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(1)+'%' : '0%';
+        const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
+        return [catLabel, '₹'+amt.toLocaleString('en-IN',{maximumFractionDigits:0}), pct];
+      });
+      doc.autoTable({
+        startY: y, head:[['Category','Amount','Share']], body: catRows,
+        margin:{left:pL,right:18}, theme:'grid',
+        headStyles:{ fillColor:[26,30,40], textColor:gold, fontStyle:'bold', fontSize:8, cellPadding:3 },
+        bodyStyles:{ fillColor:[19,22,30], textColor:white, fontSize:8, cellPadding:3 },
+        alternateRowStyles:{ fillColor:[22,26,36] },
+        columnStyles:{ 0:{cellWidth:80}, 1:{cellWidth:50,halign:'right'}, 2:{cellWidth:30,halign:'right'} },
+        didDrawPage: (d) => { y = d.cursor.y; }
+      });
+      y = doc.lastAutoTable.finalY + 12;
+    }
+
+    // \u2500 Transaction List
+    if (incList && filtered.length) {
+      if (y > 220) { doc.addPage(); y = 20; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...gold);
+      doc.text('TRANSACTION LIST', pL, y); y += 6;
+      const txRows = filtered.map(t => {
+        const d = new Date(t.date + 'T00:00:00');
+        const dateStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})} ${d.getFullYear()}`;
+        const amtStr = (t.type==='income'?'+':'-')+'₹'+t.amount.toLocaleString('en-IN',{maximumFractionDigits:2});
+        return [dateStr, t.desc||'—', (t.cat||'other').charAt(0).toUpperCase()+(t.cat||'other').slice(1), amtStr, t.mode||'—'];
+      });
+      doc.autoTable({
+        startY: y, head:[['Date','Description','Category','Amount','Mode']], body: txRows,
+        margin:{left:pL,right:18}, theme:'grid',
+        headStyles:{ fillColor:[26,30,40], textColor:gold, fontStyle:'bold', fontSize:7.5, cellPadding:2.5 },
+        bodyStyles:{ fillColor:[19,22,30], textColor:white, fontSize:7.5, cellPadding:2.5 },
+        alternateRowStyles:{ fillColor:[22,26,36] },
+        columnStyles:{ 0:{cellWidth:30}, 1:{cellWidth:70}, 2:{cellWidth:28}, 3:{cellWidth:32,halign:'right'}, 4:{cellWidth:18,halign:'center'} },
+        didParseCell: (d) => {
+          if (d.section==='body' && d.column.index===3) {
+            d.cell.styles.textColor = d.cell.raw.startsWith('+') ? green : red;
+          }
+        }
+      });
+    }
+
+    // \u2500 Footer on every page
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFillColor(...dark); doc.rect(0, doc.internal.pageSize.getHeight()-12, W, 12, 'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...muted);
+      doc.text('Flux — Personal Finance Dashboard', pL, doc.internal.pageSize.getHeight()-5);
+      doc.text(`Page ${i} of ${totalPages}`, pR, doc.internal.pageSize.getHeight()-5, {align:'right'});
+    }
+
+    // Save
+    const fileName = `flux-report-${fromDate}-to-${toDate}.pdf`;
+    doc.save(fileName);
+    closeReportMod();
+    showToast('PDF downloaded', 'ok');
+  } catch(e) {
+    console.error('PDF generation error:', e);
+    showToast('PDF generation failed: ' + (e?.message||'Unknown error'), 'er');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '📄 Generate &amp; Download PDF';
+  }
+}
+
+document.getElementById('reportMod').addEventListener('click', function(e) { if (e.target === this) closeReportMod(); });
+
 function switchTab(tab) {
   document.getElementById('tabDash').classList.toggle('act', tab === 'dashboard');
+  document.getElementById('tabSub').classList.toggle('act', tab === 'subscriptions');
   document.getElementById('tabLog').classList.toggle('act', tab === 'log');
   document.getElementById('dashboardView').style.display = tab === 'dashboard' ? 'block' : 'none';
+  document.getElementById('subView').style.display = tab === 'subscriptions' ? 'block' : 'none';
   document.getElementById('logView').style.display = tab === 'log' ? 'block' : 'none';
   
-  if (tab === 'log') {
-    renderLogs();
-  }
+  if (tab === 'log') renderLogs();
+  if (tab === 'subscriptions') renderRecurring();
 }
 
 function askClearLogs() {
@@ -3624,7 +4257,7 @@ async function clearLogs() {
 }
 
 window.addTx = addTx;
-window.askDelTx = askDelTx; // FIXED: Renamed from delTx to askDelTx so the inline HTML button handler finds it correctly
+window.askDelTx = askDelTx;
 window.editTx = editTx;
 window.closeEditMod = closeEditMod;
 window.saveEditTx = saveEditTx;
@@ -3671,6 +4304,20 @@ window.renderLogs = renderLogs;
 window.askClearLogs = askClearLogs;
 window.clearLogs = clearLogs;
 window.setSplitView = setSplitView;
+// Recurring
+window.openAddRecurring = openAddRecurring;
+window.openEditRecurring = openEditRecurring;
+window.closeRecurringMod = closeRecurringMod;
+window.saveRecurringMod = saveRecurringMod;
+window.setRecType = setRecType;
+window.setRecFreq = setRecFreq;
+window.toggleRecurringActive = toggleRecurringActive;
+window.askDeleteRecurring = askDeleteRecurring;
+// PDF
+window.openReportMod = openReportMod;
+window.closeReportMod = closeReportMod;
+window.setReportPeriod = setReportPeriod;
+window.generatePDF = generatePDF;
 
 // ── PWA: Service Worker Registration & Install Prompt ──
 let _deferredPrompt = null;
