@@ -19,7 +19,7 @@
 
 Flux is a single-page personal finance dashboard built with **HTML, CSS, and vanilla JavaScript**. It uses **Firebase Authentication** (Google sign-in) and **Cloud Firestore** for real-time data sync across devices - no backend code, no build step, no framework.
 
-The entire application ships as one `index.html` file (~3,100 lines) with embedded styles and ES-module scripts. It is installable as a **Progressive Web App** and works offline.
+The entire application ships as one `index.html` file (~4.000 lines) with embedded styles and ES-module scripts. It is installable as a **Progressive Web App** and works offline.
 
 ---
 
