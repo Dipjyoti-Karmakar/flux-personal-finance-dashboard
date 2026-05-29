@@ -712,7 +712,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 /* ── Subscriptions Tab ── */
 #subView { max-width:960px; margin:0 auto; }
 .sub-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
-.sub-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx); }
+.sub-title { font-family:'Playfair Display',serif; font-size:26px; font-weight:600; color:var(--tx); }
 .sub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
 .sub-card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); padding:18px; transition:all .25s cubic-bezier(0.16,1,0.3,1); box-shadow:var(--sh-card); }
 .sub-card:hover { border-color:var(--bs); box-shadow:var(--sh-hov); transform:translateY(-2px); }
@@ -721,8 +721,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .sub-section-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--mu); font-weight:600; margin-bottom:12px; }
 .sub-summary-bar { display:flex; gap:16px; padding:16px 20px; background:var(--s2); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:20px; flex-wrap:wrap; justify-content:space-around; }
 .sub-summary-item { display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; min-width:90px; flex:1; }
-.sub-summary-val { font-family:'DM Mono',monospace; font-size:18px; font-weight:700; }
-.sub-summary-lbl { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mu); font-weight:600; }
+.sub-summary-val { font-family:'DM Mono',monospace; font-size:24px; font-weight:700; }
+.sub-summary-lbl { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mu); font-weight:600; }
 @media(max-width:520px) { .sub-grid { grid-template-columns:1fr; } }
 
 /* ── Recurring Modal ── */
@@ -3920,33 +3920,33 @@ function renderRecurring() {
     const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue) - new Date(today)) / 86400000) : null;
     let statusHtml;
     if (!rec.active) {
-      statusHtml = `<span style="font-size:10px;color:var(--mu);background:var(--s3);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">PAUSED</span>`;
+      statusHtml = `<span style="font-size:11px;color:var(--mu);background:var(--s3);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">PAUSED</span>`;
     } else if (isDue) {
-      statusHtml = `<span style="font-size:10px;color:var(--ac);background:var(--ag);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">⚡ DUE</span>`;
+      statusHtml = `<span style="font-size:11px;color:var(--ac);background:var(--ag);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">⚡ DUE</span>`;
     } else if (daysUntil !== null && daysUntil <= 3) {
-      statusHtml = `<span style="font-size:10px;color:var(--ex);background:var(--eb);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">In ${daysUntil}d</span>`;
+      statusHtml = `<span style="font-size:11px;color:var(--ex);background:var(--eb);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">In ${daysUntil}d</span>`;
     } else {
-      statusHtml = `<span style="font-size:10px;color:var(--in);background:var(--ib);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">✓ Active</span>`;
+      statusHtml = `<span style="font-size:11px;color:var(--in);background:var(--ib);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">✓ Active</span>`;
     }
     const amtColor = rec.type === 'income' ? 'var(--in)' : 'var(--ex)';
     const amtSign = rec.type === 'income' ? '+' : '-';
     const catIcon = CICO[rec.cat] || '✦';
     return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:44px;height:44px;border-radius:12px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--bd)">${catIcon}</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:54px;height:54px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:1px solid var(--bd)">${catIcon}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:14px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rec.name)}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);letter-spacing:.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rec.freq === 'custom' ? rec.customDays + ' Days' : (FREQ[rec.freq]||rec.freq)} · Next: ${rec.nextDue || '—'}</div>
+          <div style="font-weight:600;font-size:17px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rec.name)}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--mu);letter-spacing:.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rec.freq === 'custom' ? rec.customDays + ' Days' : (FREQ[rec.freq]||rec.freq)} · Next: ${rec.nextDue || '—'}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:17px;color:${amtColor}">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</div>
+          <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:22px;color:${amtColor}">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</div>
           <div style="margin-top:5px">${statusHtml}</div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
-        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">${rec.active ? '⏸ Pause' : '▶ Resume'}</button>
-        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px" onclick="openEditRecurring('${rec.id}')">✏ Edit</button>
-        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px;color:var(--ex)" onclick="askDeleteRecurring('${rec.id}')">🗑 Delete</button>
+      <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
+        <button class="ib" style="flex:1;justify-content:center;font-size:12px;padding:10px 4px" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">${rec.active ? '⏸ Pause' : '▶ Resume'}</button>
+        <button class="ib" style="flex:1;justify-content:center;font-size:12px;padding:10px 4px" onclick="openEditRecurring('${rec.id}')">✏ Edit</button>
+        <button class="ib" style="flex:1;justify-content:center;font-size:12px;padding:10px 4px;color:var(--ex)" onclick="askDeleteRecurring('${rec.id}')">🗑 Delete</button>
       </div>
     </div>`;
   }).join('');
@@ -4479,7 +4479,7 @@ async function generatePDF() {
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor:[28,32,42] },
-        columnStyles:{ 0:{minCellWidth: 26}, 1:{}, 2:{}, 3:{cellWidth:25,halign:'right'}, 4:{cellWidth:15,halign:'center'} },
+        columnStyles:{ 0:{minCellWidth: 26}, 1:{}, 2:{}, 3:{cellWidth:25,halign:'right'}, 4:{minCellWidth:17,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
