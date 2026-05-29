@@ -434,6 +434,17 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
     font-size: 11px; 
     border-radius: 12px;
   }
+  
+  /* Subscriptions Revert for Mobile */
+  .sub-title { font-size: 20px; }
+  .sub-summary-val { font-size: 18px; }
+  .sub-summary-lbl { font-size: 9px; }
+  .sub-card-status { font-size: 10px; }
+  .sub-card-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+  .sub-card-name { font-size: 14px; }
+  .sub-card-freq { font-size: 10px; }
+  .sub-card-amt { font-size: 17px; }
+  .sub-card-btn { font-size: 10px; padding: 7px 4px; }
 
   /* Hero Dashboard Balance */
   .sr1{grid-template-columns:1fr 1fr; gap:10px;}
@@ -723,6 +734,12 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .sub-summary-item { display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; min-width:90px; flex:1; }
 .sub-summary-val { font-family:'DM Mono',monospace; font-size:24px; font-weight:700; }
 .sub-summary-lbl { font-family:'DM Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mu); font-weight:600; }
+.sub-card-status { font-size:11px; padding:3px 8px; border-radius:4px; font-family:'DM Mono',monospace; font-weight:600; }
+.sub-card-icon { width:54px; height:54px; border-radius:14px; font-size:28px; }
+.sub-card-name { font-size:17px; }
+.sub-card-freq { font-size:12px; }
+.sub-card-amt { font-size:22px; }
+.sub-card-btn { font-size:12px; padding:10px 4px; }
 @media(max-width:520px) { .sub-grid { grid-template-columns:1fr; } }
 
 /* ── Recurring Modal ── */
@@ -3920,33 +3937,33 @@ function renderRecurring() {
     const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue) - new Date(today)) / 86400000) : null;
     let statusHtml;
     if (!rec.active) {
-      statusHtml = `<span style="font-size:11px;color:var(--mu);background:var(--s3);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">PAUSED</span>`;
+      statusHtml = `<span class="sub-card-status" style="color:var(--mu);background:var(--s3)">PAUSED</span>`;
     } else if (isDue) {
-      statusHtml = `<span style="font-size:11px;color:var(--ac);background:var(--ag);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">⚡ DUE</span>`;
+      statusHtml = `<span class="sub-card-status" style="color:var(--ac);background:var(--ag)">⚡ DUE</span>`;
     } else if (daysUntil !== null && daysUntil <= 3) {
-      statusHtml = `<span style="font-size:11px;color:var(--ex);background:var(--eb);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">In ${daysUntil}d</span>`;
+      statusHtml = `<span class="sub-card-status" style="color:var(--ex);background:var(--eb)">In ${daysUntil}d</span>`;
     } else {
-      statusHtml = `<span style="font-size:11px;color:var(--in);background:var(--ib);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">✓ Active</span>`;
+      statusHtml = `<span class="sub-card-status" style="color:var(--in);background:var(--ib)">✓ Active</span>`;
     }
     const amtColor = rec.type === 'income' ? 'var(--in)' : 'var(--ex)';
     const amtSign = rec.type === 'income' ? '+' : '-';
     const catIcon = CICO[rec.cat] || '✦';
     return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}">
       <div style="display:flex;align-items:center;gap:14px">
-        <div style="width:54px;height:54px;border-radius:14px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;border:1px solid var(--bd)">${catIcon}</div>
+        <div class="sub-card-icon" style="background:var(--s2);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid var(--bd)">${catIcon}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:17px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rec.name)}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--mu);letter-spacing:.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rec.freq === 'custom' ? rec.customDays + ' Days' : (FREQ[rec.freq]||rec.freq)} · Next: ${rec.nextDue || '—'}</div>
+          <div class="sub-card-name" style="font-weight:600;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rec.name)}</div>
+          <div class="sub-card-freq" style="font-family:'DM Mono',monospace;color:var(--mu);letter-spacing:.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rec.freq === 'custom' ? rec.customDays + ' Days' : (FREQ[rec.freq]||rec.freq)} · Next: ${rec.nextDue || '—'}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:22px;color:${amtColor}">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</div>
+          <div class="sub-card-amt" style="font-family:'DM Mono',monospace;font-weight:700;color:${amtColor}">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</div>
           <div style="margin-top:5px">${statusHtml}</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
-        <button class="ib" style="flex:1;justify-content:center;font-size:12px;padding:10px 4px" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">${rec.active ? '⏸ Pause' : '▶ Resume'}</button>
-        <button class="ib" style="flex:1;justify-content:center;font-size:12px;padding:10px 4px" onclick="openEditRecurring('${rec.id}')">✏ Edit</button>
-        <button class="ib" style="flex:1;justify-content:center;font-size:12px;padding:10px 4px;color:var(--ex)" onclick="askDeleteRecurring('${rec.id}')">🗑 Delete</button>
+        <button class="ib sub-card-btn" style="flex:1;justify-content:center" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">${rec.active ? '⏸ Pause' : '▶ Resume'}</button>
+        <button class="ib sub-card-btn" style="flex:1;justify-content:center" onclick="openEditRecurring('${rec.id}')">✏ Edit</button>
+        <button class="ib sub-card-btn" style="flex:1;justify-content:center;color:var(--ex)" onclick="askDeleteRecurring('${rec.id}')">🗑 Delete</button>
       </div>
     </div>`;
   }).join('');
