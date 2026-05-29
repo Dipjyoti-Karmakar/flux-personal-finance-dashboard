@@ -1331,7 +1331,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',utility:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
 const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8','#c8c36e','#6e8dc8','#c86e6e','#7ac86e'];
@@ -3847,20 +3847,32 @@ async function checkAndTriggerRecurring() {
     triggeringRecs.add(rec.id);
     
     try {
-      const txId = uid();
-      await setDoc(doc(db, 'users', userId, 'transactions', txId), {
-        type: rec.type, mode: rec.mode || 'online',
-        desc: rec.name, cat: rec.cat,
-        amount: rec.amount, date: today, _recurring: true
+      await runTransaction(db, async (transaction) => {
+        const recDoc = await transaction.get(doc(db, 'users', userId, 'recurring', rec.id));
+        if (!recDoc.exists()) throw "not_found";
+        const data = recDoc.data();
+        if (data.freq === 'monthly' && data.lastTriggered === monthKey) throw "already_triggered";
+        if (data.freq !== 'monthly' && data.lastTriggered === today) throw "already_triggered";
+        if (today < data.nextDue) throw "not_due";
+        
+        const txId = uid();
+        const nextKey = (data.freq === 'monthly') ? monthKey : today;
+        transaction.set(doc(db, 'users', userId, 'transactions', txId), {
+          type: data.type, mode: data.mode || 'online',
+          desc: data.name, cat: data.cat,
+          amount: data.amount, date: today, _recurring: true
+        });
+        transaction.update(recDoc.ref, {
+          nextDue: computeNextDue(today, data.freq, data.customDays),
+          lastTriggered: nextKey
+        });
       });
-      const nextKey = (rec.freq === 'monthly') ? monthKey : today;
-      await setDoc(doc(db, 'users', userId, 'recurring', rec.id), {
-        nextDue: computeNextDue(today, rec.freq, rec.customDays), lastTriggered: nextKey
-      }, { merge: true });
       triggered.push(rec.name);
       writeLog('ADD', `Auto-added recurring: ${rec.name} (₹${rec.amount})`);
     } catch(e) { 
-      console.error('Failed to trigger recurring:', rec.name, e); 
+      if (e !== "already_triggered" && e !== "not_due") {
+        console.error('Failed to trigger recurring:', rec.name, e); 
+      }
     } finally {
       triggeringRecs.delete(rec.id);
     }
@@ -4093,8 +4105,7 @@ async function generatePDF() {
     // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
     const fmtPDF = (n, showSign = false) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
-      const sign = n < 0 ? '- ' : (showSign && n > 0 ? '+ ' : '');
-      return `${sign}Rs. ${abs}`;
+      return `Rs. ${abs}`;
     };
     const fmtPDFS = (n) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {maximumFractionDigits:0});
@@ -4334,8 +4345,10 @@ async function generatePDF() {
         // Legend
         const legendX = leftX + catR * 2 + 12;
         const maxLegendItems = Math.min(catEntries.length, 7);
+        const startY = catCY - ((maxLegendItems - 1) * 8.5) / 2;
+        
         catEntries.slice(0, maxLegendItems).forEach(([cat, amt], idx) => {
-          const ly = chartPanelTop + 14 + idx * 8.5;
+          const ly = startY + idx * 8.5 + 2.5; // +2.5 for text baseline alignment
           const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(0) : '0';
           const label = cat.charAt(0).toUpperCase() + cat.slice(1);
           doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 3.5, 4, 4, 0.5, 0.5, 'F');
@@ -4345,7 +4358,7 @@ async function generatePDF() {
           doc.text(`${pct}%`, leftX + colW - 4, ly, {align:'right'});
         });
         if (catEntries.length > maxLegendItems) {
-          const ly = chartPanelTop + 14 + maxLegendItems * 8.5;
+          const ly = startY + maxLegendItems * 8.5 + 2.5;
           doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
           doc.text(`+${catEntries.length - maxLegendItems} more`, legendX, ly);
         }
@@ -4375,6 +4388,8 @@ async function generatePDF() {
         doc.setFillColor(...panel); doc.circle(oCX, oCY, oInnerR - 0.5, 'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...muted);
         doc.text('SPLIT', oCX, oCY - 1.5, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...red);
+        doc.text(fmtPDFS(totalExp), oCX, oCY + 3.5, {align:'center'});
 
         // Legend items
         const oLegendX = rightX + oR * 2 + 12;
@@ -4382,8 +4397,9 @@ async function generatePDF() {
           { label:'Online', pct:(onlinePctVal*100).toFixed(1), amt:onlineExp, color:[110,157,200] },
           { label:'Offline', pct:(offlinePctVal*100).toFixed(1), amt:offlineExp, color:[157,122,200] },
         ];
+        const oStartY = oCY - 11;
         oItems.forEach((item, idx) => {
-          const ly = chartPanelTop + 30 + idx * 18;
+          const ly = oStartY + idx * 18;
           doc.setFillColor(...item.color); doc.roundedRect(oLegendX, ly - 4, 4, 4, 0.5, 0.5, 'F');
           doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...item.color);
           doc.text(`${item.pct}%`, oLegendX + 6.5, ly);
@@ -4415,7 +4431,7 @@ async function generatePDF() {
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9.5, cellPadding:4 },
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:9, cellPadding:4 },
         alternateRowStyles:{ fillColor:[28,32,42] },
-        columnStyles:{ 0:{cellWidth:90}, 1:{cellWidth:50,halign:'right'}, 2:{cellWidth:35,halign:'right'} },
+        columnStyles:{ 0:{}, 1:{cellWidth:40,halign:'right'}, 2:{cellWidth:35,halign:'right'} },
         tableLineColor: bd, tableLineWidth: 0.15,
       });
       curY = doc.lastAutoTable.finalY + 12;
@@ -4431,7 +4447,7 @@ async function generatePDF() {
         const amtStr = fmtPDF(t.type==='income' ? t.amount : -t.amount, true);
         const desc = t.desc || '(no description)';
         const catLabel = (t.cat||'other').charAt(0).toUpperCase()+(t.cat||'other').slice(1);
-        return [dateStr, desc, catLabel, amtStr, (t.mode||'online'), t.id]; // pass id for matching
+        return [dateStr, desc, catLabel, amtStr, (t.mode||'online'), t.id, t.type]; // pass id and type for styling
       });
       doc.autoTable({
         startY: curY, head:[['Date','Description','Category','Amount','Mode']], body: txRows,
@@ -4439,17 +4455,22 @@ async function generatePDF() {
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5 },
         alternateRowStyles:{ fillColor:[28,32,42] },
-        columnStyles:{ 0:{cellWidth:28}, 1:{cellWidth:68}, 2:{cellWidth:26}, 3:{cellWidth:38,halign:'right'}, 4:{cellWidth:18,halign:'center'} },
+        columnStyles:{ 0:{cellWidth:25}, 1:{}, 2:{cellWidth:25}, 3:{cellWidth:32,halign:'right'}, 4:{cellWidth:16,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
             const isLargest = largestTx && d.row.raw[5] === largestTx.id;
-            if (isLargest) {
-              d.cell.styles.fillColor = [40, 46, 60]; // highlight color
-              d.cell.styles.fontStyle = 'bold';
+            
+            // Set amount color based on transaction type (red for expense, green for income)
+            if (d.column.index === 3) {
+              d.cell.styles.textColor = d.row.raw[6] === 'income' ? green : red;
             }
-            if (d.column.index===3) {
-              d.cell.styles.textColor = d.cell.raw.startsWith('+') ? green : red;
+            
+            // Highlight largest transaction
+            if (isLargest) {
+              d.cell.styles.fillColor = [200, 169, 110]; // gold background
+              d.cell.styles.textColor = [15, 18, 25]; // dark text to contrast with gold
+              d.cell.styles.fontStyle = 'bold';
             }
           }
         }
@@ -4489,6 +4510,9 @@ function switchTab(tab) {
   document.getElementById('dashboardView').style.display = tab === 'dashboard' ? 'block' : 'none';
   document.getElementById('subView').style.display = tab === 'subscriptions' ? 'block' : 'none';
   document.getElementById('logView').style.display = tab === 'log' ? 'block' : 'none';
+  
+  const fab = document.getElementById('fab');
+  if (fab) fab.style.display = tab === 'dashboard' ? '' : 'none';
   
   if (tab === 'log') renderLogs();
   if (tab === 'subscriptions') renderRecurring();
