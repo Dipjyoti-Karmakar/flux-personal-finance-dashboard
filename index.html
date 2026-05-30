@@ -4387,7 +4387,21 @@ async function generatePDF() {
         for (let i = 0; i < pts.length; i++) doc.circle(getX(i), getY(pts[i][dataKey]), 1.2, 'F');
         
         const labelSteps = Math.max(1, Math.ceil(pts.length / 8));
-        doc.setFontSize(8);
+        
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...color);
+        for (let i = 0; i < pts.length; i += labelSteps) {
+          const val = pts[i][dataKey];
+          const amtStr = val >= 100000 ? (val/100000).toFixed(1)+'L' : val >= 1000 ? (val/1000).toFixed(1)+'k' : val.toFixed(0);
+          doc.text(amtStr, getX(i), getY(val) - 2.5, { align: 'center' });
+        }
+        if (pts.length > 1 && (pts.length - 1) % labelSteps !== 0) {
+           const lst = pts.length - 1;
+           const val = pts[lst][dataKey];
+           const amtStr = val >= 100000 ? (val/100000).toFixed(1)+'L' : val >= 1000 ? (val/1000).toFixed(1)+'k' : val.toFixed(0);
+           doc.text(amtStr, getX(lst), getY(val) - 2.5, { align: 'center' });
+        }
+        
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
         for (let i = 0; i < pts.length; i += labelSteps) {
           const lx = getX(i);
           doc.text(pts[i].label, lx, gridBottom + 7, { align: 'center' });
