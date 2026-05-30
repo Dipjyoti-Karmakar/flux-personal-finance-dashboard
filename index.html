@@ -4233,6 +4233,7 @@ async function generatePDF() {
     const panel2 = [245, 246, 248], white = [30, 35, 46], darkText = [30, 35, 46];
     const green = [73, 166, 118], red = [204, 92, 92], muted = [110, 115, 130];
     const bd = [220, 222, 230], altRow = [248, 249, 251];
+    const headerBg = [13, 15, 20], headerText = [232, 234, 240], headerMuted = [142, 148, 173];
 
     let curY = 0;
     let pageNum = 1;
@@ -4250,22 +4251,22 @@ async function generatePDF() {
     };
 
     // ── PAGE 1: HEADER BANNER ──────────────────────────────────────────────
-    doc.setFillColor(...dark); doc.rect(0, 0, W, 48, 'F');
+    doc.setFillColor(...headerBg); doc.rect(0, 0, W, 48, 'F');
     doc.setFillColor(...gold); doc.rect(0, 45, W, 3, 'F');
 
     // Brand
     doc.setFont('helvetica','bold'); doc.setFontSize(30); doc.setTextColor(...gold);
     doc.text('Flux', pL, 24);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...headerMuted);
     doc.text('PERSONAL FINANCE', pL, 31);
 
     // Report title
-    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...white);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...headerText);
     doc.text(reportTitle, pL, 41);
 
     // Generated date (right-aligned)
     const genDate = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...headerMuted);
     doc.text(`Generated: ${genDate}`, pR, 41, { align:'right' });
     curY = 56;
 
@@ -4724,9 +4725,9 @@ async function generatePDF() {
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
-      doc.setFillColor(...dark); doc.rect(0, H - 12, W, 12, 'F');
+      doc.setFillColor(...headerBg); doc.rect(0, H - 12, W, 12, 'F');
       doc.setDrawColor(...gold); doc.setLineWidth(0.2); doc.line(pL, H - 12, pR, H - 12);
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...headerMuted);
       doc.text('Flux - Personal Finance Dashboard', pL, H - 5);
       doc.text(`Page ${i} of ${totalPages}`, pR, H - 5, {align:'right'});
     }
