@@ -4122,11 +4122,11 @@ async function generatePDF() {
     // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
     const fmtPDF = (n, showSign = false) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
-      return `Rs. ${abs}`;
+      return `₹ ${abs}`;
     };
     const fmtPDFS = (n) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {maximumFractionDigits:0});
-      return (n < 0 ? '- ' : '') + 'Rs. ' + abs;
+      return (n < 0 ? '- ' : '') + '₹ ' + abs;
     };
 
     // Determine date range
@@ -4393,7 +4393,8 @@ async function generatePDF() {
           const val = pts[i][dataKey];
           if (val > 0) {
             const amtStr = val >= 100000 ? (val/100000).toFixed(1)+'L' : val >= 1000 ? (val/1000).toFixed(1)+'k' : val.toFixed(0);
-            doc.text(amtStr, getX(i), getY(val) - 2.5, { align: 'center' });
+            const yOffset = (i % 2 === 0) ? -2.5 : 4.5;
+            doc.text(amtStr, getX(i), getY(val) + yOffset, { align: 'center' });
           }
         }
         
