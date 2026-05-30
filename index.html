@@ -4232,7 +4232,7 @@ async function generatePDF() {
     const gold = [200, 169, 110], dark = [255, 255, 255], panel = [252, 252, 253];
     const panel2 = [245, 246, 248], white = [30, 35, 46], darkText = [30, 35, 46];
     const green = [73, 166, 118], red = [204, 92, 92], muted = [110, 115, 130];
-    const bd = [220, 222, 230], altRow = [248, 249, 251];
+    const bd = [220, 222, 230], altRow = [248, 249, 251], borderDark = [30, 35, 46];
     const headerBg = [13, 15, 20], headerText = [232, 234, 240], headerMuted = [142, 148, 173];
 
     let curY = 0;
@@ -4285,7 +4285,7 @@ async function generatePDF() {
       const cx = pL + col * (cardW + cardGap);
       const cy = curY + row * (cardH + 4);
       doc.setFillColor(...panel2); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'F');
-      doc.setDrawColor(...gold); doc.setLineWidth(0.3); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
+      doc.setDrawColor(...borderDark); doc.setLineWidth(0.3); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
       // Label
       doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...muted);
       doc.text(c.label, cx + 6, cy + 7.5);
@@ -4382,7 +4382,7 @@ async function generatePDF() {
         const cY = startY;
         
         doc.setFillColor(...panel2); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'F');
-        doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'S');
+        doc.setDrawColor(...borderDark); doc.setLineWidth(0.15); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'S');
         
         doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
         doc.text(title, cX + fullW/2, cY + 8, {align:'center'});
@@ -4536,7 +4536,7 @@ async function generatePDF() {
       const catChartTitle = 'CATEGORY DISTRIBUTION';
       // Panel background
       doc.setFillColor(...panel2); doc.roundedRect(leftX, chartPanelTop, catW, 110, 3, 3, 'F');
-      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, catW, 110, 3, 3, 'S');
+      doc.setDrawColor(...borderDark); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, catW, 110, 3, 3, 'S');
       // Title
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
       doc.text(catChartTitle, leftX + catW/2, chartPanelTop + 8, {align:'center'});
@@ -4606,7 +4606,7 @@ async function generatePDF() {
       const splitW = catFullWidth ? fullW : sideColW;
 
       doc.setFillColor(...panel2); doc.roundedRect(rightX, splitPanelTop, splitW, 110, 3, 3, 'F');
-      doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(rightX, splitPanelTop, splitW, 110, 3, 3, 'S');
+      doc.setDrawColor(...borderDark); doc.setLineWidth(0.15); doc.roundedRect(rightX, splitPanelTop, splitW, 110, 3, 3, 'S');
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
       doc.text('PAYMENT CHANNEL SPLIT', rightX + splitW/2, splitPanelTop + 8, {align:'center'});
 
@@ -4671,7 +4671,7 @@ async function generatePDF() {
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:9, cellPadding:4, valign:'middle' },
         alternateRowStyles:{ fillColor:altRow },
         columnStyles:{ 0:{}, 1:{cellWidth:40,halign:'right'}, 2:{cellWidth:35,halign:'right'} },
-        tableLineColor: bd, tableLineWidth: 0.15,
+        tableLineColor: borderDark, tableLineWidth: 0.15,
       });
       curY = doc.lastAutoTable.finalY + 12;
     }
@@ -4700,7 +4700,7 @@ async function generatePDF() {
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor:altRow },
         columnStyles:{ 0:{minCellWidth: 26}, 1:{}, 2:{}, 3:{cellWidth:25,halign:'right'}, 4:{minCellWidth:18,halign:'center'} },
-        tableLineColor: bd, tableLineWidth: 0.15,
+        tableLineColor: borderDark, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
             const isLargest = largestTx && d.row.raw[5] === largestTx.id;
