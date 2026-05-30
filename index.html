@@ -1276,6 +1276,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
             <button class="rpt-tab act" id="rptPeriodMonth" onclick="setReportPeriod('month')">Month</button>
             <button class="rpt-tab" id="rptPeriodYear" onclick="setReportPeriod('year')">Year</button>
             <button class="rpt-tab" id="rptPeriodCustom" onclick="setReportPeriod('custom')">Custom</button>
+            <button class="rpt-tab" id="rptPeriodEvent" onclick="setReportPeriod('event')">Event</button>
           </div>
         </div>
         <div id="rptMonthYearRow" class="report-row">
@@ -1309,9 +1310,11 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
             </div>
           </div>
         </div>
-        <div class="fd" style="margin-bottom:14px;">
-          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Filter by Event (Optional)</label>
-          <select id="rptEvent" style="width:100%;box-sizing:border-box;"><option value="">-- All Transactions --</option></select>
+          </div>
+        </div>
+        <div id="rptEventRow" style="display:none;margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Select Event</label>
+          <select id="rptEvent" style="width:100%;box-sizing:border-box;"><option value="">-- Select Event --</option></select>
         </div>
         <div style="margin-bottom:16px;padding:14px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);">
           <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Include in Report</label>
@@ -4092,7 +4095,7 @@ document.getElementById('rptMonth').value = now.getMonth() + 1;
   document.getElementById('rptFrom').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
   document.getElementById('rptTo').value = now.toISOString().slice(0,10);
   
-  const evtOpts = ['<option value="">-- All Transactions --</option>'];
+  const evtOpts = ['<option value="">-- Select Event --</option>'];
   Object.values(events).forEach(e => evtOpts.push(`<option value="${e.id}">${e.name}</option>`));
   document.getElementById('rptEvent').innerHTML = evtOpts.join('');
 
@@ -4106,12 +4109,14 @@ function closeReportMod() {
 
 function setReportPeriod(mode) {
   reportPeriodMode = mode;
-  ['Month','Year','Custom'].forEach(m => {
-    document.getElementById('rptPeriod' + m).classList.toggle('act', mode === m.toLowerCase());
+  ['Month','Year','Custom','Event'].forEach(m => {
+    const el = document.getElementById('rptPeriod' + m);
+    if(el) el.classList.toggle('act', mode === m.toLowerCase());
   });
   document.getElementById('rptMonthYearRow').style.display = mode === 'month' ? 'grid' : 'none';
   document.getElementById('rptYearOnlyRow').style.display = mode === 'year' ? 'block' : 'none';
   document.getElementById('rptCustomRow').style.display = mode === 'custom' ? 'block' : 'none';
+  document.getElementById('rptEventRow').style.display = mode === 'event' ? 'block' : 'none';
 }
 
 async function generatePDF() {
@@ -4143,17 +4148,25 @@ async function generatePDF() {
       const y = parseInt(document.getElementById('rptYearOnly').value);
       fromDate = `${y}-01-01`; toDate = `${y}-12-31`;
       reportTitle = `${y}  Annual Finance Report`;
+    } else if (reportPeriodMode === 'event') {
+      const rptEventId = document.getElementById('rptEvent').value;
+      if (!rptEventId) { showToast('Please select an event', 'er'); btn.disabled = false; btn.innerHTML = '📄 Generate &amp; Download PDF'; return; }
+      const evt = events[rptEventId];
+      reportTitle = `Event: ${evt.name}`;
+      const evTxs = txs.filter(t => t.eventId === rptEventId);
+      if(evTxs.length) {
+        evTxs.sort((a,b)=>a.date.localeCompare(b.date));
+        fromDate = evTxs[0].date;
+        toDate = evTxs[evTxs.length-1].date;
+      } else {
+        fromDate = new Date().toISOString().slice(0,10);
+        toDate = fromDate;
+      }
     } else {
       fromDate = document.getElementById('rptFrom').value;
       toDate = document.getElementById('rptTo').value;
-      if (!fromDate || !toDate || fromDate > toDate) { showToast('Invalid date range', 'er'); btn.disabled = false; btn.innerHTML = '&#x1F4C4; Generate &amp; Download PDF'; return; }
+      if (!fromDate || !toDate || fromDate > toDate) { showToast('Invalid date range', 'er'); btn.disabled = false; btn.innerHTML = '📄 Generate &amp; Download PDF'; return; }
       reportTitle = `${fromDate} to ${toDate}  Finance Report`;
-    }
-
-    const rptEventId = document.getElementById('rptEvent').value;
-    if (rptEventId) {
-      const evt = events[rptEventId];
-      if (evt) reportTitle = `Event: ${evt.name}`;
     }
 
     const incInc = document.getElementById('rptIncome').checked;
@@ -4162,8 +4175,13 @@ async function generatePDF() {
     const incList = document.getElementById('rptTxList').checked;
 
     // Filter transactions (use ALL txs for insight calc, filtered for display)
-    let allInPeriod = txs.filter(t => t.date >= fromDate && t.date <= toDate);
-    if (rptEventId) allInPeriod = allInPeriod.filter(t => t.eventId === rptEventId);
+    let allInPeriod = txs;
+    if (reportPeriodMode === 'event') {
+      const rptEventId = document.getElementById('rptEvent').value;
+      allInPeriod = allInPeriod.filter(t => t.eventId === rptEventId);
+    } else {
+      allInPeriod = allInPeriod.filter(t => t.date >= fromDate && t.date <= toDate);
+    }
     
     let filtered = [...allInPeriod];
     if (!incInc) filtered = filtered.filter(t => t.type !== 'income');
