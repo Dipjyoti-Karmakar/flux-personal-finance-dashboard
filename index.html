@@ -4555,6 +4555,7 @@ function switchTab(tab) {
   const fab = document.getElementById('fab');
   if (fab) fab.style.display = tab === 'dashboard' ? '' : 'none';
   
+  if (tab === 'dashboard') renderTrend();
   if (tab === 'log') renderLogs();
   if (tab === 'subscriptions') renderRecurring();
 }
