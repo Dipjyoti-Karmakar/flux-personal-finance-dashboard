@@ -4296,10 +4296,123 @@ async function generatePDF() {
       curY += 6;
     }
 
-    // ── CHARTS: Category Donut + Online/Offline Donut ────────────────────
+    // ── PAGE 2: TREND CHARTS (Income and Expense) ───────────────────
+    if (allInPeriod.length > 0) {
+      doc.addPage();
+      curY = 20;
+      sectionTitle('INCOME AND EXPENSE TRENDS');
+      
+      const trendData = {};
+      allInPeriod.forEach(t => {
+        if (!trendData[t.date]) trendData[t.date] = { inc: 0, exp: 0 };
+        if (t.type === 'income') trendData[t.date].inc += t.amount;
+        if (t.type === 'expense') trendData[t.date].exp += t.amount;
+      });
+      
+      const startTs = new Date(fromDate).getTime();
+      const endTs = new Date(toDate).getTime();
+      const daysCount = Math.max(1, Math.round((endTs - startTs) / 86400000) + 1);
+      
+      const pts = [];
+      if (daysCount > 90) {
+        const mData = {};
+        allInPeriod.forEach(t => {
+          const my = t.date.slice(0, 7);
+          if (!mData[my]) mData[my] = { inc: 0, exp: 0 };
+          if (t.type === 'income') mData[my].inc += t.amount;
+          if (t.type === 'expense') mData[my].exp += t.amount;
+        });
+        
+        let currD = new Date(fromDate.slice(0,7) + '-01');
+        const endD = new Date(toDate.slice(0,7) + '-01');
+        while (currD <= endD) {
+          const my = `${currD.getFullYear()}-${String(currD.getMonth()+1).padStart(2,'0')}`;
+          const v = mData[my] || { inc: 0, exp: 0 };
+          pts.push({ label: currD.toLocaleString('default',{month:'short'}) + ' ' + String(currD.getFullYear()).slice(2), inc: v.inc, exp: v.exp });
+          currD.setMonth(currD.getMonth() + 1);
+        }
+      } else {
+        for (let i = 0; i < daysCount; i++) {
+          const d = new Date(startTs + i * 86400000);
+          const dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+          const v = trendData[dStr] || { inc: 0, exp: 0 };
+          pts.push({ label: `${d.getDate()} ${d.toLocaleString('default',{month:'short'})}`, inc: v.inc, exp: v.exp });
+        }
+      }
+      
+      const drawTrendChart = (title, dataKey, color, startY) => {
+        const chartH = 110;
+        const fullW = W - pL - 15;
+        const cX = pL;
+        const cY = startY;
+        
+        doc.setFillColor(...panel2); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'F');
+        doc.setDrawColor(...bd); doc.setLineWidth(0.15); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'S');
+        
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
+        doc.text(title, cX + fullW/2, cY + 8, {align:'center'});
+
+        let maxAmt = 0;
+        pts.forEach(d => { maxAmt = Math.max(maxAmt, d[dataKey]); });
+        maxAmt = maxAmt > 0 ? Math.ceil(maxAmt * 1.1) : 1000;
+        
+        const padLeft = 25; 
+        const padRight = 10;
+        const padTop = 16;
+        const padBottom = 22; 
+        const drawW = fullW - padLeft - padRight;
+        const drawH = chartH - padTop - padBottom;
+        const gridX = cX + padLeft;
+        const gridY = cY + padTop;
+        const gridBottom = gridY + drawH;
+        
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+        for (let i = 0; i <= 4; i++) {
+          const yPos = gridBottom - (i / 4) * drawH;
+          const amtVal = (maxAmt * (i / 4));
+          const amtStr = amtVal >= 100000 ? (amtVal/100000).toFixed(1)+'L' : amtVal >= 1000 ? (amtVal/1000).toFixed(1)+'k' : amtVal.toFixed(0);
+          
+          doc.text(amtStr, gridX - 3, yPos + 2.5, { align: 'right' });
+          doc.setDrawColor(...bd); doc.setLineWidth(0.1);
+          doc.line(gridX, yPos, gridX + drawW, yPos);
+        }
+        
+        const getX = (idx) => gridX + (pts.length <= 1 ? drawW/2 : (idx / (pts.length - 1)) * drawW);
+        const getY = (val) => gridBottom - (val / maxAmt) * drawH;
+        
+        doc.setDrawColor(...color); doc.setLineWidth(1.0);
+        for (let i = 1; i < pts.length; i++) doc.line(getX(i-1), getY(pts[i-1][dataKey]), getX(i), getY(pts[i][dataKey]));
+        
+        doc.setFillColor(...color);
+        for (let i = 0; i < pts.length; i++) doc.circle(getX(i), getY(pts[i][dataKey]), 1.2, 'F');
+        
+        const labelSteps = Math.max(1, Math.ceil(pts.length / 8));
+        doc.setFontSize(8);
+        for (let i = 0; i < pts.length; i += labelSteps) {
+          const lx = getX(i);
+          doc.text(pts[i].label, lx, gridBottom + 7, { align: 'center' });
+          doc.setDrawColor(...bd); doc.setLineWidth(0.1); doc.line(lx, gridBottom, lx, gridBottom + 2.5);
+        }
+        if (pts.length > 1 && (pts.length - 1) % labelSteps !== 0) {
+           const lst = pts.length - 1;
+           const lx = getX(lst);
+           doc.text(pts[lst].label, lx, gridBottom + 7, { align: 'center' });
+           doc.line(lx, gridBottom, lx, gridBottom + 2.5);
+        }
+        
+        return cY + chartH;
+      };
+
+      let nextY = drawTrendChart('INCOME TREND', 'inc', green, curY);
+      drawTrendChart('EXPENSE TREND', 'exp', red, nextY + 16);
+      
+      curY = nextY + 140;
+    }
+
+    // ── PAGE 3: CHARTS (Category Donut + Online/Offline Donut) ───────────
     if (catEntries.length > 0 || totalExp > 0) {
       doc.addPage();
-      curY = 40; // Graceful top margin so the page doesn't look empty
+      curY = 20; // Graceful top margin
 
       // Helper: draw a donut slice using polygon arc approximation
       const drawDonutSlice = (cx, cy, r, innerR, startDeg, endDeg, fillColor) => {
