@@ -4500,22 +4500,28 @@ async function generatePDF() {
         catEntries.slice(0, maxLegendItems).forEach(([cat, amt], idx) => {
           const c = Math.floor(idx / itemsPerCol);
           const r = idx % itemsPerCol;
-          const legendX = leftX + (catFullWidth ? 80 + c * 46 : catR * 2 + 10);
+          const legendX = leftX + (catFullWidth ? 76 + c * 52 : catR * 2 + 8);
           
           const ly = startY + r * 11 + 3; // +3 for text baseline alignment
           const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(0) : '0';
           const label = cat.charAt(0).toUpperCase() + cat.slice(1);
           
-          doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 4, 5, 5, 0.5, 0.5, 'F');
-          doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...white);
-          doc.text(`${label}`, legendX + 7, ly);
-          doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-          const pctX = catFullWidth ? legendX + 42 : leftX + catW - 4;
-          doc.text(`${pct}%`, pctX, ly, {align:'right'});
+          doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 3.5, 4.5, 4.5, 0.5, 0.5, 'F');
+          
+          doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...white);
+          let displayLabel = label.length > 10 ? label.slice(0,8)+'..' : label;
+          doc.text(displayLabel, legendX + 6.5, ly);
+          
+          const rightEdgeX = catFullWidth ? legendX + 48 : leftX + catW - 6;
+          doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...muted);
+          doc.text(fmtPDFS(amt), rightEdgeX, ly, {align:'right'});
+          
+          doc.setTextColor(...white);
+          doc.text(`${pct}%`, rightEdgeX - 16, ly, {align:'right'});
         });
         if (catEntries.length > maxLegendItems) {
           const ly = startY + itemsPerCol * 11 + 3;
-          const legendX = leftX + (catFullWidth ? 80 : catR * 2 + 10);
+          const legendX = leftX + (catFullWidth ? 76 : catR * 2 + 8);
           doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
           doc.text(`+${catEntries.length - maxLegendItems} more`, legendX, ly);
         }
@@ -4555,21 +4561,24 @@ async function generatePDF() {
         doc.text(fmtPDFS(totalExp), oCX, oCY + 4, {align:'center'});
 
         // Legend items
-        const oLegendX = rightX + (catFullWidth ? 110 : oR * 2 + 10);
+        const oLegendX = rightX + (catFullWidth ? 100 : oR * 2 + 8);
         const oItems = [
           { label:'Online', pct:(onlinePctVal*100).toFixed(1), amt:onlineExp, color:[110,157,200] },
           { label:'Offline', pct:(offlinePctVal*100).toFixed(1), amt:offlineExp, color:[157,122,200] },
         ];
-        const oStartY = oCY - 13;
+        const oStartY = oCY - 5;
         oItems.forEach((item, idx) => {
-          const ly = oStartY + idx * 22;
-          doc.setFillColor(...item.color); doc.roundedRect(oLegendX, ly - 5, 5, 5, 0.5, 0.5, 'F');
-          doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(...item.color);
-          doc.text(`${item.pct}%`, oLegendX + 8, ly);
+          const ly = oStartY + idx * 14;
+          doc.setFillColor(...item.color); doc.roundedRect(oLegendX, ly - 4, 4.5, 4.5, 0.5, 0.5, 'F');
+          
+          doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...item.color);
+          doc.text(`${item.pct}%`, oLegendX + 7, ly);
+          
           doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
-          doc.text(item.label, oLegendX + 8, ly + 6);
+          doc.text(item.label, oLegendX + 19, ly);
+          
           doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...white);
-          doc.text(fmtPDFS(item.amt), oLegendX + 8, ly + 12);
+          doc.text(fmtPDFS(item.amt), oLegendX + 34, ly);
         });
       } else {
         doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
