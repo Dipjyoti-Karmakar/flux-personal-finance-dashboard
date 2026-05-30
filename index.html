@@ -434,17 +434,6 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
     font-size: 11px; 
     border-radius: 12px;
   }
-  
-  /* Subscriptions Revert for Mobile */
-  .sub-title { font-size: 20px; }
-  .sub-summary-val { font-size: 18px; }
-  .sub-summary-lbl { font-size: 9px; }
-  .sub-card-status { font-size: 10px; }
-  .sub-card-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
-  .sub-card-name { font-size: 14px; }
-  .sub-card-freq { font-size: 10px; }
-  .sub-card-amt { font-size: 17px; }
-  .sub-card-btn { font-size: 10px; padding: 7px 4px; }
 
   /* Hero Dashboard Balance */
   .sr1{grid-template-columns:1fr 1fr; gap:10px;}
@@ -740,7 +729,18 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .sub-card-freq { font-size:12px; }
 .sub-card-amt { font-size:22px; }
 .sub-card-btn { font-size:12px; padding:10px 4px; }
-@media(max-width:520px) { .sub-grid { grid-template-columns:1fr; } }
+@media(max-width:520px) { 
+  .sub-grid { grid-template-columns:1fr; } 
+  .sub-title { font-size: 20px; }
+  .sub-summary-val { font-size: 18px; }
+  .sub-summary-lbl { font-size: 9px; }
+  .sub-card-status { font-size: 10px; }
+  .sub-card-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+  .sub-card-name { font-size: 14px; }
+  .sub-card-freq { font-size: 10px; }
+  .sub-card-amt { font-size: 17px; }
+  .sub-card-btn { font-size: 10px; padding: 7px 4px; }
+}
 
 /* ── Recurring Modal ── */
 #recurringMod .mo { max-width:480px; }
