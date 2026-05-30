@@ -4406,13 +4406,48 @@ async function generatePDF() {
         
         const labelSteps = Math.max(1, Math.ceil(pts.length / 8));
         
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...color);
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+        const placedLabels = [];
         for (let i = 0; i < pts.length; i++) {
           const val = pts[i][dataKey];
           if (val > 0) {
             const amtStr = val >= 100000 ? (val/100000).toFixed(1)+'L' : val >= 1000 ? (val/1000).toFixed(1)+'k' : val.toFixed(0);
-            const yOffset = (i % 2 === 0) ? -2.5 : 4.5;
-            doc.text(amtStr, getX(i), getY(val) + yOffset, { align: 'center' });
+            const currY = getY(val);
+            const prevY = i > 0 ? getY(pts[i-1][dataKey]) : currY;
+            const nextY = i < pts.length - 1 ? getY(pts[i+1][dataKey]) : currY;
+            
+            let isValley = (currY >= prevY && currY >= nextY) || (i===0 && nextY < currY) || (i===pts.length-1 && prevY < currY);
+            
+            const offsets = isValley ? [4.5, -2.5, 7.5, -5.5] : [-2.5, 4.5, -5.5, 7.5];
+            const txtW = doc.getTextWidth(amtStr);
+            const txtH = 3;
+            
+            let finalOff = offsets[0];
+            for (let off of offsets) {
+               const cx = getX(i);
+               const cy = currY + off;
+               let collides = false;
+               for (let pl of placedLabels) {
+                  if (Math.abs(cx - pl.x) < (txtW + pl.w)/2 + 1.5 && Math.abs(cy - pl.y) < txtH + 1) {
+                     collides = true; break;
+                  }
+               }
+               if (!collides) {
+                  finalOff = off; break;
+               }
+            }
+            
+            const drawX = getX(i);
+            const drawY = currY + finalOff;
+            
+            // Mask background to prevent line intersection
+            doc.setFillColor(...panel2);
+            doc.rect(drawX - txtW/2 - 0.5, drawY - 2.5, txtW + 1, 3.2, 'F');
+            
+            doc.setTextColor(...color);
+            doc.text(amtStr, drawX, drawY, { align: 'center' });
+            
+            placedLabels.push({x: drawX, y: drawY, w: txtW});
           }
         }
         
