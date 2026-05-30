@@ -4125,22 +4125,6 @@ async function generatePDF() {
   const btn = document.getElementById('pdfGenBtn');
   btn.disabled = true; btn.textContent = 'Generating...';
   try {
-    const doc = new window.jspdf.jsPDF();
-    
-    // Inject Roboto font to support Unicode Rupee symbol (₹)
-    if (typeof pdfMake !== 'undefined' && pdfMake.vfs && pdfMake.vfs['Roboto-Regular.ttf']) {
-      doc.addFileToVFS('Roboto-Regular.ttf', pdfMake.vfs['Roboto-Regular.ttf']);
-      doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-      doc.addFileToVFS('Roboto-Medium.ttf', pdfMake.vfs['Roboto-Medium.ttf']);
-      doc.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
-      
-      const origSetFont = doc.setFont.bind(doc);
-      doc.setFont = function(fontName, fontStyle, fontWeight) {
-        if (fontName.toLowerCase() === 'helvetica') fontName = 'Roboto';
-        return origSetFont(fontName, fontStyle, fontWeight);
-      };
-    }
-
     // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
     const fmtPDF = (n, showSign = false) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -4225,6 +4209,21 @@ async function generatePDF() {
     // Init PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    
+    // Inject Roboto font to support Unicode Rupee symbol (₹)
+    if (typeof pdfMake !== 'undefined' && pdfMake.vfs && pdfMake.vfs['Roboto-Regular.ttf']) {
+      doc.addFileToVFS('Roboto-Regular.ttf', pdfMake.vfs['Roboto-Regular.ttf']);
+      doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
+      doc.addFileToVFS('Roboto-Medium.ttf', pdfMake.vfs['Roboto-Medium.ttf']);
+      doc.addFont('Roboto-Medium.ttf', 'Roboto', 'bold');
+      
+      const origSetFont = doc.setFont.bind(doc);
+      doc.setFont = function(fontName, fontStyle, fontWeight) {
+        if (fontName && fontName.toLowerCase() === 'helvetica') fontName = 'Roboto';
+        return origSetFont(fontName, fontStyle, fontWeight);
+      };
+    }
+    
     const W = doc.internal.pageSize.getWidth();
     const H = doc.internal.pageSize.getHeight();
     const pL = 15, pR = W - 15;
