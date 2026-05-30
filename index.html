@@ -719,10 +719,10 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .sub-card.sub-paused { opacity:0.6; }
 .sub-due-section { margin-bottom:24px; }
 .sub-section-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--mu); font-weight:600; margin-bottom:12px; }
-.sub-summary-bar { display:flex; gap:16px; padding:16px 20px; background:var(--s2); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:20px; flex-wrap:wrap; justify-content:space-around; }
-.sub-summary-item { display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; min-width:90px; flex:1; }
-.sub-summary-val { font-family:'DM Mono',monospace; font-size:18px; font-weight:700; }
-.sub-summary-lbl { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mu); font-weight:600; }
+.sub-summary-bar { display:flex; gap:6px; padding:14px 8px; background:var(--s2); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:20px; flex-wrap:nowrap; justify-content:space-between; }
+.sub-summary-item { display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; min-width:0; flex:1; }
+.sub-summary-val { font-family:'DM Mono',monospace; font-size:15px; font-weight:700; }
+.sub-summary-lbl { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.5px; text-transform:uppercase; color:var(--mu); font-weight:600; line-height:1.2; }
 @media(max-width:520px) { .sub-grid { grid-template-columns:1fr; } }
 
 @media(min-width:768px) {
