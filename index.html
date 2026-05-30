@@ -4127,11 +4127,11 @@ async function generatePDF() {
     // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
     const fmtPDF = (n, showSign = false) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
-      return `₹ ${abs}`;
+      return `Rs. ${abs}`;
     };
     const fmtPDFS = (n) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {maximumFractionDigits:0});
-      return (n < 0 ? '- ' : '') + '₹ ' + abs;
+      return (n < 0 ? '- ' : '') + 'Rs. ' + abs;
     };
 
     // Determine date range
