@@ -4229,10 +4229,10 @@ async function generatePDF() {
     const pL = 15, pR = W - 15;
 
     // Colour palette
-    const gold = [200, 169, 110], dark = [13, 15, 20], panel = [24, 28, 38];
-    const panel2 = [30, 35, 46], white = [232, 234, 240], darkText = [75, 80, 95];
-    const green = [73, 166, 118], red = [204, 92, 92], muted = [142, 148, 173];
-    const bd = [45, 50, 65];
+    const gold = [200, 169, 110], dark = [255, 255, 255], panel = [252, 252, 253];
+    const panel2 = [245, 246, 248], white = [30, 35, 46], darkText = [30, 35, 46];
+    const green = [73, 166, 118], red = [204, 92, 92], muted = [110, 115, 130];
+    const bd = [220, 222, 230], altRow = [248, 249, 251];
 
     let curY = 0;
     let pageNum = 1;
@@ -4668,7 +4668,7 @@ async function generatePDF() {
         margin:{left:pL, right:15}, theme:'grid',
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9.5, cellPadding:4 },
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:9, cellPadding:4, valign:'middle' },
-        alternateRowStyles:{ fillColor:[28,32,42] },
+        alternateRowStyles:{ fillColor:altRow },
         columnStyles:{ 0:{}, 1:{cellWidth:40,halign:'right'}, 2:{cellWidth:35,halign:'right'} },
         tableLineColor: bd, tableLineWidth: 0.15,
       });
@@ -4697,7 +4697,7 @@ async function generatePDF() {
         margin:{left:pL, right:15}, theme:'grid',
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5, valign:'middle' },
-        alternateRowStyles:{ fillColor:[28,32,42] },
+        alternateRowStyles:{ fillColor:altRow },
         columnStyles:{ 0:{minCellWidth: 26}, 1:{}, 2:{}, 3:{cellWidth:25,halign:'right'}, 4:{minCellWidth:18,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
