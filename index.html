@@ -2147,23 +2147,31 @@ function debouncedRender() {
 }
 
 // Animated number counter - smoothly counts from current to target value
+let initialAnimDone = false;
+setTimeout(() => { initialAnimDone = true; }, 3500);
+
 function animateVal(el, target, formatter, duration) {
   if (!el) return;
-  duration = duration || 600;
+  duration = duration || 2000;
+  const delay = initialAnimDone ? 0 : 3200;
+
   // Parse current displayed number (strip currency symbol and commas)
   const cur = parseFloat(String(el.textContent).replace(/[^0-9.\-]/g, '')) || 0;
-  if (cur === target) { el.textContent = formatter(target); return; }
-  const start = performance.now();
-  const diff = target - cur;
-  function tick(now) {
-    const elapsed = now - start;
-    const progress = Math.min(elapsed / duration, 1);
-    // ease-out cubic
-    const ease = 1 - Math.pow(1 - progress, 3);
-    el.textContent = formatter(cur + diff * ease);
-    if (progress < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
+  if (cur === target && initialAnimDone) { el.textContent = formatter(target); return; }
+  
+  setTimeout(() => {
+    const start = performance.now();
+    const diff = target - cur;
+    function tick(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // smooth ease-out quartic
+      const ease = 1 - Math.pow(1 - progress, 4);
+      el.textContent = formatter(cur + diff * ease);
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }, delay);
 }
 
 function renderStats(sTxs){
