@@ -789,9 +789,234 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .log-header { flex-direction:column; align-items:stretch; }
   .log-entry { padding:12px 14px; gap:10px; }
 }
+
+/* --- Splash Intro Animation --- */
+#splash-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  animation: splashOut 1.2s cubic-bezier(0.77, 0, 0.175, 1) 3.1s forwards;
+  pointer-events: none;
+  will-change: opacity, filter, transform;
+}
+
+#splash-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+  opacity: 0;
+  animation: splashGridIn 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  z-index: 0;
+}
+
+/* Background animated rings */
+.splash-bg-elements {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.splash-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid var(--bs);
+  opacity: 0;
+  transform: scale(0.2);
+  animation: splashCirclePulse 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+.splash-circle:nth-child(1) { width: 30vw; height: 30vw; min-width: 300px; min-height: 300px; animation-delay: 0.1s; }
+.splash-circle:nth-child(2) { width: 50vw; height: 50vw; min-width: 500px; min-height: 500px; animation-delay: 0.3s; }
+.splash-circle:nth-child(3) { width: 70vw; height: 70vw; min-width: 700px; min-height: 700px; animation-delay: 0.5s; }
+
+@keyframes splashCirclePulse {
+  0% { opacity: 0; transform: scale(0.2); }
+  50% { opacity: 0.8; border-color: var(--ac); box-shadow: inset 0 0 40px var(--ag); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+
+/* Glowing center */
+.splash-glow {
+  position: absolute;
+  width: 40vw;
+  height: 40vw;
+  max-width: 600px;
+  max-height: 600px;
+  background: radial-gradient(circle, var(--ag) 0%, transparent 60%);
+  opacity: 0;
+  animation: splashGlowIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
+  z-index: 1;
+}
+
+/* Animated Financial Trend Line */
+.splash-chart-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 45vh;
+  z-index: 1;
+  opacity: 0.6;
+}
+.splash-chart {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 16px var(--ac));
+  will-change: opacity;
+}
+.splash-chart path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: drawChart 2.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+  will-change: stroke-dashoffset;
+}
+
+/* Typography */
+.splash-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  perspective: 1200px;
+}
+.splash-logo {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(80px, 15vw, 220px);
+  font-weight: 600;
+  letter-spacing: -3px;
+  background: linear-gradient(135deg, var(--tx) 20%, #fff 45%, var(--tx) 60%, var(--ac) 90%);
+  background-size: 300% 300%;
+  background-position: 100% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0;
+  transform: scale(1.1) translateY(50px) rotateX(25deg);
+  filter: blur(16px) drop-shadow(0 12px 24px rgba(0,0,0,0.5));
+  animation: 
+    splashTextIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards, 
+    splashShimmer 2s cubic-bezier(0.25, 1, 0.5, 1) 1.2s forwards;
+  line-height: 1;
+  will-change: transform, opacity, filter, background-position;
+}
+.splash-logo span {
+  -webkit-text-fill-color: var(--ac);
+  display: inline-block;
+  animation: splashSpanPulse 2s cubic-bezier(0.25, 1, 0.5, 1) 1.8s forwards;
+}
+.splash-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: clamp(14px, 2vw, 22px);
+  color: var(--tx);
+  letter-spacing: 20px;
+  text-transform: uppercase;
+  margin-top: 24px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: splashSubIn 1.4s cubic-bezier(0.22, 1, 0.36, 1) 1.2s forwards;
+  will-change: transform, opacity, letter-spacing;
+}
+
+/* Keyframes */
+@keyframes splashGridIn {
+  from { transform: scale(1.1); opacity: 0; }
+  to { transform: scale(1); opacity: 0.6; }
+}
+@keyframes drawChart {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes splashTextIn {
+  to { opacity: 1; transform: scale(1) translateY(0) rotateX(0); filter: blur(0) drop-shadow(0 12px 24px rgba(0,0,0,0.3)); }
+}
+@keyframes splashShimmer {
+  to { background-position: 0% 0%; }
+}
+@keyframes splashSpanPulse {
+  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+  50% { filter: drop-shadow(0 0 16px var(--ac)); }
+}
+@keyframes splashSubIn {
+  to { opacity: 1; transform: translateY(0); letter-spacing: 8px; }
+}
+@keyframes splashGlowIn {
+  to { opacity: 1; transform: scale(1.2); }
+}
+@keyframes splashOut {
+  0% { opacity: 1; filter: blur(0); transform: scale(1); }
+  99% { opacity: 0; filter: blur(12px); transform: scale(1.1); visibility: hidden; }
+  100% { opacity: 0; filter: blur(0); transform: scale(1); visibility: hidden; }
+}
+
+.app {
+  opacity: 0;
+  animation: appEntrance 1.4s cubic-bezier(0.22, 1, 0.36, 1) 3.3s forwards;
+  will-change: opacity, transform, filter;
+}
+@keyframes appEntrance {
+  from { opacity: 0; transform: translateY(40px) scale(0.96); filter: blur(8px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+@media(max-width: 520px) {
+  .splash-logo {
+    font-size: clamp(60px, 18vw, 80px);
+    transform: scale(1.1) translateY(40px) rotateX(25deg);
+  }
+  .splash-sub {
+    font-size: 11px;
+    letter-spacing: 12px;
+  }
+  @keyframes splashSubIn {
+    to { opacity: 1; transform: translateY(0); letter-spacing: 6px; }
+  }
+  .splash-circle:nth-child(1) { width: 50vw; height: 50vw; }
+  .splash-circle:nth-child(2) { width: 80vw; height: 80vw; }
+  .splash-circle:nth-child(3) { width: 120vw; height: 120vw; }
+  .splash-chart-container { height: 35vh; }
+}
 </style>
 </head>
 <body>
+<div id="splash-screen">
+  <div class="splash-bg-elements">
+    <div class="splash-circle"></div>
+    <div class="splash-circle"></div>
+    <div class="splash-circle"></div>
+  </div>
+  <div class="splash-glow"></div>
+  
+  <div class="splash-chart-container">
+    <svg class="splash-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="chartGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="var(--ac)" stop-opacity="0" />
+          <stop offset="25%" stop-color="var(--ac)" stop-opacity="0.8" />
+          <stop offset="100%" stop-color="var(--ac)" stop-opacity="1" />
+        </linearGradient>
+      </defs>
+      <path d="M 0 100 C 15 80, 25 90, 40 60 C 50 40, 65 70, 80 30 C 90 10, 95 20, 100 0" 
+            fill="none" stroke="url(#chartGlow)" stroke-width="3" vector-effect="non-scaling-stroke" pathLength="1" />
+    </svg>
+  </div>
+
+  <div class="splash-content">
+    <div class="splash-logo">Flu<span>x</span></div>
+    <div class="splash-sub">Personal Finance</div>
+  </div>
+</div>
 
 <!-- In-App Browser Detection: blocks page if opened inside LinkedIn/Instagram/Facebook webview -->
 <script>
