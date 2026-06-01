@@ -2182,7 +2182,7 @@ setTimeout(() => { initialAnimDone = true; }, 3500);
 
 function animateVal(el, target, formatter, duration) {
   if (!el) return;
-  duration = duration || 1500;
+  duration = duration || 1000;
   const delay = initialAnimDone ? 0 : 3200;
 
   // Parse current displayed number (strip currency symbol and commas)
