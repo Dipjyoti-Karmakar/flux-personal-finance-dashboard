@@ -2178,12 +2178,57 @@ function debouncedRender() {
 
 // Animated number counter - smoothly counts from current to target value
 let initialAnimDone = false;
-setTimeout(() => { initialAnimDone = true; }, 3500);
+let initialAnimStartAt = null;
+
+function parseAnimTimeMs(value) {
+  if (!value) return 0;
+  const trimmed = value.trim();
+  if (!trimmed) return 0;
+  const num = parseFloat(trimmed);
+  if (Number.isNaN(num)) return 0;
+  return trimmed.endsWith('ms') ? num : num * 1000;
+}
+
+function initInitialAnimTiming() {
+  const appEl = document.querySelector('.app');
+  if (!appEl) { initialAnimDone = true; return; }
+  const styles = getComputedStyle(appEl);
+  const names = styles.animationName.split(',').map(n => n.trim());
+  if (names.length === 1 && (!names[0] || names[0] === 'none')) { initialAnimDone = true; return; }
+  const delays = styles.animationDelay.split(',').map(parseAnimTimeMs);
+  const idx = names.findIndex(name => name === 'appEntrance' || name === 'appEntranceMob');
+  const startDelay = idx >= 0 ? (delays[idx] ?? delays[0] ?? 0) : Math.max(0, ...delays);
+
+  initialAnimStartAt = performance.now() + startDelay;
+
+  const markStart = () => {
+    if (initialAnimDone) return;
+    initialAnimDone = true;
+    initialAnimStartAt = null;
+    appEl.removeEventListener('animationstart', onStart);
+  };
+
+  const onStart = (e) => {
+    if (e.animationName && !e.animationName.startsWith('appEntrance')) return;
+    markStart();
+  };
+
+  appEl.addEventListener('animationstart', onStart);
+  setTimeout(markStart, startDelay + 100);
+}
+
+initInitialAnimTiming();
 
 function animateVal(el, target, formatter, duration) {
   if (!el) return;
   duration = duration || 1000;
-  const delay = initialAnimDone ? 0 : 3200;
+  if (initialAnimStartAt && performance.now() >= initialAnimStartAt) {
+    initialAnimDone = true;
+    initialAnimStartAt = null;
+  }
+  const delay = initialAnimDone || initialAnimStartAt === null
+    ? 0
+    : Math.max(0, initialAnimStartAt - performance.now());
 
   // Parse current displayed number (strip currency symbol and commas)
   const cur = parseFloat(String(el.textContent).replace(/[^0-9.\-]/g, '')) || 0;
