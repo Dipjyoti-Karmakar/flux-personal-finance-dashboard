@@ -3327,14 +3327,9 @@ function exportCSV() {
     return s;
   };
 
-  const reportData = getReportData();
-  if (reportData.error) {
-    showToast(reportData.error, 'er');
-    return;
-  }
-  const exportTxs = reportData.filtered;
+  const exportTxs = txs;
   if (!exportTxs.length) {
-    showToast('No transactions found for the selected filters', 'er');
+    showToast('No transactions found to export', 'er');
     return;
   }
 
@@ -4859,7 +4854,8 @@ async function generatePDF() {
           doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 3.5, 4.5, 4.5, 0.5, 0.5, 'F');
           
           doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...white);
-          let displayLabel = label.length > 10 ? label.slice(0,8)+'..' : label;
+          let maxLen = catFullWidth ? 10 : 6;
+          let displayLabel = label.length > maxLen ? label.slice(0,maxLen-1)+'..' : label;
           doc.text(displayLabel, legendX + 6.5, ly);
           
           const rightEdgeX = catFullWidth ? legendX + 48 : leftX + catW - 6;
@@ -4867,7 +4863,7 @@ async function generatePDF() {
           doc.text(fmtPDFS(amt), rightEdgeX, ly, {align:'right'});
           
           doc.setTextColor(...white);
-          doc.text(`${pct}%`, rightEdgeX - 16, ly, {align:'right'});
+          doc.text(`${pct}%`, rightEdgeX - 22, ly, {align:'right'});
         });
         if (catEntries.length > maxLegendItems) {
           const ly = startY + itemsPerCol * 11 + 3;
@@ -4893,8 +4889,8 @@ async function generatePDF() {
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...gold);
       doc.text('PAYMENT CHANNEL SPLIT', rightX + splitW/2, splitPanelTop + 8, {align:'center'});
 
-      const oCX = rightX + (catFullWidth ? 45 : 32), oCY = splitPanelTop + 55;
-      const oR = 26, oInnerR = 15;
+      const oCX = rightX + (catFullWidth ? 45 : 26), oCY = splitPanelTop + 55;
+      const oR = catFullWidth ? 26 : 18, oInnerR = catFullWidth ? 15 : 10;
       const onlinePctVal = totalExp > 0 ? onlineExp / totalExp : 0;
       const offlinePctVal = 1 - onlinePctVal;
 
@@ -4925,10 +4921,11 @@ async function generatePDF() {
           doc.text(`${item.pct}%`, oLegendX + 7, ly);
           
           doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...muted);
-          doc.text(item.label, oLegendX + 19, ly);
+          doc.text(item.label, oLegendX + 24, ly);
           
+          const rightEdgeX = catFullWidth ? oLegendX + 60 : rightX + splitW - 6;
           doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...white);
-          doc.text(fmtPDFS(item.amt), oLegendX + 34, ly);
+          doc.text(fmtPDFS(item.amt), rightEdgeX, ly, {align:'right'});
         });
       } else {
         doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
