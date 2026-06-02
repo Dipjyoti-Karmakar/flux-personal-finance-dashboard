@@ -4937,7 +4937,8 @@ async function generatePDF() {
 
     // ── CATEGORY BREAKDOWN ───────────────────────────────────────────────
     if (incCat && catEntries.length > 0) {
-      checkBreak(65); // Ensure enough space for title + header + at least 5 rows
+      doc.addPage(); // Give CATEGORY BREAKDOWN the whole page
+      curY = 20;
       sectionTitle('CATEGORY BREAKDOWN (EXPENSES)');
       const catRows = catEntries.map(([cat,amt]) => {
         const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(1)+'%' : '0%';
@@ -4958,12 +4959,8 @@ async function generatePDF() {
 
     // ── TRANSACTION LIST ─────────────────────────────────────────────────
     if (incList && filtered.length) {
-      if (incCat && catEntries.length > 6) {
-        doc.addPage();
-        curY = 20;
-      } else {
-        checkBreak(60); // Ensure enough space for title + header + at least 5 rows
-      }
+      doc.addPage(); // Always start transactions on a new page
+      curY = 20;
       sectionTitle('TRANSACTION LIST');
       const txRows = filtered.map(t => {
         const d = new Date(t.date + 'T00:00:00');
