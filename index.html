@@ -4748,6 +4748,7 @@ async function generatePDF() {
         
         doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
         for (let i = 0; i < pts.length; i += labelSteps) {
+          if (i !== pts.length - 1 && (pts.length - 1 - i) < labelSteps * 0.6) continue;
           const lx = getX(i);
           doc.text(pts[i].label, lx, gridBottom + 7, { align: 'center' });
           doc.setDrawColor(...bd); doc.setLineWidth(0.1); doc.line(lx, gridBottom, lx, gridBottom + 2.5);
