@@ -4806,7 +4806,7 @@ async function generatePDF() {
       const sideColW = (W - pL - 15) / 2 - 3;
       const fullW = W - pL - 15;
       
-      const catFullWidth = catEntries.length > 5;
+      const catFullWidth = true; // User preference: always stack donut charts top and bottom
       const catW = catFullWidth ? fullW : sideColW;
 
       // ── LEFT: CATEGORY DISTRIBUTION ──────────────────────────────────────
