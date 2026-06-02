@@ -2876,8 +2876,6 @@ function renderCatTxList(passedTxs) {
   const hasMore = list.length > catTxVisibleCount;
   const remaining = list.length - catTxVisibleCount;
 
-  const safeColor = (c) => /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : '#c8a96e';
-
   let txHtml = '';
   if (!list.length) {
     txHtml = '<div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🔍</div><div class="empty-title">No transactions</div><div class="empty-sub">No expense transactions in this category for the selected period</div></div>';
@@ -4389,7 +4387,7 @@ async function generatePDF() {
   btn.disabled = true; btn.textContent = 'Generating...';
   try {
     // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
-    const fmtPDF = (n, showSign = false) => {
+    const fmtPDF = (n) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
       return `₹ ${abs}`;
     };
@@ -4492,7 +4490,7 @@ async function generatePDF() {
     const pL = 15, pR = W - 15;
 
     // Colour palette
-    const gold = [200, 169, 110], dark = [255, 255, 255], panel = [252, 252, 253];
+    const gold = [200, 169, 110], panel = [252, 252, 253];
     const panel2 = [245, 246, 248], white = [30, 35, 46], darkText = [30, 35, 46];
     const green = [73, 166, 118], red = [204, 92, 92], muted = [110, 115, 130];
     const bd = [220, 222, 230], altRow = [248, 249, 251], borderDark = [30, 35, 46];
@@ -4582,7 +4580,7 @@ async function generatePDF() {
       else if (parseFloat(savRate) > 0) insights.push(`You saved ${fmtPDFS(netBal)} this period. Aim for 20%+ for strong financial health.`);
       else if (netBal < 0) insights.push(`Spending exceeded income by ${fmtPDFS(Math.abs(netBal))}. Review top categories to reduce costs.`);
 
-      insights.forEach((ins, idx) => {
+      insights.forEach((ins) => {
         checkBreak(10);
         // bullet
         doc.setFillColor(...gold); doc.circle(pL + 2, curY - 0.5, 1.2, 'F');
