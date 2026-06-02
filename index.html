@@ -3260,6 +3260,60 @@ function pMd(v){if(!v)return null;const s=String(v).toLowerCase();if(/online|upi
 function pTp(v){if(!v)return null;const s=String(v).toLowerCase();if(/income|credit|cr\b|salary|inflow|receipt/.test(s))return 'income';return 'expense';}
 function pCt(v){if(!v)return 'other';const s=String(v).toLowerCase();for(const k of Object.keys(CICO)){if(s.includes(k))return k;}return 'other';}
 
+function getReportData() {
+  let fromDate, toDate, reportTitle;
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  if (reportPeriodMode === 'month') {
+    const m = parseInt(document.getElementById('rptMonth').value);
+    const y = parseInt(document.getElementById('rptYear').value);
+    fromDate = `${y}-${String(m).padStart(2,'0')}-01`;
+    const lastDay = new Date(y, m, 0).getDate();
+    toDate = `${y}-${String(m).padStart(2,'0')}-${lastDay}`;
+    reportTitle = `${MONTHS[m-1]} ${y}  Finance Report`;
+  } else if (reportPeriodMode === 'year') {
+    const y = parseInt(document.getElementById('rptYearOnly').value);
+    fromDate = `${y}-01-01`; toDate = `${y}-12-31`;
+    reportTitle = `${y}  Annual Finance Report`;
+  } else if (reportPeriodMode === 'event') {
+    const rptEventId = document.getElementById('rptEvent').value;
+    if (!rptEventId) { return { error: 'Please select an event' }; }
+    const evt = events[rptEventId];
+    reportTitle = `Event: ${evt.name}`;
+    const evTxs = txs.filter(t => t.eventId === rptEventId);
+    if(evTxs.length) {
+      evTxs.sort((a,b)=>a.date.localeCompare(b.date));
+      fromDate = evTxs[0].date;
+      toDate = evTxs[evTxs.length-1].date;
+    } else {
+      fromDate = new Date().toISOString().slice(0,10);
+      toDate = fromDate;
+    }
+  } else {
+    fromDate = document.getElementById('rptFrom').value;
+    toDate = document.getElementById('rptTo').value;
+    if (!fromDate || !toDate || fromDate > toDate) { return { error: 'Invalid date range' }; }
+    reportTitle = `${fromDate} to ${toDate}  Finance Report`;
+  }
+
+  const incInc = document.getElementById('rptIncome').checked;
+  const incExp = document.getElementById('rptExpenses').checked;
+
+  let allInPeriod = txs;
+  if (reportPeriodMode === 'event') {
+    const rptEventId = document.getElementById('rptEvent').value;
+    allInPeriod = allInPeriod.filter(t => t.eventId === rptEventId);
+  } else {
+    allInPeriod = allInPeriod.filter(t => t.date >= fromDate && t.date <= toDate);
+  }
+  
+  let filtered = [...allInPeriod];
+  if (!incInc) filtered = filtered.filter(t => t.type !== 'income');
+  if (!incExp) filtered = filtered.filter(t => t.type !== 'expense');
+  filtered.sort((a,b) => a.date.localeCompare(b.date));
+
+  return { fromDate, toDate, reportTitle, allInPeriod, filtered };
+}
+
 function exportCSV() {
   if (!txs.length) {
     showToast('No transactions to export', 'er');
@@ -3273,8 +3327,19 @@ function exportCSV() {
     return s;
   };
 
+  const reportData = getReportData();
+  if (reportData.error) {
+    showToast(reportData.error, 'er');
+    return;
+  }
+  const exportTxs = reportData.filtered;
+  if (!exportTxs.length) {
+    showToast('No transactions found for the selected filters', 'er');
+    return;
+  }
+
   const headers = ['Date', 'Description', 'Amount', 'Type', 'Mode', 'Category'];
-  const rows = txs.map(t => [
+  const rows = exportTxs.map(t => [
     t.date,
     `"${csvSafe(t.desc).replace(/"/g, '""')}"`,
     t.amount,
@@ -4396,59 +4461,16 @@ async function generatePDF() {
       return (n < 0 ? '- ' : '') + '₹ ' + abs;
     };
 
-    // Determine date range
-    let fromDate, toDate, reportTitle;
-    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    if (reportPeriodMode === 'month') {
-      const m = parseInt(document.getElementById('rptMonth').value);
-      const y = parseInt(document.getElementById('rptYear').value);
-      fromDate = `${y}-${String(m).padStart(2,'0')}-01`;
-      const lastDay = new Date(y, m, 0).getDate();
-      toDate = `${y}-${String(m).padStart(2,'0')}-${lastDay}`;
-      reportTitle = `${MONTHS[m-1]} ${y}  Finance Report`;
-    } else if (reportPeriodMode === 'year') {
-      const y = parseInt(document.getElementById('rptYearOnly').value);
-      fromDate = `${y}-01-01`; toDate = `${y}-12-31`;
-      reportTitle = `${y}  Annual Finance Report`;
-    } else if (reportPeriodMode === 'event') {
-      const rptEventId = document.getElementById('rptEvent').value;
-      if (!rptEventId) { showToast('Please select an event', 'er'); btn.disabled = false; btn.innerHTML = '📄 Generate &amp; Download PDF'; return; }
-      const evt = events[rptEventId];
-      reportTitle = `Event: ${evt.name}`;
-      const evTxs = txs.filter(t => t.eventId === rptEventId);
-      if(evTxs.length) {
-        evTxs.sort((a,b)=>a.date.localeCompare(b.date));
-        fromDate = evTxs[0].date;
-        toDate = evTxs[evTxs.length-1].date;
-      } else {
-        fromDate = new Date().toISOString().slice(0,10);
-        toDate = fromDate;
-      }
-    } else {
-      fromDate = document.getElementById('rptFrom').value;
-      toDate = document.getElementById('rptTo').value;
-      if (!fromDate || !toDate || fromDate > toDate) { showToast('Invalid date range', 'er'); btn.disabled = false; btn.innerHTML = '📄 Generate &amp; Download PDF'; return; }
-      reportTitle = `${fromDate} to ${toDate}  Finance Report`;
+    const reportData = getReportData();
+    if (reportData.error) {
+      showToast(reportData.error, 'er');
+      btn.disabled = false; btn.innerHTML = '📄 Generate &amp; Download PDF';
+      return;
     }
+    const { fromDate, toDate, reportTitle, allInPeriod, filtered } = reportData;
 
-    const incInc = document.getElementById('rptIncome').checked;
-    const incExp = document.getElementById('rptExpenses').checked;
     const incCat = document.getElementById('rptCatBreakdown').checked;
     const incList = document.getElementById('rptTxList').checked;
-
-    // Filter transactions (use ALL txs for insight calc, filtered for display)
-    let allInPeriod = txs;
-    if (reportPeriodMode === 'event') {
-      const rptEventId = document.getElementById('rptEvent').value;
-      allInPeriod = allInPeriod.filter(t => t.eventId === rptEventId);
-    } else {
-      allInPeriod = allInPeriod.filter(t => t.date >= fromDate && t.date <= toDate);
-    }
-    
-    let filtered = [...allInPeriod];
-    if (!incInc) filtered = filtered.filter(t => t.type !== 'income');
-    if (!incExp) filtered = filtered.filter(t => t.type !== 'expense');
-    filtered.sort((a,b) => a.date.localeCompare(b.date));
 
     const totalInc = allInPeriod.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
     const totalExp = allInPeriod.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
