@@ -4977,7 +4977,7 @@ async function generatePDF() {
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor:altRow },
-        columnStyles:{ 0:{minCellWidth: 26}, 1:{}, 2:{}, 3:{cellWidth:25,halign:'right'}, 4:{minCellWidth:18,halign:'center'} },
+        columnStyles:{ 0:{cellWidth: 24}, 1:{}, 2:{cellWidth: 28}, 3:{cellWidth: 26,halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
         tableLineColor: borderDark, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
