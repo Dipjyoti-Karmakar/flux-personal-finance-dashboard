@@ -1018,6 +1018,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .splash-chart-container { height: 35vh; }
 }
 </style>
+<style>img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; }</style>
+<script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="splash-screen">
@@ -2167,6 +2169,7 @@ function render(){
   renderYearly();
   renderEvents();
   renderInsights();
+  if (typeof twemoji !== 'undefined') twemoji.parse(document.body);
 }
 
 // Debounced render - coalesces rapid Firestore snapshot fires (e.g. during batch imports)
@@ -4141,6 +4144,7 @@ function renderLogs() {
       </div>
     </div>`;
   }).join('');
+  if (typeof twemoji !== 'undefined') twemoji.parse(listEl);
 }
 
 
@@ -4292,6 +4296,7 @@ function renderRecurring() {
       </div>
     </div>`;
   }).join('');
+  if (typeof twemoji !== 'undefined') twemoji.parse(listEl);
 }
 
 function openAddRecurring() {
