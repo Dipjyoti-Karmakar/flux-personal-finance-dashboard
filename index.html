@@ -1121,7 +1121,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
       Sign In
     </button>
 
-    <button class="ib" onclick="exportCSV()">
+    <button class="ib" onclick="openReportMod('csv')">
       <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 10.5v1.5h10v-1.5M7 9V1M4 4l3-3 3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       CSV
     </button>
@@ -1525,7 +1525,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <!-- PDF Report Modal -->
 <div class="bk" id="reportMod">
   <div class="mo" style="max-width:500px;">
-    <div class="mh"><span class="mti">Generate PDF Report</span><button class="mc2" onclick="closeReportMod()">×</button></div>
+    <div class="mh"><span class="mti" id="reportModTitle">Generate PDF Report</span><button class="mc2" onclick="closeReportMod()">×</button></div>
     <div class="mb">
       <div class="fb2" style="padding:0">
         <div style="margin-bottom:16px;">
@@ -1884,7 +1884,7 @@ function setStatsMode(m) {
 function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); renderTrend(); renderCats(); renderSplit(); } }
 function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; updStatsDt(); }
 
-function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✦ Other</option>';}
+function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="recharge">📱 Recharge/Bill</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✦ Other</option>';}
 function setMode(m){cMode=m;document.getElementById('bOnl').className='tb'+(m==='online'?' ao':'');document.getElementById('bOfl').className='tb'+(m==='offline'?' af':'');}
 
 function setDt(filterVal, btn) {
@@ -3318,7 +3318,16 @@ function getReportData() {
 }
 
 function exportCSV() {
-  if (!txs.length) {
+  const reportData = getReportData();
+  if (reportData.error) {
+    showToast(reportData.error, 'er');
+    return;
+  }
+  
+  const { fromDate, toDate, filtered } = reportData;
+  const exportTxs = filtered;
+  
+  if (!exportTxs || !exportTxs.length) {
     showToast('No transactions to export', 'er');
     return;
   }
@@ -3330,33 +3339,42 @@ function exportCSV() {
     return s;
   };
 
-  const exportTxs = txs;
-  if (!exportTxs.length) {
-    showToast('No transactions found to export', 'er');
-    return;
-  }
-
+  const hasEvents = exportTxs.some(t => t.eventId && events[t.eventId]);
   const headers = ['Date', 'Description', 'Amount', 'Type', 'Mode', 'Category'];
-  const rows = exportTxs.map(t => [
-    t.date,
-    `"${csvSafe(t.desc).replace(/"/g, '""')}"`,
-    t.amount,
-    `"${csvSafe(t.type).replace(/"/g, '""')}"`,
-    `"${csvSafe(t.mode).replace(/"/g, '""')}"`,
-    `"${csvSafe(t.cat).replace(/"/g, '""')}"`
-  ].join(','));
+  if (hasEvents) headers.push('Event');
+
+  const rows = exportTxs.map(t => {
+    const row = [
+      t.date,
+      `"${csvSafe(t.desc).replace(/"/g, '""')}"`,
+      t.amount,
+      `"${csvSafe(t.type).replace(/"/g, '""')}"`,
+      `"${csvSafe(t.mode).replace(/"/g, '""')}"`,
+      `"${csvSafe(t.cat).replace(/"/g, '""')}"`
+    ];
+    if (hasEvents) {
+      if (t.eventId && events[t.eventId]) {
+        // CSV files don't support cell background colors, so we add a distinct emoji to stand out
+        row.push(`"🎨 ${csvSafe(events[t.eventId].name).replace(/"/g, '""')}"`);
+      } else {
+        row.push('""');
+      }
+    }
+    return row.join(',');
+  });
   
   const csvContent = [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `Flux_Export_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = `flux-export-${fromDate}-to-${toDate}.csv`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showToast('Export successful', 'ok');
+  closeReportMod();
 }
 
 function doImport(e){
@@ -4408,7 +4426,25 @@ document.getElementById('recurringMod').addEventListener('click', function(e) { 
 
 /* \u2500\u2500 PDF Monthly Reports \u2500\u2500 */
 
-function openReportMod() {
+let reportModType = 'pdf';
+
+function openReportMod(type = 'pdf') {
+  reportModType = type;
+  document.getElementById('reportModTitle').textContent = type === 'csv' ? 'Export CSV' : 'Generate PDF Report';
+  
+  const eventTab = document.getElementById('rptPeriodEvent');
+  const btn = document.getElementById('pdfGenBtn');
+  if (type === 'csv') {
+    eventTab.style.display = 'none';
+    if (reportPeriodMode === 'event') reportPeriodMode = 'month';
+    btn.innerHTML = '📄 Download CSV';
+    btn.onclick = exportCSV;
+  } else {
+    eventTab.style.display = 'block';
+    btn.innerHTML = '📄 Generate &amp; Download PDF';
+    btn.onclick = generatePDF;
+  }
+
   const now = new Date();
   // Populate year selectors with all years present in transactions + current year
   const years = [...new Set(txs.map(t => t.date?.slice(0,4)).filter(Boolean))].sort((a,b) => b-a);
@@ -4416,7 +4452,7 @@ function openReportMod() {
   const yearOpts = years.map(y => `<option value="${y}">${y}</option>`).join('');
   document.getElementById('rptYear').innerHTML = yearOpts;
   document.getElementById('rptYearOnly').innerHTML = yearOpts;
-document.getElementById('rptMonth').value = now.getMonth() + 1;
+  document.getElementById('rptMonth').value = now.getMonth() + 1;
   document.getElementById('rptYear').value = now.getFullYear();
   document.getElementById('rptYearOnly').value = now.getFullYear();
   document.getElementById('rptFrom').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
@@ -4426,7 +4462,7 @@ document.getElementById('rptMonth').value = now.getMonth() + 1;
   Object.values(events).forEach(e => evtOpts.push(`<option value="${e.id}">${e.name}</option>`));
   document.getElementById('rptEvent').innerHTML = evtOpts.join('');
 
-  setReportPeriod('month');
+  setReportPeriod(reportPeriodMode || 'month');
   document.getElementById('reportMod').classList.add('op');
 }
 
@@ -4968,35 +5004,63 @@ async function generatePDF() {
       doc.addPage(); // Always start transactions on a new page
       curY = 20;
       sectionTitle('TRANSACTION LIST');
+      
+      const hasEvents = filtered.some(t => t.eventId && events[t.eventId]);
+      const headRow = hasEvents ? ['Date','Description','Category','Amount','Mode','Event'] : ['Date','Description','Category','Amount','Mode'];
+      
       const txRows = filtered.map(t => {
         const d = new Date(t.date + 'T00:00:00');
         const dateStr = `${d.getDate()}\u00A0${d.toLocaleString('default',{month:'short'})}\u00A0${d.getFullYear()}`;
         const amtStr = fmtPDF(t.type==='income' ? t.amount : -t.amount, true);
         const desc = t.desc || '(no description)';
         const catLabel = (t.cat||'other').charAt(0).toUpperCase()+(t.cat||'other').slice(1);
-        return [dateStr, desc, catLabel, amtStr, (t.mode||'online'), t.id, t.type]; // pass id and type for styling
+        
+        const row = [dateStr, desc, catLabel, amtStr, (t.mode||'online')];
+        if (hasEvents) {
+          row.push(t.eventId && events[t.eventId] ? events[t.eventId].name : '');
+        }
+        // pass metadata for styling (id, type, event color)
+        row.push(t.id, t.type, (t.eventId && events[t.eventId] ? events[t.eventId].color : ''));
+        return row;
       });
       doc.autoTable({
-        startY: curY, head:[['Date','Description','Category','Amount','Mode']], body: txRows,
+        startY: curY, head:[headRow], body: txRows,
         margin:{left:pL, right:15}, theme:'grid',
         headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
         bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor:altRow },
-        columnStyles:{ 0:{cellWidth: 24}, 1:{}, 2:{cellWidth: 28}, 3:{cellWidth: 26,halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
+        columnStyles: hasEvents 
+          ? { 0:{cellWidth: 24}, 1:{}, 2:{cellWidth: 28}, 3:{cellWidth: 26,halign:'right'}, 4:{cellWidth: 20,halign:'center'}, 5:{cellWidth: 26} }
+          : { 0:{cellWidth: 24}, 1:{}, 2:{cellWidth: 28}, 3:{cellWidth: 26,halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
         tableLineColor: borderDark, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
-            const isLargest = largestTx && d.row.raw[5] === largestTx.id;
+            const idIdx = hasEvents ? 6 : 5;
+            const typeIdx = hasEvents ? 7 : 6;
+            const colorIdx = hasEvents ? 8 : -1;
             
-            // Set amount color based on transaction type (red for expense, green for income)
+            const isLargest = largestTx && d.row.raw[idIdx] === largestTx.id;
+            const evColor = hasEvents ? d.row.raw[colorIdx] : '';
+            
+            // Set amount color based on transaction type
             if (d.column.index === 3) {
-              d.cell.styles.textColor = d.row.raw[6] === 'income' ? green : red;
+              d.cell.styles.textColor = d.row.raw[typeIdx] === 'income' ? green : red;
+            }
+            
+            // Distinct color for event cell
+            if (hasEvents && d.column.index === 5 && evColor) {
+              const hex = evColor.replace('#', '');
+              if (hex.length === 6) {
+                d.cell.styles.fillColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
+                d.cell.styles.textColor = [255, 255, 255];
+                d.cell.styles.fontStyle = 'bold';
+              }
             }
             
             // Highlight largest transaction
-            if (isLargest) {
+            if (isLargest && (!hasEvents || d.column.index !== 5)) {
               d.cell.styles.fillColor = [200, 169, 110]; // gold background
-              d.cell.styles.textColor = [15, 18, 25]; // dark text to contrast with gold
+              d.cell.styles.textColor = [15, 18, 25]; // dark text
               d.cell.styles.fontStyle = 'bold';
             }
           }
