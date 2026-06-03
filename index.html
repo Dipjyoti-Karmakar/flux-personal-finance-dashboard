@@ -1150,7 +1150,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   <div class="fltr" style="padding:0; border:none; margin:0;">
     <button class="ft act" id="stM_month" onclick="setStatsMode('month')">This Month</button>
     <button class="ft" id="stM_yr" onclick="setStatsMode('year')">This Year</button>
-    <button class="ft" id="stM_all" onclick="setStatsMode('all')">All Time</button>
+    <button class="ft" id="stM_all" onclick="setStatsMode('all')">All</button>
     <button class="ft" id="stM_custom" onclick="setStatsMode('custom')">Custom</button>
   </div>
 </div>
@@ -1208,8 +1208,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         <button class="ft dt-flt act" onclick="setDt('today', this)">Today</button>
         <button class="ft dt-flt" onclick="setDt('month', this)">This Month</button>
         <button class="ft dt-flt" onclick="setDt('year', this)">This Year</button>
-        <button class="ft dt-flt" onclick="setDt('all', this)">All Dates</button>
-        <button class="ft dt-flt" onclick="setDt('custom', this)">Custom Range</button>
+        <button class="ft dt-flt" onclick="setDt('all', this)">All</button>
+        <button class="ft dt-flt" onclick="setDt('custom', this)">Custom</button>
       </div>
       <div id="customDtWrap" style="display:none; padding:12px 16px; border-bottom:1px solid var(--bd); background:var(--s2); gap:8px; align-items:flex-end; flex-wrap: wrap; overflow:hidden; box-sizing:border-box; max-width:100%;">
         <div style="display:flex; flex-direction:column; gap:6px; flex: 1 1 110px; min-width:0;">
@@ -1226,7 +1226,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         <div class="fltr-row">
           <span class="fltr-label">Type</span>
           <div class="fltr-btns">
-            <button class="ft ty-flt act" onclick="setF('all', this)">All Types</button>
+            <button class="ft ty-flt act" onclick="setF('all', this)">All</button>
             <button class="ft ty-flt" onclick="setF('income', this)">Income</button>
             <button class="ft ty-flt" onclick="setF('expense', this)">Expense</button>
           </div>
@@ -1245,7 +1245,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         <div style="display:flex;flex-direction:column;gap:6px;">
           <label style="font-size:9px; color:var(--mu); font-family:'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; font-weight:600;">Event</label>
           <select id="eventTxFilterSel" onchange="setEventFilter(this.value)" style="padding:8px 10px; font-size:12px;">
-            <option value="all">All Special Events</option>
+            <option value="all">All</option>
           </select>
         </div>
       </div>
@@ -1331,7 +1331,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
     <div class="log-title">Activity Log</div>
     <div style="display:flex;gap:8px;align-items:center;">
       <select id="logFilter" onchange="renderLogs()" style="padding:6px 10px;font-size:11px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;">
-        <option value="all">All Actions</option>
+        <option value="all">All</option>
         <option value="ADD">➕ Added</option>
         <option value="EDIT">✏️ Edited</option>
         <option value="DELETE">🗑️ Deleted</option>
@@ -3800,7 +3800,7 @@ function populateEventSelects() {
   const evtFilterSel = document.getElementById('eventTxFilterSel');
   if (evtFilterSel) {
     const prev = cEventFilt;
-    evtFilterSel.innerHTML = '<option value="all">All Special Events</option>' +
+    evtFilterSel.innerHTML = '<option value="all">All</option>' +
       Object.values(events).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
     cEventFilt = (prev === 'all' || events[prev]) ? prev : 'all';
     evtFilterSel.value = cEventFilt;
