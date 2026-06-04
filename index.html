@@ -4700,7 +4700,7 @@ async function generatePDF() {
   btn.disabled = true; btn.textContent = 'Generating...';
   try {
     const hasVFS = typeof pdfMake !== 'undefined' && pdfMake.vfs && pdfMake.vfs['Roboto-Regular.ttf'];
-    const curSym = hasVFS ? '₹' : 'Rs.';
+    const curSym = hasVFS ? '₹' : 'INR';
     // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
     const fmtPDF = (n) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -5331,11 +5331,11 @@ async function generatePDF() {
       
       const txRows = filtered.map(t => {
         const d = new Date(t.date + 'T00:00:00');
-        // Format date as "18-May-2026" using non-breaking hyphens to guarantee it never wraps
+        // Use standard spaces for date; we remove fixed width so it won't wrap anyway
         const day   = String(d.getDate()).padStart(2, '0');
         const mon   = d.toLocaleString('default', {month:'short'});
         const yr    = d.getFullYear();
-        const dateStr = `${day}\u2011${mon}\u2011${yr}`;  // \u2011 = non-breaking hyphen
+        const dateStr = `${day} ${mon} ${yr}`;
         const amtStr = fmtPDF(t.type==='income' ? t.amount : -t.amount, true);
         const desc = t.desc || '(no description)';
         const catLabel = (t.cat||'other').charAt(0).toUpperCase()+(t.cat||'other').slice(1);
@@ -5355,8 +5355,8 @@ async function generatePDF() {
         bodyStyles:{ fillColor: panel, textColor: darkText, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor: altRow },
         columnStyles: hasEvents 
-          ? { 0:{cellWidth: 30}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 28,halign:'right'}, 4:{cellWidth: 20,halign:'center'}, 5:{cellWidth: 24} }
-          : { 0:{cellWidth: 30}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 28,halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
+          ? { 0:{halign:'left'}, 1:{}, 2:{cellWidth: 26}, 3:{halign:'right'}, 4:{cellWidth: 20,halign:'center'}, 5:{cellWidth: 24} }
+          : { 0:{halign:'left'}, 1:{}, 2:{cellWidth: 26}, 3:{halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
