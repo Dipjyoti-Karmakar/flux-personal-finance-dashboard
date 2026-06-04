@@ -5322,8 +5322,10 @@ async function generatePDF() {
 
     // ── TRANSACTION LIST ─────────────────────────────────────────────────
     if (incList && filtered.length) {
-      doc.addPage(); // Always start transactions on a new page
-      curY = 20;
+      if (!incCat || catEntries.length >= 7) {
+        doc.addPage();
+        curY = 20;
+      }
       sectionTitle('TRANSACTION LIST');
       
       const hasEvents = filtered.some(t => t.eventId && events[t.eventId]);
