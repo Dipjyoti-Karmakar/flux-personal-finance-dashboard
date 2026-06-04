@@ -4713,12 +4713,50 @@ async function generatePDF() {
     const H = doc.internal.pageSize.getHeight();
     const pL = 15, pR = W - 15;
 
-    // Colour palette
-    const gold = [200, 169, 110], panel = [252, 252, 253];
-    const panel2 = [245, 246, 248], white = [30, 35, 46], darkText = [30, 35, 46];
-    const green = [73, 166, 118], red = [204, 92, 92], muted = [110, 115, 130];
-    const bd = [220, 222, 230], altRow = [248, 249, 251], borderDark = [30, 35, 46];
-    const headerBg = [13, 15, 20], headerText = [232, 234, 240], headerMuted = [142, 148, 173];
+    // Colour palette — premium dark-on-light document style
+    const gold = [184, 134, 11];
+    const goldLight = [247, 231, 178];
+    const panel = [255, 255, 255];
+    const panel2 = [246, 247, 250];
+    const panel3 = [237, 239, 245];
+    const darkText = [18, 22, 38];
+    const white = [18, 22, 38]; // alias kept for compat — this is actually dark text for light bg
+    const green = [30, 130, 80];
+    const greenBg = [220, 244, 232];
+    const red = [185, 28, 28];
+    const redBg = [254, 226, 226];
+    const blueBg = [219, 234, 254];
+    const blue = [37, 99, 200];
+    const muted = [90, 98, 120];
+    const bd = [210, 214, 228];
+    const altRow = [249, 250, 252];
+    const borderDark = [180, 185, 205];
+    const headerBg = [18, 22, 38];
+    const headerText = [240, 242, 248];
+    const headerMuted = [148, 156, 180];
+    const accentStripe = [200, 169, 110];
+
+    // ── Helper: compute readable text color for any bg hex color ──
+    const getContrastColor = (hexColor) => {
+      if (!hexColor) return [18, 22, 38];
+      const hex = hexColor.replace('#', '');
+      if (hex.length !== 6) return [18, 22, 38];
+      const r = parseInt(hex.substr(0,2),16) / 255;
+      const g = parseInt(hex.substr(2,2),16) / 255;
+      const b = parseInt(hex.substr(4,2),16) / 255;
+      // sRGB luminance
+      const toLinear = c => c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
+      const L = 0.2126*toLinear(r) + 0.7152*toLinear(g) + 0.0722*toLinear(b);
+      // Use dark text for light backgrounds (L > 0.179), white for dark
+      return L > 0.35 ? [18, 22, 38] : [255, 255, 255];
+    };
+    // ── Helper: hex to RGB array ──
+    const hexToRgb = (hex) => {
+      if (!hex) return null;
+      const h = hex.replace('#', '');
+      if (h.length !== 6) return null;
+      return [parseInt(h.substr(0,2),16), parseInt(h.substr(2,2),16), parseInt(h.substr(4,2),16)];
+    };
 
     let curY = 0;
     let pageNum = 1;
@@ -4726,67 +4764,92 @@ async function generatePDF() {
     const addPage = () => { doc.addPage(); curY = 20; pageNum++; };
     const checkBreak = (needed) => { if (curY + needed > H - 18) addPage(); };
 
-    // Section title helper
+    // Section title helper — premium style with background strip
     const sectionTitle = (title) => {
-      checkBreak(14);
-      doc.setFillColor(...gold); doc.rect(pL, curY, 3, 8, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...gold);
-      doc.text(title, pL + 6, curY + 6);
-      curY += 14;
+      checkBreak(16);
+      // Background strip
+      doc.setFillColor(...panel3);
+      doc.roundedRect(pL, curY, W - 30, 10, 2, 2, 'F');
+      // Gold left accent bar
+      doc.setFillColor(...accentStripe);
+      doc.roundedRect(pL, curY, 3.5, 10, 1, 1, 'F');
+      doc.rect(pL + 2, curY, 1.5, 10, 'F');
+      // Title text
+      doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...darkText);
+      doc.text(title, pL + 9, curY + 7);
+      curY += 16;
     };
 
     // ── PAGE 1: HEADER BANNER ──────────────────────────────────────────────
-    doc.setFillColor(...headerBg); doc.rect(0, 0, W, 48, 'F');
-    doc.setFillColor(...gold); doc.rect(0, 45, W, 3, 'F');
+    // Deep navy header background
+    doc.setFillColor(...headerBg);
+    doc.rect(0, 0, W, 50, 'F');
+    // Gold accent stripe
+    doc.setFillColor(...accentStripe);
+    doc.rect(0, 47, W, 2.5, 'F');
+    // Thin lighter stripe below
+    doc.setFillColor(200, 190, 150);
+    doc.rect(0, 49.5, W, 0.8, 'F');
 
-    // Brand
-    doc.setFont('helvetica','bold'); doc.setFontSize(30); doc.setTextColor(...gold);
-    doc.text('Flux', pL, 24);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...headerMuted);
-    doc.text('PERSONAL FINANCE', pL, 31);
+    // Brand mark — vertical accent bar + FLUX
+    doc.setFillColor(...accentStripe);
+    doc.rect(pL, 10, 3, 24, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(28); doc.setTextColor(...accentStripe);
+    doc.text('Flux', pL + 8, 28);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...headerMuted);
+    doc.text('PERSONAL FINANCE', pL + 8, 34);
 
-    // Report title
-    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...headerText);
-    doc.text(reportTitle, pL, 41);
-
-    // Generated date (right-aligned)
+    // Report title (right-aligned in header)
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...headerText);
+    doc.text(reportTitle, pR, 22, { align:'right' });
     const genDate = new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...headerMuted);
-    doc.text(`Generated: ${genDate}`, pR, 41, { align:'right' });
-    curY = 56;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...headerMuted);
+    doc.text(`Generated: ${genDate}`, pR, 30, { align:'right' });
+    curY = 60;
 
-    // ── SUMMARY CARDS (2x2 grid for more room) ───────────────────────────
-    const cardW = (W - 30 - 5) / 2;
-    const cardH = 30;
-    const cardGap = 5;
+    // ── SUMMARY CARDS — premium redesign (2x2 grid) ──────────────────────
+    const cardW = (W - 30 - 6) / 2;
+    const cardH = 34;
+    const cardGap = 6;
     const summaryCards = [
-      { label:'NET BALANCE',    val: fmtPDF(netBal, true),  color: netBal >= 0 ? green : red,  sub: netBal>=0 ? 'Positive cash flow' : 'Spending exceeds income' },
-      { label:'TOTAL INCOME',   val: fmtPDFS(totalInc),     color: green,  sub: `${allInPeriod.filter(t=>t.type==='income').length} income entries` },
-      { label:'TOTAL EXPENSES', val: fmtPDFS(totalExp),     color: red,    sub: `${expTxs.length} expense entries` },
-      { label:'SAVINGS RATE',   val: `${savRate}%`,         color: parseFloat(savRate)>=20 ? green : parseFloat(savRate)>=0 ? gold : red, sub: parseFloat(savRate)>=20?'Healthy savings':'Below target (20%)' },
+      { label:'NET BALANCE',    val: fmtPDF(netBal, true),  color: netBal >= 0 ? green : red, bgColor: netBal>=0 ? greenBg : redBg, sub: netBal>=0 ? 'Positive cash flow' : 'Spending exceeds income' },
+      { label:'TOTAL INCOME',   val: fmtPDFS(totalInc),     color: green, bgColor: greenBg, sub: `${allInPeriod.filter(t=>t.type==='income').length} income entries` },
+      { label:'TOTAL EXPENSES', val: fmtPDFS(totalExp),     color: red,   bgColor: redBg,   sub: `${expTxs.length} expense entries` },
+      { label:'SAVINGS RATE',   val: `${savRate}%`,         color: parseFloat(savRate)>=20 ? green : parseFloat(savRate)>=0 ? [140,100,20] : red, bgColor: parseFloat(savRate)>=20 ? greenBg : parseFloat(savRate)>=0 ? [255,248,220] : redBg, sub: parseFloat(savRate)>=20?'Healthy savings':'Below target (20%)' },
     ];
     summaryCards.forEach((c, i) => {
       const row = Math.floor(i / 2), col = i % 2;
       const cx = pL + col * (cardW + cardGap);
-      const cy = curY + row * (cardH + 4);
-      doc.setFillColor(...panel2); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'F');
-      doc.setDrawColor(...borderDark); doc.setLineWidth(0.3); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
+      const cy = curY + row * (cardH + cardGap);
+      // Card background — very light tint
+      doc.setFillColor(...panel); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'F');
+      // Subtle border
+      doc.setDrawColor(...bd); doc.setLineWidth(0.25); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
+      // Left accent bar in card color
+      doc.setFillColor(...c.color); doc.roundedRect(cx, cy, 4, cardH, 1.5, 1.5, 'F');
+      doc.setFillColor(...c.color); doc.rect(cx + 2, cy, 2, cardH, 'F'); // square off right side of bar
       // Label
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...muted);
-      doc.text(c.label, cx + 6, cy + 7.5);
-      // Value
-      doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(...c.color);
-      doc.text(c.val, cx + 6, cy + 17.5);
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+      doc.text(c.label, cx + 9, cy + 8);
+      // Value — large and colored
+      doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(...c.color);
+      doc.text(c.val, cx + 9, cy + 21);
       // Sub-label
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...muted);
-      doc.text(c.sub, cx + 6, cy + 24.5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+      doc.text(c.sub, cx + 9, cy + 29);
     });
-    curY += (cardH + 4) * 2 + 6;
+    curY += (cardH + cardGap) * 2 + 4;
 
-    // Tx count summary line
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...darkText);
-    doc.text(`${txCount} transactions   ${allInPeriod.filter(t=>t.type==='income').length} income   ${expTxs.length} expenses`, pL, curY);
-    curY += 12;
+    // Tx count summary strip
+    doc.setFillColor(...panel2); doc.roundedRect(pL, curY, W - 30, 12, 2, 2, 'F');
+    doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, curY, W - 30, 12, 2, 2, 'S');
+    doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...darkText);
+    doc.text(`${txCount} total transactions`, pL + 6, curY + 8);
+    doc.setTextColor(green[0], green[1], green[2]);
+    doc.text(`${allInPeriod.filter(t=>t.type==='income').length} income`, pL + 70, curY + 8);
+    doc.setTextColor(red[0], red[1], red[2]);
+    doc.text(`${expTxs.length} expenses`, pL + 105, curY + 8);
+    curY += 20;
 
     // ── INSIGHTS ─────────────────────────────────────────────────────────
     if (txCount > 0) {
@@ -4805,13 +4868,17 @@ async function generatePDF() {
       else if (netBal < 0) insights.push(`Spending exceeded income by ${fmtPDFS(Math.abs(netBal))}. Review top categories to reduce costs.`);
 
       insights.forEach((ins) => {
-        checkBreak(10);
-        // bullet
-        doc.setFillColor(...gold); doc.circle(pL + 2, curY - 0.5, 1.2, 'F');
-        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...darkText);
-        const lines = doc.splitTextToSize(ins, W - pL - 15 - 10);
-        doc.text(lines, pL + 8, curY);
-        curY += lines.length * 6 + 4;
+        checkBreak(12);
+        // Insight strip background
+        doc.setFillColor(...panel2);
+        const insLines = doc.splitTextToSize(ins, W - pL - 15 - 16);
+        const stripH = insLines.length * 5.5 + 7;
+        doc.roundedRect(pL, curY - 4, W - 30, stripH, 2, 2, 'F');
+        // Gold bullet
+        doc.setFillColor(...accentStripe); doc.circle(pL + 6, curY + stripH/2 - 4, 1.5, 'F');
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...darkText);
+        doc.text(insLines, pL + 12, curY);
+        curY += stripH + 4;
       });
       curY += 6;
     }
@@ -5156,11 +5223,20 @@ async function generatePDF() {
       doc.autoTable({
         startY: curY, head:[['Category','Amount','Share of Expenses']], body: catRows,
         margin:{left:pL, right:15}, theme:'grid',
-        headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9.5, cellPadding:4 },
-        bodyStyles:{ fillColor:panel, textColor:white, fontSize:9, cellPadding:4, valign:'middle' },
-        alternateRowStyles:{ fillColor:altRow },
-        columnStyles:{ 0:{}, 1:{cellWidth:40,halign:'right'}, 2:{cellWidth:35,halign:'right'} },
-        tableLineColor: borderDark, tableLineWidth: 0.15,
+        headStyles:{ fillColor: headerBg, textColor: accentStripe, fontStyle:'bold', fontSize:9.5, cellPadding:5 },
+        bodyStyles:{ fillColor: panel, textColor: darkText, fontSize:9, cellPadding:4.5, valign:'middle' },
+        alternateRowStyles:{ fillColor: altRow },
+        columnStyles:{ 0:{}, 1:{cellWidth:44,halign:'right'}, 2:{cellWidth:38,halign:'right'} },
+        tableLineColor: bd, tableLineWidth: 0.2,
+        didParseCell: (d) => {
+          if (d.section === 'body' && d.column.index === 1) {
+            d.cell.styles.textColor = red;
+            d.cell.styles.fontStyle = 'bold';
+          }
+          if (d.section === 'body' && d.column.index === 2) {
+            d.cell.styles.textColor = muted;
+          }
+        }
       });
       curY = doc.lastAutoTable.finalY + 12;
     }
@@ -5192,13 +5268,13 @@ async function generatePDF() {
       doc.autoTable({
         startY: curY, head:[headRow], body: txRows,
         margin:{left:pL, right:15}, theme:'grid',
-        headStyles:{ fillColor:panel2, textColor:gold, fontStyle:'bold', fontSize:9, cellPadding:3.5 },
-        bodyStyles:{ fillColor:panel, textColor:white, fontSize:8.5, cellPadding:3.5, valign:'middle' },
-        alternateRowStyles:{ fillColor:altRow },
+        headStyles:{ fillColor: headerBg, textColor: accentStripe, fontStyle:'bold', fontSize:8.5, cellPadding:4 },
+        bodyStyles:{ fillColor: panel, textColor: darkText, fontSize:8.5, cellPadding:3.5, valign:'middle' },
+        alternateRowStyles:{ fillColor: altRow },
         columnStyles: hasEvents 
           ? { 0:{cellWidth: 24}, 1:{}, 2:{cellWidth: 28}, 3:{cellWidth: 26,halign:'right'}, 4:{cellWidth: 20,halign:'center'}, 5:{cellWidth: 26} }
           : { 0:{cellWidth: 24}, 1:{}, 2:{cellWidth: 28}, 3:{cellWidth: 26,halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
-        tableLineColor: borderDark, tableLineWidth: 0.15,
+        tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
             const idIdx = hasEvents ? 6 : 5;
@@ -5206,29 +5282,35 @@ async function generatePDF() {
             const colorIdx = hasEvents ? 8 : -1;
             
             const isLargest = largestTx && d.row.raw[idIdx] === largestTx.id;
-            const evColor = hasEvents ? d.row.raw[colorIdx] : '';
+            const evHex = hasEvents ? d.row.raw[colorIdx] : '';
             
-            // Set amount color based on transaction type
+            // Amount column: green for income, red for expense
             if (d.column.index === 3) {
               d.cell.styles.textColor = d.row.raw[typeIdx] === 'income' ? green : red;
+              d.cell.styles.fontStyle = 'bold';
             }
             
-            // Distinct color for event cell
-            if (hasEvents && d.column.index === 5 && evColor) {
-              const hex = evColor.replace('#', '');
-              if (hex.length === 6) {
-                d.cell.styles.fillColor = [parseInt(hex.substr(0,2),16), parseInt(hex.substr(2,2),16), parseInt(hex.substr(4,2),16)];
-                d.cell.styles.textColor = [255, 255, 255];
+            // Event column: use event background color + auto-computed readable text color
+            if (hasEvents && d.column.index === 5 && evHex) {
+              const rgb = hexToRgb(evHex);
+              if (rgb) {
+                d.cell.styles.fillColor = rgb;
+                d.cell.styles.textColor = getContrastColor(evHex);
                 d.cell.styles.fontStyle = 'bold';
               }
             }
             
-            // Highlight largest transaction
+            // Highlight largest transaction row (golden highlight, skip event cell)
             if (isLargest && (!hasEvents || d.column.index !== 5)) {
-              d.cell.styles.fillColor = [200, 169, 110]; // gold background
-              d.cell.styles.textColor = [15, 18, 25]; // dark text
+              d.cell.styles.fillColor = goldLight;
+              d.cell.styles.textColor = [100, 70, 5];
               d.cell.styles.fontStyle = 'bold';
             }
+          }
+          if (d.section==='head') {
+            // Keep amount header aligned
+            if (d.column.index === 3) d.cell.styles.halign = 'right';
+            if (d.column.index === 4) d.cell.styles.halign = 'center';
           }
         }
       });
@@ -5238,11 +5320,15 @@ async function generatePDF() {
     const totalPages = doc.internal.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
-      doc.setFillColor(...headerBg); doc.rect(0, H - 12, W, 12, 'F');
-      doc.setDrawColor(...gold); doc.setLineWidth(0.2); doc.line(pL, H - 12, pR, H - 12);
+      // Footer background
+      doc.setFillColor(...headerBg); doc.rect(0, H - 13, W, 13, 'F');
+      // Accent top stripe
+      doc.setFillColor(...accentStripe); doc.rect(0, H - 13, W, 1.5, 'F');
+      // Footer text
       doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...headerMuted);
-      doc.text('Flux - Personal Finance Dashboard', pL, H - 5);
-      doc.text(`Page ${i} of ${totalPages}`, pR, H - 5, {align:'right'});
+      doc.text('Flux — Personal Finance Dashboard', pL, H - 5);
+      doc.setTextColor(...accentStripe);
+      doc.text(`${i} / ${totalPages}`, pR, H - 5, {align:'right'});
     }
 
     // Save
