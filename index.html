@@ -4775,10 +4775,11 @@ async function generatePDF() {
       doc.setFillColor(...accentStripe);
       doc.roundedRect(pL, curY, 4, stripH, 1, 1, 'F');
       doc.rect(pL + 2, curY, 2, stripH, 'F');
-      // Title text — baseline = stripTop + stripH/2 + capHeight/2
-      // For 9.5pt: capHeight ≈ 9.5 * 0.3528 * 0.72 ≈ 2.41mm → centre offset ≈ 1.2mm
+      // Title text — PDF centering formula: baseline = stripTop + (stripH + capH) / 2
+      // 9.5pt bold cap height ≈ 9.5 × 0.3528mm × 0.72 ≈ 2.41mm
+      const capH95 = 9.5 * 0.3528 * 0.72;
       doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...darkText);
-      doc.text(title, pL + 10, curY + stripH / 2 + 1.5);
+      doc.text(title, pL + 10, curY + (stripH + capH95) / 2);
       curY += stripH + 5;
     };
 
@@ -4869,29 +4870,36 @@ async function generatePDF() {
       else if (parseFloat(savRate) > 0) insights.push(`You saved ${fmtPDFS(netBal)} this period. Aim for 20%+ for strong financial health.`);
       else if (netBal < 0) insights.push(`Spending exceeded income by ${fmtPDFS(Math.abs(netBal))}. Review top categories to reduce costs.`);
 
+      // Font metrics for 9pt regular
+      const FS = 9, PT = 0.3528;
+      const capH  = FS * PT * 0.72;   // ~2.286mm — height of capital letters above baseline
+      const descH = FS * PT * 0.22;   // ~0.700mm — depth of descenders below baseline
+      const lineH = FS * PT * 1.15;   // ~3.647mm — matches jsPDF default line-height factor
+      const vPad  = 3.5;              // equal top & bottom padding in mm
+
       insights.forEach((ins) => {
-        // Measure wrapped lines first
-        doc.setFont('helvetica','normal'); doc.setFontSize(9);
+        doc.setFont('helvetica','normal'); doc.setFontSize(FS);
         const insLines = doc.splitTextToSize(ins, W - pL - 15 - 18);
-        // Strip sizing: 5mm per line + 4mm top + 4mm bottom padding
-        const lineH   = 5.0;   // mm between baselines
-        const vPad    = 4.0;   // mm top & bottom inside the strip
-        const stripH  = insLines.length * lineH + vPad * 2;
-        checkBreak(stripH + 4);
+
+        // Strip height = actual text block height + equal padding top and bottom
+        // blockH: from top of first capital to bottom of last descender
+        const blockH = capH + (insLines.length - 1) * lineH + descH;
+        const stripH = blockH + vPad * 2;
+        checkBreak(stripH + 3);
         const stripY = curY;
 
         // Background strip
         doc.setFillColor(...panel2);
         doc.roundedRect(pL, stripY, W - 30, stripH, 2, 2, 'F');
 
-        // Gold bullet — always at the vertical centre of the strip
+        // Gold bullet — at exact vertical centre of strip (= centre of text block)
         doc.setFillColor(...accentStripe);
         doc.circle(pL + 7, stripY + stripH / 2, 1.5, 'F');
 
-        // Text — first baseline = stripTop + vPad + capHeight
-        // 9pt cap height ≈ 9 × 0.3528mm × 0.72 ≈ 2.28mm
+        // Text — first baseline = stripTop + vPad + capH
+        // This places top of first capital at (stripTop + vPad) — perfectly centred
         doc.setTextColor(...darkText);
-        const firstBaseline = stripY + vPad + 2.3;
+        const firstBaseline = stripY + vPad + capH;
         insLines.forEach((line, li) => {
           doc.text(line, pL + 14, firstBaseline + li * lineH);
         });
