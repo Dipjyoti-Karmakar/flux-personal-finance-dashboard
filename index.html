@@ -1794,6 +1794,7 @@ const CAT_COLOR = {
   health:        '#6ec8b8',  // teal
   shopping:      '#c8a96e',  // gold
   utilities:     '#f6d365',  // amber
+  utility:       '#f6d365',  // legacy alias
   occasions:     '#9d6ec8',  // violet
   salary:        '#5dba8a',  // income green
   freelance:     '#30cfd0',  // cyan
@@ -2356,7 +2357,7 @@ function render(){
   renderInsights();
   if (typeof twemoji !== 'undefined') {
     // Only re-parse dynamic content areas — never the entire body (too expensive)
-    ['txList','ctArea','spArea','insightList','yrArea','subList','logList'].forEach(id => {
+    ['txList','ctArea','spArea','insightList','yrArea','subList','logList','eventList'].forEach(id => {
       const el = document.getElementById(id);
       if (el) twemoji.parse(el);
     });
@@ -2392,7 +2393,8 @@ function animateVal(el, target, formatter, duration) {
   if (el._animCancel) { el._animCancel(); el._animCancel = null; }
 
   let cancelled = false;
-  el._animCancel = () => { cancelled = true; };
+  const cancelFn = () => { cancelled = true; };
+  el._animCancel = cancelFn;
 
   // Compute how long to wait before starting the count-up.
   // If data arrives before the cards are visible we wait; if after, we start immediately.
@@ -2401,7 +2403,6 @@ function animateVal(el, target, formatter, duration) {
 
   setTimeout(() => {
     if (cancelled) return;
-    el._animCancel = null; // timer fired — cancellation no longer possible via timeout
     const start = performance.now();
     const diff = target - cur;
     function tick(now) {
@@ -2410,7 +2411,7 @@ function animateVal(el, target, formatter, duration) {
       const ease = 1 - Math.pow(1 - progress, 4); // ease-out quartic
       el.textContent = formatter(cur + diff * ease);
       if (progress < 1) requestAnimationFrame(tick);
-      else el._animCancel = null; // done — clean up
+      else if (el._animCancel === cancelFn) el._animCancel = null; // done — clean up
     }
     requestAnimationFrame(tick);
   }, delay);
@@ -4698,14 +4699,16 @@ async function generatePDF() {
   const btn = document.getElementById('pdfGenBtn');
   btn.disabled = true; btn.textContent = 'Generating...';
   try {
+    const hasVFS = typeof pdfMake !== 'undefined' && pdfMake.vfs && pdfMake.vfs['Roboto-Regular.ttf'];
+    const curSym = hasVFS ? '₹' : 'Rs.';
     // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
     const fmtPDF = (n) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
-      return `₹ ${abs}`;
+      return `${curSym} ${abs}`;
     };
     const fmtPDFS = (n) => {
       const abs = Math.abs(n).toLocaleString('en-IN', {maximumFractionDigits:0});
-      return (n < 0 ? '- ' : '') + '₹ ' + abs;
+      return (n < 0 ? '- ' : '') + `${curSym} ` + abs;
     };
 
     const reportData = getReportData();
