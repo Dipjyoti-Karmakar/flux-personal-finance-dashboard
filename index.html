@@ -18,7 +18,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
+<!-- pdfmake vfs_fonts removed — not used by this app -->
 <style>
 :root{--bg:#0d0f14;--sf:#13161e;--s2:#1a1e28;--s3:#212633;--bd:rgba(255,255,255,0.07);--bs:rgba(255,255,255,0.13);--tx:#e8eaf0;--mu:#7a8099;--di:#4a5068;--ac:#c8a96e;--ag:rgba(200,169,110,0.15);--on:#6e9dc8;--of:#9d7ac8;--ob:rgba(110,157,200,0.1);--fb:rgba(157,122,200,0.1);--in:#5dba8a;--ex:#e07070;--ib:rgba(93,186,138,0.1);--eb:rgba(224,112,112,0.1);--r:18px;--rs:12px;--sh-hov:0 16px 40px rgba(0,0,0,0.4);--sh-btn:0 8px 24px rgba(200,169,110,0.2);--sh-card:0 2px 8px rgba(0,0,0,0.12)}
 /* ── Premium Light Theme ── */
@@ -1183,6 +1183,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .splash-circle:nth-child(3) { display: none; } /* Less DOM nodes for mobile GPU */
   .splash-chart-container { height: 35vh; }
 }
+
+/* ── Section entrance animation (splitEventCard, insightCard) ── */
+@keyframes sectionIn { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+.section-in { animation: sectionIn 0.5s cubic-bezier(0.16,1,0.3,1) backwards; }
+
+/* ── Insight Card Panel (full-width panel below the grid) ── */
+.insight-card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); overflow:hidden; min-width:0; display:flex; flex-direction:column; transition:box-shadow .4s ease, border-color .4s ease; box-shadow:var(--sh-card); margin-top:24px; }
+.insight-card:hover { border-color:var(--bs); box-shadow:var(--sh-hov); }
 </style>
 <style>img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; }</style>
 <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
@@ -1778,7 +1786,22 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',utility:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
-const CC=['#c8a96e','#6e9dc8','#8dc86e','#c86e9d','#6ec8b8','#c8876e','#9d6ec8','#c8c36e','#6e8dc8','#c86e6e','#7ac86e'];
+const CAT_COLOR = {
+  food:          '#c8876e',  // warm terracotta
+  transport:     '#6e9dc8',  // steel blue
+  housing:       '#8dc86e',  // leaf green
+  entertainment: '#c86e9d',  // magenta
+  health:        '#6ec8b8',  // teal
+  shopping:      '#c8a96e',  // gold
+  utilities:     '#f6d365',  // amber
+  occasions:     '#9d6ec8',  // violet
+  salary:        '#5dba8a',  // income green
+  freelance:     '#30cfd0',  // cyan
+  investment:    '#b490ca',  // lavender
+  stationery:    '#8fa828',  // olive
+  other:         '#7a8099',  // muted slate
+};
+function getCatColor(cat) { return CAT_COLOR[cat] || CAT_COLOR.other; }
 const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MF=['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -2031,6 +2054,9 @@ toggles.forEach(id => {
   if(el) el.addEventListener('click',(e)=>apTheme(theme==='dark'?'light':'dark', e));
 });
 
+function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); renderTrend(); renderCats(); renderSplit(); } }
+function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; updStatsDt(); }
+
 function setStatsMode(m) {
   statsMode = m;
   activeCatFilter = null; // reset category drill-down on filter change
@@ -2047,10 +2073,7 @@ function setStatsMode(m) {
   renderSplit();
 }
 
-function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); renderTrend(); renderCats(); renderSplit(); } }
-function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; updStatsDt(); }
-
-function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="recharge">📱 Recharge/Bill</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✦ Other</option>';}
+function setType(t){cType=t;document.getElementById('bInc').className='tb'+(t==='income'?' ai':'');document.getElementById('bExp').className='tb'+(t==='expense'?' ae':'');document.getElementById('txC').innerHTML=t==='income'?'<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✶ Other</option>':'<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✶ Other</option>';}
 function setMode(m){cMode=m;document.getElementById('bOnl').className='tb'+(m==='online'?' ao':'');document.getElementById('bOfl').className='tb'+(m==='offline'?' af':'');}
 
 function setDt(filterVal, btn) {
@@ -2301,10 +2324,6 @@ function getActiveTxs() {
   const now = new Date();
   const localISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
   
-  if (statsMode === 'today') {
-    const todayPrefix = localISO.slice(0, 10);
-    return txs.filter(t => t.date === todayPrefix);
-  }
   if (statsMode === 'month') {
     const prefix = localISO.slice(0, 7); 
     return txs.filter(t => t.date.startsWith(prefix));
@@ -2321,7 +2340,7 @@ function getActiveTxs() {
     if (to) list = list.filter(t => t.date <= to);
     return list;
   }
-  return txs; 
+  return txs; // 'all'
 }
 
 function render(){
@@ -2335,7 +2354,13 @@ function render(){
   renderYearly();
   renderEvents();
   renderInsights();
-  if (typeof twemoji !== 'undefined') twemoji.parse(document.body);
+  if (typeof twemoji !== 'undefined') {
+    // Only re-parse dynamic content areas — never the entire body (too expensive)
+    ['txList','ctArea','spArea','insightList','yrArea','subList','logList'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) twemoji.parse(el);
+    });
+  }
 }
 
 // Debounced render - coalesces rapid Firestore snapshot fires (e.g. during batch imports)
@@ -2345,42 +2370,52 @@ function debouncedRender() {
   _renderTimer = setTimeout(() => { _renderTimer = null; render(); }, 120);
 }
 
-// Animated number counter - smoothly counts from current to target value
-// On the very first render, delay matches the last card's entrance animation
-// (nth-child(4): 0.18s delay + 0.5s duration = 0.68s → rounded up to 700ms).
-// After that, all subsequent counter updates (e.g. adding a transaction) start instantly.
-let _firstCounterRender = true;
-const CARD_ANIM_DURATION = 700; // ms — time for last .card-in card to fully appear
+// ─── Animated number counter ────────────────────────────────────────────────
+// Counts from the current displayed value to the new target.
+// Uses page-load-relative timing so the counter always starts exactly when the
+// last .card-in card becomes fully visible to the user (~4000ms after load).
+// Per-element cancellation prevents overlapping rAF loops when re-renders fire
+// in rapid succession (e.g. Firestore batch imports, fast filter switching).
+const _pageLoadTime = performance.now();
+// App entrance animation: 3.3s delay + last card-in delay (0.18s) + card-in duration (0.5s) ≈ 4000ms
+const CARDS_VISIBLE_AT_MS = 4000;
 
 function animateVal(el, target, formatter, duration) {
   if (!el) return;
-  duration = duration || 2000;
+  duration = duration || 1400; // snappy but smooth
 
-  // Parse current displayed number (strip currency symbol and commas)
+  // Parse current displayed value, stripping currency symbols and separators
   const cur = parseFloat(String(el.textContent).replace(/[^0-9.\-]/g, '')) || 0;
   if (cur === target) { el.textContent = formatter(target); return; }
 
-  // Delay only on the initial page load so the counter kicks off exactly
-  // when the card entrance animations complete — then always 0 afterward.
-  const delay = _firstCounterRender ? CARD_ANIM_DURATION : 0;
+  // Cancel any in-progress animation on this element
+  if (el._animCancel) { el._animCancel(); el._animCancel = null; }
+
+  let cancelled = false;
+  el._animCancel = () => { cancelled = true; };
+
+  // Compute how long to wait before starting the count-up.
+  // If data arrives before the cards are visible we wait; if after, we start immediately.
+  const elapsed = performance.now() - _pageLoadTime;
+  const delay = Math.max(0, CARDS_VISIBLE_AT_MS - elapsed);
 
   setTimeout(() => {
+    if (cancelled) return;
+    el._animCancel = null; // timer fired — cancellation no longer possible via timeout
     const start = performance.now();
     const diff = target - cur;
     function tick(now) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / duration, 1);
-      // smooth ease-out quartic
-      const ease = 1 - Math.pow(1 - progress, 4);
+      if (cancelled) return;
+      const progress = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 4); // ease-out quartic
       el.textContent = formatter(cur + diff * ease);
       if (progress < 1) requestAnimationFrame(tick);
+      else el._animCancel = null; // done — clean up
     }
     requestAnimationFrame(tick);
   }, delay);
 }
 
-// Clear the first-render flag after all card animations have completed
-setTimeout(() => { _firstCounterRender = false; }, CARD_ANIM_DURATION + 50);
 
 
 function renderStats(sTxs){
@@ -3018,13 +3053,13 @@ function renderCats(passedTxs){
   // If the active filter no longer exists in the data, close it
   if(activeCatFilter && !tot[activeCatFilter]) activeCatFilter=null;
   let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:12px;">';
-  cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${CC[i%CC.length]};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
+  cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${getCatColor(cat)};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
   barHtml+='</div>';
   let detHtml=`<div class="cat-tag-list${activeCatFilter?' is-extended':''}">`;
   cats.forEach(([cat,val],i)=>{
     const pct=Math.round((val/totalExp)*100);
     const isActive=activeCatFilter===cat;
-    detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${CC[i%CC.length]};"></div><span class="cat-tag-name">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
+    detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${getCatColor(cat)};"></div><span class="cat-tag-name">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
   });
   detHtml+='</div>';
   if (activeCatFilter) {
