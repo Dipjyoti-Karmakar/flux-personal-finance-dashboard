@@ -4843,16 +4843,20 @@ async function generatePDF() {
     });
     curY += (cardH + cardGap) * 2 + 4;
 
-    // Tx count summary strip
-    doc.setFillColor(...panel2); doc.roundedRect(pL, curY, W - 30, 12, 2, 2, 'F');
-    doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, curY, W - 30, 12, 2, 2, 'S');
+    // Tx count summary strip — text vertically centred
+    const txStripH = 10;
+    // 8.5pt cap height ≈ 8.5 × 0.3528mm × 0.72 ≈ 2.16mm; baseline = top + (h + capH) / 2
+    const txCapH = 8.5 * 0.3528 * 0.72;
+    const txTextY = curY + (txStripH + txCapH) / 2;
+    doc.setFillColor(...panel2); doc.roundedRect(pL, curY, W - 30, txStripH, 2, 2, 'F');
+    doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, curY, W - 30, txStripH, 2, 2, 'S');
     doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(...darkText);
-    doc.text(`${txCount} total transactions`, pL + 6, curY + 8);
+    doc.text(`${txCount} total transactions`, pL + 6, txTextY);
     doc.setTextColor(green[0], green[1], green[2]);
-    doc.text(`${allInPeriod.filter(t=>t.type==='income').length} income`, pL + 70, curY + 8);
+    doc.text(`${allInPeriod.filter(t=>t.type==='income').length} income`, pL + 70, txTextY);
     doc.setTextColor(red[0], red[1], red[2]);
-    doc.text(`${expTxs.length} expenses`, pL + 105, curY + 8);
-    curY += 20;
+    doc.text(`${expTxs.length} expenses`, pL + 105, txTextY);
+    curY += txStripH + 8;
 
     // ── INSIGHTS ─────────────────────────────────────────────────────────
     if (txCount > 0) {
