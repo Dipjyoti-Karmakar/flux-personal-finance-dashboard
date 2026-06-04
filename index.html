@@ -4764,20 +4764,22 @@ async function generatePDF() {
     const addPage = () => { doc.addPage(); curY = 20; pageNum++; };
     const checkBreak = (needed) => { if (curY + needed > H - 18) addPage(); };
 
-    // Section title helper — premium style with background strip
+    // Section title helper — text vertically centred in the strip
     const sectionTitle = (title) => {
-      checkBreak(16);
+      checkBreak(17);
+      const stripH = 11;
       // Background strip
       doc.setFillColor(...panel3);
-      doc.roundedRect(pL, curY, W - 30, 10, 2, 2, 'F');
-      // Gold left accent bar
+      doc.roundedRect(pL, curY, W - 30, stripH, 2, 2, 'F');
+      // Gold left accent bar (full height, square right edge)
       doc.setFillColor(...accentStripe);
-      doc.roundedRect(pL, curY, 3.5, 10, 1, 1, 'F');
-      doc.rect(pL + 2, curY, 1.5, 10, 'F');
-      // Title text
+      doc.roundedRect(pL, curY, 4, stripH, 1, 1, 'F');
+      doc.rect(pL + 2, curY, 2, stripH, 'F');
+      // Title text — baseline = stripTop + stripH/2 + capHeight/2
+      // For 9.5pt: capHeight ≈ 9.5 * 0.3528 * 0.72 ≈ 2.41mm → centre offset ≈ 1.2mm
       doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor(...darkText);
-      doc.text(title, pL + 9, curY + 7);
-      curY += 16;
+      doc.text(title, pL + 10, curY + stripH / 2 + 1.5);
+      curY += stripH + 5;
     };
 
     // ── PAGE 1: HEADER BANNER ──────────────────────────────────────────────
@@ -4868,17 +4870,33 @@ async function generatePDF() {
       else if (netBal < 0) insights.push(`Spending exceeded income by ${fmtPDFS(Math.abs(netBal))}. Review top categories to reduce costs.`);
 
       insights.forEach((ins) => {
-        checkBreak(12);
-        // Insight strip background
+        // Measure wrapped lines first
+        doc.setFont('helvetica','normal'); doc.setFontSize(9);
+        const insLines = doc.splitTextToSize(ins, W - pL - 15 - 18);
+        // Strip sizing: 5mm per line + 4mm top + 4mm bottom padding
+        const lineH   = 5.0;   // mm between baselines
+        const vPad    = 4.0;   // mm top & bottom inside the strip
+        const stripH  = insLines.length * lineH + vPad * 2;
+        checkBreak(stripH + 4);
+        const stripY = curY;
+
+        // Background strip
         doc.setFillColor(...panel2);
-        const insLines = doc.splitTextToSize(ins, W - pL - 15 - 16);
-        const stripH = insLines.length * 5.5 + 7;
-        doc.roundedRect(pL, curY - 4, W - 30, stripH, 2, 2, 'F');
-        // Gold bullet
-        doc.setFillColor(...accentStripe); doc.circle(pL + 6, curY + stripH/2 - 4, 1.5, 'F');
-        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...darkText);
-        doc.text(insLines, pL + 12, curY);
-        curY += stripH + 4;
+        doc.roundedRect(pL, stripY, W - 30, stripH, 2, 2, 'F');
+
+        // Gold bullet — always at the vertical centre of the strip
+        doc.setFillColor(...accentStripe);
+        doc.circle(pL + 7, stripY + stripH / 2, 1.5, 'F');
+
+        // Text — first baseline = stripTop + vPad + capHeight
+        // 9pt cap height ≈ 9 × 0.3528mm × 0.72 ≈ 2.28mm
+        doc.setTextColor(...darkText);
+        const firstBaseline = stripY + vPad + 2.3;
+        insLines.forEach((line, li) => {
+          doc.text(line, pL + 14, firstBaseline + li * lineH);
+        });
+
+        curY = stripY + stripH + 3;
       });
       curY += 6;
     }
@@ -5046,7 +5064,8 @@ async function generatePDF() {
     // ── PAGE 3: CHARTS (Category Donut + Online/Offline Donut) ───────────
     if (catEntries.length > 0 || totalExp > 0) {
       doc.addPage();
-      curY = 20; // Graceful top margin
+      curY = 20;
+      sectionTitle('SPENDING ANALYSIS');
 
       // Helper: draw a donut slice using polygon arc approximation
       const drawDonutSlice = (cx, cy, r, innerR, startDeg, endDeg, fillColor) => {
@@ -5252,7 +5271,11 @@ async function generatePDF() {
       
       const txRows = filtered.map(t => {
         const d = new Date(t.date + 'T00:00:00');
-        const dateStr = `${d.getDate()}\u00A0${d.toLocaleString('default',{month:'short'})}\u00A0${d.getFullYear()}`;
+        // Format date as "18-May-2026" using non-breaking hyphens to guarantee it never wraps
+        const day   = String(d.getDate()).padStart(2, '0');
+        const mon   = d.toLocaleString('default', {month:'short'});
+        const yr    = d.getFullYear();
+        const dateStr = `${day}\u2011${mon}\u2011${yr}`;  // \u2011 = non-breaking hyphen
         const amtStr = fmtPDF(t.type==='income' ? t.amount : -t.amount, true);
         const desc = t.desc || '(no description)';
         const catLabel = (t.cat||'other').charAt(0).toUpperCase()+(t.cat||'other').slice(1);
@@ -5272,8 +5295,8 @@ async function generatePDF() {
         bodyStyles:{ fillColor: panel, textColor: darkText, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor: altRow },
         columnStyles: hasEvents 
-          ? { 0:{cellWidth: 24}, 1:{}, 2:{cellWidth: 28}, 3:{cellWidth: 26,halign:'right'}, 4:{cellWidth: 20,halign:'center'}, 5:{cellWidth: 26} }
-          : { 0:{cellWidth: 24}, 1:{}, 2:{cellWidth: 28}, 3:{cellWidth: 26,halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
+          ? { 0:{cellWidth: 30}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 28,halign:'right'}, 4:{cellWidth: 20,halign:'center'}, 5:{cellWidth: 24} }
+          : { 0:{cellWidth: 30}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 28,halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
