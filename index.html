@@ -5337,7 +5337,8 @@ async function generatePDF() {
         const yr    = d.getFullYear();
         const dateStr = `${day} ${mon} ${yr}`;
         const amtStr = fmtPDF(t.type==='income' ? t.amount : -t.amount, true);
-        const desc = t.desc || '(no description)';
+        // Insert zero-width space after common delimiters (+,/) to allow clean wrapping without cutting words
+        const desc = (t.desc || '(no description)').replace(/([+,/])/g, '$1\u200B');
         const catLabel = (t.cat||'other').charAt(0).toUpperCase()+(t.cat||'other').slice(1);
         
         const row = [dateStr, desc, catLabel, amtStr, (t.mode||'online')];
@@ -5355,8 +5356,8 @@ async function generatePDF() {
         bodyStyles:{ fillColor: panel, textColor: darkText, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor: altRow },
         columnStyles: hasEvents 
-          ? { 0:{cellWidth: 'wrap', halign:'left'}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 'wrap', halign:'right'}, 4:{cellWidth: 20,halign:'center'}, 5:{cellWidth: 24} }
-          : { 0:{cellWidth: 'wrap', halign:'left'}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 'wrap', halign:'right'}, 4:{cellWidth: 20,halign:'center'} },
+          ? { 0:{cellWidth: 'wrap', halign:'left'}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 'wrap', halign:'right'}, 4:{cellWidth: 14,halign:'center'}, 5:{cellWidth: 24} }
+          : { 0:{cellWidth: 'wrap', halign:'left'}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 'wrap', halign:'right'}, 4:{cellWidth: 14,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
