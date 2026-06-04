@@ -2346,18 +2346,24 @@ function debouncedRender() {
 }
 
 // Animated number counter - smoothly counts from current to target value
-let initialAnimDone = false;
-setTimeout(() => { initialAnimDone = true; }, 3500);
+// On the very first render, delay matches the last card's entrance animation
+// (nth-child(4): 0.18s delay + 0.5s duration = 0.68s → rounded up to 700ms).
+// After that, all subsequent counter updates (e.g. adding a transaction) start instantly.
+let _firstCounterRender = true;
+const CARD_ANIM_DURATION = 700; // ms — time for last .card-in card to fully appear
 
 function animateVal(el, target, formatter, duration) {
   if (!el) return;
   duration = duration || 2000;
-  const delay = initialAnimDone ? 0 : 3200;
 
   // Parse current displayed number (strip currency symbol and commas)
   const cur = parseFloat(String(el.textContent).replace(/[^0-9.\-]/g, '')) || 0;
-  if (cur === target && initialAnimDone) { el.textContent = formatter(target); return; }
-  
+  if (cur === target) { el.textContent = formatter(target); return; }
+
+  // Delay only on the initial page load so the counter kicks off exactly
+  // when the card entrance animations complete — then always 0 afterward.
+  const delay = _firstCounterRender ? CARD_ANIM_DURATION : 0;
+
   setTimeout(() => {
     const start = performance.now();
     const diff = target - cur;
@@ -2372,6 +2378,10 @@ function animateVal(el, target, formatter, duration) {
     requestAnimationFrame(tick);
   }, delay);
 }
+
+// Clear the first-render flag after all card animations have completed
+setTimeout(() => { _firstCounterRender = false; }, CARD_ANIM_DURATION + 50);
+
 
 function renderStats(sTxs){
   if (!sTxs) sTxs = getActiveTxs();
