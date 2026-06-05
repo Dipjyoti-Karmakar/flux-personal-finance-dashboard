@@ -2350,7 +2350,6 @@ function render(){
   const aTxs = getActiveTxs();
   renderStats(aTxs);
   renderTxList();
-  renderCats(aTxs);
   renderSplit(aTxs);
   renderTrend(aTxs);
   renderYearly();
@@ -2566,6 +2565,9 @@ function renderTxList(){
   }
 
   document.getElementById('txCnt').textContent = list.length;
+  
+  // Power the 'By Category' summary using these exact transaction filters
+  renderCats(list);
 
   // Compute totals for all date filters (today, month, all, custom) and event/type/mode filters
   const showTotals = true;
