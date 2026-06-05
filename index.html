@@ -1821,6 +1821,7 @@ let cTyFilt = 'all';
 let cModeFilt = 'all';
 let cEventFilt = 'all';
 let cTxSearch = '';
+let lastCatList = null;
 
 let rawImportRows = [];
 let importHeaders = [];
@@ -2536,6 +2537,7 @@ function renderTxList(){
       if(toDt) catList = catList.filter(t => t.date <= toDt);
     }
   }
+  lastCatList = catList;
   renderCats(catList);
   
   
@@ -3099,7 +3101,7 @@ window.addEventListener('resize', () => {
 });
 
 function renderCats(passedTxs){
-  const aTxs = passedTxs || getActiveTxs();
+  const aTxs = passedTxs || lastCatList || getActiveTxs();
   const exp=aTxs.filter(t=>t.type==='expense'),area=document.getElementById('ctArea');
   if(!exp.length){activeCatFilter=null;area.innerHTML='<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Your expense categories will appear here once you start tracking</div></div>';return;}
   const tot={};
@@ -3138,7 +3140,7 @@ function toggleCatFilter(cat) {
 function renderCatTxList(passedTxs) {
   const panel = document.getElementById('catTxPanel');
   if (!panel || !activeCatFilter) return;
-  const aTxs = passedTxs || getActiveTxs();
+  const aTxs = passedTxs || lastCatList || getActiveTxs();
   const list = aTxs.filter(t => t.type === 'expense' && (t.cat || 'other') === activeCatFilter)
     .sort((a,b) => new Date(b.date) - new Date(a.date));
   const totalAmt = list.reduce((s,t) => s+t.amount, 0);
