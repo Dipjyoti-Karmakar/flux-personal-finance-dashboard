@@ -4442,6 +4442,7 @@ function loadRecurring() {
     recurringList.sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
     if (document.getElementById('subView').style.display !== 'none') renderRecurring();
     checkAndTriggerRecurring();
+    tagPastSubscriptions();
   }, err => console.error('Recurring sync error:', err));
 }
 
