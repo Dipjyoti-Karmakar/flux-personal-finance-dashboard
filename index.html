@@ -1413,8 +1413,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
             <button class="ft mode-flt act" onclick="setModeFilt('all', this)">All</button>
             <button class="ft mode-flt" onclick="setModeFilt('online', this)">Online</button>
             <button class="ft mode-flt" onclick="setModeFilt('offline', this)">Offline</button>
-            <button class="ft mode-flt" onclick="setModeFilt('subscription', this)">🔁 Subscription</button>
             <button class="ft mode-flt" onclick="setModeFilt('event', this)">Event</button>
+            <button class="ft mode-flt" onclick="setModeFilt('subscription', this)">Subscription</button>
           </div>
         </div>
       </div>
@@ -2581,7 +2581,7 @@ function renderTxList(){
         <div class="tm">
           <span class="bg ct" data-cat="${tx.cat||'other'}">${CICO[tx.cat]||'✦'} ${tx.cat||'other'}</span>
           <span class="bg ${safeMode==='online'?'on':'of'}">${safeMode==='online'?'⚡ online':'🏪 offline'}</span>
-          ${tx._recurring ? '<span class="bg" style="background:rgba(157,122,200,0.18);color:var(--of);border:1px solid rgba(157,122,200,0.35);font-weight:600;">🔁 subscription</span>' : ''}
+          ${tx._recurring ? '<span class="bg" style="background:rgba(157,122,200,0.18);color:var(--of);border:1px solid rgba(157,122,200,0.35);font-weight:600;">subscription</span>' : ''}
           ${evtBadge}
           ${tx._imp?'<span class="bg ip">xlsx</span>':''}
           <span>${fmtDt(tx.date)}</span>
