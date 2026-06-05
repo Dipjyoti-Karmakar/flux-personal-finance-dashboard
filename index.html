@@ -2516,6 +2516,29 @@ function renderTxList(){
   const el=document.getElementById('txList');
   let list=txs;
   
+  // Power the 'By Category' summary using ONLY the date filters
+  let catList = txs;
+  const now = new Date();
+  const todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0,10);
+  if (cDtFilt === 'today') {
+    catList = catList.filter(t => t.date === todayISO);
+  } else if (cDtFilt === 'month') {
+    const monthPrefix = todayISO.slice(0,7);
+    catList = catList.filter(t => t.date.startsWith(monthPrefix));
+  } else if (cDtFilt === 'year') {
+    const yearPrefix = todayISO.slice(0,4);
+    catList = catList.filter(t => t.date.startsWith(yearPrefix));
+  } else if (cDtFilt === 'custom') {
+    const fromDt = document.getElementById('cDtFrom').value;
+    const toDt = document.getElementById('cDtTo').value;
+    if (fromDt || toDt) {
+      if(fromDt) catList = catList.filter(t => t.date >= fromDt);
+      if(toDt) catList = catList.filter(t => t.date <= toDt);
+    }
+  }
+  renderCats(catList);
+  
+  
   // When mode filter is "Event", filter by event (date filters skipped for event view)
   const isEventFilter = (cModeFilt === 'event');
   let activeEvent = null;
@@ -2565,9 +2588,6 @@ function renderTxList(){
   }
 
   document.getElementById('txCnt').textContent = list.length;
-  
-  // Power the 'By Category' summary using these exact transaction filters
-  renderCats(list);
 
   // Compute totals for all date filters (today, month, all, custom) and event/type/mode filters
   const showTotals = true;
