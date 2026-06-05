@@ -2382,18 +2382,15 @@ async function tagPastSubscriptions() {
   txs.forEach(tx => {
     if (tx._recurring) return;
     const matchingRec = recurringList.find(rec => {
+      if (!rec.name || !tx.desc) return false;
       if (rec.name.trim().toLowerCase() !== tx.desc.trim().toLowerCase()) return false;
-      if (Math.abs(rec.amount) !== Math.abs(tx.amount)) return false;
+      if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
       if (rec.type !== tx.type) return false;
-      if (!rec.nextDue) return false;
-      const txD = new Date(tx.date + 'T00:00:00');
-      const dueD = new Date(rec.nextDue + 'T00:00:00');
-      if (rec.freq === 'monthly') return txD.getDate() === dueD.getDate();
-      if (rec.freq === 'yearly') return txD.getDate() === dueD.getDate() && txD.getMonth() === dueD.getMonth();
-      if (rec.freq === 'weekly') return txD.getDay() === dueD.getDay();
-      if (rec.freq === 'daily') return true;
-      if (rec.freq === 'custom') return Math.round(Math.abs(dueD - txD) / 86400000) % (rec.customDays || 1) === 0;
-      return false;
+      
+      // We removed the strict date matching. If the Name, Amount, and Type match perfectly,
+      // it is safely considered the same subscription. This fixes issues where billing days
+      // fluctuate due to weekends, shorter months, or manual entry differences.
+      return true;
     });
     if (matchingRec) toTag.push(tx.id);
   });
@@ -2407,6 +2404,7 @@ async function tagPastSubscriptions() {
       chunk.forEach(id => batch.update(doc(db, 'users', userId, 'transactions', id), { _recurring: true }));
       await batch.commit();
     }
+    showToast(`Auto-tagged ${toTag.length} past subscriptions!`, 'ok');
     console.log(`Auto-tagged ${toTag.length} past transactions as subscriptions.`);
   } catch(e) { console.error('Failed to auto-tag past subscriptions:', e); }
 }
