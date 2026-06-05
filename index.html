@@ -4102,6 +4102,7 @@ function renderEvents() {
   const area = document.getElementById('eventList');
   if (!area) return;
   const evts = Object.values(events);
+  evts.sort((a, b) => (b.start || '').localeCompare(a.start || ''));
   if (!evts.length) {
     area.innerHTML = '<div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div>';
     return;
