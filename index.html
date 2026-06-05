@@ -292,7 +292,7 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .fd{display:flex;flex-direction:column;gap:6px;min-width:0}
 label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu); font-weight:600;}
 input,select{background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;width:100%;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s,box-shadow .2s}
-input[type="radio"],input[type="checkbox"]{-webkit-appearance:auto;appearance:auto;width:auto;padding:0;margin:0;border:none;box-shadow:none;outline:none}
+input[type="radio"],input[type="checkbox"]{-webkit-appearance:auto;appearance:auto;width:auto;padding:0;margin:0;border:none;box-shadow:none;}
 input:not([type="radio"]):not([type="checkbox"]):focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ag),0 0 12px rgba(200,169,110,0.08)}
 input::placeholder{color:var(--di)}
 select option{background:var(--s2)}
@@ -4467,23 +4467,44 @@ async function checkAndTriggerRecurring() {
     try {
       const txId = uid();
       const nextKey = (rec.freq === 'monthly') ? monthKey : today;
-      const batch = writeBatch(db);
       
-      batch.set(doc(db, 'users', userId, 'transactions', txId), {
-        type: rec.type, mode: rec.mode || 'online',
-        desc: rec.name, cat: rec.cat,
-        amount: rec.amount, date: today, _recurring: true
+      // Optimistic local UI update
+      const optimisticTx = {
+        id: txId, type: rec.type, mode: rec.mode || 'online',
+        desc: rec.name, cat: rec.cat, amount: rec.amount, date: today, _recurring: true
+      };
+      if (!txs.find(t => t.id === txId)) {
+        txs.unshift(optimisticTx);
+        debouncedRender();
+      }
+
+      await runTransaction(db, async (transaction) => {
+        const recDoc = await transaction.get(doc(db, 'users', userId, 'recurring', rec.id));
+        if (!recDoc.exists()) throw "not_found";
+        const data = recDoc.data();
+        if (data.freq === 'monthly' && data.lastTriggered === monthKey) throw "already_triggered";
+        if (data.freq !== 'monthly' && data.lastTriggered === today) throw "already_triggered";
+        if (today < data.nextDue) throw "not_due";
+        
+        transaction.set(doc(db, 'users', userId, 'transactions', txId), {
+          type: data.type, mode: data.mode || 'online',
+          desc: data.name, cat: data.cat,
+          amount: data.amount, date: today, _recurring: true
+        });
+        transaction.update(recDoc.ref, {
+          nextDue: computeNextDue(today, data.freq, data.customDays),
+          lastTriggered: nextKey
+        });
       });
-      batch.update(doc(db, 'users', userId, 'recurring', rec.id), {
-        nextDue: computeNextDue(today, rec.freq, rec.customDays),
-        lastTriggered: nextKey
-      });
-      
-      await batch.commit();
       triggered.push(rec.name);
       writeLog('ADD', `Auto-added recurring: ${rec.name} (₹${rec.amount})`);
     } catch(e) { 
-      console.error('Failed to trigger recurring:', rec.name, e); 
+      // Revert optimistic update if transaction failed
+      txs = txs.filter(t => t.id !== txId);
+      debouncedRender();
+      if (e !== "already_triggered" && e !== "not_due") {
+        console.error('Failed to trigger recurring:', rec.name, e); 
+      }
     } finally {
       triggeringRecs.delete(rec.id);
     }
