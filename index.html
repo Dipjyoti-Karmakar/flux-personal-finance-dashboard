@@ -4459,6 +4459,31 @@ async function checkAndTriggerRecurring() {
     // For others: skip if lastTriggered is today
     if (rec.freq !== 'monthly' && rec.lastTriggered === today) continue;
     
+    // Prevent duplicates if the user manually paid this subscription early
+    const dueD = new Date(rec.nextDue + 'T00:00:00');
+    let wDays = 10;
+    if (rec.freq === 'weekly') wDays = 3;
+    if (rec.freq === 'daily') wDays = 0;
+    if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
+    
+    const minD = new Date(dueD.getTime() - wDays * 86400000).toISOString().slice(0, 10);
+    const manuallyPaid = txs.some(t => 
+      !t._auto && 
+      t.desc.trim().toLowerCase() === rec.name.trim().toLowerCase() && 
+      Math.abs(t.amount) === Math.abs(rec.amount) &&
+      t.date >= minD && t.date <= today
+    );
+
+    if (manuallyPaid) {
+      const nextKey = (rec.freq === 'monthly') ? monthKey : today;
+      await setDoc(doc(db, 'users', userId, 'recurring', rec.id), {
+        nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays),
+        lastTriggered: nextKey
+      }, { merge: true });
+      writeLog('UPDATE', `Skipped duplicate auto-add for ${rec.name} (already manually paid early). Advanced due date.`);
+      continue;
+    }
+
     if (triggeringRecs.has(rec.id)) continue;
     triggeringRecs.add(rec.id);
     
@@ -4469,7 +4494,7 @@ async function checkAndTriggerRecurring() {
       // Optimistic local UI update
       const optimisticTx = {
         id: txId, type: rec.type, mode: rec.mode || 'online',
-        desc: rec.name, cat: rec.cat, amount: rec.amount, date: today, _recurring: true
+        desc: rec.name, cat: rec.cat, amount: rec.amount, date: today, _recurring: true, _auto: true
       };
       if (!txs.find(t => t.id === txId)) {
         txs.unshift(optimisticTx);
@@ -4487,10 +4512,10 @@ async function checkAndTriggerRecurring() {
         transaction.set(doc(db, 'users', userId, 'transactions', txId), {
           type: data.type, mode: data.mode || 'online',
           desc: data.name, cat: data.cat,
-          amount: data.amount, date: today, _recurring: true
+          amount: data.amount, date: today, _recurring: true, _auto: true
         });
         transaction.update(recDoc.ref, {
-          nextDue: computeNextDue(today, data.freq, data.customDays),
+          nextDue: computeNextDue(data.nextDue, data.freq, data.customDays),
           lastTriggered: nextKey
         });
       });
