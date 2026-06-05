@@ -5360,32 +5360,15 @@ async function generatePDF() {
         row.push(t.id, t.type, (t.eventId && events[t.eventId] ? events[t.eventId].color : ''));
         return row;
       });
-      // Fixed column widths keep Date/Category/Amount/Mode compact so Description
-      // always gets the leftover space. overflow:'ellipsize' ensures no cell ever
-      // wraps onto a 2nd line — including the golden-highlighted largest-tx row.
-      const colStyles = hasEvents
-        ? {
-            0: { cellWidth: 22, halign: 'left',   overflow: 'ellipsize' },  // Date
-            1: {                                   overflow: 'ellipsize' },  // Description (auto)
-            2: { cellWidth: 22,                    overflow: 'ellipsize' },  // Category
-            3: { cellWidth: 24, halign: 'right',   overflow: 'ellipsize' },  // Amount
-            4: { cellWidth: 14, halign: 'center',  overflow: 'ellipsize' },  // Mode
-            5: { cellWidth: 24,                    overflow: 'ellipsize' },  // Event
-          }
-        : {
-            0: { cellWidth: 22, halign: 'left',   overflow: 'ellipsize' },  // Date
-            1: {                                   overflow: 'ellipsize' },  // Description (auto)
-            2: { cellWidth: 22,                    overflow: 'ellipsize' },  // Category
-            3: { cellWidth: 24, halign: 'right',   overflow: 'ellipsize' },  // Amount
-            4: { cellWidth: 14, halign: 'center',  overflow: 'ellipsize' },  // Mode
-          };
       doc.autoTable({
         startY: curY, head:[headRow], body: txRows,
         margin:{left:pL, right:15}, theme:'grid',
         headStyles:{ fillColor: headerBg, textColor: accentStripe, fontStyle:'bold', fontSize:8.5, cellPadding:4 },
-        bodyStyles:{ fillColor: panel, textColor: darkText, fontSize:8.5, cellPadding:3.5, valign:'middle', minCellHeight: 8, overflow: 'ellipsize' },
+        bodyStyles:{ fillColor: panel, textColor: darkText, fontSize:8.5, cellPadding:3.5, valign:'middle' },
         alternateRowStyles:{ fillColor: altRow },
-        columnStyles: colStyles,
+        columnStyles: hasEvents 
+          ? { 0:{cellWidth: 'wrap', halign:'left'}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 'wrap', halign:'right'}, 4:{cellWidth: 16,halign:'center'}, 5:{cellWidth: 24} }
+          : { 0:{cellWidth: 'wrap', halign:'left'}, 1:{}, 2:{cellWidth: 26}, 3:{cellWidth: 'wrap', halign:'right'}, 4:{cellWidth: 16,halign:'center'} },
         tableLineColor: bd, tableLineWidth: 0.15,
         didParseCell: (d) => {
           if (d.section==='body') {
@@ -5417,8 +5400,6 @@ async function generatePDF() {
               d.cell.styles.fillColor = goldLight;
               d.cell.styles.textColor = [100, 70, 5];
               d.cell.styles.fontStyle = 'bold';
-              // Keep overflow:ellipsize so the golden row never wraps either
-              d.cell.styles.overflow = 'ellipsize';
             }
           }
           if (d.section==='head') {
