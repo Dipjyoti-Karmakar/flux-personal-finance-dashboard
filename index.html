@@ -291,9 +291,9 @@ header{display:flex;align-items:flex-end;justify-content:space-between;margin-bo
 .fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fd{display:flex;flex-direction:column;gap:6px;min-width:0}
 label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mu); font-weight:600;}
-input,select{background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;width:100%;outline:none;-webkit-appearance:none;transition:border-color .2s,box-shadow .2s}
-input[type="radio"],input[type="checkbox"]{-webkit-appearance:auto;width:auto;padding:0;margin:0;border:none;box-shadow:none}
-input:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ag),0 0 12px rgba(200,169,110,0.08)}
+input,select{background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);color:var(--tx);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 14px;width:100%;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s,box-shadow .2s}
+input[type="radio"],input[type="checkbox"]{-webkit-appearance:auto;appearance:auto;width:auto;padding:0;margin:0;border:none;box-shadow:none;outline:none}
+input:not([type="radio"]):not([type="checkbox"]):focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ag),0 0 12px rgba(200,169,110,0.08)}
 input::placeholder{color:var(--di)}
 select option{background:var(--s2)}
 .tg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
@@ -2369,7 +2369,46 @@ function render(){
 let _renderTimer = null;
 function debouncedRender() {
   if (_renderTimer) clearTimeout(_renderTimer);
-  _renderTimer = setTimeout(() => { _renderTimer = null; render(); }, 120);
+  _renderTimer = setTimeout(() => { 
+    _renderTimer = null; 
+    render(); 
+    tagPastSubscriptions();
+  }, 120);
+}
+
+async function tagPastSubscriptions() {
+  if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return;
+  const toTag = [];
+  txs.forEach(tx => {
+    if (tx._recurring) return;
+    const matchingRec = recurringList.find(rec => {
+      if (rec.name.trim().toLowerCase() !== tx.desc.trim().toLowerCase()) return false;
+      if (Math.abs(rec.amount) !== Math.abs(tx.amount)) return false;
+      if (rec.type !== tx.type) return false;
+      if (!rec.nextDue) return false;
+      const txD = new Date(tx.date + 'T00:00:00');
+      const dueD = new Date(rec.nextDue + 'T00:00:00');
+      if (rec.freq === 'monthly') return txD.getDate() === dueD.getDate();
+      if (rec.freq === 'yearly') return txD.getDate() === dueD.getDate() && txD.getMonth() === dueD.getMonth();
+      if (rec.freq === 'weekly') return txD.getDay() === dueD.getDay();
+      if (rec.freq === 'daily') return true;
+      if (rec.freq === 'custom') return Math.round(Math.abs(dueD - txD) / 86400000) % (rec.customDays || 1) === 0;
+      return false;
+    });
+    if (matchingRec) toTag.push(tx.id);
+  });
+  
+  if (!toTag.length) return;
+  
+  try {
+    for (let i = 0; i < toTag.length; i += 450) {
+      const chunk = toTag.slice(i, i + 450);
+      const batch = writeBatch(db);
+      chunk.forEach(id => batch.update(doc(db, 'users', userId, 'transactions', id), { _recurring: true }));
+      await batch.commit();
+    }
+    console.log(`Auto-tagged ${toTag.length} past transactions as subscriptions.`);
+  } catch(e) { console.error('Failed to auto-tag past subscriptions:', e); }
 }
 
 // ─── Animated number counter ────────────────────────────────────────────────
@@ -2504,9 +2543,7 @@ function renderTxList(){
     } else if (cDtFilt === 'custom') {
       const fromDt = document.getElementById('cDtFrom').value;
       const toDt = document.getElementById('cDtTo').value;
-      if (!fromDt && !toDt) {
-          list = [];
-      } else {
+      if (fromDt || toDt) {
           if(fromDt) list = list.filter(t => t.date >= fromDt);
           if(toDt) list = list.filter(t => t.date <= toDt);
       }
@@ -2543,11 +2580,7 @@ function renderTxList(){
   }
 
   if(!list.length){
-    if (cDtFilt === 'custom' && !document.getElementById('cDtFrom').value && !document.getElementById('cDtTo').value) {
-        el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Select dates to view</div><div class="empty-sub">Pick a date range above to filter transactions</div></div>';
-    } else {
-        el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No matching transactions</div><div class="empty-sub">Try adjusting your filters or search query</div></div>';
-    }
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No matching transactions</div><div class="empty-sub">Try adjusting your filters or search query</div></div>';
     return;
   }
   
@@ -4432,32 +4465,25 @@ async function checkAndTriggerRecurring() {
     triggeringRecs.add(rec.id);
     
     try {
-      await runTransaction(db, async (transaction) => {
-        const recDoc = await transaction.get(doc(db, 'users', userId, 'recurring', rec.id));
-        if (!recDoc.exists()) throw "not_found";
-        const data = recDoc.data();
-        if (data.freq === 'monthly' && data.lastTriggered === monthKey) throw "already_triggered";
-        if (data.freq !== 'monthly' && data.lastTriggered === today) throw "already_triggered";
-        if (today < data.nextDue) throw "not_due";
-        
-        const txId = uid();
-        const nextKey = (data.freq === 'monthly') ? monthKey : today;
-        transaction.set(doc(db, 'users', userId, 'transactions', txId), {
-          type: data.type, mode: data.mode || 'online',
-          desc: data.name, cat: data.cat,
-          amount: data.amount, date: today, _recurring: true
-        });
-        transaction.update(recDoc.ref, {
-          nextDue: computeNextDue(today, data.freq, data.customDays),
-          lastTriggered: nextKey
-        });
+      const txId = uid();
+      const nextKey = (rec.freq === 'monthly') ? monthKey : today;
+      const batch = writeBatch(db);
+      
+      batch.set(doc(db, 'users', userId, 'transactions', txId), {
+        type: rec.type, mode: rec.mode || 'online',
+        desc: rec.name, cat: rec.cat,
+        amount: rec.amount, date: today, _recurring: true
       });
+      batch.update(doc(db, 'users', userId, 'recurring', rec.id), {
+        nextDue: computeNextDue(today, rec.freq, rec.customDays),
+        lastTriggered: nextKey
+      });
+      
+      await batch.commit();
       triggered.push(rec.name);
       writeLog('ADD', `Auto-added recurring: ${rec.name} (₹${rec.amount})`);
     } catch(e) { 
-      if (e !== "already_triggered" && e !== "not_due") {
-        console.error('Failed to trigger recurring:', rec.name, e); 
-      }
+      console.error('Failed to trigger recurring:', rec.name, e); 
     } finally {
       triggeringRecs.delete(rec.id);
     }
