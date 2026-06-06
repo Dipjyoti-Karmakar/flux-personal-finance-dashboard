@@ -4591,6 +4591,7 @@ function renderRecurring() {
     else if (r.freq === 'yearly') yearlyTotal += amt / 12;
     else if (r.freq === 'weekly') monthlyTotal += amt * 4.33;
     else if (r.freq === 'daily') monthlyTotal += amt * 30;
+    else if (r.freq === 'custom' && r.customDays > 0) monthlyTotal += (amt * 365.25 / r.customDays) / 12;
     if (r.nextDue && r.nextDue <= today) dueCount++;
     else if (r.nextDue) {
       const days = Math.ceil((new Date(r.nextDue) - new Date(today)) / 86400000);
