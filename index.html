@@ -4381,6 +4381,7 @@ function loadMoreTx() {
 
 // FAB: scroll to New Transaction form & auto-hide when form is visible
 function scrollToForm() {
+    const form = document.querySelector('.fb2');
     if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 (function initFab() {
