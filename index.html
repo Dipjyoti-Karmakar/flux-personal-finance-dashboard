@@ -2188,7 +2188,7 @@ async function addTx() {
     window._highlightTxId = txId;
     
     // Log the addition
-    writeLog('ADD', `Added <strong>"${esc(desc)}"</strong> — ${fmt(amt)}, ${cat||'other'}, ${fmtDt(date)}, ${cMode}`);
+    writeLog('ADD', `Added <strong>"${esc(desc)}"</strong> — ${fmt(amt)}, ${cat||'other'}, ${fmtDt(date)}, ${cMode}`, cType);
 
     showToast('Transaction added', 'ok');
     // Confetti on milestones: 1st, 10th, 25th, every 50th
@@ -2266,7 +2266,7 @@ async function commitDelete(id) {
   
   // Log deletion synchronously to ensure it's captured immediately when the undo window expires
   if (logData) {
-    writeLog('DELETE', `Deleted <strong>"${esc(logData.desc)}"</strong> — ${fmt(logData.amount)}, ${logData.cat||'other'}, ${fmtDt(logData.date)}, ${logData.mode}`);
+    writeLog('DELETE', `Deleted <strong>"${esc(logData.desc)}"</strong> — ${fmt(logData.amount)}, ${logData.cat||'other'}, ${fmtDt(logData.date)}, ${logData.mode}`, logData.type);
   }
   
   if (!userId) return;
@@ -3394,7 +3394,7 @@ function mkYrBlock(yr,yrMonths,todayISO,cY,cM,cD){
   const mnHTML=Array.from({length:12},(_,m)=>mkMnCard(m,yr,yrMonths,isCur,cM,cD,todayISO,mMax,yrTot)).join('');
   const netClr=yrNet>=0?'var(--in)':'var(--ex)';
   const savRateHtml=yrSavRate!==null?`<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate>=0?'var(--in)':'var(--ex)'}">${yrSavRate>0?'+':''}${yrSavRate}%</span></div>`:'';
-  return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}<div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmt(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
+  return `<div class="yb${isCur?' cy':''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex-shrink:0;"><span class="yl">${yr}</span>${isCur?'<span class="ytag">Current</span>':''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmt(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
 }
 
 function mkMnCard(m,yr,yrMonths,isCurYr,cM,cD,todayISO,mMax,yrTot){
@@ -4381,12 +4381,12 @@ function setTxSearch(val) {
 /* ── Activity Log Logic (Firestore-synced) ── */
 const ACTIVITY_LOG_LIMIT = 200;
 
-function writeLog(action, msg) {
+function writeLog(action, msg, txType) {
   if (!userId) return;
   try {
-    addDoc(collection(db, 'users', userId, 'activities'), {
-      a: action, m: msg, t: serverTimestamp()
-    }).catch(e => {
+    const entry = { a: action, m: msg, t: serverTimestamp() };
+    if (txType) entry.tp = txType; // 'income' or 'expense' for ADD/DELETE
+    addDoc(collection(db, 'users', userId, 'activities'), entry).catch(e => {
       console.warn('Activity log write failed:', e);
     });
   } catch (e) {
@@ -4433,16 +4433,39 @@ function renderLogs() {
   }
 
   const actIcons = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
+
+  // Helper: render a colored Income / Expense type badge
+  function txTypeBadge(txType) {
+    if (!txType) return '';
+    if (txType === 'income') {
+      return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:var(--ib);color:var(--in);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;vertical-align:middle;margin-left:6px;">↑ INCOME</span>`;
+    }
+    return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:var(--eb);color:var(--ex);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;vertical-align:middle;margin-left:6px;">↓ EXPENSE</span>`;
+  }
+
+  // Helper: try to infer tx type from legacy log messages that don't have 'tp' field
+  function inferTxType(l) {
+    if (l.tp) return l.tp;
+    // Only infer for ADD / DELETE actions
+    if (l.a !== 'ADD' && l.a !== 'DELETE') return null;
+    // Heuristic: presence of income-related category keywords in the message
+    const m = (l.m || '').toLowerCase();
+    if (/salary|freelance|investment|income/.test(m)) return 'income';
+    return null; // can't determine reliably for old logs — show nothing
+  }
   
   listEl.innerHTML = logs.map(l => {
     const ts = l.t;
     // Handle Firestore Timestamp objects, plain numbers, and null (pending serverTimestamp)
     const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
     const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+    const showBadge = l.a === 'ADD' || l.a === 'DELETE';
+    const txType = showBadge ? inferTxType(l) : null;
+    const typeBadge = txType ? txTypeBadge(txType) : '';
     return `<div class="log-entry card-in">
       <div class="log-icon">${actIcons[l.a] || '•'}</div>
       <div class="log-body">
-        <div class="log-msg">${l.m}</div>
+        <div class="log-msg">${l.m}${typeBadge}</div>
         <div class="log-time">${timeStr}</div>
       </div>
     </div>`;
@@ -4647,7 +4670,7 @@ function renderRecurring() {
       </div>
     </div>`;
   }).join('');
-  if (typeof twemoji !== 'undefined') twemoji.parse(listEl);
+  if (typeof twemoji !== 'undefined') twemoji.parse(area);
 }
 
 function openAddRecurring() {
