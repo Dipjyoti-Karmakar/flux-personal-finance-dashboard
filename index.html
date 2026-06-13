@@ -2184,6 +2184,11 @@ async function addTx() {
     document.getElementById('txA').value = '';
     document.getElementById('txDt').value = getTodayStr();
     
+    // Log the addition
+    writeLog('ADD', `<div>${esc(desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${cType==='income'?'in':'ex'});font-weight:600">${fmt(amt)}</span><span>•</span><span style="text-transform:capitalize">${cat||'other'}</span><span>•</span><span>${fmtDt(date)}</span><span>•</span><span style="text-transform:capitalize">${cMode}</span></div>`, cType);
+
+    showToast('Transaction added', 'ok');
+    
     // Button checkmark animation
     if (btn) {
       const orig = btn.textContent;
@@ -2195,10 +2200,6 @@ async function addTx() {
     // Mark the new TX for highlight after next render
     window._highlightTxId = txId;
     
-    // Log the addition
-    writeLog('ADD', `Added <strong>"${esc(desc)}"</strong> — ${fmt(amt)}, ${cat||'other'}, ${fmtDt(date)}, ${cMode}`, cType);
-
-    showToast('Transaction added', 'ok');
     // Confetti on milestones: 1st, 10th, 25th, every 50th
     const mc = txs.length + 1;
     if (mc === 1 || mc === 10 || mc === 25 || mc % 50 === 0) launchConfetti();
@@ -2274,7 +2275,7 @@ async function commitDelete(id) {
   
   // Log deletion synchronously to ensure it's captured immediately when the undo window expires
   if (logData) {
-    writeLog('DELETE', `Deleted <strong>"${esc(logData.desc)}"</strong> — ${fmt(logData.amount)}, ${logData.cat||'other'}, ${fmtDt(logData.date)}, ${logData.mode}`, logData.type);
+    writeLog('DELETE', `<div>${esc(logData.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${logData.type==='income'?'in':'ex'});font-weight:600">${fmt(logData.amount)}</span><span>•</span><span style="text-transform:capitalize">${logData.cat||'other'}</span><span>•</span><span>${fmtDt(logData.date)}</span><span>•</span><span style="text-transform:capitalize">${logData.mode}</span></div>`, logData.type);
   }
   
   if (!userId) return;
@@ -2799,7 +2800,7 @@ async function saveEditTx() {
        if (b.type !== type) diffs.push(`type <span class="log-change log-from">${b.type}</span><span class="log-arrow">→</span><span class="log-change log-to">${type}</span>`);
        
        if (diffs.length > 0) {
-         writeLog('EDIT', `Edited <strong>"${esc(b.desc)}"</strong>: ${diffs.join(', ')}`);
+         writeLog('EDIT', `<div>${esc(b.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px;line-height:1.4"><span style="color:var(--ag);font-weight:600">Updated:</span> ${diffs.join('<span style="margin:0 4px;opacity:0.5">•</span>')}</div>`);
        }
     }
 
@@ -3976,7 +3977,7 @@ async function executeImport(mode) {
 
       closeMod();
       if (addedCount > 0) {
-        writeLog('IMPORT', `Imported ${addedCount} transaction${addedCount !== 1 ? 's' : ''} (mode: ${mode})`);
+        writeLog('IMPORT', `<div>Imported ${addedCount} transaction${addedCount !== 1 ? 's' : ''}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Mode: <strong style="text-transform:uppercase">${mode}</strong></div>`);
         showToast('Imported ' + addedCount + ' transaction' + (addedCount !== 1 ? 's' : ''), 'ok');
       } else {
         showToast('No new transactions to import (All duplicates)', 'ok');
@@ -4576,7 +4577,7 @@ async function checkAndTriggerRecurring() {
         nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays),
         lastTriggered: nextKey
       }, { merge: true });
-      writeLog('UPDATE', `Skipped duplicate auto-add for ${esc(rec.name)} (already manually paid early). Advanced due date.`);
+      writeLog('UPDATE', `<div>${esc(rec.name)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`);
       continue;
     }
 
@@ -4616,7 +4617,7 @@ async function checkAndTriggerRecurring() {
         });
       });
       triggered.push(rec.name);
-      writeLog('ADD', `Auto-added recurring: ${esc(rec.name)} (₹${rec.amount})`);
+      writeLog('ADD', `<div>${esc(rec.name)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--ex);font-weight:600">₹${rec.amount}</span><span>•</span><span>Auto-recurring</span></div>`);
     } catch(e) { 
       // Revert optimistic update if transaction failed
       txs = txs.filter(t => t.id !== txId);
@@ -4783,7 +4784,7 @@ async function saveRecurringMod() {
       data.createdAt = Date.now();
       await setDoc(doc(db, 'users', userId, 'recurring', uid()), data);
       showToast('Subscription created', 'ok');
-      writeLog('ADD', `Created recurring subscription: ${esc(name)}`);
+      writeLog('ADD', `<div>${esc(name)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New recurring subscription</div>`);
     } catch(e) { showToast('Error creating: ' + (e?.code || e?.message), 'er'); }
   }
 }
