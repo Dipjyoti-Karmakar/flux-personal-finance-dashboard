@@ -20,7 +20,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
 <style>
-:root{--bg:#0d0f14;--sf:#13161e;--s2:#1a1e28;--s3:#212633;--bd:rgba(255,255,255,0.07);--bs:rgba(255,255,255,0.13);--tx:#e8eaf0;--mu:#7a8099;--di:#4a5068;--ac:#c8a96e;--ag:rgba(200,169,110,0.15);--on:#6e9dc8;--of:#9d7ac8;--ob:rgba(110,157,200,0.1);--fb:rgba(157,122,200,0.1);--in:#5dba8a;--ex:#e07070;--ib:rgba(93,186,138,0.1);--eb:rgba(224,112,112,0.1);--r:18px;--rs:12px;--sh-hov:0 16px 40px rgba(0,0,0,0.4);--sh-btn:0 8px 24px rgba(200,169,110,0.2);--sh-card:0 2px 8px rgba(0,0,0,0.12)}
+:root{--bg:#0d0f14;--sf:#13161e;--s2:#1a1e28;--s3:#212633;--bd:rgba(255,255,255,0.07);--bs:rgba(255,255,255,0.13);--txi-bd:rgba(255,255,255,0.06);--tx:#e8eaf0;--mu:#7a8099;--di:#4a5068;--ac:#c8a96e;--ag:rgba(200,169,110,0.15);--on:#6e9dc8;--of:#9d7ac8;--ob:rgba(110,157,200,0.1);--fb:rgba(157,122,200,0.1);--in:#5dba8a;--ex:#e07070;--ib:rgba(93,186,138,0.1);--eb:rgba(224,112,112,0.1);--r:18px;--rs:12px;--sh-hov:0 16px 40px rgba(0,0,0,0.4);--sh-btn:0 8px 24px rgba(200,169,110,0.2);--sh-card:0 2px 8px rgba(0,0,0,0.12)}
 /* ── Premium Light Theme ── */
 [data-theme="light"]{
   --bg: hsl(220, 25%, 96%);
@@ -29,6 +29,7 @@
   --s3: hsl(220, 18%, 93%);
   --bd: rgba(99, 117, 153, 0.14);
   --bs: rgba(99, 117, 153, 0.26);
+  --txi-bd: rgba(0,0,0,0.06);
   --tx: hsl(224, 40%, 10%);
   --mu: hsl(220, 18%, 42%);
   --di: hsl(220, 14%, 62%);
@@ -316,7 +317,7 @@ select option{background:var(--s2)}
 .txl::-webkit-scrollbar-thumb{background:var(--s3);border-radius:6px}
 .txl::-webkit-scrollbar-thumb:hover{background:var(--di);}
 .txa{padding:48px 20px;text-align:center;color:var(--di);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;font-weight:500;}
-.txi{display:flex;align-items:center;gap:12px;padding:12px 12px;border:1px solid transparent;border-radius:var(--rs);margin-bottom:6px;transition:all .25s cubic-bezier(0.16, 1, 0.3, 1);animation:sIn .25s ease;min-width:0;}
+.txi{display:flex;align-items:center;gap:12px;padding:12px 12px;border:1px solid var(--txi-bd);border-radius:var(--rs);margin-bottom:6px;transition:all .25s cubic-bezier(0.16, 1, 0.3, 1);animation:sIn .25s ease;min-width:0;}
 .txi:hover{background:var(--s2);border-color:var(--bs);transform:translateX(6px);box-shadow:0 6px 20px rgba(0,0,0,0.1);}
 .txi:hover .td{opacity:1;transform:translateX(0);}
 @keyframes sIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
@@ -1951,6 +1952,7 @@ onAuthStateChanged(auth, (user) => {
     loadEvents();
     loadActivityLog();
     loadRecurring();
+    migratePastLogs(); // Temporary migration script to tag old logs
     // Clear stale localStorage activity log (migrated to Firestore)
     try { localStorage.removeItem('flux_activity_log'); } catch(_) {}
     showSkeletons();
@@ -4455,7 +4457,7 @@ function renderLogs() {
   listEl.innerHTML = logs.map(l => {
     const ts = l.t;
     const d  = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
-    const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+    const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})} ${d.getFullYear().toString().slice(-2)}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
 
     const showTypePill = l.a === 'ADD' || l.a === 'DELETE';
     const txType = showTypePill ? inferTxType(l) : null;
@@ -5991,6 +5993,50 @@ function initAutocomplete() {
   });
 }
 
+// TEMPORARY MIGRATION SCRIPT TO TAG PAST LOGS
+async function migratePastLogs() {
+  if (!userId) return;
+  try {
+    const snap = await getDocs(collection(db, 'users', userId, 'activities'));
+    const batch = writeBatch(db);
+    let count = 0;
+    
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (data.tp) return; // already has type
+      if (data.a !== 'ADD' && data.a !== 'DELETE') return;
+      
+      const m = (data.m || '').toLowerCase();
+      let type = null;
+      
+      if (m.includes('salary') || m.includes('freelance') || m.includes('investment') || m.includes('income')) {
+        type = 'income';
+      } else if (m.includes('food') || m.includes('transport') || m.includes('housing') || m.includes('entertainment') || m.includes('health') || m.includes('shopping') || m.includes('utilit') || m.includes('occasion') || m.includes('stationery') || m.includes('expense')) {
+        type = 'expense';
+      } else if (m.includes('other')) {
+        if (m.includes('cash') || m.includes('refund')) {
+          type = 'income';
+        } else {
+          type = 'expense'; 
+        }
+      } else {
+        type = 'expense'; // Ultimate fallback
+      }
+
+      if (type) {
+        batch.update(docSnap.ref, { tp: type });
+        count++;
+      }
+    });
+
+    if (count > 0) {
+      await batch.commit();
+      console.log(`Migrated ${count} past activity logs successfully.`);
+    }
+  } catch(e) {
+    console.error('Migration failed:', e);
+  }
+}
 </script>
 </body>
 </html>
