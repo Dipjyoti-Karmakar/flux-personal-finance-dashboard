@@ -532,7 +532,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .btn.pr{background:var(--ac);border-color:var(--ac);color:#0d0f14}
 .btn.pr:hover{opacity:.9;color:#0d0f14;transform:translateY(-2px);box-shadow:var(--sh-btn);}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
-.tst{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--sf);border:1px solid var(--bs);border-radius:14px;padding:14px 28px;font-family:'DM Mono',monospace;font-size:13px;color:var(--tx);z-index:9999;opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(0.16, 1, 0.3, 1),opacity .35s;white-space:normal;font-weight:500;box-shadow:0 16px 48px rgba(0,0,0,0.45);backdrop-filter:blur(12px);max-width:90vw;text-align:center;}
+.tst{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--sf);border:1px solid var(--bs);border-radius:14px;padding:12px 20px;font-family:'DM Mono',monospace;font-size:13px;color:var(--tx);z-index:9999;opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(0.16, 1, 0.3, 1),opacity .35s;white-space:nowrap;font-weight:500;box-shadow:0 16px 48px rgba(0,0,0,0.45);backdrop-filter:blur(12px);max-width:90vw;overflow:hidden;text-overflow:ellipsis;}
 .tst.sh{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
 .tst.ok{border-color:var(--in);color:var(--in);background:color-mix(in srgb,var(--sf) 92%,var(--in))}
 .tst.er{border-color:var(--ex);color:var(--ex);background:color-mix(in srgb,var(--sf) 92%,var(--ex))}
@@ -5753,6 +5753,7 @@ async function recoverLogs() {
       opCount++;
     };
 
+    const logRegistry = new Map(); // key -> [{ ref, ts }]
     const logCounts = new Map();
     let upCount = 0;
 
@@ -5776,10 +5777,20 @@ async function recoverLogs() {
              const spans = cDivs[1].querySelectorAll('span');
              if (spans.length >= 7) {
                 const amt = parseFloat(spans[0].textContent.replace(/[^0-9.-]+/g, ''));
+                const logTs = data.t
+                  ? (data.t.toDate ? data.t.toDate().getTime() : new Date(data.t).getTime())
+                  : 0;
+                const candidates = txs.filter(tx => tx.desc === desc && tx.amount === amt);
                 let legDate = '2000-01-01';
-                const match = txs.find(tx => tx.desc === desc && tx.amount === amt);
-                if (match) legDate = match.date;
-                else {
+                if (candidates.length === 1) {
+                  legDate = candidates[0].date;
+                } else if (candidates.length > 1 && logTs) {
+                  candidates.sort((a, b) =>
+                    Math.abs(new Date(a.date + 'T12:00:00').getTime() - logTs) -
+                    Math.abs(new Date(b.date + 'T12:00:00').getTime() - logTs)
+                  );
+                  legDate = candidates[0].date;
+                } else {
                   const dt = data.t ? (data.t.toDate ? data.t.toDate() : new Date(data.t)) : new Date();
                   legDate = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
                 }
@@ -5797,7 +5808,12 @@ async function recoverLogs() {
              }
            }
         }
-        if (!payload) payload = { legacyHtml: data.m };
+        if (!payload) {
+          const tmpDiv = document.createElement('div');
+          tmpDiv.innerHTML = data.m;
+          const stripped = tmpDiv.textContent.trim();
+          payload = { summary: stripped || '[legacy log]' };
+        }
       }
 
       if (isLegacy) {
@@ -5807,9 +5823,24 @@ async function recoverLogs() {
       }
       if (data.a === 'ADD' && payload && payload.desc && payload.amt !== undefined) {
         const key = payload.desc + '|' + payload.amt + '|' + payload.date;
-        logCounts.set(key, (logCounts.get(key) || 0) + 1);
+        if (!logRegistry.has(key)) logRegistry.set(key, []);
+        const ts = data.t
+          ? (data.t.toDate ? data.t.toDate().getTime() : new Date(data.t).getTime())
+          : 0;
+        logRegistry.get(key).push({ ref: d.ref, ts });
       }
     });
+
+    let dupCount = 0;
+    for (const [key, entries] of logRegistry) {
+      entries.sort((a, b) => a.ts - b.ts);
+      for (let i = 1; i < entries.length; i++) {
+        checkBatch();
+        currentBatch.delete(entries[i].ref);
+        dupCount++;
+      }
+      logCounts.set(key, 1);
+    }
 
     let addCount = 0;
     const sortedTxs = [...txs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -5845,7 +5876,14 @@ async function recoverLogs() {
     if (opCount > 0) batches.push(currentBatch.commit());
     await Promise.all(batches);
     
-    showToast(`Upgraded ${upCount}, recovered ${addCount} missing logs!`, 'ok');
+    let msg = 'Logs up to date';
+    const parts = [];
+    if (dupCount) parts.push(`Del ${dupCount} dupes`);
+    if (upCount) parts.push(`Upd ${upCount}`);
+    if (addCount) parts.push(`Rec ${addCount}`);
+    if (parts.length > 0) msg = parts.join(', ') + ' logs';
+    
+    showToast(msg, 'ok');
   } catch (e) {
     console.error('Error recovering logs:', e);
     showToast('Recovery failed: ' + e.message, 'er');
