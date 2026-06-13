@@ -1789,7 +1789,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',utility:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
@@ -1878,6 +1878,17 @@ const db = initializeFirestore(app, {
   localCache: persistentLocalCache()
 });
 const provider = new GoogleAuthProvider();
+
+getRedirectResult(auth).catch((error) => {
+  console.error("Redirect auth error:", error);
+  // We don't have showToast defined yet at this point, so we wait for DOMContentLoaded
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      showToast("Auth Error: " + error.message, "er");
+    }, 1000);
+  });
+});
+
 
 document.addEventListener('DOMContentLoaded', () => {
   apTheme(theme);
