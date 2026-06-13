@@ -2189,7 +2189,7 @@ async function addTx() {
     document.getElementById('txDt').value = getTodayStr();
     
     // Log the addition
-    writeLog('ADD', `<div>${esc(desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${cType==='income'?'in':'ex'});font-weight:600">${fmt(amt)}</span><span>•</span><span style="text-transform:capitalize">${cat||'other'}</span><span>•</span><span>${fmtDt(date)}</span><span>•</span><span style="text-transform:capitalize">${cMode}</span></div>`, cType);
+    writeLog('ADD', { desc, amt, cat, date, mode: cMode, type: cType }, cType);
 
     showToast('Transaction added', 'ok');
     
@@ -2279,7 +2279,7 @@ async function commitDelete(id) {
   
   // Log deletion synchronously to ensure it's captured immediately when the undo window expires
   if (logData) {
-    writeLog('DELETE', `<div>${esc(logData.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${logData.type==='income'?'in':'ex'});font-weight:600">${fmt(logData.amount)}</span><span>•</span><span style="text-transform:capitalize">${logData.cat||'other'}</span><span>•</span><span>${fmtDt(logData.date)}</span><span>•</span><span style="text-transform:capitalize">${logData.mode}</span></div>`, logData.type);
+    writeLog('DELETE', { desc: logData.desc, amt: logData.amount, cat: logData.cat, date: logData.date, mode: logData.mode, type: logData.type }, logData.type);
   }
   
   if (!userId) return;
@@ -2795,17 +2795,16 @@ async function saveEditTx() {
     // Generate diff for logging
     if (window._editSnapshot) {
        const b = window._editSnapshot;
-       const dfn = (label, oldV, newV) => `<div style="display:flex;align-items:center;gap:6px;margin-top:2px;padding:4px 8px;background:var(--s2);border-radius:6px;border:1px solid var(--bd);line-height:1"><span style="width:40px;font-size:9px;text-transform:uppercase;font-weight:600;color:var(--mu)">${label}</span><span style="color:var(--ex);text-decoration:line-through">${oldV}</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2"><path d="M5 12h14m-7-7 7 7-7 7"/></svg><span style="color:var(--in);font-weight:600">${newV}</span></div>`;
        let diffs = [];
-       if (b.desc !== desc) diffs.push(dfn('Desc', `"${esc(b.desc)}"`, `"${esc(desc)}"`));
-       if (b.amount !== amt) diffs.push(dfn('Amt', fmt(b.amount), fmt(amt)));
-       if (b.cat !== cat) diffs.push(dfn('Cat', b.cat||'other', cat||'other'));
-       if (b.date !== date) diffs.push(dfn('Date', fmtDt(b.date), fmtDt(date)));
-       if (b.mode !== mode) diffs.push(dfn('Mode', b.mode, mode));
-       if (b.type !== type) diffs.push(dfn('Type', b.type, type));
+       if (b.desc !== desc) diffs.push({ label: 'Desc', oldV: `"${esc(b.desc)}"`, newV: `"${esc(desc)}"` });
+       if (b.amount !== amt) diffs.push({ label: 'Amt', oldV: fmt(b.amount), newV: fmt(amt) });
+       if (b.cat !== cat) diffs.push({ label: 'Cat', oldV: b.cat||'other', newV: cat||'other' });
+       if (b.date !== date) diffs.push({ label: 'Date', oldV: fmtDt(b.date), newV: fmtDt(date) });
+       if (b.mode !== mode) diffs.push({ label: 'Mode', oldV: b.mode, newV: mode });
+       if (b.type !== type) diffs.push({ label: 'Type', oldV: b.type, newV: type });
        
        if (diffs.length > 0) {
-         writeLog('EDIT', `<div>${esc(b.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;margin-top:6px;display:flex;flex-direction:column;gap:2px">${diffs.join('')}</div>`);
+         writeLog('EDIT', { desc: b.desc, diffs });
        }
     }
 
@@ -3994,7 +3993,7 @@ async function executeImport(mode) {
 
       closeMod();
       if (addedCount > 0) {
-        writeLog('IMPORT', `<div>Imported ${addedCount} transaction${addedCount !== 1 ? 's' : ''}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Mode: <strong style="text-transform:uppercase">${mode}</strong></div>`);
+        writeLog('IMPORT', { count: addedCount, mode });
         showToast('Imported ' + addedCount + ' transaction' + (addedCount !== 1 ? 's' : ''), 'ok');
       } else {
         showToast('No new transactions to import (All duplicates)', 'ok');
@@ -4379,8 +4378,7 @@ function loadMoreTx() {
 
 // FAB: scroll to New Transaction form & auto-hide when form is visible
 function scrollToForm() {
-  const form = document.querySelector('.fb2');
-  if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 (function initFab() {
   const fab = document.getElementById('fab');
@@ -4413,14 +4411,37 @@ const ACTIVITY_LOG_LIMIT = 200;
 function writeLog(action, msg, txType) {
   if (!userId) return;
   try {
-    const entry = { a: action, m: msg, t: serverTimestamp() };
+    const actRef = collection(db, 'users', userId, 'activities');
+    const mStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
+    const entry = { a: action, m: mStr, t: serverTimestamp() };
     if (txType) entry.tp = txType; // 'income' or 'expense' for ADD/DELETE
-    addDoc(collection(db, 'users', userId, 'activities'), entry).catch(e => {
+    addDoc(actRef, entry).catch(e => {
       console.warn('Activity log write failed:', e);
     });
   } catch (e) {
     console.error('Failed to write activity log', e);
   }
+}
+
+function renderParsedLog(action, p) {
+  if (action === 'ADD' || action === 'DELETE') {
+    if (p.isNewRec) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New recurring subscription</div>`;
+    if (p.isAuto) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--ex);font-weight:600">${fmt(p.amt)}</span><span>•</span><span>Auto-recurring</span></div>`;
+    return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600">${fmt(p.amt)}</span><span>•</span><span style="text-transform:capitalize">${p.cat||'other'}</span><span>•</span><span>${fmtDt(p.date)}</span><span>•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
+  }
+  if (action === 'EDIT') {
+    if (!p.diffs) return `<div>${esc(p.desc)}</div>`;
+    const dfn = (label, oldV, newV) => `<div style="display:flex;align-items:center;gap:6px;margin-top:2px;padding:4px 8px;background:var(--s2);border-radius:6px;border:1px solid var(--bd);line-height:1"><span style="width:40px;font-size:9px;text-transform:uppercase;font-weight:600;color:var(--mu)">${label}</span><span style="color:var(--ex);text-decoration:line-through">${oldV}</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2"><path d="M5 12h14m-7-7 7 7-7 7"/></svg><span style="color:var(--in);font-weight:600">${newV}</span></div>`;
+    const diffHtml = p.diffs.map(d => dfn(d.label, d.oldV, d.newV)).join('');
+    return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;margin-top:6px;display:flex;flex-direction:column;gap:2px">${diffHtml}</div>`;
+  }
+  if (action === 'IMPORT') {
+    return `<div>Imported ${p.count} transaction${p.count !== 1 ? 's' : ''}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Mode: <strong style="text-transform:uppercase">${p.mode}</strong></div>`;
+  }
+  if (action === 'UPDATE') {
+    if (p.isSkip) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`;
+  }
+  return `<div>${esc(p.desc||'')}</div>`;
 }
 
 function loadActivityLog() {
@@ -4483,10 +4504,18 @@ function renderLogs() {
     const d  = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
     const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})} ${d.getFullYear().toString().slice(-2)}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
 
-    const isAuto = l.a === 'ADD' && (l.m || '').includes('Auto-added');
+    const isAuto = l.a === 'ADD' && (l.m || '').includes('isAuto');
     const showTypePill = l.a === 'ADD' || l.a === 'DELETE';
     const txType = showTypePill ? inferTxType(l) : null;
     const actionLabel = actLabels[l.a] || l.a;
+
+    let msgHtml = l.m || '';
+    if (msgHtml.startsWith('{') || msgHtml.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(msgHtml);
+        msgHtml = renderParsedLog(l.a, parsed);
+      } catch(e) {}
+    }
 
     const dotColorClass = txType === 'income' ? 'income' : (txType === 'expense' ? 'expense' : 'neutral');
 
@@ -4511,7 +4540,7 @@ function renderLogs() {
     return `<div class="txi card-in" style="cursor:default;padding:14px 16px;">
       <div class="dot ${dotColorClass}" ${dotColorClass==='neutral'?'style="background:var(--mu);box-shadow:0 0 8px var(--mu)"':''}></div>
       <div class="ti">
-        <div class="tn log-msg" style="white-space:normal;overflow:visible;line-height:1.4;margin-bottom:6px;font-size:13px;font-weight:600;">${l.m}</div>
+        <div class="tn log-msg" style="white-space:normal;overflow:visible;line-height:1.4;margin-bottom:6px;font-size:13px;font-weight:600;">${msgHtml}</div>
         <div class="tm" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           ${actionPill}
           ${typePill}
@@ -4594,7 +4623,7 @@ async function checkAndTriggerRecurring() {
         nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays),
         lastTriggered: nextKey
       }, { merge: true });
-      writeLog('UPDATE', `<div>${esc(rec.name)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`);
+      writeLog('UPDATE', { desc: rec.name, isSkip: true });
       continue;
     }
 
@@ -4634,7 +4663,7 @@ async function checkAndTriggerRecurring() {
         });
       });
       triggered.push(rec.name);
-      writeLog('ADD', `<div>${esc(rec.name)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--ex);font-weight:600">₹${rec.amount}</span><span>•</span><span>Auto-recurring</span></div>`);
+      writeLog('ADD', { desc: rec.name, amt: rec.amount, isAuto: true });
     } catch(e) { 
       // Revert optimistic update if transaction failed
       txs = txs.filter(t => t.id !== txId);
@@ -4801,7 +4830,7 @@ async function saveRecurringMod() {
       data.createdAt = Date.now();
       await setDoc(doc(db, 'users', userId, 'recurring', uid()), data);
       showToast('Subscription created', 'ok');
-      writeLog('ADD', `<div>${esc(name)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New recurring subscription</div>`);
+      writeLog('ADD', { desc: name, isNewRec: true });
     } catch(e) { showToast('Error creating: ' + (e?.code || e?.message), 'er'); }
   }
 }
@@ -5706,15 +5735,21 @@ async function recoverLogs() {
   showToast('Recovering logs...', 'ok');
   try {
     const actRef = collection(db, 'users', userId, 'activities');
-    let count = 0;
     
+    // Clear existing logs first to prevent duplicates
+    const existingSnap = await getDocs(actRef);
+    const delBatch = writeBatch(db);
+    existingSnap.docs.forEach(d => delBatch.delete(d.ref));
+    await delBatch.commit();
+    
+    let count = 0;
     const sortedTxs = [...txs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     let currentBatch = writeBatch(db);
     let batchCount = 0;
 
     for (const t of sortedTxs) {
-      const msg = `<div>${esc(t.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${t.type==='income'?'in':'ex'});font-weight:600">${fmt(t.amount)}</span><span>•</span><span style="text-transform:capitalize">${t.cat||'other'}</span><span>•</span><span>${fmtDt(t.date)}</span><span>•</span><span style="text-transform:capitalize">${t.mode}</span></div>`;
+      const msg = JSON.stringify({ desc: t.desc, amt: t.amount, cat: t.cat, date: t.date, mode: t.mode, type: t.type });
       
       const newRef = doc(actRef);
       const txDate = new Date(t.date + 'T12:00:00');
