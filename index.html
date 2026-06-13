@@ -2792,16 +2792,17 @@ async function saveEditTx() {
     // Generate diff for logging
     if (window._editSnapshot) {
        const b = window._editSnapshot;
+       const dfn = (label, oldV, newV) => `<div style="display:flex;align-items:center;gap:6px;margin-top:2px;padding:4px 8px;background:var(--s2);border-radius:6px;border:1px solid var(--bd);line-height:1"><span style="width:40px;font-size:9px;text-transform:uppercase;font-weight:600;color:var(--mu)">${label}</span><span style="color:var(--ex);text-decoration:line-through">${oldV}</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2"><path d="M5 12h14m-7-7 7 7-7 7"/></svg><span style="color:var(--in);font-weight:600">${newV}</span></div>`;
        let diffs = [];
-       if (b.desc !== desc) diffs.push(`desc <span class="log-change log-from">"${esc(b.desc)}"</span><span class="log-arrow">→</span><span class="log-change log-to">"${esc(desc)}"</span>`);
-       if (b.amount !== amt) diffs.push(`amount <span class="log-change log-from">${fmt(b.amount)}</span><span class="log-arrow">→</span><span class="log-change log-to">${fmt(amt)}</span>`);
-       if (b.cat !== cat) diffs.push(`cat <span class="log-change log-from">${b.cat||'other'}</span><span class="log-arrow">→</span><span class="log-change log-to">${cat||'other'}</span>`);
-       if (b.date !== date) diffs.push(`date <span class="log-change log-from">${fmtDt(b.date)}</span><span class="log-arrow">→</span><span class="log-change log-to">${fmtDt(date)}</span>`);
-       if (b.mode !== mode) diffs.push(`mode <span class="log-change log-from">${b.mode}</span><span class="log-arrow">→</span><span class="log-change log-to">${mode}</span>`);
-       if (b.type !== type) diffs.push(`type <span class="log-change log-from">${b.type}</span><span class="log-arrow">→</span><span class="log-change log-to">${type}</span>`);
+       if (b.desc !== desc) diffs.push(dfn('Desc', `"${esc(b.desc)}"`, `"${esc(desc)}"`));
+       if (b.amount !== amt) diffs.push(dfn('Amt', fmt(b.amount), fmt(amt)));
+       if (b.cat !== cat) diffs.push(dfn('Cat', b.cat||'other', cat||'other'));
+       if (b.date !== date) diffs.push(dfn('Date', fmtDt(b.date), fmtDt(date)));
+       if (b.mode !== mode) diffs.push(dfn('Mode', b.mode, mode));
+       if (b.type !== type) diffs.push(dfn('Type', b.type, type));
        
        if (diffs.length > 0) {
-         writeLog('EDIT', `<div>${esc(b.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px;line-height:1.4"><span style="color:var(--ag);font-weight:600">Updated:</span> ${diffs.join('<span style="margin:0 4px;opacity:0.5">•</span>')}</div>`);
+         writeLog('EDIT', `<div>${esc(b.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;margin-top:6px;display:flex;flex-direction:column;gap:2px">${diffs.join('')}</div>`);
        }
     }
 
