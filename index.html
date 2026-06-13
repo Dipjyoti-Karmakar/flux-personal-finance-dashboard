@@ -539,11 +539,11 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .tst .undo-btn{display:inline-block;margin-left:12px;padding:4px 12px;border-radius:8px;border:1px solid currentColor;background:transparent;color:inherit;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;transition:background .2s}
 .tst .undo-btn:hover{background:rgba(255,255,255,.12)}
 /* Summary custom date range */
-.stats-custom-dt{display:none;align-items:center;gap:8px;margin-top:8px}
+.stats-custom-dt{display:none;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;}
 .stats-custom-dt.vis{display:flex;margin-bottom:12px}
-.stats-custom-dt input[type=date]{padding:5px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-family:'DM Mono',monospace;font-size:11px;outline:none}
+.stats-custom-dt input[type=date]{flex:1;min-width:110px;max-width:140px;padding:5px 8px;border-radius:8px;border:1px solid var(--bd);background:var(--sf);color:var(--tx);font-family:'DM Mono',monospace;font-size:11px;outline:none}
 .stats-custom-dt input[type=date]:focus{border-color:var(--ac)}
-.stats-custom-dt .dt-clear{font-size:10px;color:var(--mu);cursor:pointer;text-decoration:underline;font-family:'DM Mono',monospace}
+.stats-custom-dt .dt-clear{font-size:10px;color:var(--mu);cursor:pointer;text-decoration:underline;font-family:'DM Mono',monospace;white-space:nowrap;}
 /* Trend mode toggle */
 .trend-toggle{display:flex;gap:4px;margin-left:auto}
 .trend-toggle .tt-btn{padding:4px 10px;border-radius:8px;border:1px solid var(--bd);background:transparent;color:var(--mu);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .2s;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
@@ -1506,10 +1506,9 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 </div>
 
 <div id="logView" style="display:none">
-  <div class="log-header">
+  <div class="log-header" style="margin-bottom:12px;">
     <div class="log-title">Activity Log</div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1;justify-content:flex-end;">
-      <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)" style="padding:6px 12px;font-size:12px;border-radius:20px;background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;flex:1;min-width:120px;max-width:200px;" aria-label="Search logs">
+    <div style="display:flex;gap:8px;align-items:center;">
       <select id="logFilter" onchange="renderLogs()" style="padding:6px 10px;font-size:11px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;">
         <option value="all">All</option>
         <option value="ADD">➕ Added</option>
@@ -1519,6 +1518,10 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
       </select>
       <button class="log-clear-btn" onclick="askClearLogs()">Clear All</button>
     </div>
+  </div>
+  <div style="margin-bottom:16px; position:relative;">
+    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;">🔍</span>
+    <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)" style="padding:10px 14px 10px 36px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);" onfocus="this.style.borderColor='var(--on)';this.style.boxShadow='0 0 0 2px var(--ob)'" onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='var(--sh-card)'" aria-label="Search logs">
   </div>
   <div id="logList"></div>
 </div>
