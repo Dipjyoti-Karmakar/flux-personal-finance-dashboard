@@ -5732,51 +5732,124 @@ function undoClearLogs() {
 
 async function recoverLogs() {
   if (!userId) { showToast('Sign in first', 'er'); return; }
-  showToast('Recovering logs...', 'ok');
+  showToast('Reconciling & migrating logs...', 'ok');
   try {
     const actRef = collection(db, 'users', userId, 'activities');
-    
-    // Clear existing logs first to prevent duplicates
     const existingSnap = await getDocs(actRef);
-    const delBatch = writeBatch(db);
-    existingSnap.docs.forEach(d => delBatch.delete(d.ref));
-    await delBatch.commit();
     
-    let count = 0;
+    let batches = [];
+    let currentBatch = writeBatch(db);
+    let opCount = 0;
+    
+    const checkBatch = () => {
+      if (opCount >= 449) {
+        batches.push(currentBatch.commit());
+        currentBatch = writeBatch(db);
+        opCount = 0;
+      }
+      opCount++;
+    };
+
+    const seenSigs = new Set();
+    const keptAddKeys = new Set();
+    let delCount = 0;
+    let upCount = 0;
+
+    existingSnap.docs.forEach(d => {
+      const data = d.data();
+      let payload = null;
+      let isLegacy = false;
+
+      if (typeof data.m === 'string' && (data.m.startsWith('{') || data.m.startsWith('['))) {
+        try { payload = JSON.parse(data.m); } catch(e) {}
+      }
+
+      if (!payload) {
+        isLegacy = true;
+        if (data.a === 'ADD' || data.a === 'DELETE') {
+           const div = document.createElement('div');
+           div.innerHTML = data.m;
+           const cDivs = div.querySelectorAll('div');
+           if (cDivs.length >= 2) {
+             const desc = cDivs[0].textContent;
+             const spans = cDivs[1].querySelectorAll('span');
+             if (spans.length >= 7) {
+                const amt = parseFloat(spans[0].textContent.replace(/[^0-9.-]+/g, ''));
+                let legDate = '2000-01-01';
+                const match = txs.find(tx => tx.desc === desc && tx.amount === amt);
+                if (match) legDate = match.date;
+                else {
+                  const dt = data.t ? (data.t.toDate ? data.t.toDate() : new Date(data.t)) : new Date();
+                  legDate = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+                }
+                
+                payload = {
+                  desc: desc,
+                  amt: amt,
+                  cat: spans[2].textContent.trim().toLowerCase(),
+                  date: legDate,
+                  mode: spans[6].textContent.trim().toLowerCase(),
+                  type: data.tp || 'expense'
+                };
+             } else if (cDivs[1].textContent.includes('Auto-recurring')) {
+                payload = { desc, amt: parseFloat(cDivs[1].textContent.replace(/[^0-9.-]+/g, '')), isAuto: true };
+             }
+           }
+        }
+        if (!payload) payload = { legacyHtml: data.m };
+      }
+
+      const sig = data.a + '|' + (payload.legacyHtml || JSON.stringify(payload));
+      
+      if (seenSigs.has(sig)) {
+        checkBatch();
+        currentBatch.delete(d.ref);
+        delCount++;
+      } else {
+        seenSigs.add(sig);
+        if (isLegacy) {
+          checkBatch();
+          currentBatch.update(d.ref, { m: JSON.stringify(payload) });
+          upCount++;
+        }
+        if (data.a === 'ADD' && payload.desc && payload.amt) {
+          keptAddKeys.add(payload.desc + '|' + payload.amt);
+        }
+      }
+    });
+
+    let addCount = 0;
     const sortedTxs = [...txs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
-    let currentBatch = writeBatch(db);
-    let batchCount = 0;
-
     for (const t of sortedTxs) {
-      const msg = JSON.stringify({ desc: t.desc, amt: t.amount, cat: t.cat, date: t.date, mode: t.mode, type: t.type });
-      
-      const newRef = doc(actRef);
-      const txDate = new Date(t.date + 'T12:00:00');
-      const fakeTimestamp = new Date(txDate.getTime() + (count * 1000));
+      const key = t.desc + '|' + t.amount;
+      if (!keptAddKeys.has(key)) {
+        checkBatch();
+        const msg = JSON.stringify({ desc: t.desc, amt: t.amount, cat: t.cat, date: t.date, mode: t.mode, type: t.type });
+        const newRef = doc(actRef);
+        
+        let tsVal;
+        if (t.createdAt) {
+          tsVal = new Date(t.createdAt);
+        } else {
+          const txDate = new Date(t.date + 'T12:00:00');
+          tsVal = new Date(txDate.getTime() + (addCount * 1000));
+        }
 
-      currentBatch.set(newRef, {
-        a: 'ADD',
-        m: msg,
-        t: fakeTimestamp,
-        tp: t.type
-      });
-      
-      count++;
-      batchCount++;
-      
-      if (batchCount === 450) {
-        await currentBatch.commit();
-        currentBatch = writeBatch(db);
-        batchCount = 0;
+        currentBatch.set(newRef, {
+          a: 'ADD',
+          m: msg,
+          t: tsVal,
+          tp: t.type
+        });
+        addCount++;
       }
     }
     
-    if (batchCount > 0) {
-      await currentBatch.commit();
-    }
+    if (opCount > 0) batches.push(currentBatch.commit());
+    await Promise.all(batches);
     
-    showToast(`Recovered ${count} logs!`, 'ok');
+    showToast(`Cleaned ${delCount} dupes, upgraded ${upCount}, recovered ${addCount} missing logs!`, 'ok');
   } catch (e) {
     console.error('Error recovering logs:', e);
     showToast('Recovery failed: ' + e.message, 'er');
