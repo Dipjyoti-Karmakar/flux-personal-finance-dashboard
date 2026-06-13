@@ -1508,7 +1508,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <div id="logView" style="display:none">
   <div class="log-header">
     <div class="log-title">Activity Log</div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex:1;justify-content:flex-end;">
+      <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)" style="padding:6px 12px;font-size:12px;border-radius:20px;background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;flex:1;min-width:120px;max-width:200px;" aria-label="Search logs">
       <select id="logFilter" onchange="renderLogs()" style="padding:6px 10px;font-size:11px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;">
         <option value="all">All</option>
         <option value="ADD">➕ Added</option>
@@ -1823,6 +1824,7 @@ let cTyFilt = 'all';
 let cModeFilt = 'all';
 let cEventFilt = 'all';
 let cTxSearch = '';
+let cLogSearch = '';
 let lastCatList = null;
 
 let rawImportRows = [];
@@ -4430,6 +4432,9 @@ function renderLogs() {
   if (filter !== 'all') {
     logs = logs.filter(l => l.a === filter);
   }
+  if (cLogSearch) {
+    logs = logs.filter(l => (l.m || '').toLowerCase().includes(cLogSearch));
+  }
 
   if (logs.length === 0) {
     listEl.innerHTML = `<div class="log-empty"><div class="log-empty-icon">📝</div><div class="log-empty-title">No activity yet</div><div class="log-empty-sub">Your transaction history and edits will appear here.</div></div>`;
@@ -5663,6 +5668,7 @@ window.updCustomDt = updCustomDt;
 window.clearCustomDt = clearCustomDt;
 window.loadMoreTx = loadMoreTx;
 window.setTxSearch = setTxSearch;
+window.setLogSearch = function(val) { cLogSearch = val.toLowerCase(); renderLogs(); };
 window.scrollToForm = scrollToForm;
 window.setEventFilter = setEventFilter;
 window.showCreateEvent = showCreateEvent;
