@@ -1952,7 +1952,6 @@ onAuthStateChanged(auth, (user) => {
     loadEvents();
     loadActivityLog();
     loadRecurring();
-    migratePastLogs(); // Temporary migration script to tag old logs
     // Clear stale localStorage activity log (migrated to Firestore)
     try { localStorage.removeItem('flux_activity_log'); } catch(_) {}
     showSkeletons();
@@ -2491,11 +2490,7 @@ function renderStats(sTxs){
 
   let avgNumerator = tE;
 
-  if (statsMode === 'month' && cDtFilt === 'today') {
-    // Today-only filter within month mode: use 1 day
-    elapsedDays = 1;
-    avgNumerator = exp.filter(t => t.date === todayStr).reduce((s,t) => s + t.amount, 0);
-  } else if (statsMode === 'month') {
+  if (statsMode === 'month') {
     elapsedDays = now.getDate();
   } else if (statsMode === 'year') {
     const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -4459,34 +4454,33 @@ function renderLogs() {
     const d  = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
     const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})} ${d.getFullYear().toString().slice(-2)}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
 
+    const isAuto = l.a === 'ADD' && (l.m || '').includes('Auto-added');
     const showTypePill = l.a === 'ADD' || l.a === 'DELETE';
     const txType = showTypePill ? inferTxType(l) : null;
     const actionLabel = actLabels[l.a] || l.a;
 
     const dotColorClass = txType === 'income' ? 'income' : (txType === 'expense' ? 'expense' : 'neutral');
 
-    // Create a beautiful pill that merges action and type
-    let mergedPill = '';
-    if (l.a === 'EDIT') {
-      mergedPill = `<span class="bg ct" style="background:linear-gradient(135deg, #f6d365, #fda085);color:#0d0f14;text-shadow:none;">✏️ Edited</span>`;
-    } else if (l.a === 'IMPORT') {
-      mergedPill = `<span class="bg ct" style="background:linear-gradient(135deg, #4facfe, #00f2fe);color:#fff;text-shadow:none;">📥 Imported</span>`;
-    } else if (txType === 'income') {
-      mergedPill = `<span class="bg ct" style="background:linear-gradient(135deg, #43e97b, #38f9d7);color:#0d0f14;text-shadow:none;">↑ ${actionLabel} Income</span>`;
-    } else if (txType === 'expense') {
-      mergedPill = `<span class="bg ct" style="background:linear-gradient(135deg, #ff0844, #ffb199);color:#fff;text-shadow:none;">↓ ${actionLabel} Expense</span>`;
-    } else {
-      mergedPill = `<span class="bg ct" style="background:var(--s3);color:var(--mu);text-shadow:none;">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
-    }
+    let actionPill = '';
+    if (l.a === 'EDIT') actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--tx);text-shadow:none;">✏️ Edited</span>`;
+    else if (l.a === 'IMPORT') actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--tx);text-shadow:none;">📥 Imported</span>`;
+    else if (l.a === 'DELETE') actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--tx);text-shadow:none;">🗑️ Deleted</span>`;
+    else if (l.a === 'ADD') actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--tx);text-shadow:none;">${isAuto ? '🔄 Auto-recurring' : '➕ Added'}</span>`;
+    else actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--mu);text-shadow:none;">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
 
-    const timePill = `<span>${timeStr}</span>`;
+    let typePill = '';
+    if (txType === 'income') typePill = `<span class="bg ct" style="background:var(--ib);color:var(--in);text-shadow:none;">↑ Income</span>`;
+    else if (txType === 'expense') typePill = `<span class="bg ct" style="background:var(--eb);color:var(--ex);text-shadow:none;">↓ Expense</span>`;
+
+    const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
 
     return `<div class="txi card-in" style="cursor:default;padding:14px 16px;">
       <div class="dot ${dotColorClass}" ${dotColorClass==='neutral'?'style="background:var(--mu);box-shadow:0 0 8px var(--mu)"':''}></div>
       <div class="ti">
         <div class="tn log-msg" style="white-space:normal;overflow:visible;line-height:1.4;margin-bottom:6px;font-size:13px;font-weight:600;">${l.m}</div>
-        <div class="tm">
-          ${mergedPill}
+        <div class="tm" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          ${actionPill}
+          ${typePill}
           ${timePill}
         </div>
       </div>
@@ -5993,50 +5987,6 @@ function initAutocomplete() {
   });
 }
 
-// TEMPORARY MIGRATION SCRIPT TO TAG PAST LOGS
-async function migratePastLogs() {
-  if (!userId) return;
-  try {
-    const snap = await getDocs(collection(db, 'users', userId, 'activities'));
-    const batch = writeBatch(db);
-    let count = 0;
-    
-    snap.forEach(docSnap => {
-      const data = docSnap.data();
-      if (data.tp) return; // already has type
-      if (data.a !== 'ADD' && data.a !== 'DELETE') return;
-      
-      const m = (data.m || '').toLowerCase();
-      let type = null;
-      
-      if (m.includes('salary') || m.includes('freelance') || m.includes('investment') || m.includes('income')) {
-        type = 'income';
-      } else if (m.includes('food') || m.includes('transport') || m.includes('housing') || m.includes('entertainment') || m.includes('health') || m.includes('shopping') || m.includes('utilit') || m.includes('occasion') || m.includes('stationery') || m.includes('expense')) {
-        type = 'expense';
-      } else if (m.includes('other')) {
-        if (m.includes('cash') || m.includes('refund')) {
-          type = 'income';
-        } else {
-          type = 'expense'; 
-        }
-      } else {
-        type = 'expense'; // Ultimate fallback
-      }
-
-      if (type) {
-        batch.update(docSnap.ref, { tp: type });
-        count++;
-      }
-    });
-
-    if (count > 0) {
-      await batch.commit();
-      console.log(`Migrated ${count} past activity logs successfully.`);
-    }
-  } catch(e) {
-    console.error('Migration failed:', e);
-  }
-}
 </script>
 </body>
 </html>
