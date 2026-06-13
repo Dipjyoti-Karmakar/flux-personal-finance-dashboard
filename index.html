@@ -575,37 +575,33 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; }
   header{flex-direction:column;align-items:stretch; gap:0; margin-bottom:20px;}
   
-  /* ── Mobile Action Bar ── */
-  .hr {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin: 0;
-    padding: 0;
+  /* Action Bar Fix for Mobile Headers */
+  .hr { 
+    display: grid; 
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 8px; 
+    margin: 0; 
+    padding: 0; 
+    overflow: visible; 
     align-items: stretch;
   }
-  /* Sync pill spans full width on its own row */
-  #cloudStatus {
-    grid-column: 1 / -1;
-    justify-content: center;
-    padding: 10px 14px;
+  #cloudStatus { 
+    grid-column: span 3; 
+    justify-content: center; 
+    margin-right: 0; 
+    padding: 10px; 
     border-radius: 12px;
-    background: var(--s2);
-    font-size: 11px;
   }
-  /* Sign Out, CSV, PDF, Import — 3 per row */
-  #authBtn, .hr .ib {
-    width: 100%;
-    justify-content: center;
-    flex-direction: column;
-    gap: 4px;
-    padding: 10px 6px;
-    font-size: 10px;
-    letter-spacing: 0.5px;
+  #authBtn {
+    grid-column: span 3;
+  }
+  .ib { 
+    width: 100%; 
+    justify-content: center; 
+    padding: 12px 8px; 
+    font-size: 11px; 
     border-radius: 12px;
-    min-height: 52px;
   }
-  #authBtn svg, .hr .ib svg { width: 15px; height: 15px; }
 
   /* Hero Dashboard Balance */
   .sr1{grid-template-columns:1fr 1fr; gap:10px;}
@@ -884,94 +880,35 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 /* ── Subscriptions Tab ── */
 #subView { max-width:960px; margin:0 auto; }
-.sub-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-.sub-title { font-family:'Playfair Display',serif; font-size:22px; font-weight:600; color:var(--tx); }
+.sub-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+.sub-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx); }
+.sub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; }
+.sub-card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); padding:18px; transition:all .25s cubic-bezier(0.16,1,0.3,1); box-shadow:var(--sh-card); }
+.sub-card:hover { border-color:var(--bs); box-shadow:var(--sh-hov); transform:translateY(-2px); }
+.sub-card.sub-paused { opacity:0.6; }
+.sub-due-section { margin-bottom:24px; }
+.sub-section-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--mu); font-weight:600; margin-bottom:12px; }
+.sub-summary-bar { display:flex; gap:6px; padding:14px 8px; background:var(--s2); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:20px; flex-wrap:nowrap; justify-content:space-between; }
+.sub-summary-item { display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; min-width:0; flex:1; }
+.sub-summary-val { font-family:'DM Mono',monospace; font-size:15px; font-weight:700; }
+.sub-summary-lbl { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:0.5px; text-transform:uppercase; color:var(--mu); font-weight:600; line-height:1.2; }
+@media(max-width:520px) { .sub-grid { grid-template-columns:1fr; } }
 
-/* Premium Stats Bar */
-.sub-summary-bar { display:grid; grid-template-columns:repeat(4,1fr); gap:0; background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); margin-bottom:24px; overflow:hidden; box-shadow:var(--sh-card); }
-.sub-summary-item { display:flex; flex-direction:column; gap:6px; align-items:center; text-align:center; min-width:0; padding:18px 12px; position:relative; }
-.sub-summary-item:not(:last-child)::after { content:''; position:absolute; right:0; top:20%; height:60%; width:1px; background:var(--bd); }
-.sub-summary-val { font-family:'DM Mono',monospace; font-size:18px; font-weight:700; line-height:1; }
-.sub-summary-lbl { font-family:'DM Mono',monospace; font-size:8px; letter-spacing:1px; text-transform:uppercase; color:var(--mu); font-weight:600; line-height:1.3; }
-.sub-summary-icon { font-size:16px; margin-bottom:2px; opacity:0.7; }
-
-/* Premium Subscription Cards */
-.sub-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
-.sub-card { background:var(--sf); border:1px solid var(--bd); border-radius:var(--r); padding:20px; transition:all .3s cubic-bezier(0.16,1,0.3,1); box-shadow:var(--sh-card); position:relative; overflow:hidden; }
-.sub-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,var(--ac),color-mix(in srgb,var(--ac) 60%,var(--on))); opacity:0; transition:opacity .3s ease; }
-.sub-card:hover { border-color:var(--bs); box-shadow:var(--sh-hov); transform:translateY(-3px); }
-.sub-card:hover::before { opacity:1; }
-.sub-card.sub-paused { opacity:0.55; }
-.sub-card.sub-paused::before { background:var(--mu); opacity:0.4; }
-.sub-card.sub-due::before { background:linear-gradient(90deg,var(--ac),var(--ex)); opacity:1; }
-.sub-card-icon { width:48px; height:48px; border-radius:14px; background:var(--s2); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; border:1px solid var(--bd); position:relative; transition:all .3s ease; }
-.sub-card:hover .sub-card-icon { transform:scale(1.08); }
-.sub-progress { width:100%; height:3px; background:var(--s3); border-radius:2px; margin-top:10px; overflow:hidden; }
-.sub-progress-fill { height:100%; border-radius:2px; transition:width .6s ease; }
-.sub-btn { display:flex; align-items:center; justify-content:center; gap:6px; flex:1; padding:9px 6px; border-radius:10px; border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; font-weight:600; letter-spacing:.3px; cursor:pointer; transition:all .2s; text-transform:uppercase; }
-.sub-btn:hover { border-color:var(--bs); color:var(--tx); background:var(--s3); }
-.sub-btn.sub-btn-del { color:var(--ex); }
-.sub-btn.sub-btn-del:hover { border-color:var(--ex); background:var(--eb); }
-.sub-btn.sub-btn-pause:hover { border-color:var(--ac); color:var(--ac); background:var(--ag); }
-.sub-section-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--mu); font-weight:600; margin-bottom:14px; }
-
-@media(max-width:520px) {
-  .sub-grid { grid-template-columns:1fr; }
-  /* Stats bar: 2×2 grid, more breathing room */
-  .sub-summary-bar {
-    grid-template-columns: repeat(2, 1fr);
-    margin: 0 0 20px 0;
-  }
-  .sub-summary-item {
-    padding: 18px 10px;
-    gap: 5px;
-  }
-  /* Hide vertical divider between col-2 items */
-  .sub-summary-item:nth-child(2)::after,
-  .sub-summary-item:nth-child(4)::after { display:none; }
-  /* Add a horizontal divider between the two rows */
-  .sub-summary-item:nth-child(3),
-  .sub-summary-item:nth-child(4) {
-    border-top: 1px solid var(--bd);
-  }
-  .sub-summary-icon { font-size:20px; margin-bottom:4px; opacity:0.85; }
-  .sub-summary-val { font-size:18px; }
-  .sub-summary-lbl { font-size:9px; letter-spacing:0.8px; }
-
-  /* Sub header: stack title + button full width */
-  .sub-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-    margin-bottom: 18px;
-  }
-  .sub-header > button {
-    width: 100%;
-    justify-content: center;
-    padding: 12px 18px !important;
-    font-size: 12px !important;
-    border-radius: 14px !important;
-  }
-
-  /* Sub card mobile tweaks */
-  .sub-card { padding: 16px; }
-  .sub-btn {
-    padding: 11px 6px;
-    font-size: 10px;
-    min-height: 40px;
-  }
-
-  #subView, #logView { padding:0 2px; }
-  .sub-title, .log-title { font-size:22px; }
-}
 @media(min-width:768px) {
   .sub-title { font-size:28px; }
-  .sub-summary-bar { margin-bottom:32px; }
-  .sub-summary-val { font-size:22px; }
-  .sub-summary-lbl { font-size:10px; }
-  .sub-summary-item { padding:24px 16px; }
-  .sub-grid { grid-template-columns:repeat(auto-fill,minmax(380px,1fr)); gap:24px; }
-  .sub-card { padding:26px; }
+  .sub-summary-bar { padding: 24px 32px; gap:24px; margin-bottom: 32px; }
+  .sub-summary-val { font-size: 26px; }
+  .sub-summary-lbl { font-size: 11px; }
+  .sub-grid { grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 24px; }
+  .sub-card { padding: 24px; }
+  .sub-card > div:first-child { gap: 16px !important; }
+  .sub-card > div:first-child > div:first-child { width: 56px !important; height: 56px !important; font-size: 28px !important; border-radius: 16px !important; }
+  .sub-card > div:first-child > div:nth-child(2) > div:first-child { font-size: 18px !important; margin-bottom: 6px !important; }
+  .sub-card > div:first-child > div:nth-child(2) > div:nth-child(2) { font-size: 12px !important; }
+  .sub-card > div:first-child > div:last-child > div:first-child { font-size: 22px !important; }
+  .sub-card > div:first-child > div:last-child > div:last-child span { font-size: 11px !important; padding: 4px 10px !important; }
+  .sub-card > div:last-child { margin-top: 20px !important; padding-top: 16px !important; gap: 12px !important; }
+  .sub-card > div:last-child button { font-size: 12px !important; padding: 10px 8px !important; }
 }
 
 /* ── Recurring Modal ── */
@@ -1541,33 +1478,26 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <!-- Subscriptions View -->
 <div id="subView" style="display:none">
   <div class="sub-header">
-    <div>
-      <div class="sub-title">Subscriptions</div>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--mu);margin-top:3px;letter-spacing:.3px;">Recurring expenses &amp; income tracked automatically</div>
-    </div>
-    <button onclick="openAddRecurring()" style="display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:12px;border:1px solid var(--ac);background:var(--ag);color:var(--ac);font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:all .2s;text-transform:uppercase;" onmouseover="this.style.background='var(--ac)';this.style.color='#0d0f14'" onmouseout="this.style.background='var(--ag)';this.style.color='var(--ac)'">
+    <div class="sub-title">Subscriptions</div>
+    <button class="ib" onclick="openAddRecurring()" style="font-size:11px;">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Subscription
     </button>
   </div>
   <div class="sub-summary-bar" id="subSummaryBar">
     <div class="sub-summary-item">
-      <div class="sub-summary-icon">💸</div>
       <div class="sub-summary-val" id="subTotalMonthly" style="color:var(--ex)">₹0</div>
-      <div class="sub-summary-lbl">Monthly</div>
+      <div class="sub-summary-lbl">Monthly Cost</div>
     </div>
     <div class="sub-summary-item">
-      <div class="sub-summary-icon">📅</div>
       <div class="sub-summary-val" id="subTotalYearly" style="color:var(--mu)">₹0</div>
-      <div class="sub-summary-lbl">Yearly</div>
+      <div class="sub-summary-lbl">Yearly Cost</div>
     </div>
     <div class="sub-summary-item">
-      <div class="sub-summary-icon">⚡</div>
       <div class="sub-summary-val" id="subDueCount" style="color:var(--ac)">0</div>
       <div class="sub-summary-lbl">Due Soon</div>
     </div>
     <div class="sub-summary-item">
-      <div class="sub-summary-icon">✅</div>
       <div class="sub-summary-val" id="subActiveCount" style="color:var(--in)">0</div>
       <div class="sub-summary-lbl">Active</div>
     </div>
@@ -4815,71 +4745,35 @@ function renderRecurring() {
   area.innerHTML = recurringList.map(rec => {
     const isDue = rec.nextDue && rec.nextDue <= today;
     const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue) - new Date(today)) / 86400000) : null;
-
-    // Progress bar: % of billing cycle elapsed
-    const FREQ_DAYS = { daily:1, weekly:7, monthly:30, yearly:365 };
-    const cycleDays = rec.freq === 'custom' ? (rec.customDays || 30) : (FREQ_DAYS[rec.freq] || 30);
-    let progressPct = 0;
-    let progressColor = 'var(--in)';
-    if (rec.nextDue && rec.active) {
-      const elapsed = cycleDays - Math.max(0, daysUntil || 0);
-      progressPct = Math.min(100, Math.max(0, Math.round((elapsed / cycleDays) * 100)));
-      if (progressPct > 85) progressColor = 'var(--ex)';
-      else if (progressPct > 60) progressColor = 'var(--ac)';
-    }
-
     let statusHtml;
-    let cardClass = 'sub-card' + (rec.active ? '' : ' sub-paused');
     if (!rec.active) {
-      statusHtml = `<span style="font-size:10px;color:var(--mu);background:var(--s3);padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-weight:700;letter-spacing:.5px">⏸ PAUSED</span>`;
+      statusHtml = `<span style="font-size:10px;color:var(--mu);background:var(--s3);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">PAUSED</span>`;
     } else if (isDue) {
-      cardClass += ' sub-due';
-      statusHtml = `<span style="font-size:10px;color:var(--ac);background:var(--ag);padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-weight:700;border:1px solid var(--ac);letter-spacing:.5px">⚡ DUE NOW</span>`;
+      statusHtml = `<span style="font-size:10px;color:var(--ac);background:var(--ag);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">⚡ DUE</span>`;
     } else if (daysUntil !== null && daysUntil <= 3) {
-      statusHtml = `<span style="font-size:10px;color:var(--ex);background:var(--eb);padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-weight:700;border:1px solid var(--ex);letter-spacing:.5px">🔴 In ${daysUntil}d</span>`;
-    } else if (daysUntil !== null && daysUntil <= 7) {
-      statusHtml = `<span style="font-size:10px;color:var(--of);background:var(--fb);padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-weight:700;letter-spacing:.5px">⚠ In ${daysUntil}d</span>`;
+      statusHtml = `<span style="font-size:10px;color:var(--ex);background:var(--eb);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">In ${daysUntil}d</span>`;
     } else {
-      statusHtml = `<span style="font-size:10px;color:var(--in);background:var(--ib);padding:4px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-weight:700;letter-spacing:.5px">✓ Active</span>`;
+      statusHtml = `<span style="font-size:10px;color:var(--in);background:var(--ib);padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:600">✓ Active</span>`;
     }
     const amtColor = rec.type === 'income' ? 'var(--in)' : 'var(--ex)';
     const amtSign = rec.type === 'income' ? '+' : '-';
     const catIcon = CICO[rec.cat] || '✦';
-    const freqLabel = rec.freq === 'custom' ? `Every ${rec.customDays}d` : (FREQ[rec.freq] || rec.freq);
-    const nextLabel = rec.nextDue ? rec.nextDue : '—';
-
-    return `<div class="${cardClass} card-in">
-      <div style="display:flex;align-items:flex-start;gap:14px">
-        <div class="sub-card-icon">${catIcon}</div>
+    return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--bd)">${catIcon}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:15px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx)">${esc(rec.name)}</div>
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);background:var(--s3);padding:2px 8px;border-radius:5px;font-weight:600">${freqLabel}</span>
-            <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--di);">${nextLabel}</span>
-          </div>
-          ${rec.active ? `<div class="sub-progress" style="margin-top:10px"><div class="sub-progress-fill" style="width:${progressPct}%;background:${progressColor}"></div></div>` : ''}
-          ${rec.active && daysUntil !== null ? `<div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--mu);margin-top:4px;letter-spacing:.3px">${isDue ? 'Overdue' : `${daysUntil} day${daysUntil!==1?'s':''} remaining`}</div>` : ''}
+          <div style="font-weight:600;font-size:14px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(rec.name)}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);letter-spacing:.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rec.freq === 'custom' ? rec.customDays + ' Days' : (FREQ[rec.freq]||rec.freq)} • Next: ${rec.nextDue || '—'}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-family:'DM Mono',monospace;font-weight:800;font-size:18px;color:${amtColor};line-height:1">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</div>
-          <div style="margin-top:8px">${statusHtml}</div>
+          <div style="font-family:'DM Mono',monospace;font-weight:700;font-size:17px;color:${amtColor}">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN',{maximumFractionDigits:2})}</div>
+          <div style="margin-top:5px">${statusHtml}</div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)">
-        <button class="sub-btn sub-btn-pause" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">
-          ${rec.active
-            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Pause`
-            : `<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Resume`
-          }
-        </button>
-        <button class="sub-btn" onclick="openEditRecurring('${rec.id}')" style="flex:1.2">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>
-          Edit
-        </button>
-        <button class="sub-btn sub-btn-del" onclick="askDeleteRecurring('${rec.id}')">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-          Delete
-        </button>
+      <div style="display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--bd)">
+        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">${rec.active ? '⏸ Pause' : '▶ Resume'}</button>
+        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px" onclick="openEditRecurring('${rec.id}')">✏ Edit</button>
+        <button class="ib" style="flex:1;justify-content:center;font-size:10px;padding:7px 4px;color:var(--ex)" onclick="askDeleteRecurring('${rec.id}')">🗑 Delete</button>
       </div>
     </div>`;
   }).join('');
