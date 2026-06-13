@@ -2487,7 +2487,8 @@ function renderStats(sTxs){
   const todayStr = getTodayStr();
   const todayDate = new Date(todayStr + 'T00:00:00');
 
-  if (statsMode === 'today') {
+  if (statsMode === 'month' && cDtFilt === 'today') {
+    // Today-only filter within month mode: use 1 day
     elapsedDays = 1;
   } else if (statsMode === 'month') {
     elapsedDays = now.getDate();
@@ -3227,7 +3228,10 @@ function renderSplit(passedTxs){
   const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
   const oA=onl.reduce((s,t)=>s+t.amount,0),fA=ofl.reduce((s,t)=>s+t.amount,0),tot=oA+fA;
   const op=tot>0?(oA/tot*100).toFixed(1):0,fp=tot>0?(fA/tot*100).toFixed(1):0;
-  area.innerHTML=`<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">⚡ Online ${op}%</span><span class="splb" style="color:var(--of)">🏪 Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length>0?fmtS(oA/new Set(onl.map(t=>t.date)).size)+' avg/day':'—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)">Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length>0?fmtS(fA/new Set(ofl.map(t=>t.date)).size)+' avg/day':'—'}</div></div></div>`;
+  // FIXED: Use Set size with a minimum of 1 to prevent division by zero / Infinity avg/day
+  const onlDays=Math.max(1,new Set(onl.map(t=>t.date)).size);
+  const oflDays=Math.max(1,new Set(ofl.map(t=>t.date)).size);
+  area.innerHTML=`<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">⚡ Online ${op}%</span><span class="splb" style="color:var(--of)">🏪 Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length>0?fmtS(oA/onlDays)+' avg/day':'—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)">Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length>0?fmtS(fA/oflDays)+' avg/day':'—'}</div></div></div>`;
 }
 
 // ── Month-over-Month Insights (max 8, high-impact) ──
@@ -4432,41 +4436,60 @@ function renderLogs() {
     return;
   }
 
-  const actIcons = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
-
-  // Helper: render a colored Income / Expense type badge
-  function txTypeBadge(txType) {
-    if (!txType) return '';
-    if (txType === 'income') {
-      return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:var(--ib);color:var(--in);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;vertical-align:middle;margin-left:6px;">↑ INCOME</span>`;
-    }
-    return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;background:var(--eb);color:var(--ex);font-family:'DM Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;vertical-align:middle;margin-left:6px;">↓ EXPENSE</span>`;
-  }
+  // Action icon colours and labels
+  const actIcons  = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
+  const actLabels = { 'ADD': 'Added', 'EDIT': 'Edited', 'DELETE': 'Deleted', 'IMPORT': 'Imported' };
+  const actBgColor = {
+    'ADD':    'var(--ib)',
+    'EDIT':   'rgba(200,169,110,0.13)',
+    'DELETE': 'var(--eb)',
+    'IMPORT': 'var(--ob)'
+  };
+  const actFgColor = {
+    'ADD':    'var(--in)',
+    'EDIT':   'var(--ac)',
+    'DELETE': 'var(--ex)',
+    'IMPORT': 'var(--on)'
+  };
 
   // Helper: try to infer tx type from legacy log messages that don't have 'tp' field
   function inferTxType(l) {
     if (l.tp) return l.tp;
-    // Only infer for ADD / DELETE actions
     if (l.a !== 'ADD' && l.a !== 'DELETE') return null;
-    // Heuristic: presence of income-related category keywords in the message
     const m = (l.m || '').toLowerCase();
     if (/salary|freelance|investment|income/.test(m)) return 'income';
-    return null; // can't determine reliably for old logs — show nothing
+    return null;
   }
-  
+
   listEl.innerHTML = logs.map(l => {
     const ts = l.t;
-    // Handle Firestore Timestamp objects, plain numbers, and null (pending serverTimestamp)
-    const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
+    const d  = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
     const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
-    const showBadge = l.a === 'ADD' || l.a === 'DELETE';
-    const txType = showBadge ? inferTxType(l) : null;
-    const typeBadge = txType ? txTypeBadge(txType) : '';
-    return `<div class="log-entry card-in">
-      <div class="log-icon">${actIcons[l.a] || '•'}</div>
-      <div class="log-body">
-        <div class="log-msg">${l.m}${typeBadge}</div>
-        <div class="log-time">${timeStr}</div>
+
+    const showTypePill = l.a === 'ADD' || l.a === 'DELETE';
+    const txType = showTypePill ? inferTxType(l) : null;
+
+    // Action pill — styled exactly like the category badge in transaction items
+    const actionLabel = actLabels[l.a] || l.a;
+    const actionBg    = actBgColor[l.a]  || 'var(--s3)';
+    const actionFg    = actFgColor[l.a]  || 'var(--mu)';
+    const actionPill  = `<span class="bg ct" style="background:${actionBg};color:${actionFg};border:none;font-weight:700;text-shadow:none;font-size:9px;box-shadow:none;">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
+
+    // Income / Expense pill — same style, green or red
+    let typePill = '';
+    if (txType === 'income') {
+      typePill = `<span class="bg ct" style="background:var(--ib);color:var(--in);border:none;font-weight:700;text-shadow:none;font-size:9px;box-shadow:none;">↑ Income</span>`;
+    } else if (txType === 'expense') {
+      typePill = `<span class="bg ct" style="background:var(--eb);color:var(--ex);border:none;font-weight:700;text-shadow:none;font-size:9px;box-shadow:none;">↓ Expense</span>`;
+    }
+
+    // Time pill
+    const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
+
+    return `<div class="log-entry card-in" style="flex-direction:column;gap:6px;padding:14px 16px;">
+      <div class="log-msg" style="font-size:13px;font-weight:600;color:var(--tx);line-height:1.4;">${l.m}</div>
+      <div class="tm" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+        ${actionPill}${typePill}${timePill}
       </div>
     </div>`;
   }).join('');
