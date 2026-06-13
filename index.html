@@ -1516,6 +1516,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         <option value="DELETE">🗑️ Deleted</option>
         <option value="IMPORT">📥 Imported</option>
       </select>
+      <button class="log-clear-btn" onclick="recoverLogs()" style="color:var(--ib);border-color:var(--ib);">Recover Logs</button>
       <button class="log-clear-btn" onclick="askClearLogs()">Clear All</button>
     </div>
   </div>
@@ -5603,6 +5604,54 @@ async function generatePDF() {
   }
 }
 
+async function recoverLogs() {
+  if (!userId) { showToast('Sign in to recover logs', 'er'); return; }
+  try {
+    showToast('Recovering logs...', 'ok');
+    let count = 0;
+    const batchSize = 450;
+    let batch = writeBatch(db);
+    
+    const sortedTxs = [...txs].sort((a,b) => {
+       const da = a.ts ? (a.ts.toDate ? a.ts.toDate() : new Date(a.ts)) : new Date(a.date);
+       const dbTime = b.ts ? (b.ts.toDate ? b.ts.toDate() : new Date(b.ts)) : new Date(b.date);
+       return da - dbTime;
+    });
+
+    for (let i = 0; i < sortedTxs.length; i++) {
+      const t = sortedTxs[i];
+      const actRef = doc(collection(db, 'users', userId, 'activities'));
+      
+      let tDate = t.ts || t.date || new Date();
+      if (typeof tDate === 'string') tDate = new Date(tDate);
+      
+      batch.set(actRef, {
+        a: 'ADD',
+        m: `Added <strong>"${esc(t.desc)}"</strong> - ${fmt(t.amount)}, ${t.cat||'other'}, ${fmtDt(t.date)}, ${t.mode}`,
+        t: tDate,
+        tp: t.type || null
+      });
+      
+      count++;
+      if (count % batchSize === 0) {
+        await batch.commit();
+        batch = writeBatch(db);
+      }
+    }
+    
+    if (count % batchSize !== 0) {
+      await batch.commit();
+    }
+    
+    showToast(`Recovered ${count} logs!`, 'ok');
+  } catch (e) {
+    console.error(e);
+    showToast('Error recovering logs', 'er');
+  }
+}
+
+function esc(str) { return str.replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
 document.getElementById('reportMod').addEventListener('click', function(e) { if (e.target === this) closeReportMod(); });
 
 function switchTab(tab) {
@@ -5693,6 +5742,7 @@ window.loadMoreCatTx = loadMoreCatTx;
 window.switchTab = switchTab;
 window.renderLogs = renderLogs;
 window.askClearLogs = askClearLogs;
+window.recoverLogs = recoverLogs;
 window.clearLogs = clearLogs;
 window.setSplitView = setSplitView;
 // Recurring
