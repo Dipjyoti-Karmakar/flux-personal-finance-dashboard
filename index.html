@@ -2010,7 +2010,10 @@ function loadDataFromCloud() {
         loadedTxs.push({ id: doc.id, ...clean });
       }
     });
-    txs = loadedTxs.sort((a,b) => new Date(b.date) - new Date(a.date));
+    txs = loadedTxs.sort((a,b) => {
+      const dDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
+    });
     // Exclude tx pending soft-delete during undo window
     if (_undoTxData) txs = txs.filter(t => t.id !== _undoTxData.id);
     
@@ -2172,7 +2175,7 @@ async function addTx() {
   }
 
   const eventId = document.getElementById('txEvent').value || '';
-  const newTx = { type: cType, mode: cMode, desc, amount: amt, cat, date };
+  const newTx = { type: cType, mode: cMode, desc, amount: amt, cat, date, createdAt: Date.now() };
   if (eventId) newTx.eventId = eventId;
   const txId = uid();
   
@@ -3154,7 +3157,10 @@ function renderCatTxList(passedTxs) {
   if (!panel || !activeCatFilter) return;
   const aTxs = passedTxs || lastCatList || getActiveTxs();
   const list = aTxs.filter(t => t.type === 'expense' && (t.cat || 'other') === activeCatFilter)
-    .sort((a,b) => new Date(b.date) - new Date(a.date));
+    .sort((a,b) => {
+      const dDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
+    });
   const totalAmt = list.reduce((s,t) => s+t.amount, 0);
   const renderList = list.slice(0, catTxVisibleCount);
   const hasMore = list.length > catTxVisibleCount;
@@ -3468,7 +3474,10 @@ function lazyLoadMonthTxs(el, yr, m) {
   const mTxs = txs.filter(t => {
     const d = new Date(t.date+'T00:00:00');
     return d.getFullYear() === yr && d.getMonth() === m;
-  }).sort((a,b) => new Date(b.date) - new Date(a.date));
+  }).sort((a,b) => {
+    const dDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
+  });
   let html;
   if (mTxs.length > 0) {
     const isCapped = mTxs.length > 50;
@@ -3568,7 +3577,10 @@ function getReportData() {
     reportTitle = `Event: ${evt.name}`;
     const evTxs = txs.filter(t => t.eventId === rptEventId);
     if(evTxs.length) {
-      evTxs.sort((a,b)=>a.date.localeCompare(b.date));
+      evTxs.sort((a,b) => {
+        const dDiff = a.date.localeCompare(b.date);
+        return dDiff !== 0 ? dDiff : ((a.createdAt || 0) - (b.createdAt || 0));
+      });
       fromDate = evTxs[0].date;
       toDate = evTxs[evTxs.length-1].date;
     } else {
@@ -3596,7 +3608,10 @@ function getReportData() {
   let filtered = [...allInPeriod];
   if (!incInc) filtered = filtered.filter(t => t.type !== 'income');
   if (!incExp) filtered = filtered.filter(t => t.type !== 'expense');
-  filtered.sort((a,b) => a.date.localeCompare(b.date));
+  filtered.sort((a,b) => {
+    const dDiff = a.date.localeCompare(b.date);
+    return dDiff !== 0 ? dDiff : ((a.createdAt || 0) - (b.createdAt || 0));
+  });
 
   return { fromDate, toDate, reportTitle, allInPeriod, filtered };
 }
@@ -3965,7 +3980,7 @@ async function executeImport(mode) {
         if (mode === 'replace' || !isDup) {
           checkBatchLimit();
           const newId = uid();
-          const nTx = { type:r.type, mode:r.mode, desc:r.desc, amount:r.amount, cat:r.cat, date:r.date, _imp:true };
+          const nTx = { type:r.type, mode:r.mode, desc:r.desc, amount:r.amount, cat:r.cat, date:r.date, _imp:true, createdAt: Date.now() };
           currentBatch.set(doc(db, 'users', userId, 'transactions', newId), nTx);
           addedCount++;
         }
@@ -4611,7 +4626,7 @@ async function checkAndTriggerRecurring() {
         transaction.set(doc(db, 'users', userId, 'transactions', txId), {
           type: data.type, mode: data.mode || 'online',
           desc: data.name, cat: data.cat,
-          amount: data.amount, date: today, _recurring: true, _auto: true
+          amount: data.amount, date: today, _recurring: true, _auto: true, createdAt: Date.now()
         });
         transaction.update(recDoc.ref, {
           nextDue: computeNextDue(data.nextDue, data.freq, data.customDays),
