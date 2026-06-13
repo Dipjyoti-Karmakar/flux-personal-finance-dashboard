@@ -1517,6 +1517,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         <option value="IMPORT">📥 Imported</option>
       </select>
       <button class="log-clear-btn" onclick="askClearLogs()">Clear All</button>
+      <button class="log-clear-btn" onclick="recoverLogs()" style="color:var(--in);border-color:var(--in);">Recover</button>
     </div>
   </div>
   <div style="margin-bottom:16px; position:relative;">
@@ -5684,6 +5685,54 @@ function undoClearLogs() {
   renderLogs();
 }
 
+async function recoverLogs() {
+  if (!userId) { showToast('Sign in first', 'er'); return; }
+  showToast('Recovering logs...', 'ok');
+  try {
+    const actRef = collection(db, 'users', userId, 'activities');
+    let count = 0;
+    
+    const sortedTxs = [...txs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    let currentBatch = writeBatch(db);
+    let batchCount = 0;
+
+    for (const t of sortedTxs) {
+      const msg = `<div>${esc(t.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${t.type==='income'?'in':'ex'});font-weight:600">${fmt(t.amount)}</span><span>•</span><span style="text-transform:capitalize">${t.cat||'other'}</span><span>•</span><span>${fmtDt(t.date)}</span><span>•</span><span style="text-transform:capitalize">${t.mode}</span></div>`;
+      
+      const newRef = doc(actRef);
+      const txDate = new Date(t.date + 'T12:00:00');
+      const fakeTimestamp = new Date(txDate.getTime() + (count * 1000));
+
+      currentBatch.set(newRef, {
+        a: 'ADD',
+        m: msg,
+        t: fakeTimestamp,
+        tp: t.type
+      });
+      
+      count++;
+      batchCount++;
+      
+      if (batchCount === 450) {
+        await currentBatch.commit();
+        currentBatch = writeBatch(db);
+        batchCount = 0;
+      }
+    }
+    
+    if (batchCount > 0) {
+      await currentBatch.commit();
+    }
+    
+    showToast(`Recovered ${count} logs!`, 'ok');
+  } catch (e) {
+    console.error('Error recovering logs:', e);
+    showToast('Recovery failed: ' + e.message, 'er');
+  }
+}
+
+window.recoverLogs = recoverLogs;
 window.addTx = addTx;
 window.askDelTx = askDelTx;
 window.editTx = editTx;
