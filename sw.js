@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V35: Bumped to v23 to add plus signs for positive savings rates
-const CACHE_NAME = 'flux-v23';
+// V36: Bumped to v24 to invalidate cache for auth fix
+const CACHE_NAME = 'flux-v24';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
