@@ -4466,16 +4466,21 @@ function renderLogs() {
 
     const dotColorClass = txType === 'income' ? 'income' : (txType === 'expense' ? 'expense' : 'neutral');
 
+    const pSty = "padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px;letter-spacing:0.3px;";
+
     let actionPill = '';
-    if (l.a === 'EDIT') actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--tx);text-shadow:none;">✏️ Edited</span>`;
-    else if (l.a === 'IMPORT') actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--tx);text-shadow:none;">📥 Imported</span>`;
-    else if (l.a === 'DELETE') actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--tx);text-shadow:none;">🗑️ Deleted</span>`;
-    else if (l.a === 'ADD') actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--tx);text-shadow:none;">${isAuto ? '🔄 Auto-recurring' : '➕ Added'}</span>`;
-    else actionPill = `<span class="bg ct" style="background:var(--s3);color:var(--mu);text-shadow:none;">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
+    if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);">✏️ Edited</span>`;
+    else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">📥 Imported</span>`;
+    else if (l.a === 'DELETE') actionPill = `<span style="${pSty}background:var(--eb);color:var(--ex);border:1px solid var(--ex);">🗑️ Deleted</span>`;
+    else if (l.a === 'ADD') {
+      if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);">🔄 Auto-recurring</span>`;
+      else actionPill = `<span style="${pSty}background:var(--ib);color:var(--in);border:1px solid var(--in);">➕ Added</span>`;
+    }
+    else actionPill = `<span style="${pSty}background:var(--s3);color:var(--tx);border:1px solid var(--bd);">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
 
     let typePill = '';
-    if (txType === 'income') typePill = `<span class="bg ct" style="background:var(--ib);color:var(--in);text-shadow:none;">↑ Income</span>`;
-    else if (txType === 'expense') typePill = `<span class="bg ct" style="background:var(--eb);color:var(--ex);text-shadow:none;">↓ Expense</span>`;
+    if (txType === 'income') typePill = `<span style="${pSty}background:transparent;color:var(--in);border:1px dashed var(--in);">↑ Income</span>`;
+    else if (txType === 'expense') typePill = `<span style="${pSty}background:transparent;color:var(--ex);border:1px dashed var(--ex);">↓ Expense</span>`;
 
     const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
 
