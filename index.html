@@ -4442,18 +4442,6 @@ function renderLogs() {
   // Action icon colours and labels
   const actIcons  = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
   const actLabels = { 'ADD': 'Added', 'EDIT': 'Edited', 'DELETE': 'Deleted', 'IMPORT': 'Imported' };
-  const actBgColor = {
-    'ADD':    'var(--ib)',
-    'EDIT':   'rgba(200,169,110,0.13)',
-    'DELETE': 'var(--eb)',
-    'IMPORT': 'var(--ob)'
-  };
-  const actFgColor = {
-    'ADD':    'var(--in)',
-    'EDIT':   'var(--ac)',
-    'DELETE': 'var(--ex)',
-    'IMPORT': 'var(--on)'
-  };
 
   // Helper: try to infer tx type from legacy log messages that don't have 'tp' field
   function inferTxType(l) {
@@ -4471,28 +4459,34 @@ function renderLogs() {
 
     const showTypePill = l.a === 'ADD' || l.a === 'DELETE';
     const txType = showTypePill ? inferTxType(l) : null;
-
-    // Action pill — styled exactly like the category badge in transaction items
     const actionLabel = actLabels[l.a] || l.a;
-    const actionBg    = actBgColor[l.a]  || 'var(--s3)';
-    const actionFg    = actFgColor[l.a]  || 'var(--mu)';
-    const actionPill  = `<span class="bg ct" style="background:${actionBg};color:${actionFg};border:none;font-weight:700;text-shadow:none;font-size:9px;box-shadow:none;">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
 
-    // Income / Expense pill — same style, green or red
-    let typePill = '';
-    if (txType === 'income') {
-      typePill = `<span class="bg ct" style="background:var(--ib);color:var(--in);border:none;font-weight:700;text-shadow:none;font-size:9px;box-shadow:none;">↑ Income</span>`;
+    const dotColorClass = txType === 'income' ? 'income' : (txType === 'expense' ? 'expense' : 'neutral');
+
+    // Create a beautiful pill that merges action and type
+    let mergedPill = '';
+    if (l.a === 'EDIT') {
+      mergedPill = `<span class="bg ct" style="background:linear-gradient(135deg, #f6d365, #fda085);color:#0d0f14;text-shadow:none;">✏️ Edited</span>`;
+    } else if (l.a === 'IMPORT') {
+      mergedPill = `<span class="bg ct" style="background:linear-gradient(135deg, #4facfe, #00f2fe);color:#fff;text-shadow:none;">📥 Imported</span>`;
+    } else if (txType === 'income') {
+      mergedPill = `<span class="bg ct" style="background:linear-gradient(135deg, #43e97b, #38f9d7);color:#0d0f14;text-shadow:none;">↑ ${actionLabel} Income</span>`;
     } else if (txType === 'expense') {
-      typePill = `<span class="bg ct" style="background:var(--eb);color:var(--ex);border:none;font-weight:700;text-shadow:none;font-size:9px;box-shadow:none;">↓ Expense</span>`;
+      mergedPill = `<span class="bg ct" style="background:linear-gradient(135deg, #ff0844, #ffb199);color:#fff;text-shadow:none;">↓ ${actionLabel} Expense</span>`;
+    } else {
+      mergedPill = `<span class="bg ct" style="background:var(--s3);color:var(--mu);text-shadow:none;">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
     }
 
-    // Time pill
-    const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
+    const timePill = `<span>${timeStr}</span>`;
 
-    return `<div class="log-entry card-in" style="flex-direction:column;gap:6px;padding:14px 16px;">
-      <div class="log-msg" style="font-size:13px;font-weight:600;color:var(--tx);line-height:1.4;">${l.m}</div>
-      <div class="tm" style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
-        ${actionPill}${typePill}${timePill}
+    return `<div class="txi card-in" style="cursor:default;padding:14px 16px;">
+      <div class="dot ${dotColorClass}" ${dotColorClass==='neutral'?'style="background:var(--mu);box-shadow:0 0 8px var(--mu)"':''}></div>
+      <div class="ti">
+        <div class="tn log-msg" style="white-space:normal;overflow:visible;line-height:1.4;margin-bottom:6px;font-size:13px;font-weight:600;">${l.m}</div>
+        <div class="tm">
+          ${mergedPill}
+          ${timePill}
+        </div>
       </div>
     </div>`;
   }).join('');
