@@ -575,35 +575,37 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; }
   header{flex-direction:column;align-items:stretch; gap:0; margin-bottom:20px;}
   
-  /* Action Bar Fix for Mobile Headers: Sync + Sign Out side-by-side */
-  .hr { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr 1fr; 
-    gap: 8px; 
-    margin: 0; 
-    padding: 0; 
-    overflow: visible; 
+  /* ── Mobile Action Bar ── */
+  .hr {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
     align-items: stretch;
   }
-  #cloudStatus { 
-    grid-column: span 1;
-    grid-row: 1;
-    justify-content: center; 
-    margin-right: 0; 
-    padding: 10px; 
+  /* Sync pill spans full width on its own row */
+  #cloudStatus {
+    grid-column: 1 / -1;
+    justify-content: center;
+    padding: 10px 14px;
     border-radius: 12px;
+    background: var(--s2);
+    font-size: 11px;
   }
-  #authBtn {
-    grid-column: span 1;
-    grid-row: 1;
-  }
-  .ib { 
-    width: 100%; 
-    justify-content: center; 
-    padding: 12px 8px; 
-    font-size: 11px; 
+  /* Sign Out, CSV, PDF, Import — 3 per row */
+  #authBtn, .hr .ib {
+    width: 100%;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 6px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
     border-radius: 12px;
+    min-height: 52px;
   }
+  #authBtn svg, .hr .ib svg { width: 15px; height: 15px; }
 
   /* Hero Dashboard Balance */
   .sr1{grid-template-columns:1fr 1fr; gap:10px;}
@@ -915,11 +917,52 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 @media(max-width:520px) {
   .sub-grid { grid-template-columns:1fr; }
-  .sub-summary-bar { grid-template-columns:repeat(2,1fr); }
-  .sub-summary-item:nth-child(2)::after { display:none; }
-  .sub-summary-val { font-size:16px; }
-  #subView, #logView { padding:0 4px; }
-  .sub-title, .log-title { font-size:20px; padding:0 8px; }
+  /* Stats bar: 2×2 grid, more breathing room */
+  .sub-summary-bar {
+    grid-template-columns: repeat(2, 1fr);
+    margin: 0 0 20px 0;
+  }
+  .sub-summary-item {
+    padding: 18px 10px;
+    gap: 5px;
+  }
+  /* Hide vertical divider between col-2 items */
+  .sub-summary-item:nth-child(2)::after,
+  .sub-summary-item:nth-child(4)::after { display:none; }
+  /* Add a horizontal divider between the two rows */
+  .sub-summary-item:nth-child(3),
+  .sub-summary-item:nth-child(4) {
+    border-top: 1px solid var(--bd);
+  }
+  .sub-summary-icon { font-size:20px; margin-bottom:4px; opacity:0.85; }
+  .sub-summary-val { font-size:18px; }
+  .sub-summary-lbl { font-size:9px; letter-spacing:0.8px; }
+
+  /* Sub header: stack title + button full width */
+  .sub-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .sub-header > button {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 18px !important;
+    font-size: 12px !important;
+    border-radius: 14px !important;
+  }
+
+  /* Sub card mobile tweaks */
+  .sub-card { padding: 16px; }
+  .sub-btn {
+    padding: 11px 6px;
+    font-size: 10px;
+    min-height: 40px;
+  }
+
+  #subView, #logView { padding:0 2px; }
+  .sub-title, .log-title { font-size:22px; }
 }
 @media(min-width:768px) {
   .sub-title { font-size:28px; }
