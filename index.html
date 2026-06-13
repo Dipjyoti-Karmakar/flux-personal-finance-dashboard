@@ -1516,13 +1516,19 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         <option value="DELETE">🗑️ Deleted</option>
         <option value="IMPORT">📥 Imported</option>
       </select>
-      <button class="log-clear-btn" onclick="askClearLogs()">Clear All</button>
-      <button class="log-clear-btn" onclick="recoverLogs()" style="color:var(--in);border-color:var(--in);">Recover</button>
+      <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()" style="color:var(--ex);border-color:var(--ex);">Delete Logs</button>
     </div>
   </div>
   <div style="margin-bottom:16px; position:relative;">
     <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;">🔍</span>
     <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)" style="padding:10px 14px 10px 36px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);" onfocus="this.style.borderColor='var(--on)';this.style.boxShadow='0 0 0 2px var(--ob)'" onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='var(--sh-card)'" aria-label="Search logs">
+  </div>
+  <div id="logDeleteAction" style="display:none; justify-content:space-between; align-items:center; background:color-mix(in srgb,var(--ex) 10%,transparent); padding:10px 14px; border-radius:12px; margin-bottom:16px;">
+    <span id="logSelectCount" style="color:var(--ex);font-size:13px;font-weight:600;">0 selected</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" style="padding:6px 12px;font-size:12px;min-width:auto;" onclick="toggleLogSelectionMode()">Cancel</button>
+      <button class="btn pr" style="padding:6px 12px;font-size:12px;min-width:auto;background:var(--ex);border-color:var(--ex);color:#fff;" onclick="confirmDeleteSelectedLogs()">Confirm Delete</button>
+    </div>
   </div>
   <div id="logList"></div>
 </div>
@@ -1793,7 +1799,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',utility:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
+const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'🔌',utility:'🔌',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
 const CAT_COLOR = {
   food:          '#c8876e',  // warm terracotta
   transport:     '#6e9dc8',  // steel blue
@@ -4406,7 +4412,7 @@ function setTxSearch(val) {
 }
 
 /* ── Activity Log Logic (Firestore-synced) ── */
-const ACTIVITY_LOG_LIMIT = 200;
+const ACTIVITY_LOG_LIMIT = 300;
 
 function writeLog(action, msg, txType) {
   if (!userId) return;
@@ -4448,14 +4454,23 @@ function loadActivityLog() {
   if (!userId) return;
   if (unsubscribeActivityLog) unsubscribeActivityLog();
   const actRef = collection(db, 'users', userId, 'activities');
-  const actQuery = query(actRef, orderBy('t', 'desc'), limit(ACTIVITY_LOG_LIMIT));
+  const actQuery = query(actRef, orderBy('t', 'desc'));
   unsubscribeActivityLog = onSnapshot(actQuery, (snap) => {
-    if (_undoClearLogsData) return;
     activityLogs = [];
+    let excessDocs = [];
     snap.forEach(d => {
-      const data = d.data();
-      activityLogs.push({ id: d.id, ...data });
+      if (activityLogs.length < ACTIVITY_LOG_LIMIT) {
+        activityLogs.push({ id: d.id, ...d.data() });
+      } else {
+        excessDocs.push(d);
+      }
     });
+
+    if (excessDocs.length > 0) {
+      const batch = writeBatch(db);
+      excessDocs.forEach(d => batch.delete(d.ref));
+      batch.commit().catch(e => console.error('Auto-prune error:', e));
+    }
     if (document.getElementById('logView').style.display !== 'none') {
       renderLogs();
     }
@@ -4537,7 +4552,12 @@ function renderLogs() {
 
     const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
 
-    return `<div class="txi card-in" style="cursor:default;padding:14px 16px;">
+    const isSelected = typeof logSelectionMode !== 'undefined' && logSelectionMode && selectedLogs.has(l.id);
+    const selStyle = isSelected ? 'border:2px solid var(--ex); background:color-mix(in srgb,var(--ex) 10%,var(--sf));' : '';
+    const clickHandler = typeof logSelectionMode !== 'undefined' && logSelectionMode ? `onclick="toggleLogSelection('${l.id}')"` : '';
+    const cursorSty = typeof logSelectionMode !== 'undefined' && logSelectionMode ? 'cursor:pointer;' : 'cursor:default;';
+
+    return `<div class="txi card-in" ${clickHandler} style="${cursorSty}padding:14px 16px;${selStyle}">
       <div class="dot ${dotColorClass}" ${dotColorClass==='neutral'?'style="background:var(--mu);box-shadow:0 0 8px var(--mu)"':''}></div>
       <div class="ti">
         <div class="tn log-msg" style="white-space:normal;overflow:visible;line-height:1.4;margin-bottom:6px;font-size:13px;font-weight:600;">${msgHtml}</div>
@@ -5671,226 +5691,60 @@ function switchTab(tab) {
   if (tab === 'subscriptions') renderRecurring();
 }
 
-function askClearLogs() {
-  if (activityLogs.length === 0) { showToast('No logs to clear', 'ok'); return; }
-  showConfirm('Clear Activity Log', 'Are you sure you want to clear all your logs?', () => clearLogs(), true);
-}
+let logSelectionMode = false;
+let selectedLogs = new Set();
 
-function clearLogs() {
-  if (!userId) { showToast('Sign in to clear logs', 'er'); return; }
+function toggleLogSelectionMode() {
+  logSelectionMode = !logSelectionMode;
+  selectedLogs.clear();
   
-  if (_undoClearLogsTimer) {
-    clearTimeout(_undoClearLogsTimer);
-    commitClearLogs();
+  const btn = document.getElementById('btnToggleDeleteLogs');
+  const actionDiv = document.getElementById('logDeleteAction');
+  
+  if (logSelectionMode) {
+    if (btn) btn.style.display = 'none';
+    if (actionDiv) actionDiv.style.display = 'flex';
+  } else {
+    if (btn) btn.style.display = 'inline-block';
+    if (actionDiv) actionDiv.style.display = 'none';
   }
-  
-  _undoClearLogsData = [...activityLogs];
-  
-  activityLogs = [];
-  renderLogs();
-  
-  const el = document.getElementById('toast');
-  el.innerHTML = 'Activity log cleared <button class="undo-btn" onclick="undoClearLogs()">↺ Undo</button>';
-  el.className = 'tst er sh';
-  clearTimeout(el._t);
-  
-  _undoClearLogsTimer = setTimeout(() => {
-    commitClearLogs();
-    el.className = 'tst';
-  }, 5000);
-}
-
-async function commitClearLogs() {
-  if (!_undoClearLogsData) return;
-  _undoClearLogsData = null;
-  _undoClearLogsTimer = null;
-  
-  try {
-    const actRef = collection(db, 'users', userId, 'activities');
-    const snap = await getDocs(actRef);
-    const refsToDelete = snap.docs.map(d => d.ref);
-    
-    for (let i = 0; i < refsToDelete.length; i += 450) {
-      const chunk = refsToDelete.slice(i, i + 450);
-      const batch = writeBatch(db);
-      chunk.forEach(ref => batch.delete(ref));
-      await batch.commit();
-    }
-  } catch (e) {
-    console.error('Error clearing activity log:', e);
-  }
-}
-
-function undoClearLogs() {
-  if (!_undoClearLogsData || !userId) return;
-  if (_undoClearLogsTimer) { clearTimeout(_undoClearLogsTimer); _undoClearLogsTimer = null; }
-  
-  const el = document.getElementById('toast');
-  el.className = 'tst';
-  
-  activityLogs = _undoClearLogsData;
-  _undoClearLogsData = null;
   renderLogs();
 }
 
-async function recoverLogs() {
-  if (!userId) { showToast('Sign in first', 'er'); return; }
-  showToast('Reconciling & migrating logs...', 'ok');
-  try {
-    const actRef = collection(db, 'users', userId, 'activities');
-    const existingSnap = await getDocs(actRef);
-    
-    let batches = [];
-    let currentBatch = writeBatch(db);
-    let opCount = 0;
-    
-    const checkBatch = () => {
-      if (opCount >= 449) {
-        batches.push(currentBatch.commit());
-        currentBatch = writeBatch(db);
-        opCount = 0;
-      }
-      opCount++;
-    };
-
-    const logRegistry = new Map(); // key -> [{ ref, ts }]
-    const logCounts = new Map();
-    let upCount = 0;
-
-    existingSnap.docs.forEach(d => {
-      const data = d.data();
-      let payload = null;
-      let isLegacy = false;
-
-      if (typeof data.m === 'string' && (data.m.startsWith('{') || data.m.startsWith('['))) {
-        try { payload = JSON.parse(data.m); } catch(e) {}
-      }
-
-      if (!payload) {
-        isLegacy = true;
-        if (data.a === 'ADD' || data.a === 'DELETE') {
-           const div = document.createElement('div');
-           div.innerHTML = data.m;
-           const cDivs = div.querySelectorAll('div');
-           if (cDivs.length >= 2) {
-             const desc = cDivs[0].textContent;
-             const spans = cDivs[1].querySelectorAll('span');
-             if (spans.length >= 7) {
-                const amt = parseFloat(spans[0].textContent.replace(/[^0-9.-]+/g, ''));
-                const logTs = data.t
-                  ? (data.t.toDate ? data.t.toDate().getTime() : new Date(data.t).getTime())
-                  : 0;
-                const candidates = txs.filter(tx => tx.desc === desc && tx.amount === amt);
-                let legDate = '2000-01-01';
-                if (candidates.length === 1) {
-                  legDate = candidates[0].date;
-                } else if (candidates.length > 1 && logTs) {
-                  candidates.sort((a, b) =>
-                    Math.abs(new Date(a.date + 'T12:00:00').getTime() - logTs) -
-                    Math.abs(new Date(b.date + 'T12:00:00').getTime() - logTs)
-                  );
-                  legDate = candidates[0].date;
-                } else {
-                  const dt = data.t ? (data.t.toDate ? data.t.toDate() : new Date(data.t)) : new Date();
-                  legDate = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-                }
-                
-                payload = {
-                  desc: desc,
-                  amt: amt,
-                  cat: spans[2].textContent.trim().toLowerCase(),
-                  date: legDate,
-                  mode: spans[6].textContent.trim().toLowerCase(),
-                  type: data.tp || 'expense'
-                };
-             } else if (cDivs[1].textContent.includes('Auto-recurring')) {
-                payload = { desc, amt: parseFloat(cDivs[1].textContent.replace(/[^0-9.-]+/g, '')), isAuto: true };
-             }
-           }
-        }
-        if (!payload) {
-          const tmpDiv = document.createElement('div');
-          tmpDiv.innerHTML = data.m;
-          const stripped = tmpDiv.textContent.trim();
-          payload = { summary: stripped || '[legacy log]' };
-        }
-      }
-
-      if (isLegacy) {
-        checkBatch();
-        currentBatch.update(d.ref, { m: JSON.stringify(payload) });
-        upCount++;
-      }
-      if (data.a === 'ADD' && payload && payload.desc && payload.amt !== undefined) {
-        const key = payload.desc + '|' + payload.amt + '|' + payload.date;
-        if (!logRegistry.has(key)) logRegistry.set(key, []);
-        const ts = data.t
-          ? (data.t.toDate ? data.t.toDate().getTime() : new Date(data.t).getTime())
-          : 0;
-        logRegistry.get(key).push({ ref: d.ref, ts });
-      }
-    });
-
-    let dupCount = 0;
-    for (const [key, entries] of logRegistry) {
-      entries.sort((a, b) => a.ts - b.ts);
-      for (let i = 1; i < entries.length; i++) {
-        checkBatch();
-        currentBatch.delete(entries[i].ref);
-        dupCount++;
-      }
-      logCounts.set(key, 1);
-    }
-
-    let addCount = 0;
-    const sortedTxs = [...txs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
-    for (const t of sortedTxs) {
-      const key = t.desc + '|' + t.amount + '|' + t.date;
-      const count = logCounts.get(key) || 0;
-      if (count > 0) {
-        logCounts.set(key, count - 1);
-      } else {
-        checkBatch();
-        const msg = JSON.stringify({ desc: t.desc, amt: t.amount, cat: t.cat, date: t.date, mode: t.mode, type: t.type });
-        const newRef = doc(actRef);
-        
-        let tsVal;
-        if (t.createdAt) {
-          tsVal = new Date(t.createdAt);
-        } else {
-          const txDate = new Date(t.date + 'T12:00:00');
-          tsVal = new Date(txDate.getTime() + (addCount * 1000));
-        }
-
-        currentBatch.set(newRef, {
-          a: 'ADD',
-          m: msg,
-          t: tsVal,
-          tp: t.type
-        });
-        addCount++;
-      }
-    }
-    
-    if (opCount > 0) batches.push(currentBatch.commit());
-    await Promise.all(batches);
-    
-    let msg = 'Logs up to date';
-    const parts = [];
-    if (dupCount) parts.push(`Del ${dupCount} dupes`);
-    if (upCount) parts.push(`Upd ${upCount}`);
-    if (addCount) parts.push(`Rec ${addCount}`);
-    if (parts.length > 0) msg = parts.join(', ') + ' logs';
-    
-    showToast(msg, 'ok');
-  } catch (e) {
-    console.error('Error recovering logs:', e);
-    showToast('Recovery failed: ' + e.message, 'er');
-  }
+function toggleLogSelection(id) {
+  if (!logSelectionMode) return;
+  if (selectedLogs.has(id)) selectedLogs.delete(id);
+  else selectedLogs.add(id);
+  
+  const countEl = document.getElementById('logSelectCount');
+  if (countEl) countEl.textContent = `${selectedLogs.size} selected`;
+  renderLogs();
 }
 
-window.recoverLogs = recoverLogs;
+async function confirmDeleteSelectedLogs() {
+  if (selectedLogs.size === 0) {
+    toggleLogSelectionMode();
+    return;
+  }
+  
+  if (!confirm(`Are you sure you want to delete ${selectedLogs.size} logs?`)) return;
+  if (!confirm(`Are you REALLY sure? This action cannot be undone.`)) return;
+  
+  const batch = writeBatch(db);
+  selectedLogs.forEach(id => {
+    batch.delete(doc(db, 'users', userId, 'activities', id));
+  });
+  
+  try {
+    await batch.commit();
+    showToast(`Deleted ${selectedLogs.size} logs`, 'ok');
+  } catch (e) {
+    console.error(e);
+    showToast('Failed to delete logs', 'er');
+  }
+  
+  toggleLogSelectionMode();
+}
 window.addTx = addTx;
 window.askDelTx = askDelTx;
 window.editTx = editTx;
@@ -5937,9 +5791,9 @@ window.closeCatPanel = closeCatPanel;
 window.loadMoreCatTx = loadMoreCatTx;
 window.switchTab = switchTab;
 window.renderLogs = renderLogs;
-window.askClearLogs = askClearLogs;
-window.undoClearLogs = undoClearLogs;
-window.clearLogs = clearLogs;
+window.toggleLogSelectionMode = toggleLogSelectionMode;
+window.toggleLogSelection = toggleLogSelection;
+window.confirmDeleteSelectedLogs = confirmDeleteSelectedLogs;
 window.setSplitView = setSplitView;
 // Recurring
 window.openAddRecurring = openAddRecurring;
