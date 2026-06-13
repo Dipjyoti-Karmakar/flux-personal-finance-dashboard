@@ -1789,7 +1789,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'⚡',utility:'⚡',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
@@ -1859,8 +1859,6 @@ let catTxVisibleCount = 20;       // Paginated count for category drill-down
 const CAT_TX_PAGE_SIZE = 20;      // Page size for category transaction list
 let _undoTimer = null;
 let _undoTxData = null;
-let _undoClearLogsTimer = null;
-let _undoClearLogsData = null;
 
 const firebaseConfig = {
   apiKey: "AIzaSyD9sEai-TSuIHDuv6zL-3utgdBBfb3FN4k",
@@ -1878,17 +1876,6 @@ const db = initializeFirestore(app, {
   localCache: persistentLocalCache()
 });
 const provider = new GoogleAuthProvider();
-
-getRedirectResult(auth).catch((error) => {
-  console.error("Redirect auth error:", error);
-  // We don't have showToast defined yet at this point, so we wait for DOMContentLoaded
-  window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      showToast("Auth Error: " + error.message, "er");
-    }, 1000);
-  });
-});
-
 
 document.addEventListener('DOMContentLoaded', () => {
   apTheme(theme);
@@ -1951,7 +1938,7 @@ async function toggleAuth() {
     }
   } else {
     try {
-      await signInWithRedirect(auth, provider);
+      await signInWithPopup(auth, provider);
     } catch (e) {
       console.error(e);
       showToast("Login failed", "er");
@@ -4422,7 +4409,6 @@ function loadActivityLog() {
   const actRef = collection(db, 'users', userId, 'activities');
   const actQuery = query(actRef, orderBy('t', 'desc'), limit(ACTIVITY_LOG_LIMIT));
   unsubscribeActivityLog = onSnapshot(actQuery, (snap) => {
-    if (_undoClearLogsData) return;
     activityLogs = [];
     snap.forEach(d => {
       const data = d.data();
@@ -5617,13 +5603,6 @@ async function generatePDF() {
   }
 }
 
-function askClearLogs() {
-  if (activityLogs.length === 0) { showToast('No logs to clear', 'ok'); return; }
-  clearLogs();
-}
-
-function esc(str) { return str.replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-
 document.getElementById('reportMod').addEventListener('click', function(e) { if (e.target === this) closeReportMod(); });
 
 function switchTab(tab) {
@@ -5642,58 +5621,29 @@ function switchTab(tab) {
   if (tab === 'subscriptions') renderRecurring();
 }
 
-function clearLogs() {
-  if (!userId) { showToast('Sign in to clear logs', 'er'); return; }
-  
-  if (_undoClearLogsTimer) {
-    clearTimeout(_undoClearLogsTimer);
-    commitClearLogs();
-  }
-  
-  _undoClearLogsData = [...activityLogs];
-  
-  activityLogs = [];
-  renderLogs();
-  
-  const el = document.getElementById('toast');
-  el.innerHTML = 'Activity log cleared <button class="undo-btn" onclick="undoClearLogs()">↺ Undo</button>';
-  el.className = 'tst er sh';
-  clearTimeout(el._t);
-  
-  _undoClearLogsTimer = setTimeout(() => {
-    commitClearLogs();
-    el.className = 'tst';
-  }, 5000);
+function askClearLogs() {
+  showConfirm('Clear Activity Log', 'Are you sure? This will delete all activity history across all devices. This cannot be undone.', () => clearLogs(), true);
 }
 
-async function commitClearLogs() {
-  if (!_undoClearLogsData) return;
-  const refsToDelete = _undoClearLogsData.map(l => doc(db, 'users', userId, 'activities', l.id));
-  _undoClearLogsData = null;
-  _undoClearLogsTimer = null;
-  
+async function clearLogs() {
+  if (!userId) { showToast('Sign in to clear logs', 'er'); return; }
   try {
-    for (let i = 0; i < refsToDelete.length; i += 450) {
-      const chunk = refsToDelete.slice(i, i + 450);
+    const actRef = collection(db, 'users', userId, 'activities');
+    const snap = await getDocs(actRef);
+    if (snap.empty) { showToast('No logs to clear', 'ok'); return; }
+    for (let i = 0; i < snap.docs.length; i += 450) {
+      const chunk = snap.docs.slice(i, i + 450);
       const batch = writeBatch(db);
-      chunk.forEach(ref => batch.delete(ref));
+      chunk.forEach(d => batch.delete(d.ref));
       await batch.commit();
     }
+    activityLogs = [];
+    renderLogs();
+    showToast('Activity log cleared', 'ok');
   } catch (e) {
     console.error('Error clearing activity log:', e);
+    showToast('Failed to clear logs: ' + (e?.code || e?.message || 'Unknown error'), 'er');
   }
-}
-
-function undoClearLogs() {
-  if (!_undoClearLogsData || !userId) return;
-  if (_undoClearLogsTimer) { clearTimeout(_undoClearLogsTimer); _undoClearLogsTimer = null; }
-  
-  const el = document.getElementById('toast');
-  el.className = 'tst';
-  
-  activityLogs = _undoClearLogsData;
-  _undoClearLogsData = null;
-  renderLogs();
 }
 
 window.addTx = addTx;
@@ -5743,7 +5693,6 @@ window.loadMoreCatTx = loadMoreCatTx;
 window.switchTab = switchTab;
 window.renderLogs = renderLogs;
 window.askClearLogs = askClearLogs;
-window.undoClearLogs = undoClearLogs;
 window.clearLogs = clearLogs;
 window.setSplitView = setSplitView;
 // Recurring
