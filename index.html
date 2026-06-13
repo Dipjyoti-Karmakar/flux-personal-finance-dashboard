@@ -2487,9 +2487,12 @@ function renderStats(sTxs){
   const todayStr = getTodayStr();
   const todayDate = new Date(todayStr + 'T00:00:00');
 
+  let avgNumerator = tE;
+
   if (statsMode === 'month' && cDtFilt === 'today') {
     // Today-only filter within month mode: use 1 day
     elapsedDays = 1;
+    avgNumerator = exp.filter(t => t.date === todayStr).reduce((s,t) => s + t.amount, 0);
   } else if (statsMode === 'month') {
     elapsedDays = now.getDate();
   } else if (statsMode === 'year') {
@@ -2509,7 +2512,7 @@ function renderStats(sTxs){
     elapsedDays = Math.max(1, Math.floor((lastDt - firstDt) / 86400000) + 1);
   }
 
-  animateVal(document.getElementById('sAvg'), elapsedDays > 0 ? tE / elapsedDays : 0, fmtS);
+  animateVal(document.getElementById('sAvg'), elapsedDays > 0 ? avgNumerator / elapsedDays : 0, fmtS);
 
   const aDays=new Set(sTxs.map(t=>t.date)).size;
   animateVal(document.getElementById('sDays'), aDays, v=>Math.round(v).toString());
@@ -4567,7 +4570,7 @@ async function checkAndTriggerRecurring() {
         nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays),
         lastTriggered: nextKey
       }, { merge: true });
-      writeLog('UPDATE', `Skipped duplicate auto-add for ${rec.name} (already manually paid early). Advanced due date.`);
+      writeLog('UPDATE', `Skipped duplicate auto-add for ${esc(rec.name)} (already manually paid early). Advanced due date.`);
       continue;
     }
 
@@ -4607,7 +4610,7 @@ async function checkAndTriggerRecurring() {
         });
       });
       triggered.push(rec.name);
-      writeLog('ADD', `Auto-added recurring: ${rec.name} (₹${rec.amount})`);
+      writeLog('ADD', `Auto-added recurring: ${esc(rec.name)} (₹${rec.amount})`);
     } catch(e) { 
       // Revert optimistic update if transaction failed
       txs = txs.filter(t => t.id !== txId);
@@ -4774,7 +4777,7 @@ async function saveRecurringMod() {
       data.createdAt = Date.now();
       await setDoc(doc(db, 'users', userId, 'recurring', uid()), data);
       showToast('Subscription created', 'ok');
-      writeLog('ADD', `Created recurring subscription: ${name}`);
+      writeLog('ADD', `Created recurring subscription: ${esc(name)}`);
     } catch(e) { showToast('Error creating: ' + (e?.code || e?.message), 'er'); }
   }
 }
