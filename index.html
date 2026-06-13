@@ -532,7 +532,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .btn.pr{background:var(--ac);border-color:var(--ac);color:#0d0f14}
 .btn.pr:hover{opacity:.9;color:#0d0f14;transform:translateY(-2px);box-shadow:var(--sh-btn);}
 .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
-.tst{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--sf);border:1px solid var(--bs);border-radius:14px;padding:14px 28px;font-family:'DM Mono',monospace;font-size:13px;color:var(--tx);z-index:9999;opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(0.16, 1, 0.3, 1),opacity .35s;white-space:nowrap;font-weight:500;box-shadow:0 16px 48px rgba(0,0,0,0.45);backdrop-filter:blur(12px)}
+.tst{position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--sf);border:1px solid var(--bs);border-radius:14px;padding:14px 28px;font-family:'DM Mono',monospace;font-size:13px;color:var(--tx);z-index:9999;opacity:0;pointer-events:none;transition:transform .35s cubic-bezier(0.16, 1, 0.3, 1),opacity .35s;white-space:normal;font-weight:500;box-shadow:0 16px 48px rgba(0,0,0,0.45);backdrop-filter:blur(12px);max-width:90vw;text-align:center;}
 .tst.sh{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
 .tst.ok{border-color:var(--in);color:var(--in);background:color-mix(in srgb,var(--sf) 92%,var(--in))}
 .tst.er{border-color:var(--ex);color:var(--ex);background:color-mix(in srgb,var(--sf) 92%,var(--ex))}
@@ -5702,11 +5702,14 @@ function clearLogs() {
 
 async function commitClearLogs() {
   if (!_undoClearLogsData) return;
-  const refsToDelete = _undoClearLogsData.map(l => doc(db, 'users', userId, 'activities', l.id));
   _undoClearLogsData = null;
   _undoClearLogsTimer = null;
   
   try {
+    const actRef = collection(db, 'users', userId, 'activities');
+    const snap = await getDocs(actRef);
+    const refsToDelete = snap.docs.map(d => d.ref);
+    
     for (let i = 0; i < refsToDelete.length; i += 450) {
       const chunk = refsToDelete.slice(i, i + 450);
       const batch = writeBatch(db);
@@ -5750,9 +5753,7 @@ async function recoverLogs() {
       opCount++;
     };
 
-    const seenSigs = new Set();
-    const keptAddKeys = new Set();
-    let delCount = 0;
+    const logCounts = new Map();
     let upCount = 0;
 
     existingSnap.docs.forEach(d => {
@@ -5799,22 +5800,14 @@ async function recoverLogs() {
         if (!payload) payload = { legacyHtml: data.m };
       }
 
-      const sig = data.a + '|' + (payload.legacyHtml || JSON.stringify(payload));
-      
-      if (seenSigs.has(sig)) {
+      if (isLegacy) {
         checkBatch();
-        currentBatch.delete(d.ref);
-        delCount++;
-      } else {
-        seenSigs.add(sig);
-        if (isLegacy) {
-          checkBatch();
-          currentBatch.update(d.ref, { m: JSON.stringify(payload) });
-          upCount++;
-        }
-        if (data.a === 'ADD' && payload.desc && payload.amt) {
-          keptAddKeys.add(payload.desc + '|' + payload.amt);
-        }
+        currentBatch.update(d.ref, { m: JSON.stringify(payload) });
+        upCount++;
+      }
+      if (data.a === 'ADD' && payload && payload.desc && payload.amt !== undefined) {
+        const key = payload.desc + '|' + payload.amt + '|' + payload.date;
+        logCounts.set(key, (logCounts.get(key) || 0) + 1);
       }
     });
 
@@ -5822,8 +5815,11 @@ async function recoverLogs() {
     const sortedTxs = [...txs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     for (const t of sortedTxs) {
-      const key = t.desc + '|' + t.amount;
-      if (!keptAddKeys.has(key)) {
+      const key = t.desc + '|' + t.amount + '|' + t.date;
+      const count = logCounts.get(key) || 0;
+      if (count > 0) {
+        logCounts.set(key, count - 1);
+      } else {
         checkBatch();
         const msg = JSON.stringify({ desc: t.desc, amt: t.amount, cat: t.cat, date: t.date, mode: t.mode, type: t.type });
         const newRef = doc(actRef);
@@ -5849,7 +5845,7 @@ async function recoverLogs() {
     if (opCount > 0) batches.push(currentBatch.commit());
     await Promise.all(batches);
     
-    showToast(`Cleaned ${delCount} dupes, upgraded ${upCount}, recovered ${addCount} missing logs!`, 'ok');
+    showToast(`Upgraded ${upCount}, recovered ${addCount} missing logs!`, 'ok');
   } catch (e) {
     console.error('Error recovering logs:', e);
     showToast('Recovery failed: ' + e.message, 'er');
