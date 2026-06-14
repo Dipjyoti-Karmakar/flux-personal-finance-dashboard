@@ -4477,9 +4477,10 @@ function writeLog(action, msg, txType) {
 
 function renderParsedLog(action, p) {
   if (action === 'ADD' || action === 'DELETE') {
-    if (p.isNewRec) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New recurring subscription</div>`;
-    if (p.isAuto) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600">${fmt(p.amt)}</span><span>•</span><span>Auto-recurring</span></div>`;
-    return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600">${fmt(p.amt)}</span><span>•</span><span style="text-transform:capitalize">${p.cat||'other'}</span><span>•</span><span>${fmtDt(p.date)}</span><span>•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
+    const descStyle = action === 'DELETE' ? 'text-decoration:line-through;opacity:0.8;' : '';
+    if (p.isNewRec) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New recurring subscription</div>`;
+    if (p.isAuto) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;${descStyle}">${fmt(p.amt)}</span><span>•</span><span>Auto-recurring</span></div>`;
+    return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;${descStyle}">${fmt(p.amt)}</span><span>•</span><span style="text-transform:capitalize">${p.cat||'other'}</span><span>•</span><span>${fmtDt(p.date)}</span><span>•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
   }
   if (action === 'EDIT') {
     if (!p.diffs) return `<div>${esc(p.desc)}</div>`;
@@ -4590,7 +4591,7 @@ function renderLogs() {
     let actionPill = '';
     if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);">✏️ Edited</span>`;
     else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">📥 Imported</span>`;
-    else if (l.a === 'DELETE') actionPill = `<span style="${pSty}background:var(--eb);color:var(--ex);border:1px solid var(--ex);">🗑️ Deleted</span>`;
+    else if (l.a === 'DELETE') actionPill = '';
     else if (l.a === 'ADD') {
       if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);">🔄 Auto-recurring</span>`;
       else actionPill = `<span style="${pSty}background:var(--ib);color:var(--in);border:1px solid var(--in);">➕ Added</span>`;
@@ -4613,8 +4614,13 @@ function renderLogs() {
     const a11y = logSelectionMode
       ? `tabindex="0" role="button" aria-pressed="${isSelected}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLogSelection('${l.id}')}"`
       : '';
+      
+    let extraStyle = '';
+    if (l.a === 'DELETE') {
+      extraStyle = 'border:1px dashed var(--ex) !important;background:color-mix(in srgb,var(--ex) 5%,transparent);opacity:0.85;';
+    }
 
-    return `<div class="${animClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}padding:14px 16px;${selStyle}">
+    return `<div class="${animClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}padding:14px 16px;${extraStyle}${selStyle}">
       <div class="dot ${dotColorClass}" ${dotColorClass==='neutral'?'style="background:var(--mu);box-shadow:0 0 8px var(--mu)"':''}></div>
       <div class="ti">
         <div class="tn log-msg" style="white-space:normal;overflow:visible;line-height:1.4;margin-bottom:6px;font-size:13px;font-weight:600;">${msgHtml}</div>
