@@ -904,36 +904,47 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .sub-card.sub-paused { opacity:0.55; filter:saturate(0.5); }
 
 /* Card top row */
-.sub-card-top { display:flex; align-items:center; gap:13px; margin-bottom:15px; }
-.sub-card-icon { width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; background:var(--s2); border:1px solid var(--bd); }
-.sub-card-info { flex:1; min-width:0; }
-.sub-card-name { font-weight:700; font-size:15px; color:var(--tx); margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.sub-card-meta { font-family:'DM Mono',monospace; font-size:10px; color:var(--mu); letter-spacing:.3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.sub-card-right { display:flex; flex-direction:column; align-items:flex-end; gap:7px; flex-shrink:0; }
-.sub-card-amt { font-family:'DM Mono',monospace; font-weight:800; font-size:18px; line-height:1; }
+.sub-card-top { display:flex; align-items:flex-start; gap:12px; margin-bottom:14px; }
+.sub-card-icon { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; background:var(--s2); border:1px solid var(--bd); }
+.sub-card-info { flex:1; min-width:0; overflow:hidden; }
+.sub-card-name { font-weight:700; font-size:14px; color:var(--tx); margin-bottom:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sub-card-plan { font-family:'DM Mono',monospace; font-size:9.5px; color:var(--mu); letter-spacing:.3px; margin-bottom:4px; }
+.sub-card-renewal { font-family:'DM Mono',monospace; font-size:9px; color:var(--mu); letter-spacing:.2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sub-card-renewal span { color:var(--tx); font-weight:600; }
+.sub-card-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; max-width:90px; }
+.sub-card-amt { font-family:'DM Mono',monospace; font-weight:800; font-size:17px; line-height:1; }
 
 /* Status Badges */
-.sub-badge { display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-family:'DM Mono',monospace; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:4px 10px; border-radius:50px; border:1px solid transparent; }
+.sub-badge { display:inline-flex; align-items:center; gap:3px; font-size:9px; font-family:'DM Mono',monospace; font-weight:700; letter-spacing:.4px; text-transform:uppercase; padding:3px 8px; border-radius:50px; border:1px solid transparent; white-space:nowrap; }
 .sub-badge.badge-active { background:color-mix(in srgb,var(--in) 14%,transparent); color:var(--in); border-color:color-mix(in srgb,var(--in) 28%,transparent); }
 .sub-badge.badge-due { background:color-mix(in srgb,var(--ac) 16%,transparent); color:var(--ac); border-color:color-mix(in srgb,var(--ac) 35%,transparent); animation:subPulse 2s ease-in-out infinite; }
-.sub-badge.badge-soon { background:color-mix(in srgb,var(--ex) 13%,transparent); color:var(--ex); border-color:color-mix(in srgb,var(--ex) 28%,transparent); }
+.sub-badge.badge-soon { background:color-mix(in srgb,#f59e0b 13%,transparent); color:#f59e0b; border-color:color-mix(in srgb,#f59e0b 28%,transparent); }
 .sub-badge.badge-paused { background:color-mix(in srgb,var(--mu) 12%,transparent); color:var(--mu); border-color:color-mix(in srgb,var(--mu) 22%,transparent); }
 @keyframes subPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.7;transform:scale(0.98)} }
 
-/* Action Buttons Row */
-.sub-card-actions { display:flex; gap:8px; padding-top:14px; border-top:1px solid var(--bd); }
-.sub-action-btn { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:5px; padding:9px 6px; border-radius:10px; border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; font-weight:600; letter-spacing:.4px; text-transform:uppercase; cursor:pointer; transition:all .2s; white-space:nowrap; }
-.sub-action-btn:hover { border-color:var(--bs); color:var(--tx); background:var(--sf); }
-.sub-action-btn.del-btn:hover { border-color:color-mix(in srgb,var(--ex) 60%,transparent); color:var(--ex); background:color-mix(in srgb,var(--ex) 8%,transparent); }
-.sub-action-btn.pause-btn:hover { border-color:color-mix(in srgb,var(--ac) 50%,transparent); color:var(--ac); background:color-mix(in srgb,var(--ac) 8%,transparent); }
+/* Action Buttons Row — distinct colors always visible */
+.sub-card-actions { display:flex; gap:7px; padding-top:13px; border-top:1px solid var(--bd); }
+.sub-action-btn { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:4px; padding:8px 4px; border-radius:10px; border:1px solid; font-family:'DM Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.sub-action-btn.pause-btn { background:color-mix(in srgb,#f59e0b 12%,transparent); color:#f59e0b; border-color:color-mix(in srgb,#f59e0b 35%,transparent); }
+.sub-action-btn.pause-btn:hover { background:color-mix(in srgb,#f59e0b 22%,transparent); border-color:#f59e0b; }
+.sub-action-btn.edit-btn { background:color-mix(in srgb,#3b82f6 12%,transparent); color:#3b82f6; border-color:color-mix(in srgb,#3b82f6 35%,transparent); }
+.sub-action-btn.edit-btn:hover { background:color-mix(in srgb,#3b82f6 22%,transparent); border-color:#3b82f6; }
+.sub-action-btn.del-btn { background:color-mix(in srgb,var(--ex) 12%,transparent); color:var(--ex); border-color:color-mix(in srgb,var(--ex) 35%,transparent); }
+.sub-action-btn.del-btn:hover { background:color-mix(in srgb,var(--ex) 22%,transparent); border-color:var(--ex); }
 
 @media(max-width:600px) {
   .sub-summary-bar { grid-template-columns:repeat(2,1fr); }
+  .sub-card { padding:14px; }
+  .sub-card-top { gap:10px; }
+  .sub-card-icon { width:40px; height:40px; font-size:18px; }
+  .sub-card-amt { font-size:15px; }
+  .sub-card-right { max-width:80px; }
+  .sub-action-btn { font-size:8.5px; padding:7px 3px; gap:3px; }
 }
 @media(min-width:768px) {
   .sub-title { font-size:26px; }
   .sub-summary-val { font-size:24px; }
-  .sub-card { padding:22px; }
+  .sub-card { padding:20px; }
 }
 
 /* ── Recurring Modal ── */
@@ -4772,7 +4783,7 @@ function renderRecurring() {
     const isDue = rec.nextDue && rec.nextDue <= today;
     const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue) - new Date(today)) / 86400000) : null;
 
-    // Status badge
+    // Status badge — always show active/paused, plus urgency if due soon
     let badgeHtml;
     if (!rec.active) {
       badgeHtml = `<span class="sub-badge badge-paused">⏸ Paused</span>`;
@@ -4784,20 +4795,23 @@ function renderRecurring() {
       badgeHtml = `<span class="sub-badge badge-active">✓ Active</span>`;
     }
 
-    const amtColor  = rec.type === 'income' ? 'var(--in)' : 'var(--ex)';
-    const amtSign   = rec.type === 'income' ? '+' : '-';
-    const catIcon   = CICO[rec.cat] || '✦';
-    const freqLabel = rec.freq === 'custom' ? `Every ${rec.customDays}d` : (FREQ[rec.freq] || rec.freq);
+    const amtColor    = rec.type === 'income' ? 'var(--in)' : 'var(--ex)';
+    const amtSign     = rec.type === 'income' ? '+' : '-';
+    const catIcon     = CICO[rec.cat] || '✦';
+    const freqLabel   = rec.freq === 'custom' ? `Every ${rec.customDays}d` : (FREQ[rec.freq] || rec.freq);
+    const planLabel   = rec.cat ? rec.cat.charAt(0).toUpperCase() + rec.cat.slice(1) : 'Other';
     const renewalDate = rec.nextDue
-      ? new Date(rec.nextDue + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })
+      ? new Date(rec.nextDue + 'T00:00:00').toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
       : '—';
+    const pauseLabel  = rec.active ? '⏸ Pause' : '▶ Resume';
 
     return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}">
       <div class="sub-card-top">
         <div class="sub-card-icon">${catIcon}</div>
         <div class="sub-card-info">
           <div class="sub-card-name">${esc(rec.name)}</div>
-          <div class="sub-card-meta">${rec.cat ? rec.cat.charAt(0).toUpperCase()+rec.cat.slice(1) : 'Other'} Plan &nbsp;·&nbsp; Next Renewal: ${renewalDate}</div>
+          <div class="sub-card-plan">${planLabel} Plan &nbsp;·&nbsp; ${freqLabel}</div>
+          <div class="sub-card-renewal">Next Renewal: <span>${renewalDate}</span></div>
         </div>
         <div class="sub-card-right">
           ${badgeHtml}
@@ -4805,8 +4819,8 @@ function renderRecurring() {
         </div>
       </div>
       <div class="sub-card-actions">
-        <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">&#9646;&#9646; ${rec.active ? 'Pause Subscription' : '&#9654; Resume'}</button>
-        <button class="sub-action-btn" onclick="openEditRecurring('${rec.id}')">&#9998; Edit Details</button>
+        <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">${pauseLabel}</button>
+        <button class="sub-action-btn edit-btn" onclick="openEditRecurring('${rec.id}')">✏ Edit Details</button>
         <button class="sub-action-btn del-btn" onclick="askDeleteRecurring('${rec.id}')">🗑 Remove</button>
       </div>
     </div>`;
