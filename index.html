@@ -4478,7 +4478,7 @@ function writeLog(action, msg, txType) {
 function renderParsedLog(action, p) {
   if (action === 'ADD' || action === 'DELETE') {
     if (p.isNewRec) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New recurring subscription</div>`;
-    if (p.isAuto) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--ex);font-weight:600">${fmt(p.amt)}</span><span>•</span><span>Auto-recurring</span></div>`;
+    if (p.isAuto) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600">${fmt(p.amt)}</span><span>•</span><span>Auto-recurring</span></div>`;
     return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600">${fmt(p.amt)}</span><span>•</span><span style="text-transform:capitalize">${p.cat||'other'}</span><span>•</span><span>${fmtDt(p.date)}</span><span>•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
   }
   if (action === 'EDIT') {
@@ -4683,6 +4683,7 @@ async function checkAndTriggerRecurring() {
     // Prevent duplicates if the user manually paid this subscription early
     const dueD = new Date(rec.nextDue + 'T00:00:00');
     let wDays = 10;
+    if (rec.freq === 'yearly') wDays = 60;
     if (rec.freq === 'weekly') wDays = 3;
     if (rec.freq === 'daily') wDays = 0;
     if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
@@ -4744,7 +4745,7 @@ async function checkAndTriggerRecurring() {
         });
       });
       triggered.push(rec.name);
-      writeLog('ADD', { desc: rec.name, amt: rec.amount, isAuto: true });
+      writeLog('ADD', { desc: rec.name, amt: rec.amount, type: rec.type, isAuto: true }, rec.type);
     } catch(e) { 
       // FIX 2: txId is now in scope — ghost optimistic entry is correctly removed on failure
       if (txId) txs = txs.filter(t => t.id !== txId);
@@ -4922,7 +4923,7 @@ async function saveRecurringMod() {
       data.createdAt = Date.now();
       await setDoc(doc(db, 'users', userId, 'recurring', uid()), data);
       showToast('Subscription created', 'ok');
-      writeLog('ADD', { desc: name, isNewRec: true });
+      writeLog('ADD', { desc: name, isNewRec: true }, currentRecType);
     } catch(e) { showToast('Error creating: ' + (e?.code || e?.message), 'er'); }
   }
 }
