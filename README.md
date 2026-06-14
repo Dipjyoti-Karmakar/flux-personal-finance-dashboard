@@ -1,5 +1,3 @@
-<div align="center">
-
 # Flux - Personal Finance Dashboard
 
 > Track income, expenses, and insights in a single-page finance dashboard built with vanilla JavaScript, Firebase, and a PWA-first workflow.
@@ -8,9 +6,6 @@
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-yellow?style=for-the-badge&logo=javascript)
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%26%20Auth-ffca28?style=for-the-badge&logo=firebase)
 ![Status](https://img.shields.io/badge/Status-Completed-success?style=for-the-badge)
-
-</div>
-
 ---
 
 ## Live Demo
@@ -32,7 +27,7 @@ The entire application ships as one `index.html` file (~4,900 lines) with embedd
 ### Core Functionality
 
 | Capability | Details |
-|---|---|
+| --- | --- |
 | **Transaction CRUD** | Add, edit, delete income/expense records with 5-second undo on delete. Track category, payment mode, date, and description |
 | **Recurring Transactions** | Manage subscriptions with monthly, weekly, yearly, daily, or custom days intervals. Auto-creates transactions on due dates with visual tags |
 | **PDF Reports** | Generate rich A4 PDF reports for months, years, or custom dates and events. Includes category donuts, online vs offline splits, and insights |
@@ -45,7 +40,7 @@ The entire application ships as one `index.html` file (~4,900 lines) with embedd
 ### Analytics Dashboard
 
 | Section | What it shows |
-|---|---|
+| --- | --- |
 | **Summary Cards** | Net balance, total income/expenses, avg spend per day, active days, online vs. offline spend |
 | **Stats Modes** | Toggle This Month / This Year / All Time / Custom Date Range across every summary widget |
 | **Expense Trend** | Canvas line chart with Expense / Income / Both toggle, gradient fill, grid lines, crosshair hover, edge-clamped tooltips, theme-aware colours, and screen-reader aria-label summary |
@@ -57,7 +52,7 @@ The entire application ships as one `index.html` file (~4,900 lines) with embedd
 ### UI Polish & Micro-interactions
 
 | Enhancement | Details |
-|---|---|
+| --- | --- |
 | **Animated Number Counters** | All stat values count up smoothly with ease-out cubic animation on each render |
 | **Balance Health Glow** | Net Balance card pulses green / red / amber based on financial health |
 | **Add TX Flash** | Submit button shows "✓ Added" with a green flash; new transaction highlights with a gold inset glow |
@@ -93,7 +88,7 @@ The entire application ships as one `index.html` file (~4,900 lines) with embedd
 ### Progressive Web App (PWA)
 
 | Feature | Details |
-|---|---|
+| --- | --- |
 | **Installable** | `manifest.json` with app name, theme colour, standalone display - "Add to Home Screen" from browser |
 | **Service Worker** | `sw.js` caches HTML + CDN assets; network-first for navigation, cache-first for static resources |
 | **Firestore Offline Persistence** | `enableIndexedDbPersistence` stores data in IndexedDB; reads/writes work offline and sync when back online |
@@ -104,7 +99,7 @@ The entire application ships as one `index.html` file (~4,900 lines) with embedd
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | **Markup and Styling** | HTML5, CSS3 with custom properties, Grid, media queries, and keyframe animations |
 | **Logic** | Vanilla JavaScript with ES modules and scroll observers |
 | **Authentication** | Firebase Auth v11.6 using Google sign-in popup |
@@ -118,7 +113,7 @@ The entire application ships as one `index.html` file (~4,900 lines) with embedd
 
 ## Data Model
 
-```
+```text
 users/
   {uid}/
     transactions/             # one doc per transaction
@@ -198,7 +193,7 @@ The app ships with a default Firebase project. To use your own:
 
 ## Project Structure
 
-```
+```text
 flux-webapp/
 ├── index.html       # Entire application - HTML + CSS + JS (single-file architecture)
 ├── manifest.json    # PWA Web App Manifest (name, icons, theme, display mode)
@@ -227,4 +222,4 @@ Data Analyst · Frontend Developer · Business Intelligence
 
 ---
 
-<sub>Built as a portfolio project demonstrating vanilla JavaScript application development, Firebase cloud integration, Canvas-based data visualization, micro-interaction design, PWA offline capabilities, and responsive UI engineering.</sub>
+*Built as a portfolio project demonstrating vanilla JavaScript application development, Firebase cloud integration, Canvas-based data visualization, micro-interaction design, PWA offline capabilities, and responsive UI engineering.*
