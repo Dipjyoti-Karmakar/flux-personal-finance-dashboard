@@ -2533,7 +2533,8 @@ function renderStats(sTxs){
   const bel=document.getElementById('sBal');
   // Always animate toward the ABSOLUTE value — the card's green/red glow already signals
   // surplus vs deficit, so we never show a minus sign on this card.
-  animateVal(bel, Math.abs(bal), fmt);
+  // We use a custom formatter here so it absolutely ignores any negatives and just prefixes ₹.
+  animateVal(bel, Math.abs(bal), (v) => '₹' + Math.abs(v).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}));
   bel.className='sv big '+(bal>0?'pos':bal<0?'neg':'neu');
   document.getElementById('sBalSub').textContent=bal>=0?'↑ In the green':'↓ Overspent';
   
