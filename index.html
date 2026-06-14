@@ -749,6 +749,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 @keyframes splitFade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 .split-fade-in { animation: splitFade .3s cubic-bezier(0.16,1,0.3,1); }
 
+/* ── Event List ── */
+.event-list-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+@media(max-width: 520px) {
+  .event-list-container { display: flex; flex-direction: column; max-height: 195px; overflow-y: auto; overflow-x: hidden; padding-right: 4px; }
+  .event-list-container::-webkit-scrollbar { width: 4px; }
+  .event-list-container::-webkit-scrollbar-thumb { background: var(--bd); border-radius: 4px; }
+}
+
 /* ── PWA Install Snackbar (bottom floating) ── */
 .pwa-snackbar { display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); z-index:950; align-items:center; gap:12px; padding:14px 22px; background:var(--sf); border:1px solid var(--bs); border-radius:16px; cursor:pointer; transition:transform .4s cubic-bezier(0.16,1,0.3,1), opacity .4s ease; opacity:0; box-shadow:0 12px 40px rgba(0,0,0,0.35); backdrop-filter:blur(12px); max-width:420px; width:calc(100% - 40px); }
 .pwa-snackbar.vis { display:flex; transform:translateX(-50%) translateY(0); opacity:1; }
@@ -3116,33 +3124,46 @@ function renderTrend(passedTxs) {
           ctx.beginPath(); ctx.moveTo(px, pts[0].y); ctx.lineTo(w-px, pts[0].y);
           ctx.strokeStyle = color; ctx.lineWidth = 2.5;
           ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
-          ctx.beginPath(); ctx.moveTo(px, pts[0].y); ctx.lineTo(w-px, pts[0].y);
-          ctx.strokeStyle = glowColor; ctx.lineWidth = 8; ctx.stroke();
           ctx.beginPath(); ctx.arc(w/2, pts[0].y, 5, 0, 2*Math.PI);
           ctx.fillStyle = color; ctx.fill();
           ctx.lineWidth = 2; ctx.strokeStyle = theme === 'dark' ? '#13161e' : '#fff'; ctx.stroke();
           return;
       }
+      
+      const pathSpline = (fill) => {
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, pts[0].y);
+          for (let i = 0; i < pts.length - 1; i++) {
+              const xMid = (pts[i].x + pts[i+1].x) / 2;
+              ctx.bezierCurveTo(xMid, pts[i].y, xMid, pts[i+1].y, pts[i+1].x, pts[i+1].y);
+          }
+          if (fill) {
+              ctx.lineTo(pts[pts.length-1].x, pyT + gH);
+              ctx.lineTo(pts[0].x, pyT + gH);
+              ctx.closePath();
+          }
+      };
+
       // Area fill
-      ctx.beginPath();
-      pts.forEach((p, i) => { if(i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-      ctx.lineTo(pts[pts.length-1].x, pyT + gH); ctx.lineTo(pts[0].x, pyT + gH); ctx.closePath();
+      pathSpline(true);
       const grad = ctx.createLinearGradient(0, pyT, 0, h - pyB);
       grad.addColorStop(0, gradTop); grad.addColorStop(0.6, gradMid); grad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grad; ctx.fill();
+      
       // Line glow
-      ctx.beginPath(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      pts.forEach((p, i) => { if(i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
-      ctx.strokeStyle = glowColor; ctx.lineWidth = 10; ctx.stroke();
+      pathSpline(false);
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.strokeStyle = glowColor; ctx.lineWidth = 5; ctx.stroke();
+      
       // Main line
-      ctx.beginPath(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      pts.forEach((p, i) => { if(i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      pathSpline(false);
       const lineGrad = ctx.createLinearGradient(pts[0].x, 0, pts[pts.length-1].x, 0);
       // FIXED: The previous approach tried to convert a hex color to rgba using string
       // replace(), which silently failed on hex strings like '#e07070'. Now we use
       // globalAlpha on a cloned path for the faded start effect instead.
       lineGrad.addColorStop(0, color); lineGrad.addColorStop(0.3, color); lineGrad.addColorStop(1, color);
       ctx.strokeStyle = lineGrad; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
+      
       // Dots
       pts.forEach((p, i) => {
           const isHL = (highlightIdx === i); const hasVal = p.val > 0;
@@ -3160,8 +3181,12 @@ function renderTrend(passedTxs) {
   const drawBase = (highlightIdx) => {
       ctx.clearRect(0,0,w,h);
       ctx.font = '11px DM Mono';
-      const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)';
-      for (let g = 0; g <= 4; g++) { const gy = pyT + (gH / 4) * g; ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(w - px, gy); ctx.strokeStyle = gridColor; ctx.lineWidth = 1; ctx.stroke(); }
+      const gridColor = theme === 'dark' ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.035)';
+      for (let g = 0; g <= 4; g++) { 
+          const gy = pyT + (gH / 4) * g; 
+          ctx.beginPath(); ctx.moveTo(px, gy); ctx.lineTo(w - px, gy); 
+          ctx.strokeStyle = gridColor; ctx.lineWidth = 1; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]); 
+      }
       // Max label
       ctx.fillStyle = theme === 'dark' ? 'rgba(200,169,110,0.4)' : 'rgba(120,100,60,0.4)'; ctx.textAlign = 'right'; ctx.textBaseline = 'top'; ctx.font = '10px DM Mono'; ctx.fillText(fmtS(max), w - px, pyT + 3); ctx.font = '11px DM Mono';
 
@@ -4307,7 +4332,7 @@ function renderEvents() {
       </button>
     </div>
   `; }).join('');
-  area.innerHTML = '<div class="split-fade-in" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px;">' + itemsHtml + '</div>';
+  area.innerHTML = '<div class="split-fade-in event-list-container">' + itemsHtml + '</div>';
 }
 
 function setSplitView(view) {
