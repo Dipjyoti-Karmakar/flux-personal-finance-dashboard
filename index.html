@@ -2242,7 +2242,7 @@ async function addTx() {
     document.getElementById('txDt').value = getTodayStr();
     
     // Log the addition
-    writeLog('ADD', { desc, amt, cat, date, mode: cMode, type: cType }, cType);
+    writeLog('ADD', { desc, amt, cat, date, mode: cMode, type: cType, eventId: eventId }, cType);
 
     showToast('Transaction added', 'ok');
     
@@ -2332,7 +2332,7 @@ async function commitDelete(id) {
   
   // Log deletion synchronously to ensure it's captured immediately when the undo window expires
   if (logData) {
-    writeLog('DELETE', { desc: logData.desc, amt: logData.amount, cat: logData.cat, date: logData.date, mode: logData.mode, type: logData.type }, logData.type);
+    writeLog('DELETE', { desc: logData.desc, amt: logData.amount, cat: logData.cat, date: logData.date, mode: logData.mode, type: logData.type, eventId: logData.eventId }, logData.type);
   }
   
   if (!userId) return;
@@ -2354,6 +2354,7 @@ async function undoDelete() {
   try {
     await setDoc(doc(db, 'users', userId, 'transactions', id), data);
     showToast('Transaction restored', 'ok');
+    writeLog('ADD', { desc: data.desc, amt: data.amount, cat: data.cat, date: data.date, mode: data.mode, type: data.type, eventId: data.eventId, isRestore: true }, data.type);
   } catch(e) {
     console.error('Undo failed', e);
     showToast('Failed to restore transaction', 'er');
@@ -2858,8 +2859,9 @@ async function saveEditTx() {
        if (b.mode !== mode) diffs.push({ label: 'Mode', oldV: b.mode, newV: mode });
        if (b.type !== type) diffs.push({ label: 'Type', oldV: b.type, newV: type });
        
-       if (diffs.length > 0) {
-         writeLog('EDIT', { desc: b.desc, diffs });
+       if (diffs.length > 0 || b.eventId !== eventId) {
+         if (b.eventId !== eventId) diffs.push({ label: 'Event', oldV: b.eventId ? events[b.eventId]?.name || 'Old Event' : 'None', newV: eventId ? events[eventId]?.name || 'New Event' : 'None' });
+         writeLog('EDIT', { desc: b.desc, diffs, eventId: eventId });
        }
     }
 
@@ -4306,6 +4308,7 @@ async function createEvent(evt) {
         await setDoc(getEventDocRef(evtId, 'transactions'), { ...cleanEvent, _metaType: 'event' });
         loadEvents();
         showToast('Event created (compat mode)', 'ok');
+        writeLog('ADD', { desc: cleanEvent.name, isNewEvent: true, eventId: evtId });
         showConfirm('Apply to Transactions', `Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`, () => assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end), false);
         return;
       } catch (fallbackCreateErr) {
@@ -4358,6 +4361,7 @@ async function editEvent(evtId, data) {
     const payload = (src === 'transactions' || eventsUseFallback) ? { ...data, _metaType: 'event' } : data;
     await setDoc(getEventDocRef(evtId, src), payload, { merge: true });
     showToast('Event updated', 'ok');
+    writeLog('EDIT', { desc: data.name, isEventEdit: true });
   } catch(e) {
     console.error('Error updating event', e);
     const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
@@ -4374,9 +4378,11 @@ function askDeleteEvent(evtId) {
 async function deleteEvent(evtId) {
   if (!userId) return;
   try {
+    const eventName = events[evtId]?.name || 'Event';
     await removeEventFromTransactions(evtId);
     await deleteDoc(getEventDocRef(evtId, events[evtId]?._src));
     showToast('Event deleted', 'ok');
+    writeLog('DELETE', { desc: eventName, isDelEvent: true });
   } catch(e) {
     console.error('Error deleting event', e);
     const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
@@ -4397,6 +4403,7 @@ async function assignTransactionsToEvent(evtId, start, end) {
     showToast(`Applied ${Math.min(i + 450, matching.length)} / ${matching.length}`, 'ok');
   }
   showToast(`Applied to ${matching.length} transactions`, 'ok');
+  writeLog('UPDATE', { desc: `Applied event "${events[evtId]?.name || ''}" to ${matching.length} transactions`, isEventBulk: true });
 }
 
 function applyEventToTxs(evtId) {
@@ -4420,6 +4427,7 @@ async function removeEventFromTransactions(evtId) {
     await batch.commit();
     showToast(`Removing tags ${Math.min(i + 450, matching.length)} / ${matching.length}`, 'ok');
   }
+  writeLog('UPDATE', { desc: `Removed event "${events[evtId]?.name || ''}" from ${matching.length} transactions`, isEventBulk: true });
 }
 
 function loadMoreTx() {
@@ -4480,10 +4488,15 @@ function renderParsedLog(action, p) {
     const descStyle = action === 'DELETE' ? 'text-decoration:line-through;opacity:0.8;' : '';
     if (p.isNewRec) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New recurring subscription</div>`;
     if (p.isDelRec) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Deleted recurring subscription</div>`;
+    if (p.isNewEvent) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New event created</div>`;
+    if (p.isDelEvent) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Deleted event</div>`;
+    if (p.isRestore) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600">${fmt(p.amt)}</span><span>•</span><span>Restored transaction</span></div>`;
     if (p.isAuto) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;${descStyle}">${fmt(p.amt)}</span><span>•</span><span>Auto-recurring</span></div>`;
     return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;${descStyle}">${fmt(p.amt)}</span><span>•</span><span style="text-transform:capitalize">${p.cat||'other'}</span><span>•</span><span>${fmtDt(p.date)}</span><span>•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
   }
   if (action === 'EDIT') {
+    if (p.isEventEdit) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Event updated</div>`;
+    if (p.isRecEdit) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Subscription updated</div>`;
     if (!p.diffs) return `<div>${esc(p.desc)}</div>`;
     const dfn = (label, oldV, newV) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;font-family:'DM Mono',monospace;"><span style="color:var(--mu);font-weight:600;width:35px;text-transform:uppercase;font-size:10px;">${label}</span><span style="color:var(--ex);text-decoration:line-through;opacity:0.8;">${oldV}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6;"><path d="m9 18 6-6-6-6"/></svg><span style="color:var(--tx);font-weight:600;">${newV}</span></div>`;
     const diffHtml = p.diffs.map(d => dfn(d.label, d.oldV, d.newV)).join('');
@@ -4493,6 +4506,8 @@ function renderParsedLog(action, p) {
     return `<div>Imported ${p.count} transaction${p.count !== 1 ? 's' : ''}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Mode: <strong style="text-transform:uppercase">${p.mode}</strong></div>`;
   }
   if (action === 'UPDATE') {
+    if (p.isRecPauseToggle) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Subscription ${p.active ? 'resumed' : 'paused'}</div>`;
+    if (p.isEventBulk) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Bulk updated event tags</div>`;
     if (p.isSkip) return `<div>${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`;
   }
   return `<div>${esc(p.desc||'')}</div>`;
@@ -4579,12 +4594,14 @@ function renderLogs() {
     const actionLabel = actLabels[l.a] || l.a;
 
     let msgHtml = l.m || '';
+    let parsedData = {};
     if (msgHtml.startsWith('{') || msgHtml.startsWith('[')) {
       try {
-        const parsed = JSON.parse(msgHtml);
-        msgHtml = renderParsedLog(l.a, parsed);
+        parsedData = JSON.parse(msgHtml);
+        msgHtml = renderParsedLog(l.a, parsedData);
       } catch(e) {}
     }
+    const isNewEvent = l.a === 'ADD' && parsedData.isNewEvent;
 
     const dotColorClass = txType === 'income' ? 'income' : (txType === 'expense' ? 'expense' : 'neutral');
 
@@ -4604,6 +4621,12 @@ function renderLogs() {
     if (txType === 'income') typePill = `<span style="${pSty}background:transparent;color:var(--in);border:1px dashed var(--in);">↑ Income</span>`;
     else if (txType === 'expense') typePill = `<span style="${pSty}background:transparent;color:var(--ex);border:1px dashed var(--ex);">↓ Expense</span>`;
 
+    let eventPill = '';
+    if (parsedData.eventId && events[parsedData.eventId]) {
+      const eCol = getLegibleColor(events[parsedData.eventId].color);
+      eventPill = `<span style="${pSty}background:${eCol}22;color:${eCol};border:1px solid ${eCol}44;">${esc(events[parsedData.eventId].name)}</span>`;
+    }
+
     const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
 
     const isSelected = logSelectionMode && selectedLogs.has(l.id);
@@ -4622,6 +4645,9 @@ function renderLogs() {
       extraStyle = 'border:1px dashed var(--ex) !important;background:color-mix(in srgb,var(--ex) 5%,transparent);opacity:0.85;';
     } else if (isNewRec) {
       extraStyle = 'border:1px dashed var(--of) !important;background:color-mix(in srgb,var(--of) 5%,transparent);opacity:0.95;';
+    } else if (isNewEvent) {
+      const c = (parsedData.eventId && events[parsedData.eventId]) ? getLegibleColor(events[parsedData.eventId].color) : 'var(--ac)';
+      extraStyle = `border:1px dashed ${c} !important;background:color-mix(in srgb,${c} 5%,transparent);opacity:0.95;`;
     }
 
     return `<div class="${animClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}padding:14px 16px;${extraStyle}${selStyle}">
@@ -4631,6 +4657,7 @@ function renderLogs() {
         <div class="tm" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           ${actionPill}
           ${typePill}
+          ${eventPill}
           ${timePill}
         </div>
       </div>
@@ -4927,6 +4954,7 @@ async function saveRecurringMod() {
     try {
       await setDoc(doc(db, 'users', userId, 'recurring', editingRecurringId), data, { merge: true });
       showToast('Subscription updated', 'ok');
+      writeLog('EDIT', { desc: data.name, isRecEdit: true });
     } catch(e) { showToast('Error updating: ' + (e?.code || e?.message), 'er'); }
   } else {
     try {
@@ -4941,8 +4969,10 @@ async function saveRecurringMod() {
 async function toggleRecurringActive(id, active) {
   if (!userId) return;
   try {
+    const rec = recurringList.find(r => r.id === id);
     await setDoc(doc(db, 'users', userId, 'recurring', id), { active }, { merge: true });
     showToast(active ? 'Subscription resumed' : 'Subscription paused', 'ok');
+    if (rec) writeLog('UPDATE', { desc: rec.name, isRecPauseToggle: true, active });
   } catch(e) { showToast('Error: ' + (e?.code || e?.message), 'er'); }
 }
 
