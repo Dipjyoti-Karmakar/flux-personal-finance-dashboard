@@ -4572,6 +4572,7 @@ function renderLogs() {
     const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})} ${d.getFullYear().toString().slice(-2)}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
 
     const isAuto = l.a === 'ADD' && (l.m || '').includes('isAuto');
+    const isNewRec = l.a === 'ADD' && (l.m || '').includes('isNewRec');
     const showTypePill = l.a === 'ADD' || l.a === 'DELETE';
     const txType = showTypePill ? inferTxType(l) : null;
     const actionLabel = actLabels[l.a] || l.a;
@@ -4618,6 +4619,8 @@ function renderLogs() {
     let extraStyle = '';
     if (l.a === 'DELETE') {
       extraStyle = 'border:1px dashed var(--ex) !important;background:color-mix(in srgb,var(--ex) 5%,transparent);opacity:0.85;';
+    } else if (isNewRec) {
+      extraStyle = 'border:1px dashed var(--of) !important;background:color-mix(in srgb,var(--of) 5%,transparent);opacity:0.95;';
     }
 
     return `<div class="${animClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}padding:14px 16px;${extraStyle}${selStyle}">
