@@ -5866,22 +5866,26 @@ function confirmDeleteSelectedLogs() {
     return;
   }
   
-  showConfirm('Delete Logs', `Are you sure you want to delete ${selectedLogs.size} log(s)? This cannot be undone.`, async () => {
-    const count = selectedLogs.size;
-    const batch = writeBatch(db);
-    selectedLogs.forEach(id => {
-      batch.delete(doc(db, 'users', userId, 'activities', id));
-    });
-    
-    try {
-      await batch.commit();
-      showToast(`Deleted ${count} logs`, 'ok');
-    } catch (e) {
-      console.error(e);
-      showToast('Failed to delete logs', 'er');
-    }
-    
-    toggleLogSelectionMode();
+  showConfirm('Delete Logs', `Are you sure you want to delete ${selectedLogs.size} log(s)?`, () => {
+    setTimeout(() => {
+      showConfirm('Confirm Deletion', 'Are you REALLY sure? This action cannot be undone.', async () => {
+        const count = selectedLogs.size;
+        const batch = writeBatch(db);
+        selectedLogs.forEach(id => {
+          batch.delete(doc(db, 'users', userId, 'activities', id));
+        });
+        
+        try {
+          await batch.commit();
+          showToast(`Deleted ${count} logs`, 'ok');
+        } catch (e) {
+          console.error(e);
+          showToast('Failed to delete logs', 'er');
+        }
+        
+        toggleLogSelectionMode();
+      }, true);
+    }, 300);
   }, true);
 }
 window.addTx = addTx;
