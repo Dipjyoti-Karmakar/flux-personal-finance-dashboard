@@ -4670,14 +4670,15 @@ async function checkAndTriggerRecurring() {
   if (!userId || !recurringList.length) return;
   const today = getTodayStr();
   const monthKey = getMonthKey();
+  const yearKey = String(new Date().getFullYear());
   const triggered = [];
   for (const rec of recurringList) {
     if (!rec.active) continue;
     if (!rec.nextDue || today < rec.nextDue) continue;
-    // For monthly: skip if already triggered this month
+    // Skip if already triggered in the correct time-window for each frequency
     if (rec.freq === 'monthly' && rec.lastTriggered === monthKey) continue;
-    // For others: skip if lastTriggered is today
-    if (rec.freq !== 'monthly' && rec.lastTriggered === today) continue;
+    if (rec.freq === 'yearly'  && rec.lastTriggered === yearKey)  continue;
+    if (rec.freq !== 'monthly' && rec.freq !== 'yearly' && rec.lastTriggered === today) continue;
     
     // Prevent duplicates if the user manually paid this subscription early
     const dueD = new Date(rec.nextDue + 'T00:00:00');
@@ -4695,7 +4696,7 @@ async function checkAndTriggerRecurring() {
     );
 
     if (manuallyPaid) {
-      const nextKey = (rec.freq === 'monthly') ? monthKey : today;
+      const nextKey = rec.freq === 'monthly' ? monthKey : rec.freq === 'yearly' ? yearKey : today; // FIX 3
       await setDoc(doc(db, 'users', userId, 'recurring', rec.id), {
         nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays),
         lastTriggered: nextKey
@@ -4707,9 +4708,11 @@ async function checkAndTriggerRecurring() {
     if (triggeringRecs.has(rec.id)) continue;
     triggeringRecs.add(rec.id);
     
+    // FIX 2: declare txId before try so the catch block can reach it for optimistic-revert cleanup
+    let txId;
     try {
-      const txId = uid();
-      const nextKey = (rec.freq === 'monthly') ? monthKey : today;
+      txId = uid();
+      const nextKey = rec.freq === 'monthly' ? monthKey : rec.freq === 'yearly' ? yearKey : today; // FIX 3
       
       // Optimistic local UI update
       const optimisticTx = {
@@ -4726,7 +4729,8 @@ async function checkAndTriggerRecurring() {
         if (!recDoc.exists()) throw "not_found";
         const data = recDoc.data();
         if (data.freq === 'monthly' && data.lastTriggered === monthKey) throw "already_triggered";
-        if (data.freq !== 'monthly' && data.lastTriggered === today) throw "already_triggered";
+        if (data.freq === 'yearly'  && data.lastTriggered === yearKey)  throw "already_triggered"; // FIX 3
+        if (data.freq !== 'monthly' && data.freq !== 'yearly' && data.lastTriggered === today) throw "already_triggered";
         if (today < data.nextDue) throw "not_due";
         
         transaction.set(doc(db, 'users', userId, 'transactions', txId), {
@@ -4742,8 +4746,8 @@ async function checkAndTriggerRecurring() {
       triggered.push(rec.name);
       writeLog('ADD', { desc: rec.name, amt: rec.amount, isAuto: true });
     } catch(e) { 
-      // Revert optimistic update if transaction failed
-      txs = txs.filter(t => t.id !== txId);
+      // FIX 2: txId is now in scope — ghost optimistic entry is correctly removed on failure
+      if (txId) txs = txs.filter(t => t.id !== txId);
       debouncedRender();
       if (e !== "already_triggered" && e !== "not_due") {
         console.error('Failed to trigger recurring:', rec.name, e); 
