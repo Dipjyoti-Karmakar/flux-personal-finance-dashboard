@@ -3130,13 +3130,9 @@ function renderTrend(passedTxs) {
           return;
       }
       
-      const pathSpline = (fill) => {
+      const pathLines = (fill) => {
           ctx.beginPath();
-          ctx.moveTo(pts[0].x, pts[0].y);
-          for (let i = 0; i < pts.length - 1; i++) {
-              const xMid = (pts[i].x + pts[i+1].x) / 2;
-              ctx.bezierCurveTo(xMid, pts[i].y, xMid, pts[i+1].y, pts[i+1].x, pts[i+1].y);
-          }
+          pts.forEach((p, i) => { if(i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
           if (fill) {
               ctx.lineTo(pts[pts.length-1].x, pyT + gH);
               ctx.lineTo(pts[0].x, pyT + gH);
@@ -3145,18 +3141,18 @@ function renderTrend(passedTxs) {
       };
 
       // Area fill
-      pathSpline(true);
+      pathLines(true);
       const grad = ctx.createLinearGradient(0, pyT, 0, h - pyB);
       grad.addColorStop(0, gradTop); grad.addColorStop(0.6, gradMid); grad.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = grad; ctx.fill();
       
       // Line glow
-      pathSpline(false);
+      pathLines(false);
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       ctx.strokeStyle = glowColor; ctx.lineWidth = 5; ctx.stroke();
       
       // Main line
-      pathSpline(false);
+      pathLines(false);
       const lineGrad = ctx.createLinearGradient(pts[0].x, 0, pts[pts.length-1].x, 0);
       // FIXED: The previous approach tried to convert a hex color to rgba using string
       // replace(), which silently failed on hex strings like '#e07070'. Now we use
