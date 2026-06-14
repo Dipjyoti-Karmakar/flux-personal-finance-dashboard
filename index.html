@@ -4479,6 +4479,7 @@ function renderParsedLog(action, p) {
   if (action === 'ADD' || action === 'DELETE') {
     const descStyle = action === 'DELETE' ? 'text-decoration:line-through;opacity:0.8;' : '';
     if (p.isNewRec) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">New recurring subscription</div>`;
+    if (p.isDelRec) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);margin-top:4px">Deleted recurring subscription</div>`;
     if (p.isAuto) return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;${descStyle}">${fmt(p.amt)}</span><span>•</span><span>Auto-recurring</span></div>`;
     return `<div style="${descStyle}">${esc(p.desc)}</div><div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:400;color:var(--mu);display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;${descStyle}">${fmt(p.amt)}</span><span>•</span><span style="text-transform:capitalize">${p.cat||'other'}</span><span>•</span><span>${fmtDt(p.date)}</span><span>•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
   }
@@ -4954,8 +4955,10 @@ function askDeleteRecurring(id) {
 async function deleteRecurring(id) {
   if (!userId) return;
   try {
+    const rec = recurringList.find(r => r.id === id);
     await deleteDoc(doc(db, 'users', userId, 'recurring', id));
     showToast('Subscription deleted', 'ok');
+    if (rec) writeLog('DELETE', { desc: rec.name, isDelRec: true }, rec.type);
   } catch(e) { showToast('Error deleting: ' + (e?.code || e?.message), 'er'); }
 }
 
