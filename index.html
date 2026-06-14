@@ -2401,8 +2401,8 @@ async function undoDelete() {
 // FIXED: No longer suppresses ALL toasts during the undo window — only suppresses
 // neutral/success toasts. Error toasts always show so users see sync failures.
 function showToast(msg,type){if(_undoTimer && type !== 'er')return;const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
-function fmt(n){return (n < 0 ? '-' : '') + '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:0});}
+function fmt(n){return (n < 0 ? '-' : '') + '₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');}
+function fmtS(n){return '₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');}
 function fmtDt(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
@@ -3220,7 +3220,7 @@ function renderCats(passedTxs){
   // If the active filter no longer exists in the data, close it
   if(activeCatFilter && !tot[activeCatFilter]) activeCatFilter=null;
   let barHtml='<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:12px;">';
-  cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${getCatColor(cat)};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(1)}%"></div>`;});
+  cats.forEach(([cat,val],i)=>{const pct=(val/totalExp)*100;barHtml+=`<div style="width:${pct}%;background:${getCatColor(cat)};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(0)}%"></div>`;});
   barHtml+='</div>';
   let detHtml=`<div class="cat-tag-list${activeCatFilter?' is-extended':''}">`;
   cats.forEach(([cat,val],i)=>{
@@ -3337,7 +3337,7 @@ function renderSplit(passedTxs){
   if(!exp.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div>';return;}
   const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
   const oA=onl.reduce((s,t)=>s+t.amount,0),fA=ofl.reduce((s,t)=>s+t.amount,0),tot=oA+fA;
-  const op=tot>0?(oA/tot*100).toFixed(1):0,fp=tot>0?(fA/tot*100).toFixed(1):0;
+  const op=tot>0?(oA/tot*100).toFixed(0):0,fp=tot>0?(fA/tot*100).toFixed(0):0;
   // FIXED: Use Set size with a minimum of 1 to prevent division by zero / Infinity avg/day
   const onlDays=Math.max(1,new Set(onl.map(t=>t.date)).size);
   const oflDays=Math.max(1,new Set(ofl.map(t=>t.date)).size);
@@ -3416,7 +3416,7 @@ function renderInsights() {
     const [topDay, topDayAmt] = dayEntries[0];
     const avgDay = curExp / Math.max(1, curExpDays.size);
     const ratio = topDayAmt / avgDay;
-    let extra = ratio >= 2 ? ` — <span class="up">${ratio.toFixed(1)}x daily avg</span>` : '';
+    let extra = ratio >= 2 ? ` — <span class="up">${ratio.toFixed(0)}x daily avg</span>` : '';
     const sorted = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
     let streak = '';
     if (sorted.length > 0) { const gap = Math.floor((new Date(todayISO+'T00:00:00') - new Date(sorted[0]+'T00:00:00'))/86400000); if (gap >= 2) streak = ` No-spend streak: <strong>${gap} days</strong> 🔥`; }
@@ -5136,7 +5136,7 @@ async function generatePDF() {
     const totalInc = allInPeriod.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
     const totalExp = allInPeriod.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
     const netBal = totalInc - totalExp;
-    const savRate = totalInc > 0 ? ((netBal/totalInc)*100).toFixed(1) : '0.0';
+    const savRate = totalInc > 0 ? ((netBal/totalInc)*100).toFixed(0) : '0';
     const txCount = allInPeriod.length;
 
     // Category data for insights
@@ -5321,14 +5321,14 @@ async function generatePDF() {
     if (txCount > 0) {
       sectionTitle('KEY INSIGHTS');
       const insights = [];
-      if (topCat) insights.push(`Highest spend category: ${topCat[0].charAt(0).toUpperCase()+topCat[0].slice(1)} (${fmtPDFS(topCat[1])}, ${totalExp>0?((topCat[1]/totalExp)*100).toFixed(1):'0'}% of expenses)`);
+      if (topCat) insights.push(`Highest spend category: ${topCat[0].charAt(0).toUpperCase()+topCat[0].slice(1)} (${fmtPDFS(topCat[1])}, ${totalExp>0?((topCat[1]/totalExp)*100).toFixed(0):'0'}% of expenses)`);
       if (largestTx) insights.push(`Largest single expense: ${largestTx.desc||'(no description)'} on ${largestTx.date} for ${fmtPDFS(largestTx.amount)}`);
       if (avgDailyExp > 0) insights.push(`Average daily spending: ${fmtPDF(avgDailyExp)} per day`);
       if (totalExp > 0) {
         const onlinePct = ((onlineExp/totalExp)*100).toFixed(0);
         insights.push(`Payment split: ${onlinePct}% online (${fmtPDFS(onlineExp)})  vs  ${100-parseInt(onlinePct)}% offline (${fmtPDFS(offlineExp)})`);
       }
-      if (catEntries.length >= 2) insights.push(`Second highest: ${catEntries[1][0].charAt(0).toUpperCase()+catEntries[1][0].slice(1)} at ${fmtPDFS(catEntries[1][1])} (${totalExp>0?((catEntries[1][1]/totalExp)*100).toFixed(1):'0'}%)`);
+      if (catEntries.length >= 2) insights.push(`Second highest: ${catEntries[1][0].charAt(0).toUpperCase()+catEntries[1][0].slice(1)} at ${fmtPDFS(catEntries[1][1])} (${totalExp>0?((catEntries[1][1]/totalExp)*100).toFixed(0):'0'}%)`);
       if (parseFloat(savRate) > 30) insights.push('Excellent savings rate! You are saving more than 30% of income this period.');
       else if (parseFloat(savRate) > 0) insights.push(`You saved ${fmtPDFS(netBal)} this period. Aim for 20%+ for strong financial health.`);
       else if (netBal < 0) insights.push(`Spending exceeded income by ${fmtPDFS(Math.abs(netBal))}. Review top categories to reduce costs.`);
@@ -5446,7 +5446,7 @@ async function generatePDF() {
         for (let i = 0; i <= 4; i++) {
           const yPos = gridBottom - (i / 4) * drawH;
           const amtVal = (maxAmt * (i / 4));
-          const amtStr = amtVal >= 100000 ? (amtVal/100000).toFixed(1)+'L' : amtVal >= 1000 ? (amtVal/1000).toFixed(1)+'k' : amtVal.toFixed(0);
+          const amtStr = amtVal >= 100000 ? (amtVal/100000).toFixed(0)+'L' : amtVal >= 1000 ? (amtVal/1000).toFixed(0)+'k' : amtVal.toFixed(0);
           
           doc.text(amtStr, gridX - 3, yPos + 2.5, { align: 'right' });
           doc.setDrawColor(...bd); doc.setLineWidth(0.1);
@@ -5469,7 +5469,7 @@ async function generatePDF() {
         for (let i = 0; i < pts.length; i++) {
           const val = pts[i][dataKey];
           if (val > 0) {
-            const amtStr = val >= 100000 ? (val/100000).toFixed(1)+'L' : val >= 1000 ? (val/1000).toFixed(1)+'k' : val.toFixed(0);
+            const amtStr = val >= 100000 ? (val/100000).toFixed(0)+'L' : val >= 1000 ? (val/1000).toFixed(0)+'k' : val.toFixed(0);
             const currY = getY(val);
             const prevY = i > 0 ? getY(pts[i-1][dataKey]) : currY;
             const nextY = i < pts.length - 1 ? getY(pts[i+1][dataKey]) : currY;
@@ -5674,8 +5674,8 @@ async function generatePDF() {
         // Legend items
         const oLegendX = rightX + (catFullWidth ? 100 : oR * 2 + 8);
         const oItems = [
-          { label:'Online', pct:(onlinePctVal*100).toFixed(1), amt:onlineExp, color:[110,157,200] },
-          { label:'Offline', pct:(offlinePctVal*100).toFixed(1), amt:offlineExp, color:[157,122,200] },
+          { label:'Online', pct:(onlinePctVal*100).toFixed(0), amt:onlineExp, color:[110,157,200] },
+          { label:'Offline', pct:(offlinePctVal*100).toFixed(0), amt:offlineExp, color:[157,122,200] },
         ].sort((a,b) => b.amt - a.amt);
         const oStartY = oCY - 5;
         oItems.forEach((item, idx) => {
@@ -5706,7 +5706,7 @@ async function generatePDF() {
       curY = 20;
       sectionTitle('CATEGORY BREAKDOWN (EXPENSES)');
       const catRows = catEntries.map(([cat,amt]) => {
-        const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(1)+'%' : '0%';
+        const pct = totalExp > 0 ? ((amt/totalExp)*100).toFixed(0)+'%' : '0%';
         const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
         return [catLabel, fmtPDFS(amt), pct];
       });
