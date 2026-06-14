@@ -1513,14 +1513,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <!-- Activity Log View -->
 <!-- Subscriptions View -->
 <div id="subView" style="display:none">
-  <div class="sub-header">
+  <div class="sub-header" style="animation: fdI 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;">
     <div class="sub-title">Subscriptions</div>
     <button class="sub-add-btn" onclick="openAddRecurring()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Add Subscription
     </button>
   </div>
-  <div class="sub-summary-bar" id="subSummaryBar">
+  <div class="sub-summary-bar" id="subSummaryBar" style="animation: fdI 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.05s;">
     <div class="sub-summary-item">
       <div class="sub-summary-val" id="subTotalMonthly" style="color:var(--ex)">₹0</div>
       <div class="sub-summary-lbl">Monthly Cost</div>
@@ -4779,7 +4779,7 @@ function renderRecurring() {
     </div>`;
     return;
   }
-  area.innerHTML = recurringList.map(rec => {
+  area.innerHTML = recurringList.map((rec, index) => {
     const isDue = rec.nextDue && rec.nextDue <= today;
     const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue) - new Date(today)) / 86400000) : null;
 
@@ -4805,7 +4805,7 @@ function renderRecurring() {
       : '—';
     const pauseLabel  = rec.active ? '⏸ Pause' : '▶ Resume';
 
-    return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}">
+    return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}" style="animation: fdI 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: ${index * 0.05}s;">
       <div class="sub-card-top">
         <div class="sub-card-icon">${catIcon}</div>
         <div class="sub-card-info">
