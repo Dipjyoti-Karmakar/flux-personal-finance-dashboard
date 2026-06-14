@@ -585,22 +585,32 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
     overflow: visible; 
     align-items: stretch;
   }
+  /* Sync + Auth on one row: sync gets 2 cols, sign-in/out gets 1 col */
   #cloudStatus { 
-    grid-column: span 3; 
+    grid-column: span 2;
     justify-content: center; 
     margin-right: 0; 
-    padding: 10px; 
+    padding: 9px 10px; 
     border-radius: 12px;
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+    overflow: hidden;
   }
   #authBtn {
-    grid-column: span 3;
+    grid-column: span 1;
+    /* compact: show icon + abbreviated label */
   }
+  /* Keep authBtn text visible but tight */
+  #authBtn svg { flex-shrink: 0; }
   .ib { 
     width: 100%; 
     justify-content: center; 
-    padding: 12px 8px; 
-    font-size: 11px; 
+    padding: 10px 4px; 
+    font-size: 10px;
+    letter-spacing: 0.6px;
     border-radius: 12px;
+    gap: 5px;
   }
 
   /* Hero Dashboard Balance */
@@ -2521,8 +2531,9 @@ function renderStats(sTxs){
   const tI=inc.reduce((s,t)=>s+t.amount,0),tE=exp.reduce((s,t)=>s+t.amount,0),bal=tI-tE;
   
   const bel=document.getElementById('sBal');
-  // Pass signed balance to animation loop, but apply absolute value before formatting
-  animateVal(bel, bal, (v) => fmt(Math.abs(v)));
+  // Always animate toward the ABSOLUTE value — the card's green/red glow already signals
+  // surplus vs deficit, so we never show a minus sign on this card.
+  animateVal(bel, Math.abs(bal), fmt);
   bel.className='sv big '+(bal>0?'pos':bal<0?'neg':'neu');
   document.getElementById('sBalSub').textContent=bal>=0?'↑ In the green':'↓ Overspent';
   
@@ -4756,8 +4767,8 @@ function renderRecurring() {
     const amt = r.type === 'expense' ? r.amount : 0;
     if (r.freq === 'monthly') monthlyTotal += amt;
     else if (r.freq === 'yearly') yearlyTotal += amt / 12;
-    else if (r.freq === 'weekly') monthlyTotal += amt * 4.33;
-    else if (r.freq === 'daily') monthlyTotal += amt * 30;
+    else if (r.freq === 'weekly') monthlyTotal += amt * (365.25 / 84);  // 365.25/(12*7) ≈ 4.348 weeks/month
+    else if (r.freq === 'daily') monthlyTotal += amt * (365.25 / 12);  // ≈ 30.44 days/month
     else if (r.freq === 'custom' && r.customDays > 0) monthlyTotal += (amt * 365.25 / r.customDays) / 12;
     if (r.nextDue && r.nextDue <= today) dueCount++;
     else if (r.nextDue) {
