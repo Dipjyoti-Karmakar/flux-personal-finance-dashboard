@@ -2858,9 +2858,11 @@ async function saveEditTx() {
        if (b.mode !== mode) diffs.push({ label: 'Mode', oldV: b.mode, newV: mode });
        if (b.type !== type) diffs.push({ label: 'Type', oldV: b.type, newV: type });
        
-       if (diffs.length > 0 || b.eventId !== eventId) {
-         if (b.eventId !== eventId) diffs.push({ label: 'Event', oldV: b.eventId ? events[b.eventId]?.name || 'Old Event' : 'None', newV: eventId ? events[eventId]?.name || 'New Event' : 'None' });
-         writeLog('EDIT', { desc: b.desc, diffs, eventId: eventId });
+       const oldEvtId = b.eventId || '';
+       const newEvtId = eventId || '';
+       if (diffs.length > 0 || oldEvtId !== newEvtId) {
+         if (oldEvtId !== newEvtId) diffs.push({ label: 'Event', oldV: oldEvtId ? events[oldEvtId]?.name || 'Old Event' : 'None', newV: newEvtId ? events[newEvtId]?.name || 'New Event' : 'None' });
+         writeLog('EDIT', { desc: b.desc, diffs, eventId: newEvtId });
        }
     }
 
@@ -4357,10 +4359,14 @@ async function editEvent(evtId, data) {
   if (!userId) return;
   try {
     const src = events[evtId]?._src;
+    const oldEvt = events[evtId];
+    let changed = true;
+    if (oldEvt) changed = (oldEvt.name !== data.name || oldEvt.start !== data.start || oldEvt.end !== data.end || oldEvt.color !== data.color);
+    
     const payload = (src === 'transactions' || eventsUseFallback) ? { ...data, _metaType: 'event' } : data;
     await setDoc(getEventDocRef(evtId, src), payload, { merge: true });
     showToast('Event updated', 'ok');
-    writeLog('EDIT', { desc: data.name, isEventEdit: true });
+    if (changed) writeLog('EDIT', { desc: data.name, isEventEdit: true });
   } catch(e) {
     console.error('Error updating event', e);
     const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
@@ -4951,9 +4957,14 @@ async function saveRecurringMod() {
   closeRecurringMod();
   if (editingRecurringId) {
     try {
+      const oldRec = recurringList.find(r => r.id === editingRecurringId);
+      let changed = true;
+      if (oldRec) {
+         changed = (oldRec.name !== data.name || oldRec.amount !== data.amount || oldRec.cat !== data.cat || oldRec.nextDue !== data.nextDue || oldRec.type !== data.type || oldRec.freq !== data.freq || oldRec.customDays !== data.customDays);
+      }
       await setDoc(doc(db, 'users', userId, 'recurring', editingRecurringId), data, { merge: true });
       showToast('Subscription updated', 'ok');
-      writeLog('EDIT', { desc: data.name, isRecEdit: true });
+      if (changed) writeLog('EDIT', { desc: data.name, isRecEdit: true });
     } catch(e) { showToast('Error updating: ' + (e?.code || e?.message), 'er'); }
   } else {
     try {
