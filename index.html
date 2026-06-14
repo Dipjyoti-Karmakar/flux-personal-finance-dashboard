@@ -932,6 +932,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 @media(max-width:600px) {
   .sub-summary-bar { grid-template-columns:repeat(2,1fr); }
+  .sub-summary-item:nth-child(3) { border-left:none; }
+  .sub-summary-item:nth-child(n+3) { border-top:1px solid var(--bd); }
   .sub-card { padding:14px; }
   .sub-card-top { gap:10px; }
   .sub-card-icon { width:40px; height:40px; font-size:18px; }
