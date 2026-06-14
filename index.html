@@ -2354,7 +2354,6 @@ async function undoDelete() {
   try {
     await setDoc(doc(db, 'users', userId, 'transactions', id), data);
     showToast('Transaction restored', 'ok');
-    writeLog('ADD', { desc: data.desc, amt: data.amount, cat: data.cat, date: data.date, mode: data.mode, type: data.type, eventId: data.eventId, isRestore: true }, data.type);
   } catch(e) {
     console.error('Undo failed', e);
     showToast('Failed to restore transaction', 'er');
@@ -4969,10 +4968,8 @@ async function saveRecurringMod() {
 async function toggleRecurringActive(id, active) {
   if (!userId) return;
   try {
-    const rec = recurringList.find(r => r.id === id);
     await setDoc(doc(db, 'users', userId, 'recurring', id), { active }, { merge: true });
     showToast(active ? 'Subscription resumed' : 'Subscription paused', 'ok');
-    if (rec) writeLog('UPDATE', { desc: rec.name, isRecPauseToggle: true, active });
   } catch(e) { showToast('Error: ' + (e?.code || e?.message), 'er'); }
 }
 
