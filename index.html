@@ -1244,6 +1244,9 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
+<div id="offlineBanner" style="display:none; position:fixed; top:0; left:0; width:100%; background:var(--ex); color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:600; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+  Offline Mode - Changes are saved locally and will sync when reconnected.
+</div>
 <div id="splash-screen">
   <div class="splash-bg-elements">
     <div class="splash-circle"></div>
@@ -1914,6 +1917,39 @@ let _undoTxData = null;
 let _undoClearLogsTimer = null;
 let _undoClearLogsData = null;
 
+let syncQueue = JSON.parse(localStorage.getItem('flux_sync_queue') || '[]');
+function queueFailedSync(op, col, id, data, isMerge=false) {
+  syncQueue.push({ op, col, id, data, isMerge, ts: Date.now() });
+  localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
+  showToast('Saved offline. Will sync when connected.', 'ok');
+}
+async function processSyncQueue() {
+  if (syncQueue.length === 0 || !navigator.onLine || !userId) return;
+  const queue = [...syncQueue];
+  syncQueue = [];
+  localStorage.setItem('flux_sync_queue', '[]');
+  let c = 0;
+  for (const item of queue) {
+    try {
+      if (item.op === 'setDoc') await setDoc(doc(db, 'users', userId, item.col, item.id), item.data, item.isMerge ? {merge:true} : undefined);
+      else if (item.op === 'deleteDoc') await deleteDoc(doc(db, 'users', userId, item.col, item.id));
+      c++;
+    } catch(e) { console.warn('Dropped malformed queued payload:', e); }
+  }
+  if (c > 0) showToast(`Synced ${c} offline actions`, 'ok');
+}
+
+window.addEventListener('online', () => {
+  const ob = document.getElementById('offlineBanner'); if(ob) ob.style.display='none';
+  processSyncQueue();
+});
+window.addEventListener('offline', () => {
+  const ob = document.getElementById('offlineBanner'); if(ob) ob.style.display='block';
+});
+if (!navigator.onLine) {
+  const ob = document.getElementById('offlineBanner'); if(ob) ob.style.display='block';
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyD9sEai-TSuIHDuv6zL-3utgdBBfb3FN4k",
   authDomain: "my-ledger-8f8b5.firebaseapp.com",
@@ -2003,6 +2039,7 @@ async function toggleAuth() {
 onAuthStateChanged(auth, (user) => {
   if (user) {
     userId = user.uid;
+    processSyncQueue();
     if (unsubscribeFirestore) unsubscribeFirestore();
     if (unsubscribeEvents) unsubscribeEvents();
     if (unsubscribeActivityLog) unsubscribeActivityLog();
@@ -2341,7 +2378,7 @@ async function commitDelete(id) {
     await deleteDoc(doc(db, 'users', userId, 'transactions', id));
   } catch(e) {
     console.error('Error deleting', e);
-    showToast('Error deleting from cloud', 'er');
+    queueFailedSync('deleteDoc', 'transactions', id, null);
   }
 }
 
@@ -2356,7 +2393,7 @@ async function undoDelete() {
     showToast('Transaction restored', 'ok');
   } catch(e) {
     console.error('Undo failed', e);
-    showToast('Failed to restore transaction', 'er');
+    queueFailedSync('setDoc', 'transactions', id, data);
   }
   _undoTxData = null;
 }
@@ -2365,7 +2402,7 @@ async function undoDelete() {
 // neutral/success toasts. Error toasts always show so users see sync failures.
 function showToast(msg,type){if(_undoTimer && type !== 'er')return;const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
 function fmt(n){return (n < 0 ? '-' : '') + '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{maximumFractionDigits:0});}
+function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:0});}
 function fmtDt(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
@@ -2870,7 +2907,7 @@ async function saveEditTx() {
     showToast('Transaction updated', 'ok');
   } catch(e) {
     console.error("Error updating", e);
-    showToast("Error updating cloud", "er");
+    queueFailedSync('setDoc', 'transactions', editingTxId, updatedTx);
   }
 }
 
@@ -3663,7 +3700,7 @@ function getReportData() {
   if (!incExp) filtered = filtered.filter(t => t.type !== 'expense');
   filtered.sort((a,b) => {
     const dDiff = a.date.localeCompare(b.date);
-    return dDiff !== 0 ? dDiff : ((a.createdAt || 0) - (b.createdAt || 0));
+    return dDiff !== 0 ? dDiff : ((a.createdAt || 0) - (a.createdAt || 0));
   });
 
   return { fromDate, toDate, reportTitle, allInPeriod, filtered };
@@ -4474,18 +4511,17 @@ function setTxSearch(val) {
 const ACTIVITY_LOG_LIMIT = 300;
 
 function writeLog(action, msg, txType) {
-  if (!userId) return;
+  if (!userId || !logEnabled) return;
   try {
     const actRef = collection(db, 'users', userId, 'activities');
     const mStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
     const entry = { a: action, m: mStr, t: serverTimestamp() };
     if (txType) entry.tp = txType; // 'income' or 'expense' for ADD/DELETE
-    addDoc(actRef, entry).catch(e => {
-      console.warn('Activity log write failed:', e);
+    const logId = uid();
+    setDoc(doc(actRef, logId), entry).catch(e => {
+      queueFailedSync('setDoc', 'activities', logId, { a: action, m: mStr, ts: Date.now(), tp: txType || null });
     });
-  } catch (e) {
-    console.error('Failed to write activity log', e);
-  }
+  } catch(e) { console.error('Log fail', e); }
 }
 
 function renderParsedLog(action, p) {
@@ -4743,7 +4779,7 @@ async function checkAndTriggerRecurring() {
       await setDoc(doc(db, 'users', userId, 'recurring', rec.id), {
         nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays),
         lastTriggered: nextKey
-      }, { merge: true });
+      }, { merge: true }).catch(e => queueFailedSync('setDoc', 'recurring', rec.id, { nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays), lastTriggered: nextKey }, true));
       writeLog('UPDATE', { desc: rec.name, isSkip: true });
       continue;
     }
@@ -4965,14 +5001,19 @@ async function saveRecurringMod() {
       await setDoc(doc(db, 'users', userId, 'recurring', editingRecurringId), data, { merge: true });
       showToast('Subscription updated', 'ok');
       if (changed) writeLog('EDIT', { desc: data.name, isRecEdit: true });
-    } catch(e) { showToast('Error updating: ' + (e?.code || e?.message), 'er'); }
+    } catch(e) { 
+      queueFailedSync('setDoc', 'recurring', editingRecurringId, data, true);
+    }
   } else {
     try {
       data.createdAt = Date.now();
-      await setDoc(doc(db, 'users', userId, 'recurring', uid()), data);
+      const id = uid();
+      await setDoc(doc(db, 'users', userId, 'recurring', id), data);
       showToast('Subscription created', 'ok');
       writeLog('ADD', { desc: name, isNewRec: true }, currentRecType);
-    } catch(e) { showToast('Error creating: ' + (e?.code || e?.message), 'er'); }
+    } catch(e) { 
+      queueFailedSync('setDoc', 'recurring', uid(), data);
+    }
   }
 }
 
@@ -4981,7 +5022,9 @@ async function toggleRecurringActive(id, active) {
   try {
     await setDoc(doc(db, 'users', userId, 'recurring', id), { active }, { merge: true });
     showToast(active ? 'Subscription resumed' : 'Subscription paused', 'ok');
-  } catch(e) { showToast('Error: ' + (e?.code || e?.message), 'er'); }
+  } catch(e) { 
+    queueFailedSync('setDoc', 'recurring', id, { active }, true);
+  }
 }
 
 function askDeleteRecurring(id) {
@@ -4997,7 +5040,9 @@ async function deleteRecurring(id) {
     await deleteDoc(doc(db, 'users', userId, 'recurring', id));
     showToast('Subscription deleted', 'ok');
     if (rec) writeLog('DELETE', { desc: rec.name, isDelRec: true }, rec.type);
-  } catch(e) { showToast('Error deleting: ' + (e?.code || e?.message), 'er'); }
+  } catch(e) { 
+    queueFailedSync('deleteDoc', 'recurring', id, null);
+  }
 }
 
 document.getElementById('recurringMod').addEventListener('click', function(e) { if (e.target === this) closeRecurringMod(); });
