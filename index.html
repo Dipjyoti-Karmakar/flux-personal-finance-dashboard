@@ -193,13 +193,19 @@
 
 /* Global strict boundaries */
 html, body { margin: 0; padding: 0; width: 100%; max-width: 100vw; overflow-x: hidden; }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  -webkit-tap-highlight-color: transparent !important;
+}
 
 /* Clip touch ripples to button border-radius */
 button, .btn, .sbtn, .fab, .ib, .tb, .ft, .mc2, .cat-tx-close, .sub-add-btn, .sub-action-btn, .pdf-gen-btn, .freq-btn, .rpt-tab, .log-clear-btn, .app-tab { 
   overflow: hidden; 
   transform: translateZ(0); 
-  -webkit-mask-image: -webkit-radial-gradient(white, black); 
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  mask-image: radial-gradient(white, black);
 }
 
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;transition:background .4s ease,color .4s ease;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
