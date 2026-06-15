@@ -4597,7 +4597,7 @@ function writeLog(action, msg, txType) {
   try {
     const actRef = collection(db, 'users', userId, 'activities');
     const mStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
-    const entry = { a: action, m: mStr, t: serverTimestamp() };
+    const entry = { a: action, m: mStr, t: Date.now() };
     if (txType) entry.tp = txType; // 'income' or 'expense' for ADD/DELETE
     const logId = uid();
     setDoc(doc(actRef, logId), entry).catch(e => {
