@@ -1275,9 +1275,9 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .pill-evt { padding:2px 6px; border-radius:4px; font-size:9px; font-family:'DM Mono',monospace; font-weight:600; }
 
 .log-meta { font-family:'DM Mono',monospace; font-size:11px; font-weight:400; color:var(--mu); margin-top:4px; display:flex; gap:6px; flex-wrap:wrap; }
-.log-msg { white-space:normal; overflow:visible; line-height:1.4; margin-bottom:6px; font-size:13px; font-weight:600; }
+.log-msg { white-space:normal; overflow:visible; line-height:1.4; margin-bottom:6px; font-size:13px; font-weight:600; overflow-wrap: anywhere; word-break: break-word; }
 .log-time { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-.tx-deleted-text { text-decoration:line-through; opacity:0.8; }
+.tx-deleted-text { text-decoration:line-through; opacity:0.8; overflow-wrap: anywhere; word-break: break-all; }
 .diff-row { display:flex; align-items:center; gap:8px; padding:3px 0; font-size:12px; font-family:'DM Mono',monospace; }
 .diff-label { color:var(--mu); font-weight:600; width:35px; text-transform:uppercase; font-size:10px; }
 .diff-old { color:var(--ex); text-decoration:line-through; opacity:0.8; }
