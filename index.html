@@ -4601,7 +4601,7 @@ function writeLog(action, msg, txType) {
     if (txType) entry.tp = txType; // 'income' or 'expense' for ADD/DELETE
     const logId = uid();
     setDoc(doc(actRef, logId), entry).catch(e => {
-      queueFailedSync('setDoc', 'activities', logId, { a: action, m: mStr, ts: Date.now(), tp: txType || null });
+      queueFailedSync('setDoc', 'activities', logId, { a: action, m: mStr, t: Date.now(), tp: txType || null });
     });
   } catch(e) { console.error('Log fail', e); }
 }
