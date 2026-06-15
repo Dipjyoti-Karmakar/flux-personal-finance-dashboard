@@ -4598,11 +4598,11 @@ function writeLog(action, msg, txType) {
   try {
     const actRef = collection(db, 'users', userId, 'activities');
     const mStr = typeof msg === 'string' ? msg : JSON.stringify(msg);
-    const entry = { a: action, m: mStr, t: Date.now() };
+    const entry = { a: action, m: mStr, ts: Date.now() };
     if (txType) entry.tp = txType; // 'income' or 'expense' for ADD/DELETE
     const logId = uid();
     setDoc(doc(actRef, logId), entry).catch(e => {
-      queueFailedSync('setDoc', 'activities', logId, { a: action, m: mStr, t: Date.now(), tp: txType || null }, false, true);
+      queueFailedSync('setDoc', 'activities', logId, { a: action, m: mStr, ts: Date.now(), tp: txType || null }, false, true);
       if (document.getElementById('logView') && document.getElementById('logView').style.display !== 'none') {
         renderLogs();
       }
@@ -4644,7 +4644,7 @@ function loadActivityLog() {
   if (!userId) return;
   if (unsubscribeActivityLog) unsubscribeActivityLog();
   const actRef = collection(db, 'users', userId, 'activities');
-  const actQuery = query(actRef, orderBy('t', 'desc'));
+  const actQuery = query(actRef, orderBy('ts', 'desc'));
   unsubscribeActivityLog = onSnapshot(actQuery, (snap) => {
     activityLogs = [];
     let excessDocs = [];
@@ -4692,7 +4692,7 @@ function renderLogs() {
       }
     }
   });
-  logs.sort((a,b) => b.t - a.t);
+  logs.sort((a,b) => (b.ts || b.t || 0) - (a.ts || a.t || 0));
 
   if (filter !== 'all') {
     logs = logs.filter(l => l.a === filter);
@@ -4720,7 +4720,7 @@ function renderLogs() {
   }
 
   listEl.innerHTML = logs.map(l => {
-    const ts = l.t;
+    const ts = l.ts || l.t;
     const d  = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
     const timeStr = `${d.getDate()} ${d.toLocaleString('default',{month:'short'})} ${d.getFullYear().toString().slice(-2)}, ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
 
