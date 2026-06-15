@@ -1022,7 +1022,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 @media(max-width:520px) {
   .app-tabs { margin-bottom:14px; }
   .app-tab { padding:8px 10px; font-size:11px; }
-  .log-header { flex-direction:column; align-items:stretch; }
+  .log-header { flex-direction:row; align-items:center; justify-content:space-between; flex-wrap:nowrap; }
+  .log-title { font-size:18px; }
   .log-entry { padding:12px 14px; gap:10px; }
 }
 
@@ -4619,7 +4620,7 @@ function renderParsedLog(action, p) {
     if (p.isDelEvent) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Deleted event</div>`;
     if (p.isRestore) return `<div>${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600">${fmt(p.amt)}</span><span> </span><span>Restored transaction</span></div>`;
     if (p.isAuto) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span>Auto-recurring</span></div>`;
-    return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat||'other'}</span><span> </span><span>${fmtDt(p.date)}</span><span> </span><span style="text-transform:capitalize">${p.mode}</span></div>`;
+    return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat||'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
   }
   if (action === 'EDIT') {
     if (p.isEventEdit) return `<div>${esc(p.desc)}</div><div class="log-meta">Event updated</div>`;
