@@ -4644,13 +4644,17 @@ function loadActivityLog() {
   if (!userId) return;
   if (unsubscribeActivityLog) unsubscribeActivityLog();
   const actRef = collection(db, 'users', userId, 'activities');
-  const actQuery = query(actRef, orderBy('ts', 'desc'));
+  const actQuery = query(actRef);
   unsubscribeActivityLog = onSnapshot(actQuery, (snap) => {
+    let allDocs = [];
+    snap.forEach(d => allDocs.push({ id: d.id, ref: d.ref, data: d.data() }));
+    allDocs.sort((a,b) => (b.data.ts || b.data.t || 0) - (a.data.ts || a.data.t || 0));
+
     activityLogs = [];
     let excessDocs = [];
-    snap.forEach(d => {
-      if (activityLogs.length < ACTIVITY_LOG_LIMIT) {
-        activityLogs.push({ id: d.id, ...d.data() });
+    allDocs.forEach((d, index) => {
+      if (index < ACTIVITY_LOG_LIMIT) {
+        activityLogs.push({ id: d.id, ...d.data });
       } else {
         excessDocs.push(d);
       }
