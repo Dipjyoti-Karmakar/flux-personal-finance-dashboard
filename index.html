@@ -540,7 +540,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .bdg.be{background:var(--eb);color:var(--ex)}
 .bdg.bo{background:var(--ob);color:var(--on)}
 .bdg.bf{background:var(--fb);color:var(--of)}
-.btn{padding:10px 20px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s cubic-bezier(0.16, 1, 0.3, 1);font-weight:600;}
+.btn{padding:10px 20px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s cubic-bezier(0.16, 1, 0.3, 1);font-weight:600;flex-shrink:0;}
 .btn:hover{border-color:var(--bs);background:var(--s3);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.1);}
 .btn.pr{background:var(--ac);border-color:var(--ac);color:#0d0f14}
 .btn.pr:hover{opacity:.9;color:#0d0f14;transform:translateY(-2px);box-shadow:var(--sh-btn);}
@@ -1001,7 +1001,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 #logView { max-width:960px; margin:0 auto; padding:0 16px; }
 .log-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
 .log-title { font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx); }
-.log-clear-btn { padding:6px 14px; border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.5px; text-transform:uppercase; font-weight:600; border-radius:var(--rs); cursor:pointer; transition:all .2s; white-space:nowrap; }
+.log-clear-btn { padding:6px 14px; border:1px solid var(--bd); background:var(--s2); color:var(--mu); font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.5px; text-transform:uppercase; font-weight:600; border-radius:var(--rs); cursor:pointer; transition:all .2s; white-space:nowrap; flex-shrink: 0; }
 .log-clear-btn:hover { border-color:var(--ex); color:var(--ex); }
 .log-entry { display:flex; gap:12px; padding:14px 16px; background:var(--sf); border:1px solid var(--bd); border-radius:var(--rs); margin-bottom:8px; transition:all .2s; align-items:flex-start; }
 .log-entry:hover { border-color:var(--bs); background:var(--s2); }
@@ -1629,7 +1629,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <div id="logView" style="display:none">
   <div class="log-header" style="margin-bottom:12px;">
     <div class="log-title">Activity Log</div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;flex-shrink:0;">
       <select id="logFilter" onchange="renderLogs()" style="padding:6px 10px;font-size:11px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;">
         <option value="all">All</option>
         <option value="ADD">➕ Added</option>
