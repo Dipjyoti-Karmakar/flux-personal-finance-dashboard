@@ -2970,7 +2970,7 @@ async function saveEditTx() {
        const newEvtId = eventId || '';
        if (diffs.length > 0 || oldEvtId !== newEvtId) {
          if (oldEvtId !== newEvtId) diffs.push({ label: 'Event', oldV: oldEvtId ? events[oldEvtId]?.name || 'Old Event' : 'None', newV: newEvtId ? events[newEvtId]?.name || 'New Event' : 'None' });
-         writeLog('EDIT', { desc: b.desc, diffs, eventId: newEvtId });
+         writeLog('EDIT', { desc: b.desc, diffs, eventId: newEvtId, amt: b.amount, cat: b.cat, date: b.date, mode: b.mode, type: b.type });
        }
     }
 
@@ -4626,9 +4626,15 @@ function renderParsedLog(action, p) {
     if (p.isEventEdit) return `<div>${esc(p.desc)}</div><div class="log-meta">Event updated</div>`;
     if (p.isRecEdit) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription updated</div>`;
     if (!p.diffs) return `<div>${esc(p.desc)}</div>`;
+    
+    let metaHtml = '';
+    if (p.amt !== undefined && p.date) {
+      metaHtml = `<div class="log-meta" style="margin-top:2px;margin-bottom:6px;"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;">${fmt(p.amt)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.cat||'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode||'offline'}</span></div>`;
+    }
+    
     const dfn = (label, oldV, newV) => `<div class="diff-row"><span class="diff-label">${label}</span><span class="diff-old">${esc(oldV)}</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--mu)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.6;"><path d="m9 18 6-6-6-6"/></svg><span class="diff-new">${esc(newV)}</span></div>`;
     const diffHtml = p.diffs.map(d => dfn(d.label, d.oldV, d.newV)).join('');
-    return `<div>${esc(p.desc)}</div><div class="diff-container">${diffHtml}</div>`;
+    return `<div>${esc(p.desc)}</div>${metaHtml}<div class="diff-container">${diffHtml}</div>`;
   }
   if (action === 'IMPORT') {
     return `<div>Imported ${p.count} transaction${p.count !== 1 ? 's' : ''}</div><div class="log-meta">Mode: <strong style="text-transform:uppercase">${p.mode}</strong></div>`;
