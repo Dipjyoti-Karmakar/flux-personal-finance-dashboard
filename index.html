@@ -677,8 +677,9 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   @keyframes sUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   
   #confirmMod { align-items: center; padding: 20px; }
-  #confirmMod .mo { border-radius: 20px; max-height: auto; transform: none; animation: sIn .2s ease; padding-bottom: 0;}
+  #confirmMod .mo { border-radius: 20px; max-height: none; transform: none; animation: sIn .2s ease; padding-bottom: 0;}
   #confirmMod .mf { flex-direction: row; border-top: none; }
+  #confirmMod .mf .btn { flex: 1; width: auto; }
   
   .mng { grid-template-columns: 1fr; gap: 8px; }
   .mc { padding: 12px 14px; border-radius: 12px;}
@@ -1991,10 +1992,10 @@ let _undoClearLogsTimer = null;
 let _undoClearLogsData = null;
 
 let syncQueue = JSON.parse(localStorage.getItem('flux_sync_queue') || '[]');
-function queueFailedSync(op, col, id, data, isMerge=false) {
+function queueFailedSync(op, col, id, data, isMerge=false, silent=false) {
   syncQueue.push({ op, col, id, data, isMerge, ts: Date.now() });
   localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
-  showToast('Saved offline. Will sync when connected.', 'ok');
+  if (!silent) showToast('Saved offline. Will sync when connected.', 'ok');
 }
 async function processSyncQueue() {
   if (syncQueue.length === 0 || !navigator.onLine || !userId) return;
@@ -4601,7 +4602,10 @@ function writeLog(action, msg, txType) {
     if (txType) entry.tp = txType; // 'income' or 'expense' for ADD/DELETE
     const logId = uid();
     setDoc(doc(actRef, logId), entry).catch(e => {
-      queueFailedSync('setDoc', 'activities', logId, { a: action, m: mStr, t: Date.now(), tp: txType || null });
+      queueFailedSync('setDoc', 'activities', logId, { a: action, m: mStr, t: Date.now(), tp: txType || null }, false, true);
+      if (document.getElementById('logView') && document.getElementById('logView').style.display !== 'none') {
+        renderLogs();
+      }
     });
   } catch(e) { console.error('Log fail', e); }
 }
@@ -4679,6 +4683,16 @@ function renderLogs() {
   if (!listEl) return;
   const filter = document.getElementById('logFilter').value;
   let logs = [...activityLogs];
+
+  // Include queued activities that haven't synced yet
+  syncQueue.forEach(q => {
+    if (q.col === 'activities' && q.op === 'setDoc') {
+      if (!logs.find(l => l.id === q.id)) {
+        logs.push({ id: q.id, ...q.data });
+      }
+    }
+  });
+  logs.sort((a,b) => b.t - a.t);
 
   if (filter !== 'all') {
     logs = logs.filter(l => l.a === filter);
