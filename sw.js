@@ -1,13 +1,13 @@
 // Flux Service Worker — Offline-first caching strategy
-// V37: Bumped to v25 to invalidate cache for new icons
-const CACHE_NAME = 'flux-v25';
+// V38: Bumped to v26 to invalidate cache for mobile devices (with cache busters)
+const CACHE_NAME = 'flux-v26';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
   './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
+  './manifest.json?v=2',
+  './icon-192.png?v=2',
+  './icon-512.png?v=2',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
 ];
