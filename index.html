@@ -4619,7 +4619,21 @@ function renderParsedLog(action, p) {
     if (p.isNewEvent) return `<div>${esc(p.desc)}</div><div class="log-meta">New event created</div>`;
     if (p.isDelEvent) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Deleted event</div>`;
     if (p.isRestore) return `<div>${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600">${fmt(p.amt)}</span><span> </span><span>Restored transaction</span></div>`;
-    if (p.isAuto) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span>Auto-recurring</span></div>`;
+    if (p.isAuto) {
+      let dRange = p.dateRange;
+      if (!dRange && p.desc.includes('(Auto Catch-up)')) {
+         const baseName = p.desc.replace('(Auto Catch-up)', '').trim().toLowerCase();
+         const matchingTxs = txs.filter(t => t._auto && t.desc.trim().toLowerCase() === baseName);
+         if (matchingTxs.length > 0) {
+            const sortedDates = matchingTxs.map(t => t.date).sort();
+            const minDt = sortedDates[0];
+            const maxDt = sortedDates[sortedDates.length - 1];
+            dRange = minDt === maxDt ? fmtDt(minDt) : `${fmtDt(minDt)} to ${fmtDt(maxDt)}`;
+         }
+      }
+      let extraHtml = dRange ? `<span style="opacity:0.5;margin:0 4px;">•</span><span>${dRange}</span>` : '';
+      return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span>Auto-recurring</span>${extraHtml}</div>`;
+    }
     return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type==='income'?'in':'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat||'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
   }
   if (action === 'EDIT') {
@@ -4952,7 +4966,13 @@ async function checkAndTriggerRecurring() {
         // Sort txs array again since dates might be mixed
         txs.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
         debouncedRender();
-        writeLog('ADD', { desc: `${rec.name} (Auto Catch-up)`, amt: rec.amount, type: rec.type, isAuto: true }, rec.type);
+        
+        const sortedDates = newTxs.map(t => t.date).sort();
+        const minDt = sortedDates[0];
+        const maxDt = sortedDates[sortedDates.length - 1];
+        let dRange = minDt === maxDt ? fmtDt(minDt) : `${fmtDt(minDt)} to ${fmtDt(maxDt)}`;
+        
+        writeLog('ADD', { desc: newTxs.length > 1 ? `${rec.name} (Auto Catch-up)` : rec.name, amt: rec.amount * newTxs.length, type: rec.type, isAuto: true, dateRange: dRange }, rec.type);
       }
     } catch (e) {
       if (e !== "already_triggered_or_inactive") {
