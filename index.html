@@ -4928,14 +4928,14 @@ async function checkAndTriggerRecurring() {
           // Look ahead up to the next due date or today
           const maxD = nextDueAfterThis > today ? today : nextDueAfterThis;
 
-          const manuallyPaid = txs.some(t => 
-            !t._auto && 
+          const allTxs = [...txs, ...newTxs];
+          const alreadyPaid = allTxs.some(t => 
             t.desc.trim().toLowerCase() === data.name.trim().toLowerCase() && 
             Math.abs(t.amount) === Math.abs(data.amount) &&
             t.date >= minD && t.date <= maxD
           );
 
-          if (!manuallyPaid) {
+          if (!alreadyPaid) {
             const txId = uid();
             const txData = {
               type: data.type, mode: data.mode || 'online',
