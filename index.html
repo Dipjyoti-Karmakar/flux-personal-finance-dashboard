@@ -4629,6 +4629,7 @@ function renderParsedLog(action, p) {
             const minDt = sortedDates[0];
             const maxDt = sortedDates[sortedDates.length - 1];
             dRange = minDt === maxDt ? fmtDt(minDt) : `${fmtDt(minDt)} to ${fmtDt(maxDt)}`;
+            p.amt = Math.abs(matchingTxs[0].amount) * matchingTxs.length;
          }
       }
       let extraHtml = dRange ? `<span style="opacity:0.5;margin:0 4px;">•</span><span>${dRange}</span>` : '';
