@@ -4898,6 +4898,7 @@ async function checkAndTriggerRecurring() {
       await runTransaction(db, async (transaction) => {
         // Clear local tracking arrays in case of retry
         newTxs.length = 0; 
+        const matchedTxIds = new Set();
         let cyclesProcessed = 0;
         const MAX_CYCLES = 60; // Safety limit (5 years monthly)
         let updatesNeeded = false;
@@ -4929,13 +4930,15 @@ async function checkAndTriggerRecurring() {
           const maxD = nextDueAfterThis > today ? today : nextDueAfterThis;
 
           const allTxs = [...txs, ...newTxs];
-          const alreadyPaid = allTxs.some(t => 
+          const matchedTx = allTxs.find(t => 
+            t.type === data.type &&
             t.desc.trim().toLowerCase() === data.name.trim().toLowerCase() && 
             Math.abs(t.amount) === Math.abs(data.amount) &&
-            t.date >= minD && t.date <= maxD
+            t.date >= minD && t.date <= maxD &&
+            !matchedTxIds.has(t.id)
           );
 
-          if (!alreadyPaid) {
+          if (!matchedTx) {
             const txId = uid();
             const txData = {
               type: data.type, mode: data.mode || 'online',
@@ -4947,6 +4950,7 @@ async function checkAndTriggerRecurring() {
             newTxs.push({ id: txId, ...txData });
             updatesNeeded = true;
           } else {
+            matchedTxIds.add(matchedTx.id);
             updatesNeeded = true;
           }
           
@@ -4965,7 +4969,10 @@ async function checkAndTriggerRecurring() {
         triggeredCount += newTxs.length;
         newTxs.forEach(t => txs.unshift(t));
         // Sort txs array again since dates might be mixed
-        txs.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+        txs.sort((a, b) => {
+           const dDiff = b.date.localeCompare(a.date);
+           return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
+        });
         debouncedRender();
         
         const sortedDates = newTxs.map(t => t.date).sort();
