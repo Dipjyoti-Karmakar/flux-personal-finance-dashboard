@@ -4819,13 +4819,26 @@ function renderLogs() {
 
 /* \u2500\u2500 Recurring Transactions (Subscriptions) \u2500\u2500 */
 
-function computeNextDue(fromDate, freq, customDays) {
+function computeNextDue(fromDate, freq, customDays, billingDay = null) {
   const d = new Date(fromDate + 'T00:00:00');
+  let targetDay = billingDay || d.getDate();
+  
   if (freq === 'daily')   d.setDate(d.getDate() + 1);
   else if (freq === 'weekly')  d.setDate(d.getDate() + 7);
-  else if (freq === 'monthly') d.setMonth(d.getMonth() + 1);
-  else if (freq === 'yearly')  d.setFullYear(d.getFullYear() + 1);
+  else if (freq === 'monthly') {
+    d.setDate(1); 
+    d.setMonth(d.getMonth() + 1);
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(targetDay, lastDay));
+  }
+  else if (freq === 'yearly') {
+    d.setDate(1);
+    d.setFullYear(d.getFullYear() + 1);
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(targetDay, lastDay));
+  }
   else if (freq === 'custom' && customDays) d.setDate(d.getDate() + parseInt(customDays, 10));
+
   // Use local date parts directly to avoid UTC midnight rollback for IST users
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -4856,95 +4869,101 @@ const triggeringRecs = new Set();
 async function checkAndTriggerRecurring() {
   if (!userId || !recurringList.length) return;
   const today = getTodayStr();
-  const monthKey = getMonthKey();
-  const yearKey = String(new Date().getFullYear());
-  const triggered = [];
+  let triggeredCount = 0;
+  
   for (const rec of recurringList) {
-    if (!rec.active) continue;
-    if (!rec.nextDue || today < rec.nextDue) continue;
-    // Skip if already triggered in the correct time-window for each frequency
-    if (rec.freq === 'monthly' && rec.lastTriggered === monthKey) continue;
-    if (rec.freq === 'yearly'  && rec.lastTriggered === yearKey)  continue;
-    if (rec.freq !== 'monthly' && rec.freq !== 'yearly' && rec.lastTriggered === today) continue;
-    
-    // Prevent duplicates if the user manually paid this subscription early
-    const dueD = new Date(rec.nextDue + 'T00:00:00');
-    let wDays = 10;
-    if (rec.freq === 'yearly') wDays = 60;
-    if (rec.freq === 'weekly') wDays = 3;
-    if (rec.freq === 'daily') wDays = 0;
-    if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
-    
-    const minD = new Date(dueD.getTime() - wDays * 86400000).toISOString().slice(0, 10);
-    const manuallyPaid = txs.some(t => 
-      !t._auto && 
-      t.desc.trim().toLowerCase() === rec.name.trim().toLowerCase() && 
-      Math.abs(t.amount) === Math.abs(rec.amount) &&
-      t.date >= minD && t.date <= today
-    );
-
-    if (manuallyPaid) {
-      const nextKey = rec.freq === 'monthly' ? monthKey : rec.freq === 'yearly' ? yearKey : today; // FIX 3
-      await setDoc(doc(db, 'users', userId, 'recurring', rec.id), {
-        nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays),
-        lastTriggered: nextKey
-      }, { merge: true }).catch(e => queueFailedSync('setDoc', 'recurring', rec.id, { nextDue: computeNextDue(rec.nextDue, rec.freq, rec.customDays), lastTriggered: nextKey }, true));
-      writeLog('UPDATE', { desc: rec.name, isSkip: true });
-      continue;
-    }
-
+    if (!rec.active || !rec.nextDue || today < rec.nextDue) continue;
     if (triggeringRecs.has(rec.id)) continue;
     triggeringRecs.add(rec.id);
     
-    // FIX 2: declare txId before try so the catch block can reach it for optimistic-revert cleanup
-    let txId;
     try {
-      txId = uid();
-      const nextKey = rec.freq === 'monthly' ? monthKey : rec.freq === 'yearly' ? yearKey : today; // FIX 3
-      
-      // Optimistic local UI update
-      const optimisticTx = {
-        id: txId, type: rec.type, mode: rec.mode || 'online',
-        desc: rec.name, cat: rec.cat, amount: rec.amount, date: today, _recurring: true, _auto: true
-      };
-      if (!txs.find(t => t.id === txId)) {
-        txs.unshift(optimisticTx);
-        debouncedRender();
-      }
+      const newTxs = [];
+      let updatesMade = false;
 
       await runTransaction(db, async (transaction) => {
-        const recDoc = await transaction.get(doc(db, 'users', userId, 'recurring', rec.id));
-        if (!recDoc.exists()) throw "not_found";
-        const data = recDoc.data();
-        if (data.freq === 'monthly' && data.lastTriggered === monthKey) throw "already_triggered";
-        if (data.freq === 'yearly'  && data.lastTriggered === yearKey)  throw "already_triggered"; // FIX 3
-        if (data.freq !== 'monthly' && data.freq !== 'yearly' && data.lastTriggered === today) throw "already_triggered";
-        if (today < data.nextDue) throw "not_due";
+        // Clear local tracking arrays in case of retry
+        newTxs.length = 0; 
+        let cyclesProcessed = 0;
+        const MAX_CYCLES = 60; // Safety limit (5 years monthly)
+        let updatesNeeded = false;
         
-        transaction.set(doc(db, 'users', userId, 'transactions', txId), {
-          type: data.type, mode: data.mode || 'online',
-          desc: data.name, cat: data.cat,
-          amount: data.amount, date: today, _recurring: true, _auto: true, createdAt: Date.now()
-        });
-        transaction.update(recDoc.ref, {
-          nextDue: computeNextDue(data.nextDue, data.freq, data.customDays),
-          lastTriggered: nextKey
-        });
+        const recRef = doc(db, 'users', userId, 'recurring', rec.id);
+        const recDoc = await transaction.get(recRef);
+        if (!recDoc.exists()) throw "not_found";
+        
+        const data = recDoc.data();
+        // If another device already updated nextDue, this will correctly abort
+        if (!data.active || !data.nextDue || today < data.nextDue) throw "already_triggered_or_inactive";
+        
+        let currentDue = data.nextDue;
+
+        while (currentDue <= today && cyclesProcessed < MAX_CYCLES) {
+          cyclesProcessed++;
+          
+          // Manual payment check window around currentDue
+          const dueD = new Date(currentDue + 'T00:00:00');
+          let wDays = 15;
+          if (data.freq === 'yearly') wDays = 60;
+          if (data.freq === 'weekly') wDays = 3;
+          if (data.freq === 'daily') wDays = 0;
+          if (data.freq === 'custom') wDays = Math.max(1, Math.floor((data.customDays || 1) / 2));
+          
+          const minD = new Date(dueD.getTime() - wDays * 86400000).toISOString().slice(0, 10);
+          const nextDueAfterThis = computeNextDue(currentDue, data.freq, data.customDays, data.billingDay);
+          // Look ahead up to the next due date or today
+          const maxD = nextDueAfterThis > today ? today : nextDueAfterThis;
+
+          const manuallyPaid = txs.some(t => 
+            !t._auto && 
+            t.desc.trim().toLowerCase() === data.name.trim().toLowerCase() && 
+            Math.abs(t.amount) === Math.abs(data.amount) &&
+            t.date >= minD && t.date <= maxD
+          );
+
+          if (!manuallyPaid) {
+            const txId = uid();
+            const txData = {
+              type: data.type, mode: data.mode || 'online',
+              desc: data.name, cat: data.cat,
+              amount: data.amount, date: currentDue, _recurring: true, _auto: true, createdAt: Date.now()
+            };
+            transaction.set(doc(db, 'users', userId, 'transactions', txId), txData);
+            
+            newTxs.push({ id: txId, ...txData });
+            updatesNeeded = true;
+          } else {
+            updatesNeeded = true;
+          }
+          
+          currentDue = nextDueAfterThis;
+        }
+
+        if (updatesNeeded) {
+          // Update the recurring document's nextDue within the transaction
+          transaction.update(recRef, { nextDue: currentDue });
+          updatesMade = true;
+        }
       });
-      triggered.push(rec.name);
-      writeLog('ADD', { desc: rec.name, amt: rec.amount, type: rec.type, isAuto: true }, rec.type);
-    } catch(e) { 
-      // FIX 2: txId is now in scope — ghost optimistic entry is correctly removed on failure
-      if (txId) txs = txs.filter(t => t.id !== txId);
-      debouncedRender();
-      if (e !== "already_triggered" && e !== "not_due") {
-        console.error('Failed to trigger recurring:', rec.name, e); 
+
+      // Optimistic UI updates (only happens if transaction succeeds)
+      if (updatesMade && newTxs.length > 0) {
+        triggeredCount += newTxs.length;
+        newTxs.forEach(t => txs.unshift(t));
+        // Sort txs array again since dates might be mixed
+        txs.sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+        debouncedRender();
+        writeLog('ADD', { desc: `${rec.name} (Auto Catch-up)`, amt: rec.amount, type: rec.type, isAuto: true }, rec.type);
+      }
+    } catch (e) {
+      if (e !== "already_triggered_or_inactive") {
+        console.error('Failed to process recurring catch-up for:', rec.name, e);
       }
     } finally {
       triggeringRecs.delete(rec.id);
     }
   }
-  if (triggered.length) showToast(`✓ Auto-added: ${triggered.join(', ')}`, 'ok');
+  
+  if (triggeredCount > 0) showToast(`✓ Auto-added: ${triggeredCount} past subscriptions`, 'ok');
 }
 
 function renderRecurring() {
@@ -5097,7 +5116,8 @@ async function saveRecurringMod() {
   if (!amount || amount <= 0) { shake('recAmount'); return; }
   if (currentRecFreq === 'custom' && (!customDays || customDays <= 0)) { shake('recCustomDays'); return; }
   if (!nextDue) { shake('recNextDue'); return; }
-  const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, active: true };
+  const billingDay = parseInt(nextDue.split('-')[2], 10);
+  const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, billingDay, active: true };
   if (currentRecFreq === 'custom') data.customDays = customDays;
   closeRecurringMod();
   if (editingRecurringId) {
@@ -5129,10 +5149,26 @@ async function saveRecurringMod() {
 async function toggleRecurringActive(id, active) {
   if (!userId) return;
   try {
-    await setDoc(doc(db, 'users', userId, 'recurring', id), { active }, { merge: true });
+    const updateData = { active };
+    if (active) {
+      // User is resuming. If nextDue is in the past, reset it to the next valid date from today
+      const rec = recurringList.find(r => r.id === id);
+      if (rec) {
+        const today = getTodayStr();
+        if (rec.nextDue && rec.nextDue <= today) {
+          // Fast-forward nextDue to the future
+          let currentDue = rec.nextDue;
+          while (currentDue <= today) {
+             currentDue = computeNextDue(currentDue, rec.freq, rec.customDays, rec.billingDay);
+          }
+          updateData.nextDue = currentDue;
+        }
+      }
+    }
+    await setDoc(doc(db, 'users', userId, 'recurring', id), updateData, { merge: true });
     showToast(active ? 'Subscription resumed' : 'Subscription paused', 'ok');
   } catch(e) { 
-    queueFailedSync('setDoc', 'recurring', id, { active }, true);
+    queueFailedSync('setDoc', 'recurring', id, updateData, true);
   }
 }
 
