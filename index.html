@@ -4925,9 +4925,16 @@ async function checkAndTriggerRecurring() {
           if (data.freq === 'custom') wDays = Math.max(1, Math.floor((data.customDays || 1) / 2));
           
           const minD = new Date(dueD.getTime() - wDays * 86400000).toISOString().slice(0, 10);
+          const maxDTarget = new Date(dueD.getTime() + wDays * 86400000).toISOString().slice(0, 10);
+          
           const nextDueAfterThis = computeNextDue(currentDue, data.freq, data.customDays, data.billingDay);
-          // Look ahead up to the next due date or today
-          const maxD = nextDueAfterThis > today ? today : nextDueAfterThis;
+          
+          const nextDueDForMax = new Date(nextDueAfterThis + 'T00:00:00');
+          nextDueDForMax.setDate(nextDueDForMax.getDate() - 1);
+          const maxDCappedByNext = nextDueDForMax.toISOString().slice(0, 10);
+          
+          let maxD = maxDTarget < maxDCappedByNext ? maxDTarget : maxDCappedByNext;
+          if (maxD > today) maxD = today;
 
           const allTxs = [...txs, ...newTxs];
           const matchedTx = allTxs.find(t => 
