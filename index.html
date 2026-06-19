@@ -1034,232 +1034,188 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .log-entry { padding:12px 14px; gap:10px; }
 }
 
-/* --- Splash Intro Animation --- */
+/* ── Startup / Splash Screen ── */
 #splash-screen {
   position: fixed;
   inset: 0;
   background: var(--bg);
   z-index: 99999;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  animation: splashOut 1.2s cubic-bezier(0.77, 0, 0.175, 1) 3.1s forwards;
   pointer-events: none;
-  will-change: opacity, filter, transform;
+  will-change: opacity;
+  animation: spl-out 0.55s cubic-bezier(0.4, 0, 0.6, 1) 2.5s forwards;
 }
 
-#splash-screen::before {
-  content: '';
+.spl-glow {
   position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: center center;
-  opacity: 0;
-  animation: splashGridIn 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  z-index: 0;
-}
-
-/* Background animated rings */
-.splash-bg-elements {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.splash-circle {
-  position: absolute;
+  width: 480px;
+  height: 480px;
   border-radius: 50%;
-  border: 1px solid var(--bs);
+  background: radial-gradient(circle, rgba(200,169,110,0.065) 0%, transparent 65%);
   opacity: 0;
-  transform: scale(0.2);
-  animation: splashCirclePulse 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: transform, opacity;
-}
-.splash-circle:nth-child(1) { width: 30vw; height: 30vw; min-width: 300px; min-height: 300px; animation-delay: 0.1s; }
-.splash-circle:nth-child(2) { width: 50vw; height: 50vw; min-width: 500px; min-height: 500px; animation-delay: 0.3s; }
-.splash-circle:nth-child(3) { width: 70vw; height: 70vw; min-width: 700px; min-height: 700px; animation-delay: 0.5s; }
-
-@keyframes splashCirclePulse {
-  0% { opacity: 0; transform: scale(0.2); }
-  50% { opacity: 0.8; border-color: var(--ac); box-shadow: inset 0 0 40px var(--ag); }
-  100% { opacity: 0; transform: scale(1.8); }
-}
-
-/* Glowing center */
-.splash-glow {
-  position: absolute;
-  width: 40vw;
-  height: 40vw;
-  max-width: 600px;
-  max-height: 600px;
-  background: radial-gradient(circle, var(--ag) 0%, transparent 60%);
-  opacity: 0;
-  animation: splashGlowIn 2.5s cubic-bezier(0.16, 1, 0.3, 1) 0.5s forwards;
-  z-index: 1;
-}
-
-/* Animated Financial Trend Line */
-.splash-chart-container {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 45vh;
-  z-index: 1;
-  opacity: 0.6;
-}
-.splash-chart {
-  width: 100%;
-  height: 100%;
-  filter: drop-shadow(0 0 16px var(--ac));
+  animation: spl-glow-in 1.4s ease-out 0.04s forwards;
+  pointer-events: none;
   will-change: opacity;
 }
-.splash-chart path {
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  animation: drawChart 2.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
-  will-change: stroke-dashoffset;
-}
 
-/* Typography */
-.splash-content {
+.spl-content {
   position: relative;
-  z-index: 2;
-  text-align: center;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  perspective: 1200px;
-}
-.splash-logo {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(80px, 15vw, 220px);
-  font-weight: 600;
-  letter-spacing: -3px;
-  background: linear-gradient(135deg, var(--tx) 20%, #fff 45%, var(--tx) 60%, var(--ac) 90%);
-  background-size: 300% 300%;
-  background-position: 100% 100%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  opacity: 0;
-  transform: scale(1.1) translateY(50px) rotateX(25deg);
-  filter: blur(16px) drop-shadow(0 12px 24px rgba(0,0,0,0.5));
-  animation: 
-    splashTextIn 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards, 
-    splashShimmer 2s cubic-bezier(0.25, 1, 0.5, 1) 1.2s forwards;
-  line-height: 1;
-  will-change: transform, opacity, filter, background-position;
-}
-.splash-logo span {
-  -webkit-text-fill-color: var(--ac);
-  display: inline-block;
-  animation: splashSpanPulse 2s cubic-bezier(0.25, 1, 0.5, 1) 1.8s forwards;
-}
-.splash-sub {
-  font-family: 'DM Mono', monospace;
-  font-size: clamp(14px, 2vw, 22px);
-  color: var(--tx);
-  letter-spacing: 20px;
-  text-transform: uppercase;
-  margin-top: 24px;
-  opacity: 0;
-  transform: translateY(20px);
-  animation: splashSubIn 1.4s cubic-bezier(0.22, 1, 0.36, 1) 1.2s forwards;
-  will-change: transform, opacity, letter-spacing;
 }
 
-/* Keyframes */
-@keyframes splashGridIn {
-  from { transform: scale(1.1); opacity: 0; }
-  to { transform: scale(1); opacity: 0.6; }
+.spl-wordmark {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(64px, 12vw, 108px);
+  font-weight: 600;
+  letter-spacing: -2px;
+  color: var(--tx);
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: spl-wordmark-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+  will-change: transform, opacity;
+  position: relative;
+  overflow: hidden;
 }
-@keyframes drawChart {
-  to { stroke-dashoffset: 0; }
+
+.spl-wordmark span {
+  color: var(--ac);
 }
-@keyframes splashTextIn {
-  to { opacity: 1; transform: scale(1) translateY(0) rotateX(0); filter: blur(0) drop-shadow(0 12px 24px rgba(0,0,0,0.3)); }
+
+.spl-wordmark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    108deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.065) 50%,
+    transparent 80%
+  );
+  transform: translateX(-120%);
+  animation: spl-shimmer 0.85s cubic-bezier(0.4, 0, 0.2, 1) 0.76s forwards;
+  will-change: transform;
+  pointer-events: none;
 }
-@keyframes splashShimmer {
-  to { background-position: 0% 0%; }
+
+.spl-rule {
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--ac), transparent);
+  margin: 22px auto 20px;
+  animation: spl-rule-expand 0.48s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+  will-change: width;
 }
-@keyframes splashSpanPulse {
-  0%, 100% { filter: drop-shadow(0 0 0 transparent); }
-  50% { filter: drop-shadow(0 0 16px var(--ac)); }
+
+.spl-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--mu);
+  opacity: 0;
+  animation: spl-tag-in 0.48s cubic-bezier(0.16, 1, 0.3, 1) 0.82s forwards;
+  will-change: opacity;
 }
-@keyframes splashSubIn {
-  to { opacity: 1; transform: translateY(0); letter-spacing: 8px; }
+
+.spl-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.03);
+  overflow: hidden;
 }
-@keyframes splashGlowIn {
-  to { opacity: 1; transform: scale(1.2); }
+
+.spl-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--bg) 0%, var(--ac) 55%, rgba(200,169,110,0.25) 100%);
+  animation: spl-progress-fill 2.38s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+  will-change: width;
 }
-@keyframes splashOut {
-  0% { opacity: 1; filter: blur(0); transform: scale(1); }
-  99% { opacity: 0; filter: blur(12px); transform: scale(1.1); visibility: hidden; }
-  100% { opacity: 0; filter: blur(0); transform: scale(1); visibility: hidden; }
+
+@keyframes spl-glow-in {
+  to { opacity: 1; }
+}
+
+@keyframes spl-wordmark-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spl-shimmer {
+  from { transform: translateX(-120%); }
+  to   { transform: translateX(220%); }
+}
+
+@keyframes spl-rule-expand {
+  to { width: 96px; }
+}
+
+@keyframes spl-tag-in {
+  to { opacity: 0.62; }
+}
+
+@keyframes spl-progress-fill {
+  0%   { width: 0%;   }
+  55%  { width: 68%;  }
+  80%  { width: 86%;  }
+  95%  { width: 93%;  }
+  100% { width: 100%; }
+}
+
+@keyframes spl-out {
+  0%   { opacity: 1; }
+  99%  { opacity: 0; }
+  100% { opacity: 0; visibility: hidden; }
 }
 
 .app {
   opacity: 0;
-  animation: appEntrance 1.4s cubic-bezier(0.22, 1, 0.36, 1) 3.3s forwards;
-  will-change: opacity, transform, filter;
-}
-@keyframes appEntrance {
-  from { opacity: 0; transform: translateY(40px) scale(0.96); filter: blur(8px); }
-  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  animation: spl-app-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.68s forwards;
+  will-change: opacity, transform;
 }
 
-@media(max-width: 520px) {
-  /* Performance optimizations for mobile GPUs */
-  .splash-logo {
-    font-size: clamp(60px, 18vw, 80px);
-    transform: scale(1.1) translateY(40px) rotateX(25deg);
-    filter: none; /* Remove expensive initial blur */
-    animation: 
-      splashTextInMob 1.5s cubic-bezier(0.22, 1, 0.36, 1) 0.6s forwards, 
-      splashShimmer 2s cubic-bezier(0.25, 1, 0.5, 1) 1.2s forwards;
+@keyframes spl-app-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 520px) {
+  .spl-wordmark {
+    font-size: clamp(52px, 17vw, 76px);
+    letter-spacing: -1.5px;
   }
-  @keyframes splashTextInMob {
-    to { opacity: 1; transform: scale(1) translateY(0) rotateX(0); filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3)); }
+
+  .spl-glow {
+    width: 300px;
+    height: 300px;
   }
-  
+
+  .spl-rule {
+    margin: 18px auto 16px;
+  }
+
+  .spl-tag {
+    font-size: 9.5px;
+    letter-spacing: 3.5px;
+  }
+
   #splash-screen {
-    animation: splashOutMob 1.2s cubic-bezier(0.77, 0, 0.175, 1) 3.1s forwards;
-  }
-  @keyframes splashOutMob {
-    0% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(1.05); visibility: hidden; }
+    animation-delay: 2.3s;
   }
 
   .app {
-    animation: appEntranceMob 1.4s cubic-bezier(0.22, 1, 0.36, 1) 3.3s forwards;
+    animation-delay: 2.48s;
+    animation-duration: 0.5s;
   }
-  @keyframes appEntranceMob {
-    from { opacity: 0; transform: translateY(30px) scale(0.98); filter: none; }
-    to { opacity: 1; transform: translateY(0) scale(1); filter: none; }
-  }
-
-  .splash-chart {
-    filter: drop-shadow(0 0 6px var(--ac)); /* Reduce expensive SVG filter */
-  }
-
-  .splash-sub {
-    font-size: 11px;
-    letter-spacing: 12px;
-  }
-  @keyframes splashSubIn {
-    to { opacity: 1; transform: translateY(0); letter-spacing: 6px; }
-  }
-  
-  .splash-circle:nth-child(1) { width: 50vw; height: 50vw; }
-  .splash-circle:nth-child(2) { width: 80vw; height: 80vw; }
-  .splash-circle:nth-child(3) { display: none; } /* Less DOM nodes for mobile GPU */
-  .splash-chart-container { height: 35vh; }
 }
 
 /* ── Section entrance animation (splitEventCard, insightCard) ── */
@@ -1328,32 +1284,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <div id="offlineBanner" style="display:none; position:fixed; top:0; left:0; width:100%; background:var(--ex); color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:600; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
   Offline Mode - Changes are saved locally and will sync when reconnected.
 </div>
-<div id="splash-screen">
-  <div class="splash-bg-elements">
-    <div class="splash-circle"></div>
-    <div class="splash-circle"></div>
-    <div class="splash-circle"></div>
+<div id="splash-screen" aria-hidden="true">
+  <div class="spl-glow"></div>
+  <div class="spl-content">
+    <div class="spl-wordmark">Flu<span>x</span></div>
+    <div class="spl-rule"></div>
+    <div class="spl-tag">Personal Finance</div>
   </div>
-  <div class="splash-glow"></div>
-  
-  <div class="splash-chart-container">
-    <svg class="splash-chart" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="chartGlow" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stop-color="var(--ac)" stop-opacity="0" />
-          <stop offset="25%" stop-color="var(--ac)" stop-opacity="0.8" />
-          <stop offset="100%" stop-color="var(--ac)" stop-opacity="1" />
-        </linearGradient>
-      </defs>
-      <path d="M 0 100 C 15 80, 25 90, 40 60 C 50 40, 65 70, 80 30 C 90 10, 95 20, 100 0" 
-            fill="none" stroke="url(#chartGlow)" stroke-width="3" vector-effect="non-scaling-stroke" pathLength="1" />
-    </svg>
-  </div>
-
-  <div class="splash-content">
-    <div class="splash-logo">Flu<span>x</span></div>
-    <div class="splash-sub">Personal Finance</div>
-  </div>
+  <div class="spl-progress"><div class="spl-progress-bar"></div></div>
 </div>
 
 <!-- In-App Browser Detection: blocks page if opened inside LinkedIn/Instagram/Facebook webview -->
