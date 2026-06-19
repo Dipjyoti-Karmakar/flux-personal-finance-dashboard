@@ -2540,8 +2540,8 @@ async function tagPastSubscriptions() {
 // Per-element cancellation prevents overlapping rAF loops when re-renders fire
 // in rapid succession (e.g. Firestore batch imports, fast filter switching).
 const _pageLoadTime = performance.now();
-// App entrance animation: 3.38s delay + last card-in delay (0.3s) + card-in duration (0.8s) ≈ 4500ms
-const CARDS_VISIBLE_AT_MS = 4500;
+// App entrance animation: starts at 3380ms. Start counting numbers right as they appear.
+const CARDS_VISIBLE_AT_MS = 3500;
 
 function animateVal(el, target, formatter, duration) {
   if (!el) return;
