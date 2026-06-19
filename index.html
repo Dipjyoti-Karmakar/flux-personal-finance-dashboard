@@ -6008,15 +6008,24 @@ function toggleLogSelectionMode() {
   logSelectionMode = !logSelectionMode;
   selectedLogs.clear();
   
+  const countEl = document.getElementById('logSelectCount');
+  if (countEl) countEl.textContent = '0 selected';
+
   const btn = document.getElementById('btnToggleDeleteLogs');
   const actionDiv = document.getElementById('logDeleteAction');
   
   if (logSelectionMode) {
     if (btn) btn.style.display = 'none';
-    if (actionDiv) actionDiv.style.display = 'flex';
+    if (actionDiv) {
+      actionDiv.style.display = 'flex';
+      actionDiv.style.animation = 'fdI 0.3s cubic-bezier(0.16,1,0.3,1)';
+    }
   } else {
     if (btn) btn.style.display = 'inline-block';
-    if (actionDiv) actionDiv.style.display = 'none';
+    if (actionDiv) {
+      actionDiv.style.display = 'none';
+      actionDiv.style.animation = '';
+    }
   }
   renderLogs();
 }
@@ -6036,12 +6045,15 @@ function toggleLogSelection(id) {
   // Directly patch the clicked element's style — no full re-render
   const el = document.querySelector(`[data-logid="${CSS.escape(id)}"]`);
   if (el) {
+    el.style.transition = 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
     if (selectedLogs.has(id)) {
       el.style.border = '2px solid var(--ex)';
       el.style.background = 'color-mix(in srgb,var(--ex) 12%,var(--sf))';
+      el.style.transform = 'scale(0.98)';
     } else {
       el.style.border = '';
       el.style.background = '';
+      el.style.transform = 'scale(1)';
     }
   }
 }
@@ -6058,7 +6070,14 @@ function confirmDeleteSelectedLogs() {
       showConfirm('Confirm Deletion', 'Are you REALLY sure? This action cannot be undone.', async () => {
         const count = selectedLogs.size;
         const batch = writeBatch(db);
+        
         selectedLogs.forEach(id => {
+          const el = document.querySelector(`[data-logid="${CSS.escape(id)}"]`);
+          if (el) {
+            el.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+            el.style.transform = 'scale(0.9) translateX(30px)';
+            el.style.opacity = '0';
+          }
           batch.delete(doc(db, 'users', userId, 'activities', id));
         });
         
@@ -6070,7 +6089,7 @@ function confirmDeleteSelectedLogs() {
           showToast('Failed to delete logs', 'er');
         }
         
-        toggleLogSelectionMode();
+        setTimeout(() => toggleLogSelectionMode(), 250);
       }, true);
     }, 300);
   }, true);
