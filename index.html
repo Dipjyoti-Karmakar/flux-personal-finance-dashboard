@@ -4927,8 +4927,13 @@ async function checkAndTriggerRecurring() {
           if (data.freq === 'daily') wDays = 0;
           if (data.freq === 'custom') wDays = Math.max(1, Math.floor((data.customDays || 1) / 2));
           
-          const minD = getLocalIsoDateStr(new Date(dueD.getTime() - wDays * 86400000));
-          const maxDTarget = getLocalIsoDateStr(new Date(dueD.getTime() + wDays * 86400000));
+          const minDateObj = new Date(dueD);
+          minDateObj.setDate(minDateObj.getDate() - wDays);
+          const minD = getLocalIsoDateStr(minDateObj);
+          
+          const maxDateObj = new Date(dueD);
+          maxDateObj.setDate(maxDateObj.getDate() + wDays);
+          const maxDTarget = getLocalIsoDateStr(maxDateObj);
           
           const nextDueAfterThis = computeNextDue(currentDue, data.freq, data.customDays, data.billingDay);
           
