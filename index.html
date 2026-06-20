@@ -1035,17 +1035,10 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 }
 
 /* ── Startup Animation ─────────────────────────
-   Hero sequence:
-     0.05s  corners start drawing
-     0.38s  scan line begins sweeping
-     0.94s  scan crosses center (wordmark zone)
-     0.98s  letter scramble begins (4 staggered)
-     1.53s  scramble complete, glow reveals
-     1.58s  rule expands
-     1.76s  tagline slides up
-     2.60s  exit
-     2.78s  app entrance
-   ─────────────────────────────────────────────── */
+   Total: 2.5s visible + 0.42s exit
+   App entrance: 2.68s (overlaps exit for continuity)
+   All transitions: GPU-accelerated properties only
+   ──────────────────────────────────────────────── */
 
 #splash-screen {
   position: fixed;
@@ -1058,193 +1051,89 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   overflow: hidden;
   pointer-events: none;
   will-change: opacity;
-  animation: sp-exit 0.4s cubic-bezier(0.4, 0, 1, 1) 2.6s forwards;
+  animation: sp-exit 0.42s cubic-bezier(0.4, 0, 1, 1) 2.5s forwards;
 }
 
-/* ── Layer 1: Breathing ambient aura ────────────
-   Slow radial pulse behind everything.
-   Fade-in and breathe run independently on
-   opacity vs transform so they never conflict.
-   ─────────────────────────────────────────────── */
-
-.sp-aura {
-  position: absolute;
-  width: 72vmax;
-  height: 72vmax;
-  border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(200, 169, 110, 0.06)  0%,
-    rgba(200, 169, 110, 0.02) 45%,
-    transparent 70%
-  );
-  opacity: 0;
-  z-index: 0;
-  will-change: opacity, transform;
-  animation:
-    sp-aura-in      1.1s ease-out   0.15s forwards,
-    sp-aura-breathe 3.4s ease-in-out 0.15s infinite alternate;
-}
-
-@keyframes sp-aura-in {
-  to { opacity: 1; }
-}
-@keyframes sp-aura-breathe {
-  from { transform: scale(0.88); }
-  to   { transform: scale(1.18); }
-}
-
-/* ── Layer 2: Graph grid overlay ─────────────── */
-
-.sp-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(200, 169, 110, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(200, 169, 110, 0.03) 1px, transparent 1px);
-  background-size: 64px 64px;
-  background-position: center center;
-  opacity: 0;
-  z-index: 0;
-  will-change: opacity;
-  animation: sp-grid-in 1.6s ease-out 0.3s forwards;
-}
-
-@keyframes sp-grid-in {
-  to { opacity: 1; }
-}
-
-/* ── Layer 3: Vignette ───────────────────────── */
-
-.sp-vignette {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse 62% 56% at 50% 50%,
-    transparent 0%,
-    rgba(0, 0, 0, 0.22) 100%
-  );
-  z-index: 1;
-  pointer-events: none;
-}
-
-/* ── Scan line (hero beat) ────────────────────
-   Sweeps the full viewport height in 1.12s.
-   Reaches screen center at t = 0.38 + 0.56 = 0.94s.
-   Letter scramble is timed to start at 0.98s,
-   so each letter "ignites" in the scan's wake.
-   ─────────────────────────────────────────────── */
-
-.sp-scan {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 1px;
-  z-index: 8;
-  opacity: 0;
-  will-change: transform, opacity;
-  background: linear-gradient(90deg,
-    transparent                       0%,
-    rgba(200, 169, 110, 0.18)         8%,
-    rgba(200, 169, 110, 0.88)        28%,
-    rgba(255, 244, 215, 0.96)        50%,
-    rgba(200, 169, 110, 0.88)        72%,
-    rgba(200, 169, 110, 0.18)        92%,
-    transparent                      100%
-  );
-  box-shadow:
-    0  0  5px  1px rgba(200, 169, 110, 0.50),
-    0  0 16px  4px rgba(200, 169, 110, 0.20),
-    0  0 48px 10px rgba(200, 169, 110, 0.07);
-  animation: sp-scan-sweep 1.12s cubic-bezier(0.4, 0, 0.6, 1) 0.38s forwards;
-}
-
-@keyframes sp-scan-sweep {
-  0%   { transform: translateY(-2px); opacity: 0; }
-  4%   { opacity: 1; }
-  91%  { opacity: 0.7; }
-  100% { transform: translateY(calc(100vh + 2px)); opacity: 0; }
-}
-
-/* ── Corner brackets (draw themselves) ───────
-   Each corner uses ::before (horizontal arm)
-   and ::after (vertical arm). The arms grow
-   from 0 to --bl via width / height animations.
-   Anchor direction per corner:
-     TL: right + down
-     TR: left  + down   (right:0 reverses growth)
-     BL: right + up     (bottom:0 reverses growth)
-     BR: left  + up     (right:0 + bottom:0)
-   ─────────────────────────────────────────────── */
-
-.sp-c {
-  --bl: 22px;
-  position: absolute;
-  width: var(--bl);
-  height: var(--bl);
-  z-index: 6;
-}
-
-.sp-c::before,
-.sp-c::after {
+/* Radial vignette: focuses attention to center without any glow */
+#splash-screen::after {
   content: '';
   position: absolute;
-  background: var(--ac);
+  inset: 0;
+  background: radial-gradient(ellipse 58% 52% at 50% 50%, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Corner Viewfinder Brackets ─────────────────
+   Appear first. Create a "precision instrument"
+   frame that anchors the center composition.
+   ─────────────────────────────────────────────── */
+
+.sp-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
   opacity: 0;
+  will-change: opacity, transform;
+  animation: sp-corner-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.05s forwards;
+  z-index: 2;
+}
+.sp-corner-tl { top: 26px; left: 26px;
+  border-top: 1px solid var(--ac); border-left: 1px solid var(--ac); }
+.sp-corner-tr { top: 26px; right: 26px;
+  border-top: 1px solid var(--ac); border-right: 1px solid var(--ac); }
+.sp-corner-bl { bottom: 26px; left: 26px;
+  border-bottom: 1px solid var(--ac); border-left: 1px solid var(--ac); }
+.sp-corner-br { bottom: 26px; right: 26px;
+  border-bottom: 1px solid var(--ac); border-right: 1px solid var(--ac); }
+
+@keyframes sp-corner-in {
+  from { opacity: 0; transform: scale(1.6); }
+  to   { opacity: 0.5; transform: scale(1); }
 }
 
-.sp-c::before {
-  height: 1px;
-  width: 0;
-  animation: sp-brk-h 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.06s forwards;
-}
-
-.sp-c::after {
-  width: 1px;
-  height: 0;
-  animation: sp-brk-v 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.13s forwards;
-}
-
-/* TL */
-.sp-c-tl           { top: 26px; left: 26px; }
-.sp-c-tl::before   { top: 0; left: 0; }
-.sp-c-tl::after    { top: 0; left: 0; }
-
-/* TR */
-.sp-c-tr           { top: 26px; right: 26px; }
-.sp-c-tr::before   { top: 0; right: 0; left: auto; }
-.sp-c-tr::after    { top: 0; right: 0; left: auto; }
-
-/* BL */
-.sp-c-bl           { bottom: 26px; left: 26px; }
-.sp-c-bl::before   { bottom: 0; top: auto; left: 0; }
-.sp-c-bl::after    { bottom: 0; top: auto; left: 0; }
-
-/* BR */
-.sp-c-br           { bottom: 26px; right: 26px; }
-.sp-c-br::before   { bottom: 0; top: auto; right: 0; left: auto; }
-.sp-c-br::after    { bottom: 0; top: auto; right: 0; left: auto; }
-
-@keyframes sp-brk-h {
-  from { width: 0;        opacity: 0;    }
-  to   { width: var(--bl); opacity: 0.52; }
-}
-@keyframes sp-brk-v {
-  from { height: 0;        opacity: 0;    }
-  to   { height: var(--bl); opacity: 0.52; }
-}
-
-/* ── Center stage ─────────────────────────────── */
+/* ── Center Stage ────────────────────────────── */
 
 .sp-stage {
   position: relative;
-  z-index: 4;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* ── Wordmark ─────────────────────────────────── */
+/* ── Pre-line ────────────────────────────────────
+   Grows from center before the letters appear,
+   then retracts as the wordmark completes.
+   Acts as a visual "cue" that something is coming.
+   ─────────────────────────────────────────────── */
+
+.sp-preline {
+  width: 48px;
+  height: 1.5px;
+  background: var(--ac);
+  margin-bottom: 18px;
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: sp-preline 0.9s 0.10s forwards;
+}
+
+@keyframes sp-preline {
+  0%  { transform: scaleX(0); opacity: 0;
+        animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  30% { transform: scaleX(1); opacity: 0.48;
+        animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
+  82% { transform: scaleX(0); opacity: 0; }
+  100%{ transform: scaleX(0); opacity: 0; }
+}
+
+/* ── Wordmark ─────────────────────────────────────
+   Per-letter reveal: each letter translates up
+   from behind its clipping wrapper.
+   Stagger: 68ms per letter.
+   ─────────────────────────────────────────────── */
 
 .sp-wordmark {
   display: flex;
@@ -1256,46 +1145,31 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   color: var(--tx);
   line-height: 1;
   user-select: none;
-  position: relative;
 }
 
-/* Soft glow that blooms in after scramble settles */
-.sp-wordmark::after {
-  content: '';
-  position: absolute;
-  inset: -32px -56px;
-  background: radial-gradient(ellipse,
-    rgba(200, 169, 110, 0.08) 0%,
-    transparent 65%
-  );
-  opacity: 0;
-  z-index: -1;
-  pointer-events: none;
-  animation: sp-wm-glow 0.9s ease-out 1.5s forwards;
-}
-
-@keyframes sp-wm-glow {
-  to { opacity: 1; }
-}
-
-/* Letter wrappers: fixed height prevents layout
-   shifts as the scramble cycles character heights. */
+/* Wrapper clips letter during translate */
 .sp-lw {
   display: inline-block;
-  height: 1.05em;
   overflow: hidden;
   vertical-align: bottom;
+  line-height: 1.1;
 }
 
-/* Letters start invisible. JS sets opacity to 1
-   immediately before beginning the scramble. */
+/* Letter slides upward from below its clip boundary */
 .sp-l {
   display: inline-block;
-  opacity: 0;
-  line-height: 1.05;
+  transform: translateY(110%);
+  will-change: transform;
+  animation: sp-letter-up 0.64s cubic-bezier(0.16, 1, 0.3, 1)
+    calc(0.28s + var(--li) * 0.068s) forwards;
 }
 
+/* Gold accent on 'x' */
 .sp-lw-ac .sp-l { color: var(--ac); }
+
+@keyframes sp-letter-up {
+  to { transform: translateY(0); }
+}
 
 /* ── Below-wordmark composition ──────────────── */
 
@@ -1303,10 +1177,11 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 22px;
-  gap: 13px;
+  margin-top: 20px;
+  gap: 12px;
 }
 
+/* Thin rule: expands symmetrically from center */
 .sp-rule {
   height: 1px;
   width: 200px;
@@ -1314,15 +1189,17 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   transform: scaleX(0);
   transform-origin: center;
   will-change: transform;
-  animation: sp-rule-in 0.52s cubic-bezier(0.16, 1, 0.3, 1) 1.58s forwards;
+  animation: sp-rule-in 0.52s cubic-bezier(0.16, 1, 0.3, 1) 0.68s forwards;
 }
 
 @keyframes sp-rule-in {
   to { transform: scaleX(1); }
 }
 
-.sp-tag-wrap { overflow: hidden; }
-
+/* Tagline clips up from below its wrapper */
+.sp-tag-wrap {
+  overflow: hidden;
+}
 .sp-tag {
   display: block;
   font-family: 'DM Mono', monospace;
@@ -1333,14 +1210,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   color: var(--mu);
   transform: translateY(100%);
   will-change: transform;
-  animation: sp-tag-up 0.48s cubic-bezier(0.16, 1, 0.3, 1) 1.76s forwards;
+  animation: sp-tag-up 0.48s cubic-bezier(0.16, 1, 0.3, 1) 0.80s forwards;
 }
 
 @keyframes sp-tag-up {
   to { transform: translateY(0); }
 }
 
-/* ── Progress track ───────────────────────────── */
+/* ── Progress Track ───────────────────────────── */
 
 .sp-track {
   position: absolute;
@@ -1349,24 +1226,23 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   right: 0;
   height: 2px;
   background: var(--bd);
-  z-index: 9;
+  z-index: 2;
   overflow: hidden;
 }
 
-/* scaleX from left is GPU-accelerated, avoids
-   width animation layout thrashing entirely. */
+/* Fills left-to-right via scaleX (GPU path, no layout) */
 .sp-fill {
   height: 100%;
   width: 100%;
   background: linear-gradient(90deg,
-    var(--ac)                   0%,
-    var(--ac)                  62%,
-    rgba(200, 169, 110, 0.22) 100%
-  );
+    var(--ac)               0%,
+    var(--ac)               70%,
+    rgba(200, 169, 110, 0.3) 100%);
   transform: scaleX(0);
   transform-origin: left center;
   will-change: transform;
-  animation: sp-fill-run 2.56s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.04s forwards;
+  /* ease-out: fast start, decelerates to meet the exit */
+  animation: sp-fill-run 2.44s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.06s forwards;
 }
 
 @keyframes sp-fill-run {
@@ -1380,32 +1256,36 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   to   { opacity: 0; visibility: hidden; }
 }
 
-/* ── App entrance ─────────────────────────────── */
+/* ── App Entrance ─────────────────────────────── */
 
 .app {
   opacity: 0;
   will-change: opacity, transform;
-  animation: sp-app-in 0.58s cubic-bezier(0.16, 1, 0.3, 1) 2.78s forwards;
+  animation: sp-app-in 0.58s cubic-bezier(0.16, 1, 0.3, 1) 2.66s forwards;
 }
 
 @keyframes sp-app-in {
   from { opacity: 0; transform: translateY(7px); }
-  to   { opacity: 1; transform: translateY(0);   }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Mobile ───────────────────────────────────── */
 
 @media (max-width: 520px) {
-  .sp-c           { --bl: 16px; }
-  .sp-c-tl        { top: 18px; left: 18px; }
-  .sp-c-tr        { top: 18px; right: 18px; }
-  .sp-c-bl        { bottom: 18px; left: 18px; }
-  .sp-c-br        { bottom: 18px; right: 18px; }
-  .sp-wordmark    { font-size: clamp(56px, 17vw, 76px); letter-spacing: -1.5px; }
-  .sp-rule        { width: 140px; }
-  .sp-tag         { font-size: 9px; letter-spacing: 4px; }
-  #splash-screen  { animation-delay: 2.4s; }
-  .app            { animation-delay: 2.58s; animation-duration: 0.48s; }
+  .sp-wordmark {
+    font-size: clamp(56px, 17vw, 76px);
+    letter-spacing: -1.5px;
+  }
+  .sp-corner        { width: 15px; height: 15px; }
+  .sp-corner-tl     { top: 18px; left: 18px; }
+  .sp-corner-tr     { top: 18px; right: 18px; }
+  .sp-corner-bl     { bottom: 18px; left: 18px; }
+  .sp-corner-br     { bottom: 18px; right: 18px; }
+  .sp-preline       { width: 36px; }
+  .sp-rule          { width: 140px; }
+  .sp-tag           { font-size: 9px; letter-spacing: 4px; }
+  #splash-screen    { animation-delay: 2.3s; }
+  .app              { animation-delay: 2.48s; animation-duration: 0.48s; }
 }
 
 /* ── Section entrance animation (splitEventCard, insightCard) ── */
@@ -1476,72 +1356,40 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 </div>
 <div id="splash-screen" aria-hidden="true">
 
-  <!-- Background: aura, grid, vignette (painted in layers) -->
-  <div class="sp-aura"></div>
-  <div class="sp-grid"></div>
-  <div class="sp-vignette"></div>
-
-  <!-- Hero: scan line sweeps full viewport top to bottom -->
-  <div class="sp-scan"></div>
-
-  <!-- Corner brackets draw themselves on load -->
-  <div class="sp-c sp-c-tl"></div>
-  <div class="sp-c sp-c-tr"></div>
-  <div class="sp-c sp-c-bl"></div>
-  <div class="sp-c sp-c-br"></div>
+  <!-- Precision corners: appear first, frame the composition -->
+  <div class="sp-corner sp-corner-tl"></div>
+  <div class="sp-corner sp-corner-tr"></div>
+  <div class="sp-corner sp-corner-bl"></div>
+  <div class="sp-corner sp-corner-br"></div>
 
   <!-- Center composition -->
   <div class="sp-stage">
+
+    <!-- Pre-line: cues the reveal, then retracts -->
+    <div class="sp-preline"></div>
+
+    <!-- Wordmark: per-letter clip reveal, staggered -->
     <div class="sp-wordmark" aria-label="Flux">
-      <div class="sp-lw"><span class="sp-l">F</span></div>
-      <div class="sp-lw"><span class="sp-l">l</span></div>
-      <div class="sp-lw"><span class="sp-l">u</span></div>
-      <div class="sp-lw sp-lw-ac"><span class="sp-l">x</span></div>
+      <div class="sp-lw"><span class="sp-l" style="--li:0">F</span></div>
+      <div class="sp-lw"><span class="sp-l" style="--li:1">l</span></div>
+      <div class="sp-lw"><span class="sp-l" style="--li:2">u</span></div>
+      <div class="sp-lw sp-lw-ac"><span class="sp-l" style="--li:3">x</span></div>
     </div>
+
+    <!-- Rule + tagline: appear as wordmark completes -->
     <div class="sp-below">
       <div class="sp-rule"></div>
-      <div class="sp-tag-wrap"><span class="sp-tag">Personal Finance</span></div>
+      <div class="sp-tag-wrap">
+        <span class="sp-tag">Personal Finance</span>
+      </div>
     </div>
+
   </div>
 
-  <!-- Progress synced to exit at 2.6s -->
+  <!-- Progress: fills across 2.5s, synced to exit -->
   <div class="sp-track"><div class="sp-fill"></div></div>
 
 </div>
-
-<script>
-/* Splash scramble: triggered by scan line crossing center at ~0.94s.
-   Each letter ignites at 68ms intervals, scrambles 10 random
-   characters over 360ms, then locks to its final glyph.
-   The 'x' slot inherits gold from .sp-lw-ac via CSS,
-   so it scrambles in accent color automatically. */
-(function () {
-  var CH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@$%!&'.split('');
-  var SEQ = [
-    { final: 'F', delay: 980  },
-    { final: 'l', delay: 1048 },
-    { final: 'u', delay: 1116 },
-    { final: 'x', delay: 1184 }
-  ];
-  var nodes = document.querySelectorAll('.sp-l');
-  SEQ.forEach(function (s, i) {
-    var el = nodes[i];
-    if (!el) return;
-    setTimeout(function () {
-      el.style.opacity = '1';
-      var tick = 0;
-      var iv = setInterval(function () {
-        if (tick++ >= 10) {
-          el.textContent = s.final;
-          clearInterval(iv);
-        } else {
-          el.textContent = CH[Math.floor(Math.random() * CH.length)];
-        }
-      }, 36);
-    }, s.delay);
-  });
-}());
-</script>
 
 <!-- In-App Browser Detection: blocks page if opened inside LinkedIn/Instagram/Facebook webview -->
 <script>
@@ -2789,9 +2637,8 @@ async function tagPastSubscriptions() {
 // Per-element cancellation prevents overlapping rAF loops when re-renders fire
 // in rapid succession (e.g. Firestore batch imports, fast filter switching).
 const _pageLoadTime = performance.now();
-// App entrance animation ends at 3360ms (2.78s + 0.58s) on desktop, 3060ms on mobile.
-// Start counting instantly after animation finishes.
-const CARDS_VISIBLE_AT_MS = window.innerWidth <= 520 ? 3060 : 3360;
+// App entrance animation: ends at 3240ms. Start counting instantly after animation finishes.
+const CARDS_VISIBLE_AT_MS = 3240;
 
 function animateVal(el, target, formatter, duration) {
   if (!el) return;
