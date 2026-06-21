@@ -328,7 +328,7 @@ select option{background:var(--s2)}
 .ft:hover{border-color:var(--bs);color:var(--tx);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.08)}
 .ft:active{transform:translateY(0) scale(0.94);box-shadow:none;}
 .ft.act{background:var(--ag);border-color:var(--ac);color:var(--ac);transform:translateY(0);box-shadow:inset 0 1px 4px rgba(200,169,110,0.15)}
-.txl{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--s3) transparent;min-width:0;padding:12px 14px;}
+.txl{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-x:none;scrollbar-width:thin;scrollbar-color:var(--s3) transparent;min-width:0;padding:12px 14px;}
 .txl::-webkit-scrollbar{width:6px}
 .txl::-webkit-scrollbar-thumb{background:var(--s3);border-radius:6px}
 .txl::-webkit-scrollbar-thumb:hover{background:var(--di);}
@@ -407,7 +407,7 @@ select option{background:var(--s2)}
 .cat-tx-hdr-cnt { color:var(--mu); font-size:11px; }
 .cat-tx-close { background:var(--s2); border:1px solid var(--bd); color:var(--mu); cursor:pointer; font-size:16px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:8px; line-height:1; transition:all .2s ease; flex-shrink:0; }
 .cat-tx-close:hover { color:var(--ex); background:var(--eb); border-color:rgba(224,112,112,0.3); }
-.cat-tx-list { max-height:400px; overflow-y:auto; overflow-x:hidden; padding:8px 12px; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
+.cat-tx-list { max-height:400px; overflow-y:auto; overflow-x:hidden; overscroll-behavior-x:none; padding:8px 12px; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
 .cat-tx-list::-webkit-scrollbar { width:6px; }
 .cat-tx-list::-webkit-scrollbar-thumb { background:var(--s3); border-radius:6px; }
 .cat-tx-list::-webkit-scrollbar-thumb:hover { background:var(--di); }
@@ -861,7 +861,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .theme-wipe.expand{clip-path:circle(150% at var(--cx,50%) var(--cy,50%));transition:clip-path .55s cubic-bezier(0.4,0,0.2,1);}
 
 /* -- Swipe-to-Action (Touch) -- */
-.txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;}
+.txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;touch-action:pan-y;}
 .txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;}
 .txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
 .txi-wrap.swiping .txi{transition:none;}
@@ -2124,15 +2124,12 @@ function showConfirm(title, msg, actionFn, isDestructive = true) {
 function closeConfirm() {
     document.getElementById('confirmMod').classList.remove('op');
     confirmActionCallback = null;
-    if (typeof resetAllSwipes === 'function') resetAllSwipes();
 }
 
 document.getElementById('confirmActionBtn').addEventListener('click', () => {
     if (confirmActionCallback) confirmActionCallback();
     closeConfirm();
 });
-
-document.getElementById('confirmMod').addEventListener('click', function(e) { if(e.target === this) closeConfirm(); });
 
 async function toggleAuth() {
   if (userId) {
@@ -2952,7 +2949,6 @@ function updECat(type) {
 }
 
 function editTx(id) {
-  if (typeof resetAllSwipes === 'function') resetAllSwipes();
   const tx = txs.find(t => t.id === id);
   if(!tx) return;
   editingTxId = id;
@@ -2978,7 +2974,6 @@ function editTx(id) {
 function closeEditMod() {
   document.getElementById('editMod').classList.remove('op');
   editingTxId = null;
-  if (typeof resetAllSwipes === 'function') resetAllSwipes();
 }
 
 async function saveEditTx() {
@@ -3076,8 +3071,6 @@ function setTrendMode(m) {
 }
 
 function renderTrend(passedTxs) {
-  const dashView = document.getElementById('dashboardView');
-  if (dashView && dashView.style.display === 'none') return;
   if (trendAbort) trendAbort.abort();
   trendAbort = new AbortController();
   const signal = trendAbort.signal;
@@ -6101,7 +6094,6 @@ async function generatePDF() {
 document.getElementById('reportMod').addEventListener('click', function(e) { if (e.target === this) closeReportMod(); });
 
 function switchTab(tab) {
-  if (typeof resetAllSwipes === 'function') resetAllSwipes();
   document.getElementById('tabDash').classList.toggle('act', tab === 'dashboard');
   document.getElementById('tabSub').classList.toggle('act', tab === 'subscriptions');
   document.getElementById('tabLog').classList.toggle('act', tab === 'log');
@@ -6369,42 +6361,34 @@ function initScrollTop() {
 const SWIPE_ACTION_PX = 84;
 
 // Reusable swipe-to-action attachment for any container with .txi-wrap items
-function resetAllSwipes() {
-  document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right,.txi-wrap.swiping').forEach(w => {
-    w.classList.remove('swiped-left','swiped-right','swiping');
-    const inner = w.querySelector('.txi');
-    if (inner) inner.style.transform = '';
-  });
-}
-
 function attachSwipeToContainer(container) {
   if (!container || !('ontouchstart' in window)) return;
   // Guard: prevent duplicate listener attachment on the same container element
   if (container._swipeAttached) return;
   container._swipeAttached = true;
   let startX, startY, currentWrap, swiping;
-  const THRESHOLD = 50;
+  const THRESHOLD = 40; // lower threshold = easier to trigger swipe snap
+
+  function resetWrap(w) {
+    w.classList.remove('swiped-left','swiped-right','swiping');
+    const inner = w.querySelector('.txi');
+    if (inner) inner.style.transform = '';
+  }
   function resetAll(except) {
     container.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
       if (w === except) return;
-      w.classList.remove('swiped-left','swiped-right','swiping');
-      const inner = w.querySelector('.txi');
-      if (inner) inner.style.transform = '';
+      resetWrap(w);
     });
   }
+
   container.addEventListener('touchstart', (e) => {
     const wrap = e.target.closest('.txi-wrap');
     if (!wrap) return;
-    // If the wrap is already swiped, and we tap on the main body (not the actions),
-    // we should reset it on touchstart.
-    if (wrap.classList.contains('swiped-left') || wrap.classList.contains('swiped-right')) {
-      if (e.target && !e.target.closest('.txi-act')) {
-        wrap.classList.remove('swiped-left','swiped-right','swiping');
-        const inner = wrap.querySelector('.txi');
-        if (inner) inner.style.transform = '';
-        currentWrap = null;
-        return;
-      }
+    // If user taps directly on an action button (after swipe), don't start swipe tracking.
+    // Let the synthesized click on the button fire naturally without interference.
+    if (e.target.closest('.txi-actions')) {
+      currentWrap = null;
+      return;
     }
     resetAll(wrap);
     startX = e.touches[0].clientX;
@@ -6412,12 +6396,15 @@ function attachSwipeToContainer(container) {
     currentWrap = wrap;
     swiping = false;
   }, { passive: true });
+
   container.addEventListener('touchmove', (e) => {
     if (!currentWrap) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
-    if (!swiping && Math.abs(dy) > Math.abs(dx)) { currentWrap = null; return; }
-    if (Math.abs(dx) > 10) swiping = true;
+    // Cancel swipe only if vertical motion clearly dominates (1.5x more vertical than horizontal)
+    // This gives more tolerance to diagonal swipes that are mostly horizontal.
+    if (!swiping && Math.abs(dy) > Math.abs(dx) * 1.5) { currentWrap = null; return; }
+    if (Math.abs(dx) > 8) swiping = true;
     if (!swiping) return;
     e.preventDefault();
     currentWrap.classList.add('swiping');
@@ -6425,14 +6412,18 @@ function attachSwipeToContainer(container) {
     const inner = currentWrap.querySelector('.txi');
     if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
   }, { passive: false });
+
   container.addEventListener('touchend', (e) => {
     if (!currentWrap) return;
     currentWrap.classList.remove('swiping');
     const inner = currentWrap.querySelector('.txi');
     if (!inner) { currentWrap = null; return; }
-    // If the touch ended on an action button, preserve the swiped state so the
-    // button's synthesized click event can fire without the swipe being reset first.
-    if (e.target && e.target.closest('.txi-act')) {
+    // Use changedTouches position + elementFromPoint to detect what's actually under the finger
+    // when lifted. This is more reliable than e.target (which is where touch started).
+    const touch = e.changedTouches[0];
+    const elementUnder = touch ? document.elementFromPoint(touch.clientX, touch.clientY) : null;
+    if (elementUnder && elementUnder.closest('.txi-actions')) {
+      // Touch ended on an action button — preserve swiped state so onclick fires correctly.
       currentWrap = null;
       return;
     }
@@ -6461,7 +6452,11 @@ function initSwipeActions() {
   // Global reset when tapping outside any swipe wrap
   document.addEventListener('touchstart', (e) => {
     if (!e.target.closest('.txi-wrap')) {
-      resetAllSwipes();
+      document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
+        w.classList.remove('swiped-left','swiped-right','swiping');
+        const inner = w.querySelector('.txi');
+        if (inner) inner.style.transform = '';
+      });
     }
   }, { passive: true });
 }
