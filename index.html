@@ -2936,6 +2936,9 @@ function renderTxList(){
     if (hEl) hEl.classList.add('tx-new');
     window._highlightTxId = null;
   }
+
+  // Re-attach swipe-to-action after innerHTML replacement (container listeners are lost)
+  attachSwipeToContainer(el);
 }
 
 function updECat(type) {
@@ -3153,19 +3156,27 @@ function renderTrend(passedTxs) {
   }
   area.setAttribute('aria-label', ariaDesc || 'Trend chart with data');
 
-  area.innerHTML = '<div style="position:relative; width:100%; height:100%; flex:1;"><canvas id="trendC" style="position:absolute; inset:0; width:100%; height:100%; touch-action:none;"></canvas></div>';
+  // Measure the area element before setting innerHTML (dimensions are known here)
+  const areaW = area.clientWidth || area.offsetWidth || 300;
+  const areaH = Math.max(area.clientHeight, area.offsetHeight, 220);
+
+  area.innerHTML = `<div style="position:relative; width:100%; height:${areaH}px; flex:1;"><canvas id="trendC" style="position:absolute; inset:0; width:100%; height:100%; touch-action:none;"></canvas></div>`;
   const cv = document.getElementById('trendC');
   const tip = document.getElementById('trendTip');
   
   const rect = cv.parentElement.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-  cv.width = rect.width * dpr;
-  cv.height = rect.height * dpr;
+  // Enforce minimum height of 220px — mobile Chrome browser may return 0 for
+  // flex children that haven't fully painted yet (PWA/desktop always gets correct height)
+  const rectW = rect.width || areaW;
+  const rectH = Math.max(rect.height, areaH, 220);
+  cv.width = rectW * dpr;
+  cv.height = rectH * dpr;
   
   const ctx = cv.getContext('2d');
   ctx.scale(dpr, dpr);
   
-  const w = rect.width, h = rect.height;
+  const w = rectW, h = rectH;
   const px = 15, pyT = 20, pyB = 25;
   const gW = w - px*2, gH = h - pyT - pyB;
   const max = Math.max(...(showExp ? expVals : []), ...(showInc ? incVals : []), 1);
@@ -6352,6 +6363,9 @@ const SWIPE_ACTION_PX = 84;
 // Reusable swipe-to-action attachment for any container with .txi-wrap items
 function attachSwipeToContainer(container) {
   if (!container || !('ontouchstart' in window)) return;
+  // Guard: prevent duplicate listener attachment on the same container element
+  if (container._swipeAttached) return;
+  container._swipeAttached = true;
   let startX, startY, currentWrap, swiping;
   const THRESHOLD = 50;
   function resetAll(except) {
@@ -6384,11 +6398,17 @@ function attachSwipeToContainer(container) {
     const inner = currentWrap.querySelector('.txi');
     if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
   }, { passive: false });
-  container.addEventListener('touchend', () => {
+  container.addEventListener('touchend', (e) => {
     if (!currentWrap) return;
     currentWrap.classList.remove('swiping');
     const inner = currentWrap.querySelector('.txi');
     if (!inner) { currentWrap = null; return; }
+    // If the touch ended on an action button, preserve the swiped state so the
+    // button's synthesized click event can fire without the swipe being reset first.
+    if (e.target && e.target.closest('.txi-act')) {
+      currentWrap = null;
+      return;
+    }
     const tmatch = inner.style.transform.match(/translateX\((-?[\d.]+)px\)/);
     const dx = tmatch ? parseFloat(tmatch[1]) : 0;
     if (dx < -THRESHOLD) {
@@ -6409,8 +6429,8 @@ function attachSwipeToContainer(container) {
 
 function initSwipeActions() {
   if (!('ontouchstart' in window)) return;
-  const txList = document.getElementById('txList');
-  if (txList) attachSwipeToContainer(txList);
+  // Note: txList swipe is attached in renderTxList() after each innerHTML update.
+  // catTxListInner is attached in renderCatTxList() similarly.
   // Global reset when tapping outside any swipe wrap
   document.addEventListener('touchstart', (e) => {
     if (!e.target.closest('.txi-wrap')) {
