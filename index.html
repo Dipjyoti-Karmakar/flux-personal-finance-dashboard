@@ -3011,6 +3011,11 @@ async function saveEditTx() {
     updatedTx.eventId = null;
   }
   
+  // HEAL: Restore createdAt for documents corrupted by a previous offline sync bug
+  if (window._editSnapshot) {
+    updatedTx.createdAt = window._editSnapshot.createdAt || Date.now();
+  }
+  
   try {
     const docRef = doc(db, 'users', userId, 'transactions', editingTxId);
     await setDoc(docRef, updatedTx, { merge: true });
@@ -3038,7 +3043,8 @@ async function saveEditTx() {
     showToast('Transaction updated', 'ok');
   } catch(e) {
     console.error("Error updating", e);
-    queueFailedSync('setDoc', 'transactions', editingTxId, updatedTx);
+    // FIXED: pass true for isMerge so we don't overwrite the document offline
+    queueFailedSync('setDoc', 'transactions', editingTxId, updatedTx, true);
   }
 }
 
@@ -5326,8 +5332,8 @@ async function saveRecurringMod() {
 
 async function toggleRecurringActive(id, active) {
   if (!userId) return;
+  const updateData = { active };
   try {
-    const updateData = { active };
     if (active) {
       // User is resuming. If nextDue is in the past, reset it to the next valid date from today
       const rec = recurringList.find(r => r.id === id);
