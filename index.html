@@ -6362,7 +6362,7 @@ const SWIPE_ACTION_PX = 84;
 
 // Reusable swipe-to-action attachment for any container with .txi-wrap items
 function attachSwipeToContainer(container) {
-  if (!container || !('ontouchstart' in window)) return;
+  if (!container) return;
   // Guard: prevent duplicate listener attachment on the same container element
   if (container._swipeAttached) return;
   container._swipeAttached = true;
@@ -6381,12 +6381,14 @@ function attachSwipeToContainer(container) {
     });
   }
 
-  container.addEventListener('touchstart', (e) => {
+  container.addEventListener('pointerdown', (e) => {
+    // Only accept primary pointer (left click or first touch point)
+    if (!e.isPrimary) return;
     const wrap = e.target.closest('.txi-wrap');
     if (!wrap) return;
     
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
+    startX = e.clientX;
+    startY = e.clientY;
 
     // If user taps directly on an action button, don't start swipe tracking.
     if (e.target.closest('.txi-act')) {
@@ -6396,12 +6398,15 @@ function attachSwipeToContainer(container) {
     resetAll(wrap);
     currentWrap = wrap;
     swiping = false;
-  }, { passive: true });
+    
+    // Capture the pointer to ensure we receive all subsequent move/up events even if pointer leaves element
+    try { e.target.setPointerCapture(e.pointerId); } catch(err){}
+  });
 
-  container.addEventListener('touchmove', (e) => {
-    if (!currentWrap) return;
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
+  container.addEventListener('pointermove', (e) => {
+    if (!currentWrap || !e.isPrimary) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
     
     if (!swiping) {
       // Deadzone: Wait until the user moves at least 8px in any direction before locking in the gesture
@@ -6411,6 +6416,7 @@ function attachSwipeToContainer(container) {
           swiping = true;
         } else {
           // Vertical movement dominates -> lock in scroll (abort swipe)
+          try { e.target.releasePointerCapture(e.pointerId); } catch(err){}
           currentWrap = null;
           return;
         }
@@ -6421,20 +6427,24 @@ function attachSwipeToContainer(container) {
     }
 
     // If we get here, swiping is true
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     currentWrap.classList.add('swiping');
     const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, dx));
     const inner = currentWrap.querySelector('.txi');
     if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
-  }, { passive: false });
+  });
 
-  container.addEventListener('touchend', (e) => {
-    // If it's a tap on an action button, handle it explicitly to bypass mobile click flakiness
+  function handlePointerUp(e) {
+    if (!e.isPrimary) return;
+    
+    try { e.target.releasePointerCapture(e.pointerId); } catch(err){}
+
+    // If it's a tap on an action button, handle it explicitly to bypass browser click flakiness
     if (!currentWrap) {
       const actBtn = e.target.closest('.txi-act');
-      if (actBtn && e.changedTouches && e.changedTouches.length > 0) {
-        const endX = e.changedTouches[0].clientX;
-        const endY = e.changedTouches[0].clientY;
+      if (actBtn) {
+        const endX = e.clientX;
+        const endY = e.clientY;
         if (Math.abs(endX - startX) < 15 && Math.abs(endY - startY) < 15) {
           if (e.cancelable) e.preventDefault();
           actBtn.click();
@@ -6462,15 +6472,15 @@ function attachSwipeToContainer(container) {
       currentWrap.classList.remove('swiped-left','swiped-right');
     }
     currentWrap = null;
-  }, { passive: false }); // Changed to false to allow preventDefault on the button tap
+  }
+
+  container.addEventListener('pointerup', handlePointerUp);
+  container.addEventListener('pointercancel', handlePointerUp);
 }
 
 function initSwipeActions() {
-  if (!('ontouchstart' in window)) return;
-  // Note: txList swipe is attached in renderTxList() after each innerHTML update.
-  // catTxListInner is attached in renderCatTxList() similarly.
-  // Global reset when tapping outside any swipe wrap
-  document.addEventListener('touchstart', (e) => {
+  // Global reset when tapping/clicking outside any swipe wrap
+  document.addEventListener('pointerdown', (e) => {
     if (!e.target.closest('.txi-wrap')) {
       document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
         w.classList.remove('swiped-left','swiped-right','swiping');
@@ -6478,7 +6488,7 @@ function initSwipeActions() {
         if (inner) inner.style.transform = '';
       });
     }
-  }, { passive: true });
+  });
 }
 
 // -- Celebration Confetti --
