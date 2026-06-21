@@ -334,7 +334,9 @@ select option{background:var(--s2)}
 .txl::-webkit-scrollbar-thumb:hover{background:var(--di);}
 .txa{padding:48px 20px;text-align:center;color:var(--di);font-family:'DM Mono',monospace;font-size:12px;letter-spacing:1px;font-weight:500;}
 .txi{display:flex;align-items:center;gap:12px;padding:12px 12px;border:1px solid var(--txi-bd);border-radius:var(--rs);margin-bottom:6px;transition:all .5s var(--ease-spring);animation:sIn .4s var(--ease-spring) both;min-width:0;}
-.txi:hover{background:var(--s2);border-color:var(--bs);transform:translateX(8px) scale(1.01);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+@media (hover: hover) {
+  .txi:hover{background:var(--s2);border-color:var(--bs);transform:translateX(8px) scale(1.01);box-shadow:0 8px 24px rgba(0,0,0,0.12);}
+}
 .txi:hover .td{opacity:1;transform:translateX(0);}
 @keyframes sIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:box-shadow .3s ease}
@@ -862,7 +864,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 /* -- Swipe-to-Action (Touch) -- */
 .txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
-.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
+.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;animation:none !important;}
 /* hover only fires on real pointer devices — avoids mobile sticky-hover locking transform:translateX(0) */
 @media (hover: hover) {
   .txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
@@ -6374,7 +6376,7 @@ function attachSwipeToContainer(container) {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   function setTranslate(inner, px) {
-    inner.style.transform = 'translate3d(' + px + 'px,0,0)';
+    inner.style.setProperty('transform', 'translate3d(' + px + 'px,0,0)', 'important');
   }
 
   function snapTo(wrap, inner, dx) {
@@ -6408,7 +6410,7 @@ function attachSwipeToContainer(container) {
       inner.classList.add('txi-animating');
     }
     // Clear inline transform — the CSS base transition handles the snap-back
-    inner.style.transform = '';
+    inner.style.removeProperty('transform');
   }
 
   function resetAll(except) {
@@ -6480,7 +6482,7 @@ function attachSwipeToContainer(container) {
         const inner = currentWrap.querySelector('.txi');
         if (inner) {
           inner.classList.add('txi-animating');
-          inner.style.transform = '';
+          inner.style.removeProperty('transform');
         }
         currentWrap = null;
         return;
@@ -6601,7 +6603,7 @@ function initSwipeActions() {
           inner.classList.remove('txi-animating');
           void inner.offsetWidth;
           inner.classList.add('txi-animating');
-          inner.style.transform = '';
+          inner.style.removeProperty('transform');
         }
       });
     }
