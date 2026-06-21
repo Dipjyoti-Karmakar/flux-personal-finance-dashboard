@@ -862,7 +862,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 /* -- Swipe-to-Action (Touch) -- */
 .txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;touch-action:pan-y;}
-.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;}
+.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;-webkit-user-select:none;user-select:none;}
 .txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
 .txi-wrap.swiping .txi{transition:none;}
 .txi-actions{position:absolute;top:0;bottom:0;width:84px;min-width:84px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;z-index:1;pointer-events:auto;}
@@ -6386,14 +6386,15 @@ function attachSwipeToContainer(container) {
     const wrap = e.target.closest('.txi-wrap');
     if (!wrap) return;
     
-    startX = isTouch ? e.touches[0].clientX : e.clientX;
-    startY = isTouch ? e.touches[0].clientY : e.clientY;
-
     // If user taps directly on an action button, don't start swipe tracking.
     if (e.target.closest('.txi-act')) {
       currentWrap = null;
       return;
     }
+    
+    startX = isTouch ? e.touches[0].clientX : e.clientX;
+    startY = isTouch ? e.touches[0].clientY : e.clientY;
+    
     resetAll(wrap);
     currentWrap = wrap;
     swiping = false;
@@ -6409,9 +6410,9 @@ function attachSwipeToContainer(container) {
     const dy = clientY - startY;
     
     if (!swiping) {
-      // Deadzone: Wait until the user moves at least 8px
-      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
-        if (Math.abs(dx) > Math.abs(dy) * 0.8) {
+      // Deadzone: Wait until the user moves at least 4px
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        if (Math.abs(dx) > Math.abs(dy)) {
           // Horizontal movement dominates -> lock in swipe
           swiping = true;
         } else {
@@ -6453,8 +6454,10 @@ function attachSwipeToContainer(container) {
     const inner = currentWrap.querySelector('.txi');
     if (!inner) { currentWrap = null; return; }
     
-    const tmatch = inner.style.transform.match(/translateX\((-?[\d.]+)px\)/);
-    const dx = tmatch ? parseFloat(tmatch[1]) : 0;
+    const isTouch = e.type.startsWith('touch');
+    const clientX = isTouch && e.changedTouches ? e.changedTouches[0].clientX : (e.clientX || startX);
+    const dx = clientX - startX;
+    
     if (dx < -THRESHOLD) {
       inner.style.transform = 'translateX(-' + SWIPE_ACTION_PX + 'px)';
       currentWrap.classList.add('swiped-left');
