@@ -861,10 +861,11 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .theme-wipe.expand{clip-path:circle(150% at var(--cx,50%) var(--cy,50%));transition:clip-path .55s cubic-bezier(0.4,0,0.2,1);}
 
 /* -- Swipe-to-Action (Touch) -- */
-.txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;}
-.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;}
+.txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
+.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
 .txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
 .txi-wrap.swiping .txi{transition:none;}
+.txi.txi-animating{transition:transform 0.4s var(--ease-spring);}
 .txi-actions{position:absolute;top:0;bottom:0;width:84px;min-width:84px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;z-index:1;pointer-events:auto;}
 .txi-actions.act-left{left:0;color:var(--in);}
 .txi-actions.act-right{right:0;color:var(--ex);}
@@ -6361,7 +6362,10 @@ function attachSwipeToContainer(container) {
   function resetWrap(w) {
     w.classList.remove('swiped-left','swiped-right','swiping');
     const inner = w.querySelector('.txi');
-    if (inner) inner.style.transform = '';
+    if (inner) {
+      inner.classList.add('txi-animating');
+      inner.style.transform = '';
+    }
   }
   function resetAll(except) {
     container.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
@@ -6384,11 +6388,21 @@ function attachSwipeToContainer(container) {
     startX = isTouch ? e.touches[0].clientX : e.clientX;
     startY = isTouch ? e.touches[0].clientY : e.clientY;
     
+    const edgeThresholdLeft = window.innerWidth * 0.1;
+    const edgeThresholdRight = window.innerWidth * 0.9;
+    if (startX < edgeThresholdLeft || startX > edgeThresholdRight) {
+       if (e.cancelable) e.preventDefault();
+    }
+    
     resetAll(wrap);
     currentWrap = wrap;
     swiping = false;
+    
+    const inner = currentWrap.querySelector('.txi');
+    if (inner) inner.classList.remove('txi-animating');
   }
 
+  let rafPending = false;
   function handleMove(e) {
     if (!currentWrap) return;
     const isTouch = e.type === 'touchmove';
@@ -6418,9 +6432,16 @@ function attachSwipeToContainer(container) {
     // If we get here, swiping is true
     if (e.cancelable) e.preventDefault();
     currentWrap.classList.add('swiping');
-    const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, dx));
-    const inner = currentWrap.querySelector('.txi');
-    if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
+    if (!rafPending) {
+      rafPending = true;
+      window.requestAnimationFrame(() => {
+        if (!currentWrap) { rafPending = false; return; }
+        const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, dx));
+        const inner = currentWrap.querySelector('.txi');
+        if (inner) inner.style.transform = `translate3d(${clamped}px, 0, 0)`;
+        rafPending = false;
+      });
+    }
   }
 
   function handleEnd(e) {
@@ -6443,30 +6464,32 @@ function attachSwipeToContainer(container) {
     const inner = currentWrap.querySelector('.txi');
     if (!inner) { currentWrap = null; return; }
     
+    inner.classList.add('txi-animating');
+    
     const isTouch = e.type.startsWith('touch');
     const clientX = isTouch && e.changedTouches ? e.changedTouches[0].clientX : (e.clientX || startX);
     const dx = clientX - startX;
     
     if (dx < -THRESHOLD) {
-      inner.style.transform = 'translateX(-' + SWIPE_ACTION_PX + 'px)';
+      inner.style.transform = 'translate3d(-' + SWIPE_ACTION_PX + 'px, 0, 0)';
       currentWrap.classList.add('swiped-left');
       currentWrap.classList.remove('swiped-right');
     } else if (dx > THRESHOLD) {
-      inner.style.transform = 'translateX(' + SWIPE_ACTION_PX + 'px)';
+      inner.style.transform = 'translate3d(' + SWIPE_ACTION_PX + 'px, 0, 0)';
       currentWrap.classList.add('swiped-right');
       currentWrap.classList.remove('swiped-left');
     } else {
-      inner.style.transform = '';
+      inner.style.transform = 'translate3d(0, 0, 0)';
       currentWrap.classList.remove('swiped-left','swiped-right');
     }
     currentWrap = null;
   }
 
-  // Use both touch and mouse events (passive: false is needed for preventDefault on touchmove)
-  container.addEventListener('touchstart', handleStart, { passive: true });
+  // Use both touch and mouse events (passive: false is needed for preventDefault on touchmove and touchstart edge-intercept)
+  container.addEventListener('touchstart', handleStart, { passive: false });
   container.addEventListener('touchmove', handleMove, { passive: false });
-  container.addEventListener('touchend', handleEnd);
-  container.addEventListener('touchcancel', handleEnd);
+  container.addEventListener('touchend', handleEnd, { passive: true });
+  container.addEventListener('touchcancel', handleEnd, { passive: true });
   
   container.addEventListener('mousedown', handleStart);
   container.addEventListener('mousemove', handleMove);
@@ -6485,7 +6508,10 @@ function initSwipeActions() {
       document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
         w.classList.remove('swiped-left','swiped-right','swiping');
         const inner = w.querySelector('.txi');
-        if (inner) inner.style.transform = '';
+        if (inner) {
+          inner.classList.add('txi-animating');
+          inner.style.transform = '';
+        }
       });
     }
   });
