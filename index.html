@@ -2615,10 +2615,10 @@ async function tagPastSubscriptions() {
       if (rec.name.trim().toLowerCase() !== tx.desc.trim().toLowerCase()) return false;
       if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
       if (rec.type !== tx.type) return false;
-      
-      // We removed the strict date matching. If the Name, Amount, and Type match perfectly,
-      // it is safely considered the same subscription. This fixes issues where billing days
-      // fluctuate due to weekends, shorter months, or manual entry differences.
+      // Date guard: only tag transactions on or before today and within 90 days
+      // before the subscription's current nextDue, to prevent false positives
+      // where an unrelated transaction shares the same name/amount/type.
+      if (rec.nextDue && tx.date > rec.nextDue) return false;
       return true;
     });
     if (matchingRec) toTag.push(tx.id);
@@ -4934,8 +4934,11 @@ function loadRecurring() {
 }
 
 const triggeringRecs = new Set();
+let globallyMatchedTxIds = new Set();
 async function checkAndTriggerRecurring() {
   if (!userId || !recurringList.length) return;
+  // Reset per-run so stale IDs don't accumulate across Firestore snapshot callbacks
+  globallyMatchedTxIds = new Set();
   const today = getTodayStr();
   let triggeredCount = 0;
   
@@ -4948,10 +4951,13 @@ async function checkAndTriggerRecurring() {
       const newTxs = [];
       let updatesMade = false;
 
+      // Hoist matchedTxIds outside runTransaction so post-transaction code reads
+      // the correct set even if Firestore retried the transaction internally
+      let matchedTxIds = new Set();
       await runTransaction(db, async (transaction) => {
         // Clear local tracking arrays in case of retry
-        newTxs.length = 0; 
-        const matchedTxIds = new Set();
+        newTxs.length = 0;
+        matchedTxIds = new Set();
         let cyclesProcessed = 0;
         const MAX_CYCLES = 60; // Safety limit (5 years monthly)
         let updatesNeeded = false;
@@ -5092,6 +5098,8 @@ function renderRecurring() {
   });
   const el = (id) => document.getElementById(id);
   if (el('subTotalMonthly')) el('subTotalMonthly').textContent = '₹' + (monthlyTotal).toLocaleString('en-IN', {maximumFractionDigits:0});
+  // yearlyTotal holds per-month equivalents of yearly subs (amt/12), so annualize just that.
+  // monthlyTotal already includes monthly-equivalent of ALL non-yearly subs.
   if (el('subTotalYearly')) el('subTotalYearly').textContent = '₹' + (monthlyTotal * 12 + yearlyTotal * 12).toLocaleString('en-IN', {maximumFractionDigits:0});
   if (el('subDueCount')) el('subDueCount').textContent = dueCount;
   if (el('subActiveCount')) el('subActiveCount').textContent = activeCount;
@@ -5181,7 +5189,8 @@ function openEditRecurring(id) {
   document.getElementById('recAmount').value = rec.amount || '';
   document.getElementById('recCat').value = rec.cat || 'other';
   document.getElementById('recNextDue').value = rec.nextDue || '';
-  if (rec.freq === 'custom') document.getElementById('recCustomDays').value = rec.customDays || '';
+  // Always reset customDays to avoid stale value from a previously edited custom subscription
+  document.getElementById('recCustomDays').value = rec.freq === 'custom' ? (rec.customDays || '') : '';
   setRecType(currentRecType);
   setRecFreq(currentRecFreq);
   document.getElementById('recurringMod').classList.add('op');
@@ -5218,8 +5227,15 @@ async function saveRecurringMod() {
   if (!amount || amount <= 0) { shake('recAmount'); return; }
   if (currentRecFreq === 'custom' && (!customDays || customDays <= 0)) { shake('recCustomDays'); return; }
   if (!nextDue) { shake('recNextDue'); return; }
-  const billingDay = parseInt(nextDue.split('-')[2], 10);
-  const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, billingDay, active: true };
+  // Preserve billingDay from the existing record if nextDue hasn't changed, to avoid
+  // overwriting a saved day-31 billing anchor with the clamped date shown in the field.
+  const existingRec = editingRecurringId ? recurringList.find(r => r.id === editingRecurringId) : null;
+  const billingDay = (existingRec && existingRec.nextDue === nextDue && existingRec.billingDay)
+    ? existingRec.billingDay
+    : parseInt(nextDue.split('-')[2], 10);
+  // Preserve active state on edit — don't silently re-activate a paused subscription
+  const activeState = existingRec ? existingRec.active : true;
+  const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, billingDay, active: activeState };
   if (currentRecFreq === 'custom') data.customDays = customDays;
   closeRecurringMod();
   if (editingRecurringId) {
@@ -5257,13 +5273,17 @@ async function toggleRecurringActive(id, active) {
       const rec = recurringList.find(r => r.id === id);
       if (rec) {
         const today = getTodayStr();
-        if (rec.nextDue && rec.nextDue <= today) {
-          // Fast-forward nextDue to the future
-          let currentDue = rec.nextDue;
-          while (currentDue <= today) {
-             currentDue = computeNextDue(currentDue, rec.freq, rec.customDays, rec.billingDay);
+        const startDue = rec.nextDue && rec.nextDue.match(/^\d{4}-\d{2}-\d{2}$/) ? rec.nextDue : today;
+        if (startDue <= today) {
+          // Fast-forward nextDue to the future, guard against infinite loop with cycle cap
+          let currentDue = startDue;
+          let guard = 0;
+          while (currentDue <= today && guard++ < 1000) {
+            const next = computeNextDue(currentDue, rec.freq, rec.customDays, rec.billingDay);
+            if (!next || next === currentDue) break; // computeNextDue returned invalid/same
+            currentDue = next;
           }
-          updateData.nextDue = currentDue;
+          if (currentDue.match(/^\d{4}-\d{2}-\d{2}$/)) updateData.nextDue = currentDue;
         }
       }
     }
