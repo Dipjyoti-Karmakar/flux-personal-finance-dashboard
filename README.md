@@ -18,7 +18,7 @@
 
 ## Overview
 
-Flux is a **6,300+ line single-file web application**, with all HTML, CSS, and JavaScript in one `index.html`. It uses **Firebase Auth v11.6.1** (Google sign-in popup) and **Cloud Firestore** with persistent local cache for real-time sync across devices and full offline support.
+Flux is a **6,700+ line single-file web application**, with all HTML, CSS, and JavaScript in one `index.html`. It uses **Firebase Auth v11.6.1** (Google sign-in popup) and **Cloud Firestore** with persistent local cache for real-time sync across devices and full offline support.
 
 The app is Indian-locale-first: all amounts are formatted in **INR (₹)** using `en-IN` locale conventions. There are no build steps, no `node_modules`, and no framework dependencies.
 
