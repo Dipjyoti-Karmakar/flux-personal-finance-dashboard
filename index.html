@@ -328,7 +328,7 @@ select option{background:var(--s2)}
 .ft:hover{border-color:var(--bs);color:var(--tx);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.08)}
 .ft:active{transform:translateY(0) scale(0.94);box-shadow:none;}
 .ft.act{background:var(--ag);border-color:var(--ac);color:var(--ac);transform:translateY(0);box-shadow:inset 0 1px 4px rgba(200,169,110,0.15)}
-.txl{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior-x:none;scrollbar-width:thin;scrollbar-color:var(--s3) transparent;min-width:0;padding:12px 14px;}
+.txl{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--s3) transparent;min-width:0;padding:12px 14px;}
 .txl::-webkit-scrollbar{width:6px}
 .txl::-webkit-scrollbar-thumb{background:var(--s3);border-radius:6px}
 .txl::-webkit-scrollbar-thumb:hover{background:var(--di);}
@@ -407,7 +407,7 @@ select option{background:var(--s2)}
 .cat-tx-hdr-cnt { color:var(--mu); font-size:11px; }
 .cat-tx-close { background:var(--s2); border:1px solid var(--bd); color:var(--mu); cursor:pointer; font-size:16px; width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:8px; line-height:1; transition:all .2s ease; flex-shrink:0; }
 .cat-tx-close:hover { color:var(--ex); background:var(--eb); border-color:rgba(224,112,112,0.3); }
-.cat-tx-list { max-height:400px; overflow-y:auto; overflow-x:hidden; overscroll-behavior-x:none; padding:8px 12px; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
+.cat-tx-list { max-height:400px; overflow-y:auto; overflow-x:hidden; padding:8px 12px; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
 .cat-tx-list::-webkit-scrollbar { width:6px; }
 .cat-tx-list::-webkit-scrollbar-thumb { background:var(--s3); border-radius:6px; }
 .cat-tx-list::-webkit-scrollbar-thumb:hover { background:var(--di); }
@@ -861,8 +861,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .theme-wipe.expand{clip-path:circle(150% at var(--cx,50%) var(--cy,50%));transition:clip-path .55s cubic-bezier(0.4,0,0.2,1);}
 
 /* -- Swipe-to-Action (Touch) -- */
-.txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;touch-action:pan-y;}
-.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;-webkit-user-select:none;user-select:none;}
+.txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;}
+.txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;}
 .txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
 .txi-wrap.swiping .txi{transition:none;}
 .txi-actions{position:absolute;top:0;bottom:0;width:84px;min-width:84px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;z-index:1;pointer-events:auto;}
@@ -2637,7 +2637,7 @@ async function tagPastSubscriptions() {
 // Per-element cancellation prevents overlapping rAF loops when re-renders fire
 // in rapid succession (e.g. Firestore batch imports, fast filter switching).
 const _pageLoadTime = performance.now();
-// App entrance animation: ends at 3240ms. Start counting instantly after animation finishes.
+// App entrance animation: starts at 3380ms. Start counting numbers right as they appear.
 const CARDS_VISIBLE_AT_MS = 3240;
 
 function animateVal(el, target, formatter, duration) {
@@ -2936,9 +2936,6 @@ function renderTxList(){
     if (hEl) hEl.classList.add('tx-new');
     window._highlightTxId = null;
   }
-
-  // Re-attach swipe-to-action after innerHTML replacement (container listeners are lost)
-  attachSwipeToContainer(el);
 }
 
 function updECat(type) {
@@ -3156,27 +3153,19 @@ function renderTrend(passedTxs) {
   }
   area.setAttribute('aria-label', ariaDesc || 'Trend chart with data');
 
-  // Measure the area element before setting innerHTML (dimensions are known here)
-  const areaW = area.clientWidth || area.offsetWidth || 300;
-  const areaH = Math.max(area.clientHeight, area.offsetHeight, 220);
-
-  area.innerHTML = `<div style="position:relative; width:100%; height:${areaH}px; flex:1;"><canvas id="trendC" style="position:absolute; inset:0; width:100%; height:100%; touch-action:none;"></canvas></div>`;
+  area.innerHTML = '<div style="position:relative; width:100%; height:100%; flex:1;"><canvas id="trendC" style="position:absolute; inset:0; width:100%; height:100%; touch-action:none;"></canvas></div>';
   const cv = document.getElementById('trendC');
   const tip = document.getElementById('trendTip');
   
   const rect = cv.parentElement.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
-  // Enforce minimum height of 220px — mobile Chrome browser may return 0 for
-  // flex children that haven't fully painted yet (PWA/desktop always gets correct height)
-  const rectW = rect.width || areaW;
-  const rectH = Math.max(rect.height, areaH, 220);
-  cv.width = rectW * dpr;
-  cv.height = rectH * dpr;
+  cv.width = rect.width * dpr;
+  cv.height = rect.height * dpr;
   
   const ctx = cv.getContext('2d');
   ctx.scale(dpr, dpr);
   
-  const w = rectW, h = rectH;
+  const w = rect.width, h = rect.height;
   const px = 15, pyT = 20, pyB = 25;
   const gW = w - px*2, gH = h - pyT - pyB;
   const max = Math.max(...(showExp ? expVals : []), ...(showInc ? incVals : []), 1);
@@ -6362,102 +6351,46 @@ const SWIPE_ACTION_PX = 84;
 
 // Reusable swipe-to-action attachment for any container with .txi-wrap items
 function attachSwipeToContainer(container) {
-  if (!container) return;
-  // Guard: prevent duplicate listener attachment on the same container element
-  if (container._swipeAttached) return;
-  container._swipeAttached = true;
+  if (!container || !('ontouchstart' in window)) return;
   let startX, startY, currentWrap, swiping;
-  const THRESHOLD = 40; // lower threshold = easier to trigger swipe snap
-
-  function resetWrap(w) {
-    w.classList.remove('swiped-left','swiped-right','swiping');
-    const inner = w.querySelector('.txi');
-    if (inner) inner.style.transform = '';
-  }
+  const THRESHOLD = 50;
   function resetAll(except) {
     container.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
       if (w === except) return;
-      resetWrap(w);
+      w.classList.remove('swiped-left','swiped-right','swiping');
+      const inner = w.querySelector('.txi');
+      if (inner) inner.style.transform = '';
     });
   }
-
-  function handleStart(e) {
-    const isTouch = e.type === 'touchstart';
+  container.addEventListener('touchstart', (e) => {
     const wrap = e.target.closest('.txi-wrap');
     if (!wrap) return;
-    
-    // If user taps directly on an action button, don't start swipe tracking.
-    if (e.target.closest('.txi-act')) {
-      currentWrap = null;
-      return;
-    }
-    
-    startX = isTouch ? e.touches[0].clientX : e.clientX;
-    startY = isTouch ? e.touches[0].clientY : e.clientY;
-    
     resetAll(wrap);
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
     currentWrap = wrap;
     swiping = false;
-  }
-
-  function handleMove(e) {
+  }, { passive: true });
+  container.addEventListener('touchmove', (e) => {
     if (!currentWrap) return;
-    const isTouch = e.type === 'touchmove';
-    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-    
-    const dx = clientX - startX;
-    const dy = clientY - startY;
-    
-    if (!swiping) {
-      // Deadzone: Wait until the user moves at least 4px
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-        if (Math.abs(dx) > Math.abs(dy)) {
-          // Horizontal movement dominates -> lock in swipe
-          swiping = true;
-        } else {
-          // Vertical movement dominates -> lock in scroll (abort swipe)
-          currentWrap = null;
-          return;
-        }
-      } else {
-        // Still in deadzone, ignore but keep tracking
-        return;
-      }
-    }
-
-    // If we get here, swiping is true
-    if (e.cancelable) e.preventDefault();
+    const dx = e.touches[0].clientX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (!swiping && Math.abs(dy) > Math.abs(dx)) { currentWrap = null; return; }
+    if (Math.abs(dx) > 10) swiping = true;
+    if (!swiping) return;
+    e.preventDefault();
     currentWrap.classList.add('swiping');
     const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, dx));
     const inner = currentWrap.querySelector('.txi');
     if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
-  }
-
-  function handleEnd(e) {
-    // If it's a tap on an action button, handle it explicitly
-    if (!currentWrap) {
-      const actBtn = e.target.closest('.txi-act');
-      if (actBtn) {
-        const isTouch = e.type.startsWith('touch');
-        const clientX = isTouch && e.changedTouches ? e.changedTouches[0].clientX : (e.clientX || startX);
-        const clientY = isTouch && e.changedTouches ? e.changedTouches[0].clientY : (e.clientY || startY);
-        if (Math.abs(clientX - startX) < 15 && Math.abs(clientY - startY) < 15) {
-          if (e.cancelable) e.preventDefault();
-          actBtn.click();
-        }
-      }
-      return;
-    }
-
+  }, { passive: false });
+  container.addEventListener('touchend', () => {
+    if (!currentWrap) return;
     currentWrap.classList.remove('swiping');
     const inner = currentWrap.querySelector('.txi');
     if (!inner) { currentWrap = null; return; }
-    
-    const isTouch = e.type.startsWith('touch');
-    const clientX = isTouch && e.changedTouches ? e.changedTouches[0].clientX : (e.clientX || startX);
-    const dx = clientX - startX;
-    
+    const tmatch = inner.style.transform.match(/translateX\((-?[\d.]+)px\)/);
+    const dx = tmatch ? parseFloat(tmatch[1]) : 0;
     if (dx < -THRESHOLD) {
       inner.style.transform = 'translateX(-' + SWIPE_ACTION_PX + 'px)';
       currentWrap.classList.add('swiped-left');
@@ -6471,24 +6404,15 @@ function attachSwipeToContainer(container) {
       currentWrap.classList.remove('swiped-left','swiped-right');
     }
     currentWrap = null;
-  }
-
-  // Use both touch and mouse events (passive: false is needed for preventDefault on touchmove)
-  container.addEventListener('touchstart', handleStart, { passive: true });
-  container.addEventListener('touchmove', handleMove, { passive: false });
-  container.addEventListener('touchend', handleEnd);
-  container.addEventListener('touchcancel', handleEnd);
-  
-  container.addEventListener('mousedown', handleStart);
-  container.addEventListener('mousemove', handleMove);
-  // Bind mouseup/mouseleave to the container to catch when mouse leaves the list while dragging
-  container.addEventListener('mouseup', handleEnd);
-  container.addEventListener('mouseleave', handleEnd);
+  }, { passive: true });
 }
 
 function initSwipeActions() {
-  // Global reset when tapping/clicking outside any swipe wrap
-  document.addEventListener('pointerdown', (e) => {
+  if (!('ontouchstart' in window)) return;
+  const txList = document.getElementById('txList');
+  if (txList) attachSwipeToContainer(txList);
+  // Global reset when tapping outside any swipe wrap
+  document.addEventListener('touchstart', (e) => {
     if (!e.target.closest('.txi-wrap')) {
       document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
         w.classList.remove('swiped-left','swiped-right','swiping');
@@ -6496,7 +6420,7 @@ function initSwipeActions() {
         if (inner) inner.style.transform = '';
       });
     }
-  });
+  }, { passive: true });
 }
 
 // -- Celebration Confetti --
