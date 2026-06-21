@@ -3092,8 +3092,8 @@ function renderTrend(passedTxs) {
   const isMonth = statsMode === 'month';
   const isYear = statsMode === 'year';
 
-  exp.forEach(t => { const key = isMonth ? t.date : t.date.slice(0, 7); expGroups[key] = (expGroups[key] || 0) + t.amount; });
-  inc.forEach(t => { const key = isMonth ? t.date : t.date.slice(0, 7); incGroups[key] = (incGroups[key] || 0) + t.amount; });
+  exp.forEach(t => { const key = t.date; expGroups[key] = (expGroups[key] || 0) + t.amount; });
+  inc.forEach(t => { const key = t.date; incGroups[key] = (incGroups[key] || 0) + t.amount; });
 
   // Merge all keys from both datasets
   const allGroups = {};
@@ -3112,21 +3112,29 @@ function renderTrend(passedTxs) {
       }
   } else if (isYear) {
       const y = now.getFullYear();
-      for (let m = 1; m <= 12; m++) {
-          let k = `${y}-${String(m).padStart(2, '0')}`;
+      const isLeap = (y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0);
+      const daysInYear = isLeap ? 366 : 365;
+      for (let i = 0; i < daysInYear; i++) {
+          let dt = new Date(y, 0, i + 1);
+          let m = String(dt.getMonth() + 1).padStart(2, '0');
+          let d = String(dt.getDate()).padStart(2, '0');
+          let k = `${y}-${m}-${d}`;
           allGroups[k] = true;
       }
   } else {
-      // I6 FIX: Merged identical gap-filling for 'all' and 'custom' modes
+      // For 'all' and 'custom' modes: daily gap filling
       let keys = Object.keys(allGroups).sort();
       if (keys.length > 1) {
-          let [sY, sM] = keys[0].split('-').map(Number);
-          let [eY, eM] = keys[keys.length - 1].split('-').map(Number);
-          let curY = sY, curM = sM;
-          while (curY < eY || (curY === eY && curM <= eM)) {
-              let k = `${curY}-${String(curM).padStart(2, '0')}`;
+          let startD = new Date(keys[0] + 'T00:00:00');
+          let endD = new Date(keys[keys.length - 1] + 'T00:00:00');
+          let curr = new Date(startD);
+          while (curr <= endD) {
+              let y = curr.getFullYear();
+              let m = String(curr.getMonth() + 1).padStart(2, '0');
+              let d = String(curr.getDate()).padStart(2, '0');
+              let k = `${y}-${m}-${d}`;
               allGroups[k] = true;
-              curM++; if (curM > 12) { curM = 1; curY++; }
+              curr.setDate(curr.getDate() + 1);
           }
       }
   }
@@ -3135,9 +3143,13 @@ function renderTrend(passedTxs) {
   let expVals = keys.map(k => expGroups[k] || 0);
   let incVals = keys.map(k => incGroups[k] || 0);
   
-  let fmtL = d => isMonth 
-      ? parseInt(d.split('-')[2]) + ' ' + MN[parseInt(d.split('-')[1])-1] 
-      : MN[parseInt(d.split('-')[1])-1] + " '" + d.slice(2,4);
+  let fmtL = d => {
+      let parts = d.split('-');
+      let day = parseInt(parts[2]);
+      let mon = MN[parseInt(parts[1])-1];
+      let yr = parts[0].slice(2,4);
+      return isMonth ? day + ' ' + mon : day + ' ' + mon + " '" + yr;
+  };
 
   // Accessibility summary
   let ariaDesc = '';
