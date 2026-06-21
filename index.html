@@ -863,9 +863,14 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 /* -- Swipe-to-Action (Touch) -- */
 .txi-wrap{position:relative;overflow-x:clip;overflow-y:visible;border-radius:var(--rs);margin-bottom:6px;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
 .txi-wrap .txi{margin-bottom:0;position:relative;z-index:2;background:var(--sf);will-change:transform;transition:transform .3s cubic-bezier(0.16,1,0.3,1), background .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .2s ease;min-width:100%;box-sizing:border-box;touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;}
-.txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
-.txi-wrap.swiping .txi{transition:none;}
-.txi.txi-animating{transition:transform 0.4s var(--ease-spring);}
+/* hover only fires on real pointer devices — avoids mobile sticky-hover locking transform:translateX(0) */
+@media (hover: hover) {
+  .txi-wrap .txi:hover{background:var(--s2);transform:translateX(0);}
+}
+/* disable transition while finger is dragging so movement is instant */
+.txi-wrap.swiping .txi{transition:none !important;}
+/* re-enable smooth spring snap on lift */
+.txi.txi-animating{transition:transform 0.35s var(--ease-spring) !important;}
 .txi-actions{position:absolute;top:0;bottom:0;width:84px;min-width:84px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;z-index:1;pointer-events:auto;}
 .txi-actions.act-left{left:0;color:var(--in);}
 .txi-actions.act-right{right:0;color:var(--ex);}
@@ -6356,159 +6361,241 @@ function attachSwipeToContainer(container) {
   // Guard: prevent duplicate listener attachment on the same container element
   if (container._swipeAttached) return;
   container._swipeAttached = true;
-  let startX, startY, currentWrap, swiping;
-  const THRESHOLD = 40; // lower threshold = easier to trigger swipe snap
 
-  function resetWrap(w) {
-    w.classList.remove('swiped-left','swiped-right','swiping');
-    const inner = w.querySelector('.txi');
-    if (inner) {
-      inner.classList.add('txi-animating');
-      inner.style.transform = '';
+  // Per-gesture state — all reset on each touchstart
+  let startX = 0, startY = 0;
+  let currentWrap = null;
+  let directionLocked = false; // true=horizontal-swipe, false=not yet decided
+  let isScrolling = false;     // true once vertical direction is confirmed → abort
+  let lastDx = 0;              // latest dx — updated every touchmove, read in RAF + touchend
+  let rafId = null;            // pending rAF handle (cancel on end)
+
+  const THRESHOLD = 40;
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  function setTranslate(inner, px) {
+    inner.style.transform = 'translate3d(' + px + 'px,0,0)';
+  }
+
+  function snapTo(wrap, inner, dx) {
+    // Add spring class so CSS handles the animation, then set the target position
+    inner.classList.remove('txi-animating');
+    // Force a reflow so the browser registers the class removal before re-adding
+    void inner.offsetWidth;
+    inner.classList.add('txi-animating');
+
+    if (dx < -THRESHOLD) {
+      setTranslate(inner, -SWIPE_ACTION_PX);
+      wrap.classList.add('swiped-left');
+      wrap.classList.remove('swiped-right');
+    } else if (dx > THRESHOLD) {
+      setTranslate(inner, SWIPE_ACTION_PX);
+      wrap.classList.add('swiped-right');
+      wrap.classList.remove('swiped-left');
+    } else {
+      setTranslate(inner, 0);
+      wrap.classList.remove('swiped-left', 'swiped-right');
     }
   }
+
+  function resetWrap(w, animate) {
+    w.classList.remove('swiped-left', 'swiped-right', 'swiping');
+    const inner = w.querySelector('.txi');
+    if (!inner) return;
+    if (animate) {
+      inner.classList.remove('txi-animating');
+      void inner.offsetWidth;
+      inner.classList.add('txi-animating');
+    }
+    // Clear inline transform — the CSS base transition handles the snap-back
+    inner.style.transform = '';
+  }
+
   function resetAll(except) {
     container.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
-      if (w === except) return;
-      resetWrap(w);
+      if (w !== except) resetWrap(w, true);
     });
   }
 
+  function cancelRaf() {
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+  }
+
+  // ── Touch handlers ───────────────────────────────────────────────────────
   function handleStart(e) {
-    const isTouch = e.type === 'touchstart';
-    const wrap = e.target.closest('.txi-wrap');
+    // Only handle touch events here (mouse handled separately below)
+    if (e.type !== 'touchstart') return;
+
+    const touch = e.touches[0];
+    const wrap  = touch.target.closest('.txi-wrap');
     if (!wrap) return;
-    
-    // If user taps directly on an action button, don't start swipe tracking.
-    if (e.target.closest('.txi-act')) {
+
+    // Tapping an action button should not start a swipe
+    if (touch.target.closest('.txi-act')) {
       currentWrap = null;
       return;
     }
-    
-    startX = isTouch ? e.touches[0].clientX : e.clientX;
-    startY = isTouch ? e.touches[0].clientY : e.clientY;
-    
-    const edgeThresholdLeft = window.innerWidth * 0.1;
-    const edgeThresholdRight = window.innerWidth * 0.9;
-    if (startX < edgeThresholdLeft || startX > edgeThresholdRight) {
-       if (e.cancelable) e.preventDefault();
-    }
-    
+
+    // Reset any other open swipe row
     resetAll(wrap);
-    currentWrap = wrap;
-    swiping = false;
-    
-    const inner = currentWrap.querySelector('.txi');
-    if (inner) inner.classList.remove('txi-animating');
+
+    startX = touch.clientX;
+    startY = touch.clientY;
+    lastDx = 0;
+    currentWrap    = wrap;
+    directionLocked = false;
+    isScrolling    = false;
+
+    cancelRaf();
+
+    // Immediately kill the CSS transition so drag feels instant
+    const inner = wrap.querySelector('.txi');
+    if (inner) {
+      inner.classList.remove('txi-animating');
+      // Add swiping early so transition:none takes effect right away
+      wrap.classList.add('swiping');
+    }
   }
 
-  let rafPending = false;
   function handleMove(e) {
-    if (!currentWrap) return;
-    const isTouch = e.type === 'touchmove';
-    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-    
-    const dx = clientX - startX;
-    const dy = clientY - startY;
-    
-    if (!swiping) {
-      // Deadzone: Wait until the user moves at least 4px
-      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
-        if (Math.abs(dx) > Math.abs(dy)) {
-          // Horizontal movement dominates -> lock in swipe
-          swiping = true;
-        } else {
-          // Vertical movement dominates -> lock in scroll (abort swipe)
-          currentWrap = null;
-          return;
+    if (e.type !== 'touchmove') return;
+    if (!currentWrap || isScrolling) return;
+
+    const touch = e.touches[0];
+    const dx = touch.clientX - startX;
+    const dy = touch.clientY - startY;
+
+    if (!directionLocked) {
+      const adx = Math.abs(dx), ady = Math.abs(dy);
+      if (adx < 4 && ady < 4) return; // still in deadzone
+      if (ady > adx) {
+        // Vertical dominates → hand back to browser scroll, abort swipe
+        isScrolling = true;
+        currentWrap.classList.remove('swiping');
+        // Restore the transition so it springs back properly
+        const inner = currentWrap.querySelector('.txi');
+        if (inner) {
+          inner.classList.add('txi-animating');
+          inner.style.transform = '';
         }
-      } else {
-        // Still in deadzone, ignore but keep tracking
+        currentWrap = null;
         return;
       }
+      directionLocked = true;
     }
 
-    // If we get here, swiping is true
+    // Horizontal swipe confirmed — prevent browser scroll
     if (e.cancelable) e.preventDefault();
-    currentWrap.classList.add('swiping');
-    if (!rafPending) {
-      rafPending = true;
-      window.requestAnimationFrame(() => {
-        if (!currentWrap) { rafPending = false; return; }
-        const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, dx));
+
+    lastDx = dx; // keep latest dx for RAF + touchend
+
+    // Schedule a single rAF to apply the transform
+    if (rafId === null) {
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (!currentWrap) return;
+        const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, lastDx));
         const inner = currentWrap.querySelector('.txi');
-        if (inner) inner.style.transform = `translate3d(${clamped}px, 0, 0)`;
-        rafPending = false;
+        if (inner) setTranslate(inner, clamped);
       });
     }
   }
 
   function handleEnd(e) {
-    // If it's a tap on an action button, handle it explicitly
+    if (e.type !== 'touchend' && e.type !== 'touchcancel') return;
+
+    cancelRaf();
+
     if (!currentWrap) {
+      // Tap on an action button while row is open
       const actBtn = e.target.closest('.txi-act');
-      if (actBtn) {
-        const isTouch = e.type.startsWith('touch');
-        const clientX = isTouch && e.changedTouches ? e.changedTouches[0].clientX : (e.clientX || startX);
-        const clientY = isTouch && e.changedTouches ? e.changedTouches[0].clientY : (e.clientY || startY);
-        if (Math.abs(clientX - startX) < 15 && Math.abs(clientY - startY) < 15) {
-          if (e.cancelable) e.preventDefault();
+      if (actBtn && e.changedTouches) {
+        const t = e.changedTouches[0];
+        if (Math.abs(t.clientX - startX) < 15 && Math.abs(t.clientY - startY) < 15) {
+          e.preventDefault();
           actBtn.click();
         }
       }
       return;
     }
 
-    currentWrap.classList.remove('swiping');
-    const inner = currentWrap.querySelector('.txi');
-    if (!inner) { currentWrap = null; return; }
-    
-    inner.classList.add('txi-animating');
-    
-    const isTouch = e.type.startsWith('touch');
-    const clientX = isTouch && e.changedTouches ? e.changedTouches[0].clientX : (e.clientX || startX);
-    const dx = clientX - startX;
-    
-    if (dx < -THRESHOLD) {
-      inner.style.transform = 'translate3d(-' + SWIPE_ACTION_PX + 'px, 0, 0)';
-      currentWrap.classList.add('swiped-left');
-      currentWrap.classList.remove('swiped-right');
-    } else if (dx > THRESHOLD) {
-      inner.style.transform = 'translate3d(' + SWIPE_ACTION_PX + 'px, 0, 0)';
-      currentWrap.classList.add('swiped-right');
-      currentWrap.classList.remove('swiped-left');
-    } else {
-      inner.style.transform = 'translate3d(0, 0, 0)';
-      currentWrap.classList.remove('swiped-left','swiped-right');
-    }
+    const wrap  = currentWrap;
+    const inner = wrap.querySelector('.txi');
     currentWrap = null;
+
+    wrap.classList.remove('swiping');
+    if (!inner) return;
+
+    // Use lastDx (accumulated across all moves) for the snap decision
+    snapTo(wrap, inner, lastDx);
   }
 
-  // Use both touch and mouse events (passive: false is needed for preventDefault on touchmove and touchstart edge-intercept)
-  container.addEventListener('touchstart', handleStart, { passive: false });
-  container.addEventListener('touchmove', handleMove, { passive: false });
-  container.addEventListener('touchend', handleEnd, { passive: true });
-  container.addEventListener('touchcancel', handleEnd, { passive: true });
-  
-  container.addEventListener('mousedown', handleStart);
-  container.addEventListener('mousemove', handleMove);
-  // Bind mouseup/mouseleave to the container to catch when mouse leaves the list while dragging
-  container.addEventListener('mouseup', handleEnd);
-  container.addEventListener('mouseleave', handleEnd);
+  // ── Attach listeners ─────────────────────────────────────────────────────
+  // Touch: passive:false on move so we can call preventDefault
+  container.addEventListener('touchstart',  handleStart, { passive: true });
+  container.addEventListener('touchmove',   handleMove,  { passive: false });
+  container.addEventListener('touchend',    handleEnd,   { passive: false });
+  container.addEventListener('touchcancel', handleEnd,   { passive: false });
+
+  // ── Mouse fallback (desktop drag) ────────────────────────────────────────
+  let mouseDown = false;
+  container.addEventListener('mousedown', (e) => {
+    const wrap = e.target.closest('.txi-wrap');
+    if (!wrap || e.target.closest('.txi-act')) return;
+    resetAll(wrap);
+    startX = e.clientX;
+    startY = e.clientY;
+    lastDx = 0;
+    currentWrap     = wrap;
+    directionLocked = false;
+    isScrolling     = false;
+    mouseDown       = true;
+    cancelRaf();
+    const inner = wrap.querySelector('.txi');
+    if (inner) { inner.classList.remove('txi-animating'); wrap.classList.add('swiping'); }
+  });
+  container.addEventListener('mousemove', (e) => {
+    if (!mouseDown || !currentWrap) return;
+    const dx = e.clientX - startX;
+    lastDx = dx;
+    if (rafId === null) {
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (!currentWrap) return;
+        const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, lastDx));
+        const inner = currentWrap.querySelector('.txi');
+        if (inner) setTranslate(inner, clamped);
+      });
+    }
+  });
+  const endMouse = () => {
+    if (!mouseDown) return;
+    mouseDown = false;
+    cancelRaf();
+    if (!currentWrap) return;
+    const wrap  = currentWrap;
+    const inner = wrap.querySelector('.txi');
+    currentWrap = null;
+    wrap.classList.remove('swiping');
+    if (inner) snapTo(wrap, inner, lastDx);
+  };
+  container.addEventListener('mouseup',    endMouse);
+  container.addEventListener('mouseleave', endMouse);
 }
 
 function initSwipeActions() {
   const txList = document.getElementById('txList');
   if (txList) attachSwipeToContainer(txList);
 
-  // Global reset when tapping/clicking outside any swipe wrap
+  // Global reset: tapping outside any swipe row closes it
   document.addEventListener('pointerdown', (e) => {
     if (!e.target.closest('.txi-wrap')) {
       document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
         w.classList.remove('swiped-left','swiped-right','swiping');
         const inner = w.querySelector('.txi');
         if (inner) {
+          inner.classList.remove('txi-animating');
+          void inner.offsetWidth;
           inner.classList.add('txi-animating');
           inner.style.transform = '';
         }
