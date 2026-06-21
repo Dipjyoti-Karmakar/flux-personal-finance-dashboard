@@ -3007,8 +3007,8 @@ async function saveEditTx() {
   const updatedTx = { desc, amount: amt, cat, date, type, mode };
   if (eventId) {
     updatedTx.eventId = eventId;
-  } else if (window._editSnapshot && window._editSnapshot.eventId) {
-    updatedTx.eventId = deleteField();
+  } else if (window._editSnapshot && 'eventId' in window._editSnapshot) {
+    updatedTx.eventId = null;
   }
   
   try {
@@ -4662,11 +4662,8 @@ async function removeEventFromTransactions(evtId) {
   for (let i = 0; i < matching.length; i += 450) {
     const chunk = matching.slice(i, i + 450);
     const batch = writeBatch(db);
-    // FIXED: Use deleteField() to fully remove the eventId field from Firestore documents
-    // instead of setting it to '' (empty string). The old approach left a dirty eventId:''
-    // field on every transaction. deleteField() with merge:true removes the field entirely,
-    // keeping the document clean and matching its original structure.
-    chunk.forEach(tx => { batch.set(doc(db, 'users', userId, 'transactions', tx.id), { eventId: deleteField() }, { merge: true }); });
+    // FIXED: Use null to remove eventId instead of deleteField() to bypass offline SDK bugs
+    chunk.forEach(tx => { batch.set(doc(db, 'users', userId, 'transactions', tx.id), { eventId: null }, { merge: true }); });
     await batch.commit();
     showToast(`Removing tags ${Math.min(i + 450, matching.length)} / ${matching.length}`, 'ok');
   }
