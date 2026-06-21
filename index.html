@@ -3001,9 +3001,15 @@ async function saveEditTx() {
   const eventId = document.getElementById('eEvent').value || '';
   // FIXED: When the user clears the event selection, we must remove the eventId field
   // from Firestore entirely (using deleteField) rather than writing eventId:''. 
-  // Writing '' with merge:true would leave a dirty field on all edited transactions.
-  const updatedTx = { desc, amount: amt, cat, date, type, mode,
-    eventId: eventId ? eventId : deleteField() };
+  // BUGFIX: Only use deleteField() if the transaction previously had an eventId.
+  // Using it unconditionally on older transactions that never had the field causes
+  // the Firebase SDK to throw an error and incorrectly queue an offline sync.
+  const updatedTx = { desc, amount: amt, cat, date, type, mode };
+  if (eventId) {
+    updatedTx.eventId = eventId;
+  } else if (window._editSnapshot && window._editSnapshot.eventId) {
+    updatedTx.eventId = deleteField();
+  }
   
   try {
     const docRef = doc(db, 'users', userId, 'transactions', editingTxId);
