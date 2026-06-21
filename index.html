@@ -6430,8 +6430,12 @@ function attachSwipeToContainer(container) {
     const wrap  = touch.target.closest('.txi-wrap');
     if (!wrap) return;
 
-    // Tapping an action button should not start a swipe
+    // Tapping an action button should not start a swipe.
+    // Still capture coordinates so handleEnd's threshold check uses the
+    // correct position for this tap, not stale values from a prior gesture.
     if (touch.target.closest('.txi-act')) {
+      startX = touch.clientX;
+      startY = touch.clientY;
       currentWrap = null;
       return;
     }
