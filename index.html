@@ -6381,14 +6381,13 @@ function attachSwipeToContainer(container) {
     });
   }
 
-  container.addEventListener('pointerdown', (e) => {
-    // Only accept primary pointer (left click or first touch point)
-    if (!e.isPrimary) return;
+  function handleStart(e) {
+    const isTouch = e.type === 'touchstart';
     const wrap = e.target.closest('.txi-wrap');
     if (!wrap) return;
     
-    startX = e.clientX;
-    startY = e.clientY;
+    startX = isTouch ? e.touches[0].clientX : e.clientX;
+    startY = isTouch ? e.touches[0].clientY : e.clientY;
 
     // If user taps directly on an action button, don't start swipe tracking.
     if (e.target.closest('.txi-act')) {
@@ -6398,25 +6397,25 @@ function attachSwipeToContainer(container) {
     resetAll(wrap);
     currentWrap = wrap;
     swiping = false;
-    
-    // Capture the pointer to ensure we receive all subsequent move/up events even if pointer leaves element
-    try { e.target.setPointerCapture(e.pointerId); } catch(err){}
-  });
+  }
 
-  container.addEventListener('pointermove', (e) => {
-    if (!currentWrap || !e.isPrimary) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+  function handleMove(e) {
+    if (!currentWrap) return;
+    const isTouch = e.type === 'touchmove';
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    
+    const dx = clientX - startX;
+    const dy = clientY - startY;
     
     if (!swiping) {
-      // Deadzone: Wait until the user moves at least 8px in any direction before locking in the gesture
+      // Deadzone: Wait until the user moves at least 8px
       if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
         if (Math.abs(dx) > Math.abs(dy) * 0.8) {
           // Horizontal movement dominates -> lock in swipe
           swiping = true;
         } else {
           // Vertical movement dominates -> lock in scroll (abort swipe)
-          try { e.target.releasePointerCapture(e.pointerId); } catch(err){}
           currentWrap = null;
           return;
         }
@@ -6432,20 +6431,17 @@ function attachSwipeToContainer(container) {
     const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, dx));
     const inner = currentWrap.querySelector('.txi');
     if (inner) inner.style.transform = 'translateX(' + clamped + 'px)';
-  });
+  }
 
-  function handlePointerUp(e) {
-    if (!e.isPrimary) return;
-    
-    try { e.target.releasePointerCapture(e.pointerId); } catch(err){}
-
-    // If it's a tap on an action button, handle it explicitly to bypass browser click flakiness
+  function handleEnd(e) {
+    // If it's a tap on an action button, handle it explicitly
     if (!currentWrap) {
       const actBtn = e.target.closest('.txi-act');
       if (actBtn) {
-        const endX = e.clientX;
-        const endY = e.clientY;
-        if (Math.abs(endX - startX) < 15 && Math.abs(endY - startY) < 15) {
+        const isTouch = e.type.startsWith('touch');
+        const clientX = isTouch && e.changedTouches ? e.changedTouches[0].clientX : (e.clientX || startX);
+        const clientY = isTouch && e.changedTouches ? e.changedTouches[0].clientY : (e.clientY || startY);
+        if (Math.abs(clientX - startX) < 15 && Math.abs(clientY - startY) < 15) {
           if (e.cancelable) e.preventDefault();
           actBtn.click();
         }
@@ -6474,8 +6470,17 @@ function attachSwipeToContainer(container) {
     currentWrap = null;
   }
 
-  container.addEventListener('pointerup', handlePointerUp);
-  container.addEventListener('pointercancel', handlePointerUp);
+  // Use both touch and mouse events (passive: false is needed for preventDefault on touchmove)
+  container.addEventListener('touchstart', handleStart, { passive: true });
+  container.addEventListener('touchmove', handleMove, { passive: false });
+  container.addEventListener('touchend', handleEnd);
+  container.addEventListener('touchcancel', handleEnd);
+  
+  container.addEventListener('mousedown', handleStart);
+  container.addEventListener('mousemove', handleMove);
+  // Bind mouseup/mouseleave to the container to catch when mouse leaves the list while dragging
+  container.addEventListener('mouseup', handleEnd);
+  container.addEventListener('mouseleave', handleEnd);
 }
 
 function initSwipeActions() {
