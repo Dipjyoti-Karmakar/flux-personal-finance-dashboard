@@ -6384,15 +6384,16 @@ function attachSwipeToContainer(container) {
   container.addEventListener('touchstart', (e) => {
     const wrap = e.target.closest('.txi-wrap');
     if (!wrap) return;
-    // If user taps directly on an action button (after swipe), don't start swipe tracking.
-    // Let the synthesized click on the button fire naturally without interference.
-    if (e.target.closest('.txi-actions')) {
+    
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+
+    // If user taps directly on an action button, don't start swipe tracking.
+    if (e.target.closest('.txi-act')) {
       currentWrap = null;
       return;
     }
     resetAll(wrap);
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
     currentWrap = wrap;
     swiping = false;
   }, { passive: true });
@@ -6414,19 +6415,24 @@ function attachSwipeToContainer(container) {
   }, { passive: false });
 
   container.addEventListener('touchend', (e) => {
-    if (!currentWrap) return;
+    // If it's a tap on an action button, handle it explicitly to bypass mobile click flakiness
+    if (!currentWrap) {
+      const actBtn = e.target.closest('.txi-act');
+      if (actBtn && e.changedTouches && e.changedTouches.length > 0) {
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        if (Math.abs(endX - startX) < 15 && Math.abs(endY - startY) < 15) {
+          if (e.cancelable) e.preventDefault();
+          actBtn.click();
+        }
+      }
+      return;
+    }
+
     currentWrap.classList.remove('swiping');
     const inner = currentWrap.querySelector('.txi');
     if (!inner) { currentWrap = null; return; }
-    // Use changedTouches position + elementFromPoint to detect what's actually under the finger
-    // when lifted. This is more reliable than e.target (which is where touch started).
-    const touch = e.changedTouches[0];
-    const elementUnder = touch ? document.elementFromPoint(touch.clientX, touch.clientY) : null;
-    if (elementUnder && elementUnder.closest('.txi-actions')) {
-      // Touch ended on an action button — preserve swiped state so onclick fires correctly.
-      currentWrap = null;
-      return;
-    }
+    
     const tmatch = inner.style.transform.match(/translateX\((-?[\d.]+)px\)/);
     const dx = tmatch ? parseFloat(tmatch[1]) : 0;
     if (dx < -THRESHOLD) {
@@ -6442,7 +6448,7 @@ function attachSwipeToContainer(container) {
       currentWrap.classList.remove('swiped-left','swiped-right');
     }
     currentWrap = null;
-  }, { passive: true });
+  }, { passive: false }); // Changed to false to allow preventDefault on the button tap
 }
 
 function initSwipeActions() {
