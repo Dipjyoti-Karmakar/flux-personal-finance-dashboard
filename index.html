@@ -2124,12 +2124,15 @@ function showConfirm(title, msg, actionFn, isDestructive = true) {
 function closeConfirm() {
     document.getElementById('confirmMod').classList.remove('op');
     confirmActionCallback = null;
+    if (typeof resetAllSwipes === 'function') resetAllSwipes();
 }
 
 document.getElementById('confirmActionBtn').addEventListener('click', () => {
     if (confirmActionCallback) confirmActionCallback();
     closeConfirm();
 });
+
+document.getElementById('confirmMod').addEventListener('click', function(e) { if(e.target === this) closeConfirm(); });
 
 async function toggleAuth() {
   if (userId) {
@@ -2949,6 +2952,7 @@ function updECat(type) {
 }
 
 function editTx(id) {
+  if (typeof resetAllSwipes === 'function') resetAllSwipes();
   const tx = txs.find(t => t.id === id);
   if(!tx) return;
   editingTxId = id;
@@ -2974,6 +2978,7 @@ function editTx(id) {
 function closeEditMod() {
   document.getElementById('editMod').classList.remove('op');
   editingTxId = null;
+  if (typeof resetAllSwipes === 'function') resetAllSwipes();
 }
 
 async function saveEditTx() {
@@ -3071,6 +3076,8 @@ function setTrendMode(m) {
 }
 
 function renderTrend(passedTxs) {
+  const dashView = document.getElementById('dashboardView');
+  if (dashView && dashView.style.display === 'none') return;
   if (trendAbort) trendAbort.abort();
   trendAbort = new AbortController();
   const signal = trendAbort.signal;
@@ -6094,6 +6101,7 @@ async function generatePDF() {
 document.getElementById('reportMod').addEventListener('click', function(e) { if (e.target === this) closeReportMod(); });
 
 function switchTab(tab) {
+  if (typeof resetAllSwipes === 'function') resetAllSwipes();
   document.getElementById('tabDash').classList.toggle('act', tab === 'dashboard');
   document.getElementById('tabSub').classList.toggle('act', tab === 'subscriptions');
   document.getElementById('tabLog').classList.toggle('act', tab === 'log');
@@ -6361,6 +6369,14 @@ function initScrollTop() {
 const SWIPE_ACTION_PX = 84;
 
 // Reusable swipe-to-action attachment for any container with .txi-wrap items
+function resetAllSwipes() {
+  document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right,.txi-wrap.swiping').forEach(w => {
+    w.classList.remove('swiped-left','swiped-right','swiping');
+    const inner = w.querySelector('.txi');
+    if (inner) inner.style.transform = '';
+  });
+}
+
 function attachSwipeToContainer(container) {
   if (!container || !('ontouchstart' in window)) return;
   // Guard: prevent duplicate listener attachment on the same container element
@@ -6379,6 +6395,17 @@ function attachSwipeToContainer(container) {
   container.addEventListener('touchstart', (e) => {
     const wrap = e.target.closest('.txi-wrap');
     if (!wrap) return;
+    // If the wrap is already swiped, and we tap on the main body (not the actions),
+    // we should reset it on touchstart.
+    if (wrap.classList.contains('swiped-left') || wrap.classList.contains('swiped-right')) {
+      if (e.target && !e.target.closest('.txi-act')) {
+        wrap.classList.remove('swiped-left','swiped-right','swiping');
+        const inner = wrap.querySelector('.txi');
+        if (inner) inner.style.transform = '';
+        currentWrap = null;
+        return;
+      }
+    }
     resetAll(wrap);
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
@@ -6434,11 +6461,7 @@ function initSwipeActions() {
   // Global reset when tapping outside any swipe wrap
   document.addEventListener('touchstart', (e) => {
     if (!e.target.closest('.txi-wrap')) {
-      document.querySelectorAll('.txi-wrap.swiped-left,.txi-wrap.swiped-right').forEach(w => {
-        w.classList.remove('swiped-left','swiped-right','swiping');
-        const inner = w.querySelector('.txi');
-        if (inner) inner.style.transform = '';
-      });
+      resetAllSwipes();
     }
   }, { passive: true });
 }
