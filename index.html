@@ -6402,11 +6402,25 @@ function attachSwipeToContainer(container) {
     if (!currentWrap) return;
     const dx = e.touches[0].clientX - startX;
     const dy = e.touches[0].clientY - startY;
-    // Cancel swipe only if vertical motion clearly dominates (1.5x more vertical than horizontal)
-    // This gives more tolerance to diagonal swipes that are mostly horizontal.
-    if (!swiping && Math.abs(dy) > Math.abs(dx) * 1.5) { currentWrap = null; return; }
-    if (Math.abs(dx) > 8) swiping = true;
-    if (!swiping) return;
+    
+    if (!swiping) {
+      // Deadzone: Wait until the user moves at least 8px in any direction before locking in the gesture
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        if (Math.abs(dx) > Math.abs(dy) * 0.8) {
+          // Horizontal movement dominates -> lock in swipe
+          swiping = true;
+        } else {
+          // Vertical movement dominates -> lock in scroll (abort swipe)
+          currentWrap = null;
+          return;
+        }
+      } else {
+        // Still in deadzone, ignore but keep tracking
+        return;
+      }
+    }
+
+    // If we get here, swiping is true
     e.preventDefault();
     currentWrap.classList.add('swiping');
     const clamped = Math.max(-SWIPE_ACTION_PX - 20, Math.min(SWIPE_ACTION_PX + 20, dx));
