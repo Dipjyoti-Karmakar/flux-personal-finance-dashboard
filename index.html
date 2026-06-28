@@ -2724,7 +2724,7 @@ function renderStats(sTxs){
   let avgNumerator = tE;
 
   if (statsMode === 'month') {
-    elapsedDays = now.getDate();
+    elapsedDays = Math.max(1, now.getDate());
   } else if (statsMode === 'year') {
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     elapsedDays = Math.max(1, Math.floor((todayDate - startOfYear) / 86400000) + 1);
@@ -3548,7 +3548,7 @@ function renderSplit(passedTxs){
   if(!exp.length){area.innerHTML='<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div>';return;}
   const onl=exp.filter(t=>t.mode==='online'),ofl=exp.filter(t=>t.mode!=='online');
   const oA=onl.reduce((s,t)=>s+t.amount,0),fA=ofl.reduce((s,t)=>s+t.amount,0),tot=oA+fA;
-  const op=tot>0?(oA/tot*100).toFixed(0):0,fp=tot>0?(fA/tot*100).toFixed(0):0;
+  const opRaw=tot>0?(oA/tot*100):0;const op=opRaw.toFixed(0),fp=(100-opRaw).toFixed(0);
   // FIXED: Use Set size with a minimum of 1 to prevent division by zero / Infinity avg/day
   const onlDays=Math.max(1,new Set(onl.map(t=>t.date)).size);
   const oflDays=Math.max(1,new Set(ofl.map(t=>t.date)).size);
