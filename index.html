@@ -2607,6 +2607,7 @@ function debouncedRender() {
     _renderTimer = null; 
     render(); 
     tagPastSubscriptions();
+    detectEarlyPayments();
   }, 120);
 }
 
@@ -5003,7 +5004,7 @@ function loadRecurring() {
     snap.forEach(d => recurringList.push({ id: d.id, ...d.data() }));
     recurringList.sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
     if (document.getElementById('subView').style.display !== 'none') renderRecurring();
-    checkAndTriggerRecurring();
+    checkAndTriggerRecurring().then(() => detectEarlyPayments());
     tagPastSubscriptions();
   }, err => console.error('Recurring sync error:', err));
 }
@@ -5147,6 +5148,77 @@ async function checkAndTriggerRecurring() {
   }
   
   if (triggeredCount > 0) showToast(`✓ Auto-added: ${triggeredCount} past subscriptions`, 'ok');
+}
+
+// ── Early-payment detection for subscriptions whose nextDue is still in the future ──
+// If a user pays a subscription before its due date, match the transaction and
+// advance nextDue so the card shows "Active" / "✓ Paid" instead of "In Xd".
+const _earlyPayProcessing = new Set();
+async function detectEarlyPayments() {
+  if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return;
+  const today = getTodayStr();
+
+  for (const rec of recurringList) {
+    // Only consider active subs whose nextDue is still in the future
+    if (!rec.active || !rec.nextDue || rec.nextDue <= today) continue;
+    if (_earlyPayProcessing.has(rec.id)) continue;
+
+    // Compute the prepayment window (same window sizes used in checkAndTriggerRecurring)
+    let wDays = 15;
+    if (rec.freq === 'yearly') wDays = 60;
+    if (rec.freq === 'weekly') wDays = 3;
+    if (rec.freq === 'daily') wDays = 0;
+    if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
+
+    const dueD = new Date(rec.nextDue + 'T00:00:00');
+    const minDateObj = new Date(dueD);
+    minDateObj.setDate(minDateObj.getDate() - wDays);
+    const minD = getLocalIsoDateStr(minDateObj);
+
+    // Only look at transactions up to today (can't match future-dated ones)
+    const maxD = today;
+
+    // Don't bother if today is before the window even opens
+    if (today < minD) continue;
+
+    const matchedTx = txs.find(t =>
+      t.type === rec.type &&
+      t.desc && rec.name &&
+      t.desc.trim().toLowerCase() === rec.name.trim().toLowerCase() &&
+      Math.abs(t.amount) === Math.abs(rec.amount) &&
+      t.date >= minD && t.date <= maxD &&
+      !globallyMatchedTxIds.has(t.id) &&
+      (!t._auto || t.subId === rec.id)
+    );
+
+    if (!matchedTx) continue;
+
+    _earlyPayProcessing.add(rec.id);
+    try {
+      const newNextDue = computeNextDue(rec.nextDue, rec.freq, rec.customDays, rec.billingDay);
+      const recRef = doc(db, 'users', userId, 'recurring', rec.id);
+      const txRef = doc(db, 'users', userId, 'transactions', matchedTx.id);
+      const batch = writeBatch(db);
+      batch.update(recRef, { nextDue: newNextDue });
+      batch.update(txRef, { _recurring: true, subId: rec.id });
+      await batch.commit();
+
+      // Optimistic local update
+      rec.nextDue = newNextDue;
+      matchedTx._recurring = true;
+      matchedTx.subId = rec.id;
+      globallyMatchedTxIds.add(matchedTx.id);
+
+      writeLog('UPDATE', { desc: rec.name, isSkip: true }, rec.type);
+      console.log(`Early payment detected for "${rec.name}" — due date advanced to ${newNextDue}`);
+    } catch(e) {
+      console.error('Early payment detection failed for:', rec.name, e);
+    } finally {
+      _earlyPayProcessing.delete(rec.id);
+    }
+  }
+  // Re-render subscription cards so badges update
+  if (document.getElementById('subView').style.display !== 'none') renderRecurring();
 }
 
 function renderRecurring() {
