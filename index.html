@@ -2468,6 +2468,11 @@ function executeSoftDelete(id) {
     // V10: Only include _imp if it was explicitly true
     if (txData._imp) undoData._imp = true;
     if (txData.eventId) undoData.eventId = txData.eventId;
+    // Preserve subscription flags so undo restore keeps the subscription tag
+    if (txData._recurring) undoData._recurring = true;
+    if (txData._auto) undoData._auto = true;
+    if (txData.subId) undoData.subId = txData.subId;
+    if (txData.createdAt) undoData.createdAt = txData.createdAt;
     _undoTxData = { id, data: undoData };
     // Remove from local array immediately for responsive feel
     txs = txs.filter(t => t.id !== id);
@@ -4987,9 +4992,6 @@ function computeNextDue(fromDate, freq, customDays, billingDay = null) {
   }
   else if (freq === 'custom' && customDays) d.setDate(d.getDate() + parseInt(customDays, 10));
 
-  // Use local date parts directly to avoid UTC midnight rollback for IST users
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
   return getLocalIsoDateStr(d);
 }
 
@@ -5378,7 +5380,7 @@ async function saveRecurringMod() {
   const nextDue = document.getElementById('recNextDue').value;
   const customDays = parseInt(document.getElementById('recCustomDays').value, 10);
   if (!name) { shake('recName'); return; }
-  if (!amount || amount <= 0) { shake('recAmount'); return; }
+  if (isNaN(amount) || !isFinite(amount) || amount <= 0) { shake('recAmount'); return; }
   if (currentRecFreq === 'custom' && (!customDays || customDays <= 0)) { shake('recCustomDays'); return; }
   if (!nextDue) { shake('recNextDue'); return; }
   // Preserve billingDay from the existing record if nextDue hasn't changed, to avoid
