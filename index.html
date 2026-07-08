@@ -2606,8 +2606,7 @@ function debouncedRender() {
   _renderTimer = setTimeout(() => { 
     _renderTimer = null; 
     render(); 
-    tagPastSubscriptions();
-    detectEarlyPayments();
+    tagPastSubscriptions().then(() => detectEarlyPayments());
   }, 120);
 }
 
@@ -2616,14 +2615,16 @@ async function tagPastSubscriptions() {
   const toTag = [];
   txs.forEach(tx => {
     if (tx._recurring) return;
+    // Don't steal transactions that the subscription matcher may need
+    if (globallyMatchedTxIds && globallyMatchedTxIds.has(tx.id)) return;
     const matchingRec = recurringList.find(rec => {
       if (!rec.name || !tx.desc) return false;
       if (rec.name.trim().toLowerCase() !== tx.desc.trim().toLowerCase()) return false;
       if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
       if (rec.type !== tx.type) return false;
-      // Date guard: only tag transactions on or before today and within 90 days
-      // before the subscription's current nextDue, to prevent false positives
-      // where an unrelated transaction shares the same name/amount/type.
+      // Category must match to prevent false positives on same-name/amount transactions
+      if (rec.cat && tx.cat && rec.cat !== tx.cat) return false;
+      // Date guard: only tag transactions on or before the subscription's current nextDue
       if (rec.nextDue && tx.date > rec.nextDue) return false;
       return true;
     });
@@ -2639,6 +2640,8 @@ async function tagPastSubscriptions() {
       chunk.forEach(id => batch.update(doc(db, 'users', userId, 'transactions', id), { _recurring: true }));
       await batch.commit();
     }
+    // Optimistic local update to prevent re-tagging on next render before Firestore snapshot returns
+    toTag.forEach(id => { const tx = txs.find(t => t.id === id); if (tx) tx._recurring = true; });
     showToast(`Auto-tagged ${toTag.length} past subscriptions!`, 'ok');
     console.log(`Auto-tagged ${toTag.length} past transactions as subscriptions.`);
   } catch(e) { console.error('Failed to auto-tag past subscriptions:', e); }
@@ -5079,8 +5082,9 @@ async function checkAndTriggerRecurring() {
           const allTxs = [...txs, ...newTxs];
           const matchedTx = allTxs.find(t => 
             t.type === data.type &&
-            t.desc.trim().toLowerCase() === data.name.trim().toLowerCase() && 
+            t.desc && t.desc.trim().toLowerCase() === data.name.trim().toLowerCase() && 
             Math.abs(t.amount) === Math.abs(data.amount) &&
+            (!data.cat || !t.cat || data.cat === t.cat) &&
             t.date >= minD && t.date <= maxD &&
             !matchedTxIds.has(t.id) &&
             !globallyMatchedTxIds.has(t.id) &&
@@ -5139,7 +5143,7 @@ async function checkAndTriggerRecurring() {
         }
       }
     } catch (e) {
-      if (e !== "already_triggered_or_inactive") {
+      if (e !== "already_triggered_or_inactive" && e !== "not_found") {
         console.error('Failed to process recurring catch-up for:', rec.name, e);
       }
     } finally {
@@ -5157,6 +5161,7 @@ const _earlyPayProcessing = new Set();
 async function detectEarlyPayments() {
   if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return;
   const today = getTodayStr();
+  let anyMatched = false;
 
   for (const rec of recurringList) {
     // Only consider active subs whose nextDue is still in the future
@@ -5186,6 +5191,7 @@ async function detectEarlyPayments() {
       t.desc && rec.name &&
       t.desc.trim().toLowerCase() === rec.name.trim().toLowerCase() &&
       Math.abs(t.amount) === Math.abs(rec.amount) &&
+      (!rec.cat || !t.cat || rec.cat === t.cat) &&
       t.date >= minD && t.date <= maxD &&
       !globallyMatchedTxIds.has(t.id) &&
       (!t._auto || t.subId === rec.id)
@@ -5194,6 +5200,7 @@ async function detectEarlyPayments() {
     if (!matchedTx) continue;
 
     _earlyPayProcessing.add(rec.id);
+    anyMatched = true;
     try {
       const newNextDue = computeNextDue(rec.nextDue, rec.freq, rec.customDays, rec.billingDay);
       const recRef = doc(db, 'users', userId, 'recurring', rec.id);
@@ -5217,8 +5224,8 @@ async function detectEarlyPayments() {
       _earlyPayProcessing.delete(rec.id);
     }
   }
-  // Re-render subscription cards so badges update
-  if (document.getElementById('subView').style.display !== 'none') renderRecurring();
+  // Re-render subscription cards so badges update (only if we actually found an early payment)
+  if (anyMatched && document.getElementById('subView').style.display !== 'none') renderRecurring();
 }
 
 function renderRecurring() {
