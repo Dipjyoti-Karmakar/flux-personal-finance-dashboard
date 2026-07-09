@@ -1874,6 +1874,10 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
             <label style="font-size:9px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;">Custom Days Interval</label>
             <input type="number" id="recCustomDays" placeholder="e.g. 28" min="1" step="1" style="width:100%; box-sizing:border-box;">
           </div>
+          <div style="margin-top:10px; margin-bottom: 10px;">
+            <label style="font-size:9px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;">Times Active (Optional)</label>
+            <input type="number" id="recTimesActive" placeholder="e.g. 3" min="1" step="1" style="width:100%; box-sizing:border-box;">
+          </div>
         </div>
         <div class="fd full-mob" style="margin-bottom:4px;">
           <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Next Due Date</label>
@@ -5052,8 +5056,13 @@ async function checkAndTriggerRecurring() {
         if (!data.active || !data.nextDue || today < data.nextDue) throw "already_triggered_or_inactive";
         
         let currentDue = data.nextDue;
+        let paymentsMade = data.paymentsMade || 0;
 
         while (currentDue <= today && cyclesProcessed < MAX_CYCLES) {
+          if (data.paymentsLimit && paymentsMade >= data.paymentsLimit) {
+            updatesNeeded = true;
+            break;
+          }
           cyclesProcessed++;
           
           // Manual payment check window around currentDue
@@ -5105,9 +5114,11 @@ async function checkAndTriggerRecurring() {
             
             newTxs.push({ id: txId, ...txData });
             updatesNeeded = true;
+            paymentsMade++;
           } else {
             matchedTxIds.add(matchedTx.id);
             updatesNeeded = true;
+            paymentsMade++;
           }
           
           currentDue = nextDueAfterThis;
@@ -5115,7 +5126,12 @@ async function checkAndTriggerRecurring() {
 
         if (updatesNeeded) {
           // Update the recurring document's nextDue within the transaction
-          transaction.update(recRef, { nextDue: currentDue });
+          const recUpdate = { nextDue: currentDue };
+          if (data.paymentsLimit) {
+            recUpdate.paymentsMade = paymentsMade;
+            if (paymentsMade >= data.paymentsLimit) recUpdate.active = false;
+          }
+          transaction.update(recRef, recUpdate);
           updatesMade = true;
         }
       });
@@ -5208,7 +5224,13 @@ async function detectEarlyPayments() {
       const recRef = doc(db, 'users', userId, 'recurring', rec.id);
       const txRef = doc(db, 'users', userId, 'transactions', matchedTx.id);
       const batch = writeBatch(db);
-      batch.update(recRef, { nextDue: newNextDue });
+      const recUpdate = { nextDue: newNextDue };
+      if (rec.paymentsLimit) {
+        rec.paymentsMade = (rec.paymentsMade || 0) + 1;
+        recUpdate.paymentsMade = rec.paymentsMade;
+        if (rec.paymentsMade >= rec.paymentsLimit) recUpdate.active = false;
+      }
+      batch.update(recRef, recUpdate);
       batch.update(txRef, { _recurring: true, subId: rec.id });
       await batch.commit();
 
@@ -5300,7 +5322,7 @@ function renderRecurring() {
         <div class="sub-card-info">
           <div class="sub-card-name">${esc(rec.name)}</div>
           <div class="sub-card-plan">${planLabel} Plan &nbsp;·&nbsp; ${freqLabel}</div>
-          <div class="sub-card-renewal">Next Renewal: <span>${renewalDate}</span></div>
+          <div class="sub-card-renewal">Next Renewal: <span>${renewalDate}</span>${rec.paymentsLimit ? ` &nbsp;·&nbsp; ${rec.paymentsMade || 0}/${rec.paymentsLimit} paid` : ''}</div>
         </div>
         <div class="sub-card-right">
           ${badgeHtml}
@@ -5328,6 +5350,7 @@ function openAddRecurring() {
   document.getElementById('recAmount').value = '';
   document.getElementById('recCat').value = 'entertainment';
   document.getElementById('recNextDue').value = getTodayStr();
+  document.getElementById('recTimesActive').value = '';
   setRecType('expense');
   setRecFreq('monthly');
   document.getElementById('recurringMod').classList.add('op');
@@ -5347,6 +5370,7 @@ function openEditRecurring(id) {
   document.getElementById('recNextDue').value = rec.nextDue || '';
   // Always reset customDays to avoid stale value from a previously edited custom subscription
   document.getElementById('recCustomDays').value = rec.freq === 'custom' ? (rec.customDays || '') : '';
+  document.getElementById('recTimesActive').value = rec.paymentsLimit || '';
   setRecType(currentRecType);
   setRecFreq(currentRecFreq);
   document.getElementById('recurringMod').classList.add('op');
@@ -5379,6 +5403,7 @@ async function saveRecurringMod() {
   const cat = document.getElementById('recCat').value;
   const nextDue = document.getElementById('recNextDue').value;
   const customDays = parseInt(document.getElementById('recCustomDays').value, 10);
+  const paymentsLimit = parseInt(document.getElementById('recTimesActive').value, 10);
   if (!name) { shake('recName'); return; }
   if (isNaN(amount) || !isFinite(amount) || amount <= 0) { shake('recAmount'); return; }
   if (currentRecFreq === 'custom' && (!customDays || customDays <= 0)) { shake('recCustomDays'); return; }
@@ -5393,13 +5418,18 @@ async function saveRecurringMod() {
   const activeState = existingRec ? existingRec.active : true;
   const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, billingDay, active: activeState };
   if (currentRecFreq === 'custom') data.customDays = customDays;
+  if (!isNaN(paymentsLimit) && paymentsLimit > 0) {
+    data.paymentsLimit = paymentsLimit;
+  } else {
+    data.paymentsLimit = null;
+  }
   closeRecurringMod();
   if (editingRecurringId) {
     try {
       const oldRec = recurringList.find(r => r.id === editingRecurringId);
       let changed = true;
       if (oldRec) {
-         changed = (oldRec.name !== data.name || oldRec.amount !== data.amount || oldRec.cat !== data.cat || oldRec.nextDue !== data.nextDue || oldRec.type !== data.type || oldRec.freq !== data.freq || oldRec.customDays !== data.customDays);
+         changed = (oldRec.name !== data.name || oldRec.amount !== data.amount || oldRec.cat !== data.cat || oldRec.nextDue !== data.nextDue || oldRec.type !== data.type || oldRec.freq !== data.freq || oldRec.customDays !== data.customDays || oldRec.paymentsLimit !== data.paymentsLimit);
       }
       await setDoc(doc(db, 'users', userId, 'recurring', editingRecurringId), data, { merge: true });
       showToast('Subscription updated', 'ok');
