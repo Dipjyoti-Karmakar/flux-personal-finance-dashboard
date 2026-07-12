@@ -2173,6 +2173,7 @@ onAuthStateChanged(auth, (user) => {
     if (unsubscribeFirestore) unsubscribeFirestore();
     if (unsubscribeEvents) unsubscribeEvents();
     if (unsubscribeActivityLog) unsubscribeActivityLog();
+    if (unsubscribeRecurring) unsubscribeRecurring();
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Sign Out`;
     loadDataFromCloud();
     loadEvents();
@@ -2547,10 +2548,10 @@ function getLegibleColor(c) {
   if(hex.length === 3) hex = hex.split('').map(x=>x+x).join('');
   let r = parseInt(hex.substring(0,2), 16), g = parseInt(hex.substring(2,4), 16), b = parseInt(hex.substring(4,6), 16);
   let lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-  if (theme === 'dark' && lum < 0.45) {
+  if (theme === 'dark' && lum < 0.45 && lum < 1) {
     const mix = (0.45 - lum) / (1 - lum);
     r = r + (255 - r) * mix; g = g + (255 - g) * mix; b = b + (255 - b) * mix;
-  } else if (theme === 'light' && lum > 0.55) {
+  } else if (theme === 'light' && lum > 0.55 && lum > 0) {
     const mix = (lum - 0.55) / lum;
     r = r * (1 - mix); g = g * (1 - mix); b = b * (1 - mix);
   }
@@ -3122,10 +3123,11 @@ function renderTrend(passedTxs) {
   if (statsMode === 'year') {
       isDaily = false;
   } else if (statsMode === 'all' || statsMode === 'custom') {
-      const dates = aTxs.map(t => new Date(t.date).getTime());
+      // Use reduce instead of spread to avoid stack overflow on large datasets
+      const dates = aTxs.map(t => new Date(t.date + 'T00:00:00').getTime());
       if (dates.length > 0) {
-          const minD = Math.min(...dates);
-          const maxD = Math.max(...dates);
+          const minD = dates.reduce((a, b) => a < b ? a : b);
+          const maxD = dates.reduce((a, b) => a > b ? a : b);
           const diffDays = (maxD - minD) / (1000 * 60 * 60 * 24);
           if (diffDays > 45) isDaily = false;
       }
@@ -3144,9 +3146,13 @@ function renderTrend(passedTxs) {
   
   if (isDaily) {
       if (statsMode === 'month') {
-          const y = now.getFullYear();
-          const m = String(now.getMonth() + 1).padStart(2, '0');
-          const lastDay = new Date(y, now.getMonth() + 1, 0).getDate();
+          // Use the month from actual transaction data, not always `now`
+          const existingKeys = Object.keys(allGroups).sort();
+          const refKey = existingKeys[0] || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+          const refParts = refKey.split('-');
+          const y = parseInt(refParts[0]), mo = parseInt(refParts[1]);
+          const m = String(mo).padStart(2, '0');
+          const lastDay = new Date(y, mo, 0).getDate();
           for (let d = 1; d <= lastDay; d++) {
               allGroups[`${y}-${m}-${String(d).padStart(2, '0')}`] = true;
           }
@@ -3165,8 +3171,10 @@ function renderTrend(passedTxs) {
       }
   } else {
       if (statsMode === 'year') {
-          const y = now.getFullYear();
-          for (let m = 1; m <= 12; m++) allGroups[`${y}-${String(m).padStart(2, '0')}`] = true;
+          // Use year from actual data, not always current year
+          const dataKeys = Object.keys(allGroups).sort();
+          const dataY = dataKeys.length > 0 ? parseInt(dataKeys[0].split('-')[0]) : now.getFullYear();
+          for (let m = 1; m <= 12; m++) allGroups[`${dataY}-${String(m).padStart(2, '0')}`] = true;
       } else {
           let keys = Object.keys(allGroups).sort();
           if (keys.length > 1) {
@@ -3225,6 +3233,8 @@ function renderTrend(passedTxs) {
   const tip = document.getElementById('trendTip');
   
   const rect = cv.parentElement.getBoundingClientRect();
+  // Guard: if the chart area has no size (e.g. tab is hidden), defer until visible
+  if (rect.width < 10 || rect.height < 10) return;
   const dpr = window.devicePixelRatio || 1;
   cv.width = rect.width * dpr;
   cv.height = rect.height * dpr;
@@ -3234,7 +3244,7 @@ function renderTrend(passedTxs) {
   
   const w = rect.width, h = rect.height;
   const px = 15, pyT = 20, pyB = 25;
-  const gW = w - px*2, gH = h - pyT - pyB;
+  const gW = w - px*2, gH = Math.max(1, h - pyT - pyB);
   const max = Math.max(...(showExp ? expVals : []), ...(showInc ? incVals : []), 1);
 
   const makePts = (vArr) => keys.map((k, i) => ({
@@ -3316,6 +3326,7 @@ function renderTrend(passedTxs) {
       // globalAlpha on a cloned path for the faded start effect instead.
       lineGrad.addColorStop(0, color); lineGrad.addColorStop(0.3, color); lineGrad.addColorStop(1, color);
       ctx.strokeStyle = lineGrad; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
+      ctx.globalAlpha = 1; // always reset after stroke
       
       // Dots
       pts.forEach((p, i) => {
@@ -3409,14 +3420,18 @@ function renderTrend(passedTxs) {
           if (showExp && ePts[closestIdx]) tipHTML += `<div class="val" style="color:${expColor}">Exp: ${fmt(ePts[closestIdx].val)}</div>`;
           if (showInc && iPts[closestIdx]) tipHTML += `<div class="val" style="color:${incColor}">Inc: ${fmt(iPts[closestIdx].val)}</div>`;
           tip.innerHTML = tipHTML;
-          let displayX = currentRect.left + refPts[closestIdx].x;
-          let displayY = currentRect.top + refPts[closestIdx].y - 10;
+          // Use scrollY so tooltip is correct regardless of page scroll position
+          const ptX = currentRect.left + refPts[closestIdx].x;
+          let displayY = currentRect.top + window.scrollY + refPts[closestIdx].y - 10;
           tip.style.left = '0px'; tip.style.top = '0px'; tip.classList.add('sh');
           const tipRect = tip.getBoundingClientRect();
           const tipW = tipRect.width, tipH = tipRect.height;
-          displayX = Math.max(tipW / 2 + 8, Math.min(displayX, window.innerWidth - tipW / 2 - 8));
-          if (displayY - tipH < 8) displayY = currentRect.top + refPts[closestIdx].y + tipH + 14;
-          tip.style.left = displayX + 'px'; tip.style.top = displayY + 'px';
+          // Clamp horizontally: keep tip fully inside viewport
+          let displayX = Math.max(tipW / 2 + 8, Math.min(ptX, window.innerWidth - tipW / 2 - 8));
+          // Flip below point if too close to top
+          if (displayY - tipH < window.scrollY + 8) displayY = currentRect.top + window.scrollY + refPts[closestIdx].y + tipH + 14;
+          // Anchor by left edge, not center
+          tip.style.left = (displayX - tipW / 2) + 'px'; tip.style.top = displayY + 'px';
       };
 
       const handleLeave = () => { drawBase(); tip.classList.remove('sh'); };
@@ -3477,7 +3492,7 @@ function renderCatTxList(passedTxs) {
   const aTxs = passedTxs || lastCatList || getActiveTxs();
   const list = aTxs.filter(t => t.type === 'expense' && (t.cat || 'other') === activeCatFilter)
     .sort((a,b) => {
-      const dDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      const dDiff = new Date(b.date + 'T00:00:00').getTime() - new Date(a.date + 'T00:00:00').getTime();
       return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
     });
   const totalAmt = list.reduce((s,t) => s+t.amount, 0);
@@ -3790,7 +3805,7 @@ function lazyLoadMonthTxs(el, yr, m) {
     const d = new Date(t.date+'T00:00:00');
     return d.getFullYear() === yr && d.getMonth() === m;
   }).sort((a,b) => {
-    const dDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+    const dDiff = new Date(b.date + 'T00:00:00').getTime() - new Date(a.date + 'T00:00:00').getTime();
     return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
   });
   let html;
@@ -3925,7 +3940,7 @@ function getReportData() {
   if (!incExp) filtered = filtered.filter(t => t.type !== 'expense');
   filtered.sort((a,b) => {
     const dDiff = a.date.localeCompare(b.date);
-    return dDiff !== 0 ? dDiff : ((a.createdAt || 0) - (a.createdAt || 0));
+    return dDiff !== 0 ? dDiff : ((a.createdAt || 0) - (b.createdAt || 0));
   });
 
   return { fromDate, toDate, reportTitle, allInPeriod, filtered };
@@ -4456,8 +4471,8 @@ function renderEvents() {
     const sColor = safeColor(e.color);
     let daysStr = '';
     if (e.start && e.end) {
-      const d1 = new Date(e.start);
-      const d2 = new Date(e.end);
+      const d1 = new Date(e.start + 'T00:00:00');
+      const d2 = new Date(e.end + 'T00:00:00');
       if (!isNaN(d1) && !isNaN(d2)) {
         const diffDays = Math.round(Math.abs(d2 - d1) / 86400000) + 1;
         daysStr = `<span style="white-space:nowrap;"><span style="opacity:0.5;margin-right:4px;">•</span><span style="font-weight:600;color:var(--tx);">${diffDays} day${diffDays !== 1 ? 's' : ''}</span></span>`;
@@ -4985,6 +5000,7 @@ function computeNextDue(fromDate, freq, customDays, billingDay = null) {
   else if (freq === 'monthly') {
     d.setDate(1); 
     d.setMonth(d.getMonth() + 1);
+    // d.getMonth() is already the target month; day 0 of next month = last day of current month
     const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
     d.setDate(Math.min(targetDay, lastDay));
   }
@@ -4994,7 +5010,11 @@ function computeNextDue(fromDate, freq, customDays, billingDay = null) {
     const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
     d.setDate(Math.min(targetDay, lastDay));
   }
-  else if (freq === 'custom' && customDays) d.setDate(d.getDate() + parseInt(customDays, 10));
+  else if (freq === 'custom') {
+    const days = parseInt(customDays, 10);
+    if (!days || days <= 0 || !isFinite(days)) return getLocalIsoDateStr(d); // guard: return same date to prevent infinite loop
+    d.setDate(d.getDate() + days);
+  }
 
   return getLocalIsoDateStr(d);
 }
@@ -5225,17 +5245,21 @@ async function detectEarlyPayments() {
       const txRef = doc(db, 'users', userId, 'transactions', matchedTx.id);
       const batch = writeBatch(db);
       const recUpdate = { nextDue: newNextDue };
+      const newPaymentsMade = (rec.paymentsMade || 0) + 1;
       if (rec.paymentsLimit) {
-        rec.paymentsMade = (rec.paymentsMade || 0) + 1;
-        recUpdate.paymentsMade = rec.paymentsMade;
-        if (rec.paymentsMade >= rec.paymentsLimit) recUpdate.active = false;
+        recUpdate.paymentsMade = newPaymentsMade;
+        if (newPaymentsMade >= rec.paymentsLimit) recUpdate.active = false;
       }
       batch.update(recRef, recUpdate);
       batch.update(txRef, { _recurring: true, subId: rec.id });
       await batch.commit();
 
-      // Optimistic local update
+      // Optimistic local update — only mutate after commit succeeds
       rec.nextDue = newNextDue;
+      if (rec.paymentsLimit) {
+        rec.paymentsMade = newPaymentsMade;
+        if (newPaymentsMade >= rec.paymentsLimit) rec.active = false;
+      }
       matchedTx._recurring = true;
       matchedTx.subId = rec.id;
       globallyMatchedTxIds.add(matchedTx.id);
@@ -5270,7 +5294,7 @@ function renderRecurring() {
     else if (r.freq === 'custom' && r.customDays > 0) monthlyTotal += (amt * 365.25 / r.customDays) / 12;
     if (r.nextDue && r.nextDue <= today) dueCount++;
     else if (r.nextDue) {
-      const days = Math.ceil((new Date(r.nextDue) - new Date(today)) / 86400000);
+      const days = Math.ceil((new Date(r.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
       if (days <= 7) dueCount++;
     }
   });
@@ -5292,7 +5316,7 @@ function renderRecurring() {
   }
   area.innerHTML = recurringList.map((rec, index) => {
     const isDue = rec.nextDue && rec.nextDue <= today;
-    const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue) - new Date(today)) / 86400000) : null;
+    const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
 
     // Status badge — always show active/paused, plus urgency if due soon
     let badgeHtml;
@@ -5405,8 +5429,8 @@ async function saveRecurringMod() {
   const customDays = parseInt(document.getElementById('recCustomDays').value, 10);
   const paymentsLimit = parseInt(document.getElementById('recTimesActive').value, 10);
   if (!name) { shake('recName'); return; }
-  if (isNaN(amount) || !isFinite(amount) || amount <= 0) { shake('recAmount'); return; }
-  if (currentRecFreq === 'custom' && (!customDays || customDays <= 0)) { shake('recCustomDays'); return; }
+  if (isNaN(amount) || !isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT) { shake('recAmount'); return; }
+  if (currentRecFreq === 'custom' && (!customDays || customDays <= 0 || !isFinite(customDays))) { shake('recCustomDays'); return; }
   if (!nextDue) { shake('recNextDue'); return; }
   // Preserve billingDay from the existing record if nextDue hasn't changed, to avoid
   // overwriting a saved day-31 billing anchor with the clamped date shown in the field.
@@ -5417,7 +5441,12 @@ async function saveRecurringMod() {
   // Preserve active state on edit — don't silently re-activate a paused subscription
   const activeState = existingRec ? existingRec.active : true;
   const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, billingDay, active: activeState };
-  if (currentRecFreq === 'custom') data.customDays = customDays;
+  if (currentRecFreq === 'custom') {
+    data.customDays = customDays;
+  } else {
+    // Clear stale customDays when switching away from custom frequency
+    data.customDays = null;
+  }
   if (!isNaN(paymentsLimit) && paymentsLimit > 0) {
     data.paymentsLimit = paymentsLimit;
   } else {
@@ -5440,6 +5469,7 @@ async function saveRecurringMod() {
   } else {
     try {
       data.createdAt = Date.now();
+      data.paymentsMade = 0;
       const id = uid();
       await setDoc(doc(db, 'users', userId, 'recurring', id), data);
       showToast('Subscription created', 'ok');
@@ -5452,29 +5482,28 @@ async function saveRecurringMod() {
 
 async function toggleRecurringActive(id, active) {
   if (!userId) return;
+  const rec = recurringList.find(r => r.id === id);
   const updateData = { active };
   try {
-    if (active) {
+    if (active && rec) {
       // User is resuming. If nextDue is in the past, reset it to the next valid date from today
-      const rec = recurringList.find(r => r.id === id);
-      if (rec) {
-        const today = getTodayStr();
-        const startDue = rec.nextDue && rec.nextDue.match(/^\d{4}-\d{2}-\d{2}$/) ? rec.nextDue : today;
-        if (startDue <= today) {
-          // Fast-forward nextDue to the future, guard against infinite loop with cycle cap
-          let currentDue = startDue;
-          let guard = 0;
-          while (currentDue <= today && guard++ < 1000) {
-            const next = computeNextDue(currentDue, rec.freq, rec.customDays, rec.billingDay);
-            if (!next || next === currentDue) break; // computeNextDue returned invalid/same
-            currentDue = next;
-          }
-          if (currentDue.match(/^\d{4}-\d{2}-\d{2}$/)) updateData.nextDue = currentDue;
+      const today = getTodayStr();
+      const startDue = rec.nextDue && rec.nextDue.match(/^\d{4}-\d{2}-\d{2}$/) ? rec.nextDue : today;
+      if (startDue <= today) {
+        // Fast-forward nextDue to the future, guard against infinite loop with cycle cap
+        let currentDue = startDue;
+        let guard = 0;
+        while (currentDue <= today && guard++ < 1000) {
+          const next = computeNextDue(currentDue, rec.freq, rec.customDays, rec.billingDay);
+          if (!next || next === currentDue) break; // computeNextDue returned invalid/same
+          currentDue = next;
         }
+        if (currentDue.match(/^\d{4}-\d{2}-\d{2}$/)) updateData.nextDue = currentDue;
       }
     }
     await setDoc(doc(db, 'users', userId, 'recurring', id), updateData, { merge: true });
     showToast(active ? 'Subscription resumed' : 'Subscription paused', 'ok');
+    if (rec) writeLog('UPDATE', { desc: rec.name, isRecPauseToggle: true, active }, rec.type);
   } catch(e) { 
     queueFailedSync('setDoc', 'recurring', id, updateData, true);
   }
@@ -6379,27 +6408,28 @@ function confirmDeleteSelectedLogs() {
   showConfirm('Delete Logs', `Are you sure you want to delete ${selectedLogs.size} log(s)?`, () => {
     setTimeout(() => {
       showConfirm('Confirm Deletion', 'Are you REALLY sure? This action cannot be undone.', async () => {
-        const count = selectedLogs.size;
-        const batch = writeBatch(db);
-        
-        selectedLogs.forEach(id => {
-          const el = document.querySelector(`[data-logid="${CSS.escape(id)}"]`);
-          if (el) {
-            el.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
-            el.style.transform = 'scale(0.9) translateX(30px)';
-            el.style.opacity = '0';
-          }
-          batch.delete(doc(db, 'users', userId, 'activities', id));
-        });
-        
         try {
-          await batch.commit();
-          showToast(`Deleted ${count} logs`, 'ok');
+          const idsToDelete = [...selectedLogs];
+          // Batch limit is 500; chunk if selection is large
+          for (let i = 0; i < idsToDelete.length; i += 499) {
+            const chunk = idsToDelete.slice(i, i + 499);
+            const b = writeBatch(db);
+            chunk.forEach(id => {
+              const el = document.querySelector(`[data-logid="${CSS.escape(id)}"]`);
+              if (el) {
+                el.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+                el.style.transform = 'scale(0.9) translateX(30px)';
+                el.style.opacity = '0';
+              }
+              b.delete(doc(db, 'users', userId, 'activities', id));
+            });
+            await b.commit();
+          }
+          showToast(`Deleted ${idsToDelete.length} logs`, 'ok');
         } catch (e) {
           console.error(e);
           showToast('Failed to delete logs', 'er');
         }
-        
         setTimeout(() => toggleLogSelectionMode(), 250);
       }, true);
     }, 300);
