@@ -2232,7 +2232,7 @@ function loadDataFromCloud() {
       }
     });
     txs = loadedTxs.sort((a,b) => {
-      const dDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+      const dDiff = new Date(b.date+'T00:00:00').getTime() - new Date(a.date+'T00:00:00').getTime();
       return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
     });
     // Exclude tx pending soft-delete during undo window
@@ -2548,14 +2548,14 @@ function getLegibleColor(c) {
   if(hex.length === 3) hex = hex.split('').map(x=>x+x).join('');
   let r = parseInt(hex.substring(0,2), 16), g = parseInt(hex.substring(2,4), 16), b = parseInt(hex.substring(4,6), 16);
   let lum = (0.299*r + 0.587*g + 0.114*b) / 255;
-  if (theme === 'dark' && lum < 0.45 && lum < 1) {
+  if (theme === 'dark' && lum < 0.45 && lum < 0.999) {
     const mix = (0.45 - lum) / (1 - lum);
     r = r + (255 - r) * mix; g = g + (255 - g) * mix; b = b + (255 - b) * mix;
-  } else if (theme === 'light' && lum > 0.55 && lum > 0) {
+  } else if (theme === 'light' && lum > 0.55 && lum > 0.001) {
     const mix = (lum - 0.55) / lum;
     r = r * (1 - mix); g = g * (1 - mix); b = b * (1 - mix);
   }
-  return '#' + [r,g,b].map(x => Math.round(x).toString(16).padStart(2,'0')).join('');
+  return '#' + [r,g,b].map(x => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2,'0')).join('');
 }
 
 function getLocalIsoDateStr(dateObj) {
@@ -3026,8 +3026,8 @@ async function saveEditTx() {
   const updatedTx = { desc, amount: amt, cat, date, type, mode };
   if (eventId) {
     updatedTx.eventId = eventId;
-  } else if (window._editSnapshot && 'eventId' in window._editSnapshot) {
-    updatedTx.eventId = null;
+  } else if (window._editSnapshot && window._editSnapshot.eventId) {
+    updatedTx.eventId = deleteField();
   }
   
   // HEAL: Restore createdAt for documents corrupted by a previous offline sync bug
@@ -3871,7 +3871,13 @@ function pDt(v) {
     // Also handle the edge case where both are > 12 (invalid date — return null).
     if (mo > 12 && d <= 12) { [d, mo] = [mo, d]; }
     else if (mo > 12 && d > 12) { return null; } // Both values > 12: unresolvable
-    if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) return `${yr}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) {
+      // Validate the date actually exists (e.g. reject Feb 31)
+      const candidate = `${yr}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const check = new Date(candidate + 'T00:00:00');
+      if (check.getMonth() + 1 !== mo || check.getDate() !== d) return null;
+      return candidate;
+    }
   }
   
   const dt = new Date(s);
@@ -4001,7 +4007,8 @@ function exportCSV() {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  // Defer revocation to ensure the browser has started the download
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
   showToast('Export successful', 'ok');
   closeReportMod();
 }
@@ -4577,6 +4584,7 @@ async function createEvent(evt) {
     const payload = eventsUseFallback ? { ...cleanEvent, _metaType: 'event' } : cleanEvent;
     await setDoc(getEventDocRef(evtId), payload);
     showToast('Event created', 'ok');
+    writeLog('ADD', { desc: cleanEvent.name, isNewEvent: true, eventId: evtId });
     showConfirm('Apply to Transactions', `Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`, () => assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end), false);
   } catch(e) {
     console.error('Error creating event', e);
@@ -4673,7 +4681,7 @@ async function deleteEvent(evtId) {
 }
 
 async function assignTransactionsToEvent(evtId, start, end) {
-  if (!userId) return;
+  if (!userId || !evtId) return;
   const matching = txs.filter(t => t.date >= start && t.date <= end);
   if (!matching.length) { showToast('No transactions in date range', 'er'); return; }
   showToast(`Applying to ${matching.length} transactions...`, 'ok');
@@ -4701,8 +4709,8 @@ async function removeEventFromTransactions(evtId) {
   for (let i = 0; i < matching.length; i += 450) {
     const chunk = matching.slice(i, i + 450);
     const batch = writeBatch(db);
-    // FIXED: Use null to remove eventId instead of deleteField() to bypass offline SDK bugs
-    chunk.forEach(tx => { batch.set(doc(db, 'users', userId, 'transactions', tx.id), { eventId: null }, { merge: true }); });
+    // Use deleteField() to properly remove eventId from Firestore documents
+    chunk.forEach(tx => { batch.set(doc(db, 'users', userId, 'transactions', tx.id), { eventId: deleteField() }, { merge: true }); });
     await batch.commit();
     showToast(`Removing tags ${Math.min(i + 450, matching.length)} / ${matching.length}`, 'ok');
   }
@@ -4782,7 +4790,8 @@ function renderParsedLog(action, p) {
             const minDt = sortedDates[0];
             const maxDt = sortedDates[sortedDates.length - 1];
             dRange = minDt === maxDt ? fmtDt(minDt) : `${fmtDt(minDt)} to ${fmtDt(maxDt)}`;
-            p.amt = Math.abs(matchingTxs[0].amount) * matchingTxs.length;
+            // Use a local variable instead of mutating the parsed log object
+            p = { ...p, amt: Math.abs(matchingTxs[0].amount) * matchingTxs.length };
          }
       }
       let extraHtml = dRange ? `<span style="opacity:0.5;margin:0 4px;">•</span><span>${dRange}</span>` : '';
@@ -6934,9 +6943,8 @@ function initAutocomplete() {
     if (!matches.length) { list.classList.remove('vis'); return; }
     selIdx = -1;
     list.innerHTML = matches.map((m, i) => {
-      // V6: Use the existing esc() function which properly handles single quotes too
-      const safe = esc(m);
-      return '<div class="ac-item" data-idx="' + i + '" data-val="' + safe + '">' + safe + '</div>';
+      // Store the raw value in a data attribute for retrieval; display the escaped version
+      return '<div class="ac-item" data-idx="' + i + '">' + esc(m) + '</div>';
     }).join('');
     list.classList.add('vis');
   }
@@ -6944,7 +6952,7 @@ function initAutocomplete() {
   input.addEventListener('focus', show);
   list.addEventListener('mousedown', (e) => {
     const item = e.target.closest('.ac-item');
-    if (item) { input.value = item.dataset.val; list.classList.remove('vis'); }
+    if (item) { input.value = item.textContent; list.classList.remove('vis'); }
   });
   input.addEventListener('blur', () => setTimeout(() => list.classList.remove('vis'), 150));
   input.addEventListener('keydown', (e) => {
@@ -6962,7 +6970,7 @@ function initAutocomplete() {
       items[selIdx].scrollIntoView({ block: 'nearest' });
     } else if (e.key === 'Enter' && selIdx >= 0) {
       e.preventDefault();
-      input.value = items[selIdx].dataset.val;
+      input.value = items[selIdx].textContent;
       list.classList.remove('vis');
     } else if (e.key === 'Escape') {
       list.classList.remove('vis');
