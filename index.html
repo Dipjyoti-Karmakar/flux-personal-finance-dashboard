@@ -16,9 +16,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" integrity="sha384-dWs4+zGqy/KS6giKxiK+6iowhidQwjVFaiE1lMar36QqZc6/i0K+YPQE+bWiqBRAWuFs" crossorigin="anonymous"></script>
 <style>
 :root{--bg:#0d0f14;--sf:#13161e;--s2:#1a1e28;--s3:#212633;--bd:rgba(255,255,255,0.07);--bs:rgba(255,255,255,0.13);--txi-bd:rgba(255,255,255,0.06);--tx:#e8eaf0;--mu:#7a8099;--di:#4a5068;--ac:#c8a96e;--ag:rgba(200,169,110,0.15);--on:#6e9dc8;--of:#9d7ac8;--ob:rgba(110,157,200,0.1);--fb:rgba(157,122,200,0.1);--in:#5dba8a;--ex:#e07070;--ib:rgba(93,186,138,0.1);--eb:rgba(224,112,112,0.1);--r:18px;--rs:12px;--sh-hov:0 16px 40px rgba(0,0,0,0.4);--sh-btn:0 8px 24px rgba(200,169,110,0.2);--sh-card:0 2px 8px rgba(0,0,0,0.12);--ease-spring:cubic-bezier(0.175, 0.885, 0.32, 1.275);--ease-out-expo:cubic-bezier(0.16, 1, 0.3, 1);--ease-in-out-circ:cubic-bezier(0.785, 0.135, 0.15, 0.86)}
 /* ── Premium Light Theme ── */
@@ -1361,7 +1361,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .flex-col-gap { display:flex; flex-direction:column; gap:8px; }
 </style>
 <style>img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; }</style>
-<script src="https://unpkg.com/twemoji@latest/dist/twemoji.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" integrity="sha384-32KMvAMS4DUBcQtHG6fzADguo/tpN1Nh6BAJa2QqZc6/i0K+YPQE+bWiqBRAWuFs" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="offlineBanner" style="display:none; position:fixed; top:0; left:0; width:100%; background:var(--ex); color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:600; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
@@ -2051,7 +2051,14 @@ let _undoTxData = null;
 let _undoClearLogsTimer = null;
 let _undoClearLogsData = null;
 
-let syncQueue = JSON.parse(localStorage.getItem('flux_sync_queue') || '[]');
+let syncQueue = (function() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('flux_sync_queue') || '[]');
+    if (!Array.isArray(raw)) return [];
+    // Validate shape: each entry must have op, col, id as strings
+    return raw.filter(item => item && typeof item.op === 'string' && typeof item.col === 'string' && typeof item.id === 'string');
+  } catch(e) { return []; }
+})();
 function queueFailedSync(op, col, id, data, isMerge=false, silent=false) {
   syncQueue.push({ op, col, id, data, isMerge, ts: Date.now() });
   localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
@@ -2226,8 +2233,15 @@ function loadDataFromCloud() {
     snapshot.forEach(doc => {
       const data = doc.data();
       if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount > 0) {
-        // V7: Use clean object to prevent prototype pollution (delete __proto__ is a no-op)
-        const clean = Object.assign(Object.create(null), data);
+        // V8: Explicit property pick to prevent prototype pollution — Object.assign
+        // copies __proto__ as a regular key which can still pollute downstream spreads.
+        const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId } = data;
+        const clean = { date, amount, type, mode, desc, cat, createdAt };
+        if (eventId) clean.eventId = eventId;
+        if (_imp) clean._imp = true;
+        if (_recurring) clean._recurring = true;
+        if (_auto) clean._auto = true;
+        if (subId) clean.subId = subId;
         loadedTxs.push({ id: doc.id, ...clean });
       }
     });
@@ -2879,7 +2893,7 @@ function renderTxList(){
     <div class="txi-wrap" data-txid="${esc(tx.id)}">
       <div class="txi-actions act-left"><button class="txi-act" onclick="editTx('${esc(tx.id)}')">\u270F\uFE0F Edit</button></div>
       <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx('${esc(tx.id)}')">\uD83D\uDDD1 Delete</button></div>
-      <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="tx-${tx.id}" style="${evtBorder}">
+      <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="tx-${esc(tx.id)}" style="${evtBorder}">
       <div class="dot ${safeType}"></div>
       <div class="ti">
         <div class="tn">${esc(tx.desc)}</div>
@@ -4496,13 +4510,13 @@ function renderEvents() {
           ${daysStr}
         </div>
       </div>
-      <button class="td" onclick="showEditEvent('${e.id}')" title="Edit" aria-label="Edit event: ${esc(e.name)}" style="opacity:1;transform:none;">
+      <button class="td" onclick="showEditEvent('${esc(e.id)}')" title="Edit" aria-label="Edit event: ${esc(e.name)}" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
-      <button class="td" onclick="applyEventToTxs('${e.id}')" title="Apply to transactions" aria-label="Apply event ${esc(e.name)} to transactions" style="opacity:1;transform:none;">
+      <button class="td" onclick="applyEventToTxs('${esc(e.id)}')" title="Apply to transactions" aria-label="Apply event ${esc(e.name)} to transactions" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
-      <button class="td" onclick="askDeleteEvent('${e.id}')" title="Delete" aria-label="Delete event: ${esc(e.name)}" style="opacity:1;transform:none;">
+      <button class="td" onclick="askDeleteEvent('${esc(e.id)}')" title="Delete" aria-label="Delete event: ${esc(e.name)}" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -4922,11 +4936,12 @@ function renderLogs() {
     const txType = showTypePill ? inferTxType(l) : null;
     const actionLabel = actLabels[l.a] || l.a;
 
-    let msgHtml = l.m || '';
+    let msgHtml = esc(l.m || '');
     let parsedData = {};
-    if (msgHtml.startsWith('{') || msgHtml.startsWith('[')) {
+    const rawMsg = l.m || '';
+    if (rawMsg.startsWith('{') || rawMsg.startsWith('[')) {
       try {
-        parsedData = JSON.parse(msgHtml);
+        parsedData = JSON.parse(rawMsg);
         msgHtml = renderParsedLog(l.a, parsedData);
       } catch(e) {}
     }
@@ -4960,13 +4975,14 @@ function renderLogs() {
 
     const isSelected = logSelectionMode && selectedLogs.has(l.id);
     const selStyle = isSelected ? 'border:2px solid var(--ex);background:color-mix(in srgb,var(--ex) 12%,var(--sf));' : '';
-    const clickHandler = logSelectionMode ? `onclick="toggleLogSelection('${l.id}')"` : '';
+    const safeLogId = esc(l.id);
+    const clickHandler = logSelectionMode ? `onclick="toggleLogSelection('${safeLogId}')"` : '';
     const cursorSty = logSelectionMode ? 'cursor:pointer;' : 'cursor:default;';
     const animClass = logSelectionMode ? 'txi' : 'txi card-in';
-    const logIdAttr = `data-logid="${l.id}"`;
+    const logIdAttr = `data-logid="${safeLogId}"`;
 
     const a11y = logSelectionMode
-      ? `tabindex="0" role="button" aria-pressed="${isSelected}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLogSelection('${l.id}')}"`
+      ? `tabindex="0" role="button" aria-pressed="${isSelected}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLogSelection('${safeLogId}')}"`
       : '';
       
     let extraStyle = '';
@@ -5363,9 +5379,9 @@ function renderRecurring() {
         </div>
       </div>
       <div class="sub-card-actions">
-        <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive('${rec.id}',${!rec.active})">${pauseLabel}</button>
-        <button class="sub-action-btn edit-btn" onclick="openEditRecurring('${rec.id}')">✏ Edit Details</button>
-        <button class="sub-action-btn del-btn" onclick="askDeleteRecurring('${rec.id}')">🗑 Remove</button>
+        <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive('${esc(rec.id)}',${!rec.active})">${pauseLabel}</button>
+        <button class="sub-action-btn edit-btn" onclick="openEditRecurring('${esc(rec.id)}')">✏ Edit Details</button>
+        <button class="sub-action-btn del-btn" onclick="askDeleteRecurring('${esc(rec.id)}')">🗑 Remove</button>
       </div>
     </div>`;
   }).join('');
