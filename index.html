@@ -2891,8 +2891,8 @@ function renderTxList(){
     const safeMode = (tx.mode === 'online' || tx.mode === 'offline') ? tx.mode : 'offline';
     return `
     <div class="txi-wrap" data-txid="${esc(tx.id)}">
-      <div class="txi-actions act-left"><button class="txi-act" onclick="editTx('${esc(tx.id)}')">\u270F\uFE0F Edit</button></div>
-      <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx('${esc(tx.id)}')">\uD83D\uDDD1 Delete</button></div>
+      <div class="txi-actions act-left"><button class="txi-act" onclick="editTx(${esc(JSON.stringify(tx.id))})">\u270F\uFE0F Edit</button></div>
+      <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx(${esc(JSON.stringify(tx.id))})">\uD83D\uDDD1 Delete</button></div>
       <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="tx-${esc(tx.id)}" style="${evtBorder}">
       <div class="dot ${safeType}"></div>
       <div class="ti">
@@ -2908,10 +2908,10 @@ function renderTxList(){
       </div>
       <span class="ta ${safeType}">${fmt(tx.amount)}</span>
       <div style="display:flex;gap:4px;margin-left:8px">
-        <button class="td" onclick="editTx('${esc(tx.id)}')" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
+        <button class="td" onclick="editTx(${esc(JSON.stringify(tx.id))})" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
-        <button class="td" onclick="askDelTx('${esc(tx.id)}')" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
+        <button class="td" onclick="askDelTx(${esc(JSON.stringify(tx.id))})" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
       </div>
@@ -3480,7 +3480,7 @@ function renderCats(passedTxs){
   cats.forEach(([cat,val],i)=>{
     const pct=Math.round((val/totalExp)*100);
     const isActive=activeCatFilter===cat;
-    detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter('${esc(cat)}')"><div style="width:10px;height:10px;border-radius:3px;background:${getCatColor(cat)};"></div><span class="cat-tag-name">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
+    detHtml+=`<div class="cat-tag${isActive?' cat-tag-active':''}" onclick="toggleCatFilter(${esc(JSON.stringify(cat))})"><div style="width:10px;height:10px;border-radius:3px;background:${getCatColor(cat)};"></div><span class="cat-tag-name">${CICO[cat]||'✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
   });
   detHtml+='</div>';
   if (activeCatFilter) {
@@ -3530,9 +3530,9 @@ function renderCatTxList(passedTxs) {
       const safeMode = (tx.mode === 'online' || tx.mode === 'offline') ? tx.mode : 'offline';
       return `
       <div class="txi-wrap" data-txid="${esc(tx.id)}">
-        <div class="txi-actions act-left"><button class="txi-act" onclick="editTx('${esc(tx.id)}')">✏️ Edit</button></div>
-        <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx('${esc(tx.id)}')">🗑 Delete</button></div>
-        <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="cat-tx-${tx.id}" style="${evtBorder}">
+        <div class="txi-actions act-left"><button class="txi-act" onclick="editTx(${esc(JSON.stringify(tx.id))})">✏️ Edit</button></div>
+        <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx(${esc(JSON.stringify(tx.id))})">🗑 Delete</button></div>
+        <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="cat-tx-${esc(tx.id)}" style="${evtBorder}">
         <div class="dot ${safeType}"></div>
         <div class="ti">
           <div class="tn">${esc(tx.desc)}</div>
@@ -3545,10 +3545,10 @@ function renderCatTxList(passedTxs) {
         </div>
         <span class="ta ${safeType}">${fmt(tx.amount)}</span>
         <div style="display:flex;gap:4px;margin-left:8px">
-          <button class="td" onclick="editTx('${esc(tx.id)}')" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
+          <button class="td" onclick="editTx(${esc(JSON.stringify(tx.id))})" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
           </button>
-          <button class="td" onclick="askDelTx('${esc(tx.id)}')" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
+          <button class="td" onclick="askDelTx(${esc(JSON.stringify(tx.id))})" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
             <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
           </button>
         </div>
@@ -4510,13 +4510,13 @@ function renderEvents() {
           ${daysStr}
         </div>
       </div>
-      <button class="td" onclick="showEditEvent('${esc(e.id)}')" title="Edit" aria-label="Edit event: ${esc(e.name)}" style="opacity:1;transform:none;">
+      <button class="td" onclick="showEditEvent(${esc(JSON.stringify(e.id))})" title="Edit" aria-label="Edit event: ${esc(e.name)}" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button>
-      <button class="td" onclick="applyEventToTxs('${esc(e.id)}')" title="Apply to transactions" aria-label="Apply event ${esc(e.name)} to transactions" style="opacity:1;transform:none;">
+      <button class="td" onclick="applyEventToTxs(${esc(JSON.stringify(e.id))})" title="Apply to transactions" aria-label="Apply event ${esc(e.name)} to transactions" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
       </button>
-      <button class="td" onclick="askDeleteEvent('${esc(e.id)}')" title="Delete" aria-label="Delete event: ${esc(e.name)}" style="opacity:1;transform:none;">
+      <button class="td" onclick="askDeleteEvent(${esc(JSON.stringify(e.id))})" title="Delete" aria-label="Delete event: ${esc(e.name)}" style="opacity:1;transform:none;">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     </div>
@@ -4976,13 +4976,13 @@ function renderLogs() {
     const isSelected = logSelectionMode && selectedLogs.has(l.id);
     const selStyle = isSelected ? 'border:2px solid var(--ex);background:color-mix(in srgb,var(--ex) 12%,var(--sf));' : '';
     const safeLogId = esc(l.id);
-    const clickHandler = logSelectionMode ? `onclick="toggleLogSelection('${safeLogId}')"` : '';
+    const clickHandler = logSelectionMode ? `onclick="toggleLogSelection(${esc(JSON.stringify(l.id))})"` : '';
     const cursorSty = logSelectionMode ? 'cursor:pointer;' : 'cursor:default;';
     const animClass = logSelectionMode ? 'txi' : 'txi card-in';
     const logIdAttr = `data-logid="${safeLogId}"`;
 
     const a11y = logSelectionMode
-      ? `tabindex="0" role="button" aria-pressed="${isSelected}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLogSelection('${safeLogId}')}"`
+      ? `tabindex="0" role="button" aria-pressed="${isSelected}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLogSelection(${esc(JSON.stringify(l.id))})}"`
       : '';
       
     let extraStyle = '';
@@ -5379,9 +5379,9 @@ function renderRecurring() {
         </div>
       </div>
       <div class="sub-card-actions">
-        <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive('${esc(rec.id)}',${!rec.active})">${pauseLabel}</button>
-        <button class="sub-action-btn edit-btn" onclick="openEditRecurring('${esc(rec.id)}')">✏ Edit Details</button>
-        <button class="sub-action-btn del-btn" onclick="askDeleteRecurring('${esc(rec.id)}')">🗑 Remove</button>
+        <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(${esc(JSON.stringify(rec.id))},${!rec.active})">${pauseLabel}</button>
+        <button class="sub-action-btn edit-btn" onclick="openEditRecurring(${esc(JSON.stringify(rec.id))})">✏ Edit Details</button>
+        <button class="sub-action-btn del-btn" onclick="askDeleteRecurring(${esc(JSON.stringify(rec.id))})">🗑 Remove</button>
       </div>
     </div>`;
   }).join('');
