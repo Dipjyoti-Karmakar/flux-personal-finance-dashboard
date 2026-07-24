@@ -4742,6 +4742,12 @@ async function saveEventMod() {
 
 async function editEvent(evtId, data) {
   if (!userId) return;
+  const src = events[evtId]?._src;
+  const oldEvt = events[evtId];
+  let changed = true;
+  if (oldEvt) changed = (oldEvt.name !== data.name || oldEvt.start !== data.start || oldEvt.end !== data.end || oldEvt.color !== data.color);
+  const payload = (src === 'transactions' || eventsUseFallback) ? { ...data, _metaType: 'event' } : data;
+
   let saved = false;
   try {
     await setDoc(getEventDocRef(evtId, src), payload, { merge: true });
@@ -5648,6 +5654,9 @@ async function toggleRecurringActive(id, active) {
         if (currentDue.match(/^\d{4}-\d{2}-\d{2}$/)) updateData.nextDue = currentDue;
       }
     }
+  } catch(e) {
+    console.warn('Error computing nextDue during toggle:', e);
+  }
   let saved = false;
   try {
     await setDoc(doc(db, 'users', userId, 'recurring', id), updateData, { merge: true });
