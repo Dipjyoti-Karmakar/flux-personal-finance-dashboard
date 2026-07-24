@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V40: Bumped to v28 to invalidate cache for mobile devices (with cache busters)
-const CACHE_NAME = 'flux-v29';
+// V41: Bumped to v30 for offline bug fixes (addTx/saveEditTx/processSyncQueue)
+const CACHE_NAME = 'flux-v30';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',

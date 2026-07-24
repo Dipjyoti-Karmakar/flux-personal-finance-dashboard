@@ -2070,14 +2070,24 @@ async function processSyncQueue() {
   syncQueue = [];
   localStorage.setItem('flux_sync_queue', '[]');
   let c = 0;
+  const failed = [];
   for (const item of queue) {
     try {
       if (item.op === 'setDoc') await setDoc(doc(db, 'users', userId, item.col, item.id), item.data, item.isMerge ? {merge:true} : undefined);
       else if (item.op === 'deleteDoc') await deleteDoc(doc(db, 'users', userId, item.col, item.id));
-      c++;
-    } catch(e) { console.warn('Dropped malformed queued payload:', e); }
+      // Only count user-facing operations (not activity log entries) for the toast
+      if (item.col !== 'activities') c++;
+    } catch(e) {
+      console.warn('Sync queue item failed, re-queuing:', e);
+      failed.push(item);
+    }
   }
-  if (c > 0) showToast(`Synced ${c} offline actions`, 'ok');
+  // Re-queue any failed items so they aren't lost
+  if (failed.length > 0) {
+    syncQueue.push(...failed);
+    localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
+  }
+  if (c > 0) showToast(`Synced ${c} offline action${c !== 1 ? 's' : ''}`, 'ok');
 }
 
 window.addEventListener('online', () => {
@@ -2249,6 +2259,21 @@ function loadDataFromCloud() {
       const dDiff = new Date(b.date+'T00:00:00').getTime() - new Date(a.date+'T00:00:00').getTime();
       return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
     });
+    // Merge any pending offline transactions from syncQueue that aren't in the snapshot yet
+    syncQueue.forEach(q => {
+      if (q.col === 'transactions' && q.op === 'setDoc' && q.data && !txs.find(t => t.id === q.id)) {
+        const d = q.data;
+        if (typeof d.date === 'string' && d.date && typeof d.amount === 'number' && isFinite(d.amount) && d.amount > 0) {
+          txs.push({ id: q.id, ...d });
+        }
+      }
+    });
+    if (syncQueue.some(q => q.col === 'transactions')) {
+      txs.sort((a,b) => {
+        const dDiff = new Date(b.date+'T00:00:00').getTime() - new Date(a.date+'T00:00:00').getTime();
+        return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
+      });
+    }
     // Exclude tx pending soft-delete during undo window
     if (_undoTxData) txs = txs.filter(t => t.id !== _undoTxData.id);
     
@@ -2415,10 +2440,26 @@ async function addTx() {
   const txId = uid();
   
   const btn = document.querySelector('.fb2 .sbtn');
+  let saved = false;
   try {
     const docRef = doc(db, 'users', userId, 'transactions', txId);
     await setDoc(docRef, newTx);
-    
+    saved = true;
+  } catch(e) {
+    console.error("Error adding transaction (queuing for offline sync)", e);
+    // Queue for sync when back online
+    queueFailedSync('setDoc', 'transactions', txId, newTx);
+    // Add to local array so it appears in the UI immediately
+    txs.push({ id: txId, ...newTx });
+    txs.sort((a,b) => {
+      const dDiff = new Date(b.date+'T00:00:00').getTime() - new Date(a.date+'T00:00:00').getTime();
+      return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
+    });
+    render();
+    saved = true;
+  }
+  
+  if (saved) {
     document.getElementById('txD').value = '';
     document.getElementById('txA').value = '';
     document.getElementById('txDt').value = getTodayStr();
@@ -2426,7 +2467,7 @@ async function addTx() {
     // Log the addition
     writeLog('ADD', { desc, amt, cat, date, mode: cMode, type: cType, eventId: eventId }, cType);
 
-    showToast('Transaction added', 'ok');
+    showToast(navigator.onLine ? 'Transaction added' : 'Saved offline. Will sync when connected.', 'ok');
     
     // Button checkmark animation
     if (btn) {
@@ -2442,9 +2483,6 @@ async function addTx() {
     // Confetti on milestones: 1st, 10th, 25th, every 50th
     const mc = txs.length + 1;
     if (mc === 1 || mc === 10 || mc === 25 || mc % 50 === 0) launchConfetti();
-  } catch(e) {
-    console.error("Error adding transaction", e);
-    showToast('Error saving to cloud.', 'er');
   }
 }
 
@@ -3038,9 +3076,10 @@ async function saveEditTx() {
   // Using it unconditionally on older transactions that never had the field causes
   // the Firebase SDK to throw an error and incorrectly queue an offline sync.
   const updatedTx = { desc, amount: amt, cat, date, type, mode };
+  const removingEventId = !eventId && window._editSnapshot && window._editSnapshot.eventId;
   if (eventId) {
     updatedTx.eventId = eventId;
-  } else if (window._editSnapshot && window._editSnapshot.eventId) {
+  } else if (removingEventId) {
     updatedTx.eventId = deleteField();
   }
   
@@ -3049,10 +3088,31 @@ async function saveEditTx() {
     updatedTx.createdAt = window._editSnapshot.createdAt || Date.now();
   }
   
+  let saved = false;
   try {
     const docRef = doc(db, 'users', userId, 'transactions', editingTxId);
     await setDoc(docRef, updatedTx, { merge: true });
-    
+    saved = true;
+  } catch(e) {
+    console.error("Error updating (queuing for offline sync)", e);
+    // Strip non-serializable deleteField() sentinel before queuing to localStorage
+    const queueData = { ...updatedTx };
+    if (removingEventId) {
+      delete queueData.eventId; // Can't serialize deleteField(); will be handled as a merge without eventId
+    }
+    queueFailedSync('setDoc', 'transactions', editingTxId, queueData, true);
+    // Update local txs array so UI reflects the edit immediately
+    const localIdx = txs.findIndex(t => t.id === editingTxId);
+    if (localIdx !== -1) {
+      const merged = { ...txs[localIdx], ...queueData };
+      if (removingEventId) delete merged.eventId;
+      txs[localIdx] = merged;
+    }
+    render();
+    saved = true;
+  }
+  
+  if (saved) {
     // Generate diff for logging
     if (window._editSnapshot) {
        const b = window._editSnapshot;
@@ -3073,11 +3133,7 @@ async function saveEditTx() {
     }
 
     closeEditMod();
-    showToast('Transaction updated', 'ok');
-  } catch(e) {
-    console.error("Error updating", e);
-    // FIXED: pass true for isMerge so we don't overwrite the document offline
-    queueFailedSync('setDoc', 'transactions', editingTxId, updatedTx, true);
+    showToast(navigator.onLine ? 'Transaction updated' : 'Saved offline. Will sync when connected.', 'ok');
   }
 }
 
