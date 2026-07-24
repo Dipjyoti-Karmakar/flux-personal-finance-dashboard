@@ -4436,6 +4436,16 @@ function loadEvents() {
   unsubscribeEvents = onSnapshot(evtRef, (snap) => {
     events = {};
     snap.forEach(d => { events[d.id] = { id: d.id, _src: 'events', ...d.data() }; });
+    // Merge offline entries from syncQueue
+    syncQueue.forEach(q => {
+      if ((q.col === 'events' || q.col === 'transactions') && q.data?._metaType === 'event') {
+        if (q.op === 'setDoc') {
+          events[q.id] = { id: q.id, _src: q.col, ...q.data };
+        } else if (q.op === 'deleteDoc') {
+          delete events[q.id];
+        }
+      }
+    });
     populateEventSelects();
     renderEvents();
     // After loading the real events collection, silently check if any events
@@ -4460,6 +4470,16 @@ function loadEvents() {
             color: data.color,
             createdAt: data.createdAt
           };
+        });
+        // Merge offline entries from syncQueue
+        syncQueue.forEach(q => {
+          if (q.col === 'transactions' && q.data?._metaType === 'event') {
+            if (q.op === 'setDoc') {
+              events[q.id] = { id: q.id, _src: 'transactions', name: q.data.name, start: q.data.start, end: q.data.end, color: q.data.color, createdAt: q.data.createdAt };
+            } else if (q.op === 'deleteDoc') {
+              delete events[q.id];
+            }
+          }
         });
         populateEventSelects();
         renderEvents();
@@ -4650,29 +4670,39 @@ async function createEvent(evt) {
     createdAt: Date.now()
   };
   const evtId = uid();
+  let saved = false;
   try {
     const payload = eventsUseFallback ? { ...cleanEvent, _metaType: 'event' } : cleanEvent;
     await setDoc(getEventDocRef(evtId), payload);
-    showToast('Event created', 'ok');
-    writeLog('ADD', { desc: cleanEvent.name, isNewEvent: true, eventId: evtId });
-    showConfirm('Apply to Transactions', `Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`, () => assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end), false);
+    saved = true;
   } catch(e) {
-    console.error('Error creating event', e);
     if (e?.code === 'permission-denied' && !eventsUseFallback) {
       try {
         eventsUseFallback = true;
         await setDoc(getEventDocRef(evtId, 'transactions'), { ...cleanEvent, _metaType: 'event' });
         loadEvents();
-        showToast('Event created (compat mode)', 'ok');
-        writeLog('ADD', { desc: cleanEvent.name, isNewEvent: true, eventId: evtId });
-        showConfirm('Apply to Transactions', `Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`, () => assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end), false);
-        return;
+        saved = true;
       } catch (fallbackCreateErr) {
-        console.error('Fallback create failed', fallbackCreateErr);
+        console.error('Fallback create failed (queuing)', fallbackCreateErr);
+        queueFailedSync('setDoc', 'transactions', evtId, { ...cleanEvent, _metaType: 'event' });
+        events[evtId] = { id: evtId, _src: 'transactions', ...cleanEvent, _metaType: 'event' };
+        renderEvents();
+        saved = true;
       }
+    } else {
+      console.error('Error creating event (queuing)', e);
+      const payload = eventsUseFallback ? { ...cleanEvent, _metaType: 'event' } : cleanEvent;
+      queueFailedSync('setDoc', eventsUseFallback ? 'transactions' : 'events', evtId, payload);
+      events[evtId] = { id: evtId, _src: eventsUseFallback ? 'transactions' : 'events', ...payload };
+      renderEvents();
+      saved = true;
     }
-    const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
-    showToast(`Error creating event: ${errMsg}`, 'er');
+  }
+  
+  if (saved) {
+    showToast(navigator.onLine ? 'Event created' : 'Saved offline. Will sync when connected.', 'ok');
+    writeLog('ADD', { desc: cleanEvent.name, isNewEvent: true, eventId: evtId });
+    showConfirm('Apply to Transactions', `Apply "${cleanEvent.name}" to transactions between ${cleanEvent.start} and ${cleanEvent.end}?`, () => assignTransactionsToEvent(evtId, cleanEvent.start, cleanEvent.end), false);
   }
 }
 
@@ -4712,20 +4742,21 @@ async function saveEventMod() {
 
 async function editEvent(evtId, data) {
   if (!userId) return;
+  let saved = false;
   try {
-    const src = events[evtId]?._src;
-    const oldEvt = events[evtId];
-    let changed = true;
-    if (oldEvt) changed = (oldEvt.name !== data.name || oldEvt.start !== data.start || oldEvt.end !== data.end || oldEvt.color !== data.color);
-    
-    const payload = (src === 'transactions' || eventsUseFallback) ? { ...data, _metaType: 'event' } : data;
     await setDoc(getEventDocRef(evtId, src), payload, { merge: true });
-    showToast('Event updated', 'ok');
-    if (changed) writeLog('EDIT', { desc: data.name, isEventEdit: true });
+    saved = true;
   } catch(e) {
-    console.error('Error updating event', e);
-    const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
-    showToast(`Error updating event: ${errMsg}`, 'er');
+    console.error('Error updating event (queuing)', e);
+    queueFailedSync('setDoc', src === 'transactions' || eventsUseFallback ? 'transactions' : 'events', evtId, payload, true);
+    if (events[evtId]) events[evtId] = { ...events[evtId], ...data };
+    renderEvents();
+    saved = true;
+  }
+  
+  if (saved) {
+    showToast(navigator.onLine ? 'Event updated' : 'Saved offline. Will sync when connected.', 'ok');
+    if (changed) writeLog('EDIT', { desc: data.name, isEventEdit: true });
   }
 }
 
@@ -4737,16 +4768,23 @@ function askDeleteEvent(evtId) {
 
 async function deleteEvent(evtId) {
   if (!userId) return;
+  let saved = false;
   try {
     const eventName = events[evtId]?.name || 'Event';
     await removeEventFromTransactions(evtId);
     await deleteDoc(getEventDocRef(evtId, events[evtId]?._src));
-    showToast('Event deleted', 'ok');
-    writeLog('DELETE', { desc: eventName, isDelEvent: true });
+    saved = true;
   } catch(e) {
-    console.error('Error deleting event', e);
-    const errMsg = e?.code ? `${e.code}` : (e?.message || 'Unknown error');
-    showToast(`Error deleting event: ${errMsg}`, 'er');
+    console.error('Error deleting event (queuing)', e);
+    queueFailedSync('deleteDoc', events[evtId]?._src === 'transactions' || eventsUseFallback ? 'transactions' : 'events', evtId, null);
+    delete events[evtId];
+    renderEvents();
+    saved = true;
+  }
+  
+  if (saved) {
+    showToast(navigator.onLine ? 'Event deleted' : 'Saved offline. Will sync when connected.', 'ok');
+    writeLog('DELETE', { desc: events[evtId]?.name || 'Event', isDelEvent: true });
   }
 }
 
@@ -5112,6 +5150,18 @@ function loadRecurring() {
   unsubscribeRecurring = onSnapshot(recRef, (snap) => {
     recurringList = [];
     snap.forEach(d => recurringList.push({ id: d.id, ...d.data() }));
+    // Merge offline entries from syncQueue
+    syncQueue.forEach(q => {
+      if (q.col === 'recurring') {
+        if (q.op === 'setDoc' && q.data) {
+          const existingIdx = recurringList.findIndex(r => r.id === q.id);
+          if (existingIdx !== -1) recurringList[existingIdx] = { ...recurringList[existingIdx], ...q.data };
+          else recurringList.push({ id: q.id, ...q.data });
+        } else if (q.op === 'deleteDoc') {
+          recurringList = recurringList.filter(r => r.id !== q.id);
+        }
+      }
+    });
     recurringList.sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
     if (document.getElementById('subView').style.display !== 'none') renderRecurring();
     checkAndTriggerRecurring().then(() => detectEarlyPayments());
@@ -5535,28 +5585,44 @@ async function saveRecurringMod() {
   }
   closeRecurringMod();
   if (editingRecurringId) {
+    let saved = false;
+    let changed = false;
+    const oldRec = recurringList.find(r => r.id === editingRecurringId);
+    if (oldRec) {
+       changed = (oldRec.name !== data.name || oldRec.amount !== data.amount || oldRec.cat !== data.cat || oldRec.nextDue !== data.nextDue || oldRec.type !== data.type || oldRec.freq !== data.freq || oldRec.customDays !== data.customDays || oldRec.paymentsLimit !== data.paymentsLimit);
+    }
     try {
-      const oldRec = recurringList.find(r => r.id === editingRecurringId);
-      let changed = true;
-      if (oldRec) {
-         changed = (oldRec.name !== data.name || oldRec.amount !== data.amount || oldRec.cat !== data.cat || oldRec.nextDue !== data.nextDue || oldRec.type !== data.type || oldRec.freq !== data.freq || oldRec.customDays !== data.customDays || oldRec.paymentsLimit !== data.paymentsLimit);
-      }
       await setDoc(doc(db, 'users', userId, 'recurring', editingRecurringId), data, { merge: true });
-      showToast('Subscription updated', 'ok');
-      if (changed) writeLog('EDIT', { desc: data.name, isRecEdit: true });
+      saved = true;
     } catch(e) { 
       queueFailedSync('setDoc', 'recurring', editingRecurringId, data, true);
+      const localIdx = recurringList.findIndex(r => r.id === editingRecurringId);
+      if (localIdx !== -1) recurringList[localIdx] = { ...recurringList[localIdx], ...data };
+      renderRecurring();
+      saved = true;
+    }
+    if (saved) {
+      showToast(navigator.onLine ? 'Subscription updated' : 'Saved offline. Will sync when connected.', 'ok');
+      if (changed) writeLog('EDIT', { desc: data.name, isRecEdit: true });
     }
   } else {
+    let saved = false;
+    data.createdAt = Date.now();
+    data.paymentsMade = 0;
+    const id = uid();
     try {
-      data.createdAt = Date.now();
-      data.paymentsMade = 0;
-      const id = uid();
       await setDoc(doc(db, 'users', userId, 'recurring', id), data);
-      showToast('Subscription created', 'ok');
-      writeLog('ADD', { desc: name, isNewRec: true }, currentRecType);
+      saved = true;
     } catch(e) { 
-      queueFailedSync('setDoc', 'recurring', uid(), data);
+      queueFailedSync('setDoc', 'recurring', id, data);
+      recurringList.push({ id, ...data });
+      recurringList.sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
+      renderRecurring();
+      saved = true;
+    }
+    if (saved) {
+      showToast(navigator.onLine ? 'Subscription created' : 'Saved offline. Will sync when connected.', 'ok');
+      writeLog('ADD', { desc: name, isNewRec: true }, currentRecType);
     }
   }
 }
@@ -5582,11 +5648,19 @@ async function toggleRecurringActive(id, active) {
         if (currentDue.match(/^\d{4}-\d{2}-\d{2}$/)) updateData.nextDue = currentDue;
       }
     }
+  let saved = false;
+  try {
     await setDoc(doc(db, 'users', userId, 'recurring', id), updateData, { merge: true });
-    showToast(active ? 'Subscription resumed' : 'Subscription paused', 'ok');
-    if (rec) writeLog('UPDATE', { desc: rec.name, isRecPauseToggle: true, active }, rec.type);
+    saved = true;
   } catch(e) { 
     queueFailedSync('setDoc', 'recurring', id, updateData, true);
+    if (rec) Object.assign(rec, updateData);
+    renderRecurring();
+    saved = true;
+  }
+  if (saved) {
+    showToast(navigator.onLine ? (active ? 'Subscription resumed' : 'Subscription paused') : 'Saved offline. Will sync when connected.', 'ok');
+    if (rec) writeLog('UPDATE', { desc: rec.name, isRecPauseToggle: true, active }, rec.type);
   }
 }
 
@@ -5598,13 +5672,20 @@ function askDeleteRecurring(id) {
 
 async function deleteRecurring(id) {
   if (!userId) return;
+  const rec = recurringList.find(r => r.id === id);
+  let saved = false;
   try {
-    const rec = recurringList.find(r => r.id === id);
     await deleteDoc(doc(db, 'users', userId, 'recurring', id));
-    showToast('Subscription deleted', 'ok');
-    if (rec) writeLog('DELETE', { desc: rec.name, isDelRec: true }, rec.type);
+    saved = true;
   } catch(e) { 
     queueFailedSync('deleteDoc', 'recurring', id, null);
+    recurringList = recurringList.filter(r => r.id !== id);
+    renderRecurring();
+    saved = true;
+  }
+  if (saved) {
+    showToast(navigator.onLine ? 'Subscription deleted' : 'Saved offline. Will sync when connected.', 'ok');
+    if (rec) writeLog('DELETE', { desc: rec.name, isDelRec: true }, rec.type);
   }
 }
 
