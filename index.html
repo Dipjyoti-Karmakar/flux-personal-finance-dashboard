@@ -5537,7 +5537,7 @@ function toggleSubHistory(btn, recId) {
   const isOpen = panel.classList.contains('open');
   panel.classList.toggle('open', !isOpen);
   btn.classList.toggle('act', !isOpen);
-  btn.textContent = isOpen ? '📋 History' : '▲ Close';
+  btn.innerHTML = isOpen ? '📋 History' : '▲ Close';
 
   if (isOpen || inner.dataset.loaded) return;
   inner.dataset.loaded = '1';
@@ -5550,7 +5550,8 @@ function toggleSubHistory(btn, recId) {
   const subTxs = txs
     .filter(t => {
       if (t.subId === recId) return true;
-      if (t._recurring && t.type === rec.type &&
+      // Fuzzy match only for _recurring txs that have NO subId (unlinked past tags)
+      if (!t.subId && t._recurring && t.type === rec.type &&
           Math.abs(t.amount) === Math.abs(rec.amount) &&
           (t.desc || '').trim().toLowerCase() === nameLow) return true;
       return false;
