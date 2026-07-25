@@ -1354,16 +1354,15 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .log-msg { white-space:normal; overflow:visible; line-height:1.4; margin-bottom:6px; font-size:13px; font-weight:600; overflow-wrap: anywhere; word-break: break-word; }
 .log-time { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .tx-deleted-text { text-decoration:line-through; opacity:0.8; overflow-wrap: anywhere; word-break: break-all; }
-.diff-container { margin-top:12px; display:flex; flex-direction:column; gap:0; background:var(--s2); border-radius:12px; border:1px solid var(--bd); overflow:hidden; position:relative; }
-.diff-container::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--ac); border-radius:3px 0 0 3px; }
-.diff-row { display:flex; flex-direction:column; gap:7px; padding:11px 16px 11px 20px; border-bottom:1px solid var(--bd); transition:background 0.15s ease; }
+.diff-container { margin-top:10px; display:flex; flex-direction:column; gap:0; background:transparent; border-radius:10px; border:1px solid var(--bd); overflow:hidden; }
+.diff-row { display:grid; grid-template-columns:44px 1fr; align-items:center; gap:0; padding:7px 12px; border-bottom:1px solid var(--bd); transition:background 0.12s ease; }
 .diff-row:last-child { border-bottom:none; }
-.diff-row:hover { background:color-mix(in srgb,var(--ac) 5%,transparent); }
-.diff-label { color:var(--mu); font-weight:700; text-transform:uppercase; font-size:9px; letter-spacing:1.2px; font-family:'DM Mono',monospace; }
-.diff-values { display:flex; align-items:flex-start; gap:8px; flex-wrap:wrap; }
-.diff-old { color:var(--ex); text-decoration:line-through; opacity:0.75; font-size:11.5px; font-family:'DM Mono',monospace; background:var(--eb); padding:4px 10px; border-radius:6px; word-break:break-word; flex:1 1 auto; min-width:0; line-height:1.5; }
-.diff-arrow { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--mu); opacity:0.45; margin-top:5px; }
-.diff-new { color:var(--in); font-weight:600; font-size:11.5px; font-family:'DM Mono',monospace; background:var(--ib); padding:4px 10px; border-radius:6px; word-break:break-word; flex:1 1 auto; min-width:0; line-height:1.5; }
+.diff-row:hover { background:color-mix(in srgb,var(--ac) 4%,transparent); }
+.diff-label { color:var(--mu); font-weight:700; text-transform:uppercase; font-size:8.5px; letter-spacing:1px; font-family:'DM Mono',monospace; line-height:1; }
+.diff-values { display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; }
+.diff-old { color:var(--ex); text-decoration:line-through; opacity:0.65; font-size:11px; font-family:'DM Mono',monospace; word-break:break-word; line-height:1.4; white-space:normal; }
+.diff-arrow { display:inline-flex; align-items:center; flex-shrink:0; color:var(--mu); opacity:0.35; }
+.diff-new { color:var(--in); font-weight:600; font-size:11px; font-family:'DM Mono',monospace; word-break:break-word; line-height:1.4; white-space:normal; background:color-mix(in srgb,var(--in) 10%,transparent); padding:1px 6px; border-radius:4px; }
 
 .tx-badge-sub { background:rgba(157,122,200,0.18); color:var(--of); border:1px solid rgba(157,122,200,0.35); font-weight:600; }
 .load-more-wrap { text-align:center; padding:16px; }
@@ -3150,7 +3149,7 @@ async function saveEditTx() {
     if (window._editSnapshot) {
        const b = window._editSnapshot;
        let diffs = [];
-       if (b.desc !== desc) diffs.push({ label: 'Desc', oldV: `"${esc(b.desc)}"`, newV: `"${esc(desc)}"` });
+       if (b.desc !== desc) diffs.push({ label: 'Desc', oldV: `"${b.desc}"`, newV: `"${desc}"` });
        if (b.amount !== amt) diffs.push({ label: 'Amt', oldV: fmt(b.amount), newV: fmt(amt) });
        if (b.cat !== cat) diffs.push({ label: 'Cat', oldV: b.cat||'other', newV: cat||'other' });
        if (b.date !== date) diffs.push({ label: 'Date', oldV: fmtDt(b.date), newV: fmtDt(date) });
@@ -4959,7 +4958,7 @@ function renderParsedLog(action, p) {
     const labelMap = { 'Desc':'DESC', 'Amt':'AMT', 'Cat':'CAT', 'Date':'DATE', 'Mode':'MODE', 'Type':'TYPE', 'Event':'EVENT' };
     const dfn = (label, oldV, newV) => {
       const displayLabel = labelMap[label] || label.toUpperCase();
-      return `<div class="diff-row"><span class="diff-label">${displayLabel}</span><div class="diff-values"><span class="diff-old">${esc(oldV)}</span><span class="diff-arrow"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span class="diff-new">${esc(newV)}</span></div></div>`;
+      return `<div class="diff-row"><span class="diff-label">${displayLabel}</span><div class="diff-values"><span class="diff-old">${esc(oldV)}</span><span class="diff-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span class="diff-new">${esc(newV)}</span></div></div>`;
     };
     const diffHtml = p.diffs.map(d => dfn(d.label, d.oldV, d.newV)).join('');
     return `<div>${esc(p.desc)}</div>${metaHtml}<div class="diff-container">${diffHtml}</div>`;
