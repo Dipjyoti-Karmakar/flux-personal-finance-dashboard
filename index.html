@@ -5674,7 +5674,21 @@ function renderSubHistInner(recId) {
     <div class="sub-link-results" id="link-results-${recId}"></div>
   </div></div>`;
 
-  inner.innerHTML = statsHtml + listHtml + linkBtnHtml + pickerHtml;
+  const existingPicker = document.getElementById('link-picker-' + recId);
+  const histContentHtml = `<div id="hist-content-${recId}">${statsHtml + listHtml + linkBtnHtml}</div>`;
+  
+  if (existingPicker) {
+    let contentWrap = document.getElementById('hist-content-' + recId);
+    if (!contentWrap) {
+      inner.innerHTML = histContentHtml;
+      inner.appendChild(existingPicker);
+    } else {
+      contentWrap.outerHTML = histContentHtml;
+    }
+  } else {
+    inner.innerHTML = histContentHtml + pickerHtml;
+  }
+
   // Store historyIds on inner element for picker to reference
   inner._historyIds = historyIds;
 }
@@ -5743,7 +5757,6 @@ async function linkSubTx(txId, recId) {
   } catch(e) {
     queueFailedSync('setDoc', 'transactions', txId, linkData, true);
   }
-  // Capture search query before re-rendering
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
@@ -5751,18 +5764,9 @@ async function linkSubTx(txId, recId) {
   tx.subId = recId;
   tx._recurring = true;
   tx._manualLink = true;
+  
   renderSubHistInner(recId);
-  // Re-open the picker if it was open
-  const picker = document.getElementById('link-picker-' + recId);
-  if (picker) {
-    picker.classList.add('open');
-    const newSearch = document.getElementById('link-search-' + recId);
-    if (newSearch) {
-      newSearch.value = currentQuery;
-      newSearch.focus();
-    }
-    renderLinkPicker(recId, currentQuery);
-  }
+  renderLinkPicker(recId, currentQuery);
   showToast('Payment linked to subscription', 'ok');
 }
 
@@ -5777,25 +5781,15 @@ async function unlinkSubTx(txId, recId) {
     // For offline queue, use null since deleteField() is a sentinel
     queueFailedSync('setDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
   }
-  // Capture search query before re-rendering
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
   // Optimistic local update
   delete tx.subId;
   delete tx._manualLink;
+  
   renderSubHistInner(recId);
-  // Re-open the picker if it was open
-  const picker = document.getElementById('link-picker-' + recId);
-  if (picker) {
-    picker.classList.add('open');
-    const newSearch = document.getElementById('link-search-' + recId);
-    if (newSearch) {
-      newSearch.value = currentQuery;
-      newSearch.focus();
-    }
-    renderLinkPicker(recId, currentQuery);
-  }
+  renderLinkPicker(recId, currentQuery);
   showToast('Payment removed from history', 'ok');
 }
 
