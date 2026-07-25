@@ -983,7 +983,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 /* ── Subscription History Panel ── */
 .sub-hist-panel { overflow:hidden; max-height:0; transition:max-height .38s cubic-bezier(0.16,1,0.3,1); }
-.sub-hist-panel.open { max-height:380px; }
+.sub-hist-panel.open { max-height:800px; }
 .sub-hist-inner { margin-top:14px; border-top:1px solid var(--bd); padding-top:14px; }
 .sub-hist-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--bd); border:1px solid var(--bd); border-radius:10px; overflow:hidden; margin-bottom:12px; }
 .sub-hist-stat { display:flex; flex-direction:column; gap:4px; padding:11px 14px; background:var(--s2); align-items:center; text-align:center; }
@@ -1003,6 +1003,31 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .sub-hist-empty { text-align:center; padding:18px 12px; font-family:'DM Mono',monospace; font-size:10px; color:var(--di); letter-spacing:.5px; }
 .sub-hist-cap { text-align:center; padding:8px 0 4px; font-family:'DM Mono',monospace; font-size:9px; color:var(--mu); letter-spacing:.5px; border-top:1px solid var(--bd); }
 
+/* ── Manual Link Picker ── */
+.sub-link-btn { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; padding:9px 0; margin-top:10px; border-radius:10px; border:1px dashed color-mix(in srgb,var(--ac) 45%,transparent); background:color-mix(in srgb,var(--ac) 6%,transparent); color:var(--ac); font-family:'DM Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; cursor:pointer; transition:all .22s cubic-bezier(0.16,1,0.3,1); }
+.sub-link-btn:hover { background:color-mix(in srgb,var(--ac) 14%,transparent); border-color:var(--ac); transform:translateY(-1px); }
+.sub-link-picker { overflow:hidden; max-height:0; opacity:0; transition:max-height .32s cubic-bezier(0.16,1,0.3,1), opacity .25s ease; margin-top:0; }
+.sub-link-picker.open { max-height:320px; opacity:1; margin-top:10px; }
+.sub-link-picker-inner { border:1px solid var(--bd); border-radius:10px; background:var(--s2); overflow:hidden; }
+.sub-link-search { width:100%; box-sizing:border-box; padding:10px 12px; border:none; border-bottom:1px solid var(--bd); background:var(--sf); color:var(--tx); font-family:'DM Mono',monospace; font-size:11px; outline:none; }
+.sub-link-search::placeholder { color:var(--di); }
+.sub-link-search:focus { background:var(--s2); box-shadow:inset 0 -2px 0 0 var(--ac); }
+.sub-link-results { max-height:220px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
+.sub-link-results::-webkit-scrollbar { width:5px; }
+.sub-link-results::-webkit-scrollbar-thumb { background:var(--s3); border-radius:6px; }
+.sub-link-item { display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid var(--bd); transition:background .12s; cursor:pointer; }
+.sub-link-item:last-child { border-bottom:none; }
+.sub-link-item:hover { background:var(--s3); }
+.sub-link-item-date { font-family:'DM Mono',monospace; font-size:9.5px; color:var(--mu); flex-shrink:0; width:62px; }
+.sub-link-item-desc { flex:1; font-size:11.5px; color:var(--tx); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sub-link-item-amt { font-family:'DM Mono',monospace; font-size:11px; font-weight:700; flex-shrink:0; margin-right:6px; }
+.sub-link-item-add { flex-shrink:0; padding:3px 10px; border-radius:50px; border:1px solid color-mix(in srgb,var(--ac) 40%,transparent); background:color-mix(in srgb,var(--ac) 10%,transparent); color:var(--ac); font-family:'DM Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; transition:all .18s; white-space:nowrap; }
+.sub-link-item-add:hover { background:var(--ac); color:#0d0f14; border-color:var(--ac); }
+.sub-link-empty { text-align:center; padding:16px 12px; font-family:'DM Mono',monospace; font-size:10px; color:var(--di); letter-spacing:.3px; }
+.sub-tx-unlink { flex-shrink:0; width:20px; height:20px; border-radius:50%; border:1px solid transparent; background:transparent; color:var(--di); font-size:11px; font-weight:700; line-height:1; cursor:pointer; transition:all .18s; display:flex; align-items:center; justify-content:center; padding:0; }
+.sub-tx-unlink:hover { background:color-mix(in srgb,var(--ex) 14%,transparent); color:var(--ex); border-color:color-mix(in srgb,var(--ex) 35%,transparent); }
+.sub-tx-manual-pill { font-family:'DM Mono',monospace; font-size:7.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:1.5px 5px; border-radius:50px; background:color-mix(in srgb,var(--ac) 12%,transparent); color:var(--ac); margin-left:4px; flex-shrink:0; white-space:nowrap; }
+
 @media(max-width:600px) {
   .sub-summary-bar { grid-template-columns:repeat(2,1fr); }
   .sub-summary-item:nth-child(3) { border-left:none; }
@@ -1020,6 +1045,12 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
   .sub-tx-date { width:58px; font-size:9px; }
   .sub-tx-desc { font-size:11px; }
   .sub-tx-amt { font-size:11px; }
+  .sub-link-results { max-height:180px; }
+  .sub-link-item-date { width:54px; font-size:9px; }
+  .sub-link-item-desc { font-size:10.5px; }
+  .sub-link-item-amt { font-size:10px; }
+  .sub-link-item-add { font-size:8px; padding:3px 8px; }
+  .sub-tx-manual-pill { font-size:7px; }
 }
 @media(min-width:768px) {
   .sub-title { font-size:26px; }
@@ -5551,6 +5582,12 @@ function toggleSubHistory(btn, recId) {
 
   if (isOpen) return;
   // Always re-render on open so new transactions (sync, auto-match) appear immediately
+  renderSubHistInner(recId);
+}
+
+function renderSubHistInner(recId) {
+  const inner = document.getElementById('hist-inner-' + recId);
+  if (!inner) return;
 
   const rec = recurringList.find(r => r.id === recId);
   if (!rec) { inner.innerHTML = '<div class="sub-hist-empty">Subscription not found.</div>'; return; }
@@ -5570,6 +5607,9 @@ function toggleSubHistory(btn, recId) {
       const dd = new Date(b.date + 'T00:00:00') - new Date(a.date + 'T00:00:00');
       return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
     });
+
+  // Build a set of IDs in this history for quick lookup
+  const historyIds = new Set(subTxs.map(t => t.id));
 
   const totalPaid = subTxs.reduce((s, t) => s + t.amount, 0);
   const amtCls   = rec.type === 'income' ? 'inc' : 'exp';
@@ -5603,19 +5643,127 @@ function toggleSubHistory(btn, recId) {
     const isCapped = subTxs.length > 50;
     const rows = (isCapped ? subTxs.slice(0, 50) : subTxs).map(t => {
       const d = t.desc || '';
+      const isManual = t.subId === recId && Math.abs(t.amount) !== Math.abs(rec.amount);
+      const unlinkBtn = t.subId === recId
+        ? `<button class="sub-tx-unlink" onclick="event.stopPropagation();unlinkSubTx('${esc(t.id)}','${esc(recId)}')" title="Remove from history">×</button>`
+        : '';
+      const manualPill = isManual ? '<span class="sub-tx-manual-pill">manual</span>' : '';
       return `<div class="sub-tx-row">
         <div class="sub-tx-date">${fmtDt(t.date)}</div>
-        <div class="sub-tx-desc" title="${esc(d)}">${esc(d)}</div>
+        <div class="sub-tx-desc" title="${esc(d)}">${esc(d)}${manualPill}</div>
         <div class="sub-tx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${fmt(t.amount)}</div>
+        ${unlinkBtn}
       </div>`;
-    }
-    ).join('');
+    }).join('');
     listHtml = `<div class="sub-hist-list">${rows}${
       isCapped ? `<div class="sub-hist-cap">Showing latest 50 of ${subTxs.length} payments</div>` : ''
     }</div>`;
   }
 
-  inner.innerHTML = statsHtml + listHtml;
+  const linkBtnHtml = `<button class="sub-link-btn" onclick="openLinkPicker('${esc(recId)}')">＋ Add Past Payment</button>`;
+  const pickerHtml = `<div class="sub-link-picker" id="link-picker-${recId}"><div class="sub-link-picker-inner">
+    <input class="sub-link-search" id="link-search-${recId}" type="text" placeholder="Search transactions..." oninput="renderLinkPicker('${esc(recId)}',this.value)">
+    <div class="sub-link-results" id="link-results-${recId}"></div>
+  </div></div>`;
+
+  inner.innerHTML = statsHtml + listHtml + linkBtnHtml + pickerHtml;
+  // Store historyIds on inner element for picker to reference
+  inner._historyIds = historyIds;
+}
+
+function openLinkPicker(recId) {
+  const picker = document.getElementById('link-picker-' + recId);
+  if (!picker) return;
+  const isOpen = picker.classList.contains('open');
+  picker.classList.toggle('open', !isOpen);
+  if (!isOpen) {
+    // Focus the search field
+    const search = document.getElementById('link-search-' + recId);
+    if (search) { search.value = ''; setTimeout(() => search.focus(), 100); }
+    renderLinkPicker(recId, '');
+  }
+}
+
+function renderLinkPicker(recId, query) {
+  const container = document.getElementById('link-results-' + recId);
+  const inner = document.getElementById('hist-inner-' + recId);
+  if (!container || !inner) return;
+
+  const rec = recurringList.find(r => r.id === recId);
+  if (!rec) { container.innerHTML = '<div class="sub-link-empty">Subscription not found.</div>'; return; }
+
+  const historyIds = inner._historyIds || new Set();
+  const q = (query || '').trim().toLowerCase();
+
+  // Filter candidates: not already in this sub's history
+  let candidates = txs.filter(t => !historyIds.has(t.id));
+  // Apply search filter
+  if (q) candidates = candidates.filter(t => (t.desc || '').toLowerCase().includes(q));
+  // Sort by date descending
+  candidates.sort((a, b) => {
+    const dd = (b.date || '').localeCompare(a.date || '');
+    return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
+  });
+  // Cap at 40 to keep DOM lean
+  const capped = candidates.length > 40;
+  const shown = capped ? candidates.slice(0, 40) : candidates;
+
+  if (!shown.length) {
+    container.innerHTML = `<div class="sub-link-empty">${q ? 'No matching transactions found.' : 'No unlinked transactions available.'}</div>`;
+    return;
+  }
+
+  container.innerHTML = shown.map(t => {
+    const d = t.desc || '';
+    const amtCls = t.type === 'income' ? 'inc' : 'exp';
+    return `<div class="sub-link-item">
+      <div class="sub-link-item-date">${fmtDt(t.date)}</div>
+      <div class="sub-link-item-desc" title="${esc(d)}">${esc(d)}</div>
+      <div class="sub-link-item-amt ${amtCls}">${fmt(t.amount)}</div>
+      <button class="sub-link-item-add" onclick="event.stopPropagation();linkSubTx('${esc(t.id)}','${esc(recId)}')">＋ Link</button>
+    </div>`;
+  }).join('') + (capped ? `<div class="sub-link-empty">Showing first 40 results. Use search to narrow down.</div>` : '');
+}
+
+async function linkSubTx(txId, recId) {
+  if (!userId) { showToast('Sign in first', 'er'); return; }
+  const tx = txs.find(t => t.id === txId);
+  if (!tx) return;
+  const linkData = { subId: recId, _recurring: true };
+  try {
+    await setDoc(doc(db, 'users', userId, 'transactions', txId), linkData, { merge: true });
+  } catch(e) {
+    queueFailedSync('setDoc', 'transactions', txId, linkData, true);
+  }
+  // Optimistic local update
+  tx.subId = recId;
+  tx._recurring = true;
+  renderSubHistInner(recId);
+  // Re-open the picker if it was open
+  const picker = document.getElementById('link-picker-' + recId);
+  if (picker) {
+    picker.classList.add('open');
+    const search = document.getElementById('link-search-' + recId);
+    renderLinkPicker(recId, search ? search.value : '');
+  }
+  showToast('Payment linked to subscription', 'ok');
+}
+
+async function unlinkSubTx(txId, recId) {
+  if (!userId) { showToast('Sign in first', 'er'); return; }
+  const tx = txs.find(t => t.id === txId);
+  if (!tx) return;
+  const unlinkData = { subId: deleteField() };
+  try {
+    await setDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData, { merge: true });
+  } catch(e) {
+    // For offline queue, use null since deleteField() is a sentinel
+    queueFailedSync('setDoc', 'transactions', txId, { subId: null }, true);
+  }
+  // Optimistic local update
+  delete tx.subId;
+  renderSubHistInner(recId);
+  showToast('Payment removed from history', 'ok');
 }
 
 function openAddRecurring() {
@@ -6784,6 +6932,10 @@ window.setRecFreq = setRecFreq;
 window.toggleRecurringActive = toggleRecurringActive;
 window.askDeleteRecurring = askDeleteRecurring;
 window.toggleSubHistory = toggleSubHistory;
+window.openLinkPicker = openLinkPicker;
+window.renderLinkPicker = renderLinkPicker;
+window.linkSubTx = linkSubTx;
+window.unlinkSubTx = unlinkSubTx;
 // PDF
 window.openReportMod = openReportMod;
 window.closeReportMod = closeReportMod;
