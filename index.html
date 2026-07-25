@@ -5528,7 +5528,7 @@ function renderRecurring() {
         <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(${recIdJson},${!rec.active})">${pauseLabel}</button>
         <button class="sub-action-btn edit-btn" onclick="openEditRecurring(${recIdJson})">✏ Edit</button>
         <button class="sub-action-btn del-btn" onclick="askDeleteRecurring(${recIdJson})">🗑 Remove</button>
-        <button class="sub-action-btn hist-btn" id="hist-btn-${rec.id}" onclick="toggleSubHistory(this,${recIdJson})">📋 History</button>
+        <button class="sub-action-btn hist-btn" id="hist-btn-${rec.id}" onclick="toggleSubHistory(this,'${rec.id}')">📋 History</button>
       </div>
       <div class="sub-hist-panel" id="hist-panel-${rec.id}">
         <div class="sub-hist-inner" id="hist-inner-${rec.id}"></div>
