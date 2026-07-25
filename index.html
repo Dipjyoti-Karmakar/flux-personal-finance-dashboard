@@ -4956,9 +4956,11 @@ function renderParsedLog(action, p) {
     }
     
     const labelMap = { 'Desc':'DESC', 'Amt':'AMT', 'Cat':'CAT', 'Date':'DATE', 'Mode':'MODE', 'Type':'TYPE', 'Event':'EVENT' };
+    // Decode HTML entities that may have been baked into old stored logs (legacy double-encoding bug)
+    const htmlDec = s => String(s).replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'");
     const dfn = (label, oldV, newV) => {
       const displayLabel = labelMap[label] || label.toUpperCase();
-      return `<div class="diff-row"><span class="diff-label">${displayLabel}</span><div class="diff-values"><span class="diff-old">${esc(oldV)}</span><span class="diff-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span class="diff-new">${esc(newV)}</span></div></div>`;
+      return `<div class="diff-row"><span class="diff-label">${displayLabel}</span><div class="diff-values"><span class="diff-old">${esc(htmlDec(oldV))}</span><span class="diff-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span class="diff-new">${esc(htmlDec(newV))}</span></div></div>`;
     };
     const diffHtml = p.diffs.map(d => dfn(d.label, d.oldV, d.newV)).join('');
     return `<div>${esc(p.desc)}</div>${metaHtml}<div class="diff-container">${diffHtml}</div>`;
