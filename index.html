@@ -942,8 +942,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .sub-summary-lbl { font-family:'DM Mono',monospace; font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mu); font-weight:600; }
 
 /* Cards Grid */
-.sub-grid { display:grid; grid-template-columns:1fr; gap:14px; }
-@media(min-width:640px) { .sub-grid { grid-template-columns:repeat(2,1fr); gap:16px; } }
+.sub-grid { display:grid; grid-template-columns:1fr; gap:14px; align-items:start; }
+@media(min-width:640px) { .sub-grid { grid-template-columns:repeat(2,1fr); gap:16px; align-items:start; } }
 
 /* Subscription Card */
 .sub-card { background:var(--sf); border:1px solid var(--bd); border-radius:16px; padding:18px; transition:all .25s cubic-bezier(0.16,1,0.3,1); box-shadow:var(--sh-card); }
