@@ -948,6 +948,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 /* Subscription Card */
 .sub-card { background:var(--sf); border:1px solid var(--bd); border-radius:16px; padding:18px; transition:all .25s cubic-bezier(0.16,1,0.3,1); box-shadow:var(--sh-card); }
 .sub-card:hover { border-color:var(--bs); box-shadow:var(--sh-hov); transform:translateY(-2px); }
+.sub-card:has(.sub-hist-panel.open) { transform:none; }
+.sub-card:has(.sub-hist-panel.open):hover { transform:none; }
 .sub-card.sub-paused { opacity:0.55; filter:saturate(0.5); }
 
 /* Card top row */
@@ -5546,8 +5548,8 @@ function toggleSubHistory(btn, recId) {
   btn.classList.toggle('act', !isOpen);
   btn.innerHTML = isOpen ? '📋 History' : '▲ Close';
 
-  if (isOpen || inner.dataset.loaded) return;
-  inner.dataset.loaded = '1';
+  if (isOpen) return;
+  // Always re-render on open so new transactions (sync, auto-match) appear immediately
 
   const rec = recurringList.find(r => r.id === recId);
   if (!rec) { inner.innerHTML = '<div class="sub-hist-empty">Subscription not found.</div>'; return; }
