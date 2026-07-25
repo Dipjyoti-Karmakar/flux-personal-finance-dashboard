@@ -1008,18 +1008,18 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .sub-link-btn:hover { background:color-mix(in srgb,var(--ac) 14%,transparent); border-color:var(--ac); transform:translateY(-1px); }
 .sub-link-picker { overflow:hidden; max-height:0; opacity:0; transition:max-height .32s cubic-bezier(0.16,1,0.3,1), opacity .25s ease; margin-top:0; }
 .sub-link-picker.open { max-height:320px; opacity:1; margin-top:10px; }
-.sub-link-picker-inner { border:1px solid var(--bd); border-radius:10px; background:var(--s2); overflow:hidden; }
+.sub-link-picker-inner { border:1px solid var(--bd); border-radius:10px; background:var(--s2); overflow:hidden; min-width:0; }
 .sub-link-search { width:100%; box-sizing:border-box; padding:10px 12px; border:none; border-bottom:1px solid var(--bd); background:var(--sf); color:var(--tx); font-family:'DM Mono',monospace; font-size:11px; outline:none; }
 .sub-link-search::placeholder { color:var(--di); }
 .sub-link-search:focus { background:var(--s2); box-shadow:inset 0 -2px 0 0 var(--ac); }
 .sub-link-results { max-height:220px; overflow-y:auto; overflow-x:hidden; scrollbar-width:thin; scrollbar-color:var(--s3) transparent; }
 .sub-link-results::-webkit-scrollbar { width:5px; }
 .sub-link-results::-webkit-scrollbar-thumb { background:var(--s3); border-radius:6px; }
-.sub-link-item { display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid var(--bd); transition:background .12s; cursor:pointer; }
+.sub-link-item { display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid var(--bd); transition:background .12s; cursor:pointer; min-width:0; overflow:hidden; }
 .sub-link-item:last-child { border-bottom:none; }
 .sub-link-item:hover { background:var(--s3); }
 .sub-link-item-date { font-family:'DM Mono',monospace; font-size:9.5px; color:var(--mu); flex-shrink:0; width:62px; }
-.sub-link-item-desc { flex:1; font-size:11.5px; color:var(--tx); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sub-link-item-desc { flex:1; font-size:11.5px; color:var(--tx); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
 .sub-link-item-amt { font-family:'DM Mono',monospace; font-size:11px; font-weight:700; flex-shrink:0; margin-right:6px; }
 .sub-link-item-add { flex-shrink:0; padding:3px 10px; border-radius:50px; border:1px solid color-mix(in srgb,var(--ac) 40%,transparent); background:color-mix(in srgb,var(--ac) 10%,transparent); color:var(--ac); font-family:'DM Mono',monospace; font-size:8.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; cursor:pointer; transition:all .18s; white-space:nowrap; }
 .sub-link-item-add:hover { background:var(--ac); color:#0d0f14; border-color:var(--ac); }
@@ -5643,7 +5643,7 @@ function renderSubHistInner(recId) {
     const isCapped = subTxs.length > 50;
     const rows = (isCapped ? subTxs.slice(0, 50) : subTxs).map(t => {
       const d = t.desc || '';
-      const isManual = t.subId === recId && Math.abs(t.amount) !== Math.abs(rec.amount);
+      const isManual = !!(t._manualLink);
       const unlinkBtn = t.subId === recId
         ? `<button class="sub-tx-unlink" onclick="event.stopPropagation();unlinkSubTx('${esc(t.id)}','${esc(recId)}')" title="Remove from history">×</button>`
         : '';
@@ -5695,8 +5695,8 @@ function renderLinkPicker(recId, query) {
   const historyIds = inner._historyIds || new Set();
   const q = (query || '').trim().toLowerCase();
 
-  // Filter candidates: not already in this sub's history
-  let candidates = txs.filter(t => !historyIds.has(t.id));
+  // Filter candidates: not already in this sub's history, and not assigned to a different subscription
+  let candidates = txs.filter(t => !historyIds.has(t.id) && (!t.subId || t.subId === recId));
   // Apply search filter
   if (q) candidates = candidates.filter(t => (t.desc || '').toLowerCase().includes(q));
   // Sort by date descending
@@ -5729,7 +5729,7 @@ async function linkSubTx(txId, recId) {
   if (!userId) { showToast('Sign in first', 'er'); return; }
   const tx = txs.find(t => t.id === txId);
   if (!tx) return;
-  const linkData = { subId: recId, _recurring: true };
+  const linkData = { subId: recId, _recurring: true, _manualLink: true };
   try {
     await setDoc(doc(db, 'users', userId, 'transactions', txId), linkData, { merge: true });
   } catch(e) {
@@ -5738,6 +5738,7 @@ async function linkSubTx(txId, recId) {
   // Optimistic local update
   tx.subId = recId;
   tx._recurring = true;
+  tx._manualLink = true;
   renderSubHistInner(recId);
   // Re-open the picker if it was open
   const picker = document.getElementById('link-picker-' + recId);
@@ -5753,16 +5754,24 @@ async function unlinkSubTx(txId, recId) {
   if (!userId) { showToast('Sign in first', 'er'); return; }
   const tx = txs.find(t => t.id === txId);
   if (!tx) return;
-  const unlinkData = { subId: deleteField() };
+  const unlinkData = { subId: deleteField(), _manualLink: deleteField() };
   try {
     await setDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData, { merge: true });
   } catch(e) {
     // For offline queue, use null since deleteField() is a sentinel
-    queueFailedSync('setDoc', 'transactions', txId, { subId: null }, true);
+    queueFailedSync('setDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
   }
   // Optimistic local update
   delete tx.subId;
+  delete tx._manualLink;
   renderSubHistInner(recId);
+  // Re-open the picker if it was open
+  const picker = document.getElementById('link-picker-' + recId);
+  if (picker) {
+    picker.classList.add('open');
+    const search = document.getElementById('link-search-' + recId);
+    renderLinkPicker(recId, search ? search.value : '');
+  }
   showToast('Payment removed from history', 'ok');
 }
 
