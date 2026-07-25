@@ -12,13 +12,13 @@
 <meta name="apple-mobile-web-app-title" content="Flux">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
 <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=2">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com; worker-src 'self' blob:;">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com; worker-src 'self' blob:;">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" integrity="sha384-dWs4+zGqy/KS6giKxiK+6iowhidQwjVFaiE1lMar36QqZc6/i0K+YPQE+bWiqBRAWuFs" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
 <style>
 :root{--bg:#0d0f14;--sf:#13161e;--s2:#1a1e28;--s3:#212633;--bd:rgba(255,255,255,0.07);--bs:rgba(255,255,255,0.13);--txi-bd:rgba(255,255,255,0.06);--tx:#e8eaf0;--mu:#7a8099;--di:#4a5068;--ac:#c8a96e;--ag:rgba(200,169,110,0.15);--on:#6e9dc8;--of:#9d7ac8;--ob:rgba(110,157,200,0.1);--fb:rgba(157,122,200,0.1);--in:#5dba8a;--ex:#e07070;--ib:rgba(93,186,138,0.1);--eb:rgba(224,112,112,0.1);--r:18px;--rs:12px;--sh-hov:0 16px 40px rgba(0,0,0,0.4);--sh-btn:0 8px 24px rgba(200,169,110,0.2);--sh-card:0 2px 8px rgba(0,0,0,0.12);--ease-spring:cubic-bezier(0.175, 0.885, 0.32, 1.275);--ease-out-expo:cubic-bezier(0.16, 1, 0.3, 1);--ease-in-out-circ:cubic-bezier(0.785, 0.135, 0.15, 0.86)}
 /* ── Premium Light Theme ── */
@@ -1424,7 +1424,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .flex-col-gap { display:flex; flex-direction:column; gap:8px; }
 </style>
 <style>img.emoji { height: 1em; width: 1em; margin: 0 .05em 0 .1em; vertical-align: -0.1em; }</style>
-<script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" integrity="sha384-32KMvAMS4DUBcQtHG6fzADguo/tpN1Nh6BAJa2QqZc6/i0K+YPQE+bWiqBRAWuFs" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js" integrity="sha512-oMnMpYV9/oA+Ly+0LTfsEzkvXfR3T0L2fQlBuSHAGNlHY5UPCoFnAHdRvTq1vFX5E9EV9NBYXm8hGNlkFqXQ==" crossorigin="anonymous"></script>
 </head>
 <body>
 <div id="offlineBanner" style="display:none; position:fixed; top:0; left:0; width:100%; background:var(--ex); color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:600; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
