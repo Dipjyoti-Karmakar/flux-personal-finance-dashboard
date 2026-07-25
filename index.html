@@ -822,11 +822,11 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 .section-in { animation:cardIn .6s cubic-bezier(0.16,1,0.3,1) backwards; }
 
 /* ── Scroll-to-Top Button ── */
-.scroll-top { position:fixed; bottom:24px; left:20px; z-index:900; width:44px; height:44px; border-radius:50%; border:1px solid var(--bd); background:var(--sf); color:var(--mu); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transform:translateY(12px); transition:all .3s cubic-bezier(0.16,1,0.3,1); box-shadow:0 4px 16px rgba(0,0,0,0.2); backdrop-filter:blur(8px); }
+.scroll-top { position:fixed; bottom:24px; right:20px; z-index:900; width:44px; height:44px; border-radius:50%; border:1px solid var(--bd); background:var(--sf); color:var(--mu); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transform:translateY(12px); transition:all .3s cubic-bezier(0.16,1,0.3,1); box-shadow:0 4px 16px rgba(0,0,0,0.2); backdrop-filter:blur(8px); }
 .scroll-top.vis { opacity:1; pointer-events:auto; transform:translateY(0); }
 .scroll-top:hover { border-color:var(--ac); color:var(--ac); transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,0.25); }
 .scroll-top:active { transform:scale(0.9); }
-@media(max-width:520px) { .scroll-top { bottom:24px; left:20px; width:40px; height:40px; font-size:16px; } }
+@media(max-width:520px) { .scroll-top { bottom:96px; right:20px; left:auto; width:40px; height:40px; font-size:16px; } }
 
 /* ── Enhanced Empty States ── */
 .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; gap:16px; text-align:center; }
