@@ -2308,13 +2308,14 @@ function loadDataFromCloud() {
       if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount > 0) {
         // V8: Explicit property pick to prevent prototype pollution — Object.assign
         // copies __proto__ as a regular key which can still pollute downstream spreads.
-        const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId } = data;
+        const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId, _manualLink } = data;
         const clean = { date, amount, type, mode, desc, cat, createdAt };
         if (eventId) clean.eventId = eventId;
         if (_imp) clean._imp = true;
         if (_recurring) clean._recurring = true;
         if (_auto) clean._auto = true;
         if (subId) clean.subId = subId;
+        if (_manualLink) clean._manualLink = true;
         loadedTxs.push({ id: doc.id, ...clean });
       }
     });
@@ -2324,11 +2325,18 @@ function loadDataFromCloud() {
     });
     // Merge any pending offline transactions from syncQueue that aren't in the snapshot yet
     syncQueue.forEach(q => {
-      if (q.col === 'transactions' && q.op === 'setDoc' && q.data && !txs.find(t => t.id === q.id)) {
-        const d = q.data;
-        if (typeof d.date === 'string' && d.date && typeof d.amount === 'number' && isFinite(d.amount) && d.amount > 0) {
-          txs.push({ id: q.id, ...d });
+      if (q.col === 'transactions' && q.op === 'setDoc' && q.data) {
+        const existingIdx = txs.findIndex(t => t.id === q.id);
+        if (existingIdx !== -1) {
+          txs[existingIdx] = { ...txs[existingIdx], ...q.data };
+        } else {
+          const d = q.data;
+          if (typeof d.date === 'string' && d.date && typeof d.amount === 'number' && isFinite(d.amount) && d.amount > 0) {
+            txs.push({ id: q.id, ...d });
+          }
         }
+      } else if (q.col === 'transactions' && q.op === 'deleteDoc') {
+        txs = txs.filter(t => t.id !== q.id);
       }
     });
     if (syncQueue.some(q => q.col === 'transactions')) {
@@ -5735,6 +5743,10 @@ async function linkSubTx(txId, recId) {
   } catch(e) {
     queueFailedSync('setDoc', 'transactions', txId, linkData, true);
   }
+  // Capture search query before re-rendering
+  const searchInput = document.getElementById('link-search-' + recId);
+  const currentQuery = searchInput ? searchInput.value : '';
+
   // Optimistic local update
   tx.subId = recId;
   tx._recurring = true;
@@ -5744,8 +5756,12 @@ async function linkSubTx(txId, recId) {
   const picker = document.getElementById('link-picker-' + recId);
   if (picker) {
     picker.classList.add('open');
-    const search = document.getElementById('link-search-' + recId);
-    renderLinkPicker(recId, search ? search.value : '');
+    const newSearch = document.getElementById('link-search-' + recId);
+    if (newSearch) {
+      newSearch.value = currentQuery;
+      newSearch.focus();
+    }
+    renderLinkPicker(recId, currentQuery);
   }
   showToast('Payment linked to subscription', 'ok');
 }
@@ -5761,6 +5777,10 @@ async function unlinkSubTx(txId, recId) {
     // For offline queue, use null since deleteField() is a sentinel
     queueFailedSync('setDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
   }
+  // Capture search query before re-rendering
+  const searchInput = document.getElementById('link-search-' + recId);
+  const currentQuery = searchInput ? searchInput.value : '';
+
   // Optimistic local update
   delete tx.subId;
   delete tx._manualLink;
@@ -5769,8 +5789,12 @@ async function unlinkSubTx(txId, recId) {
   const picker = document.getElementById('link-picker-' + recId);
   if (picker) {
     picker.classList.add('open');
-    const search = document.getElementById('link-search-' + recId);
-    renderLinkPicker(recId, search ? search.value : '');
+    const newSearch = document.getElementById('link-search-' + recId);
+    if (newSearch) {
+      newSearch.value = currentQuery;
+      newSearch.focus();
+    }
+    renderLinkPicker(recId, currentQuery);
   }
   showToast('Payment removed from history', 'ok');
 }
