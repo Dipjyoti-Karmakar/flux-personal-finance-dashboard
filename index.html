@@ -2122,6 +2122,7 @@ let syncQueue = (function() {
     return raw.filter(item => item && typeof item.op === 'string' && typeof item.col === 'string' && typeof item.id === 'string');
   } catch(e) { return []; }
 })();
+let _syncRetryTimer = null;
 function queueFailedSync(op, col, id, data, isMerge=false, silent=false) {
   syncQueue.push({ op, col, id, data, isMerge, ts: Date.now() });
   localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
@@ -2145,6 +2146,11 @@ function queueFailedSync(op, col, id, data, isMerge=false, silent=false) {
   }
 
   if (!silent) showToast('Saved offline. Will sync when connected.', 'ok');
+  // Retry sync shortly if we're actually online (updateDoc may have failed transiently)
+  if (navigator.onLine && userId) {
+    clearTimeout(_syncRetryTimer);
+    _syncRetryTimer = setTimeout(() => processSyncQueue(), 2000);
+  }
 }
 async function processSyncQueue() {
   if (syncQueue.length === 0 || !navigator.onLine || !userId) return;
@@ -2156,7 +2162,7 @@ async function processSyncQueue() {
   for (const item of queue) {
     try {
       if (item.op === 'setDoc') await setDoc(doc(db, 'users', userId, item.col, item.id), item.data, item.isMerge ? {merge:true} : undefined);
-      else if (item.op === 'updateDoc') await updateDoc(doc(db, 'users', userId, item.col, item.id), item.data);
+      else if (item.op === 'updateDoc') await setDoc(doc(db, 'users', userId, item.col, item.id), item.data, {merge:true});
       else if (item.op === 'deleteDoc') await deleteDoc(doc(db, 'users', userId, item.col, item.id));
       // Only count user-facing operations (not activity log entries) for the toast
       if (item.col !== 'activities') c++;
@@ -5815,7 +5821,7 @@ async function linkSubTx(txId, recId) {
   showToast('Payment linked to subscription', 'ok');
 
   try {
-    await updateDoc(doc(db, 'users', userId, 'transactions', txId), linkData);
+    await setDoc(doc(db, 'users', userId, 'transactions', txId), linkData, { merge: true });
   } catch(e) {
     queueFailedSync('updateDoc', 'transactions', txId, linkData, true);
   }
@@ -5841,7 +5847,7 @@ async function unlinkSubTx(txId, recId) {
 
   if (Object.keys(unlinkData).length > 0) {
     try {
-      await updateDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData);
+      await setDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData, { merge: true });
     } catch(e) {
       queueFailedSync('updateDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
     }
