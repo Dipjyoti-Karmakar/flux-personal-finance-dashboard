@@ -2750,6 +2750,13 @@ function render(){
       if (el) twemoji.parse(el);
     });
   }
+  // Keep open history panels updated with new transaction data
+  document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
+    const recId = p.id.replace('hist-panel-', '');
+    if (typeof renderSubHistInner === 'function') {
+      renderSubHistInner(recId);
+    }
+  });
 }
 
 // Debounced render - coalesces rapid Firestore snapshot fires (e.g. during batch imports)
@@ -5509,6 +5516,17 @@ async function detectEarlyPayments() {
 function renderRecurring() {
   const area = document.getElementById('subList');
   if (!area) return;
+
+  // Preserve open panels and their search queries
+  const openPanels = new Set();
+  const searchQueries = {};
+  area.querySelectorAll('.sub-hist-panel.open').forEach(p => {
+    const id = p.id.replace('hist-panel-', '');
+    openPanels.add(id);
+    const search = document.getElementById('link-search-' + id);
+    if (search) searchQueries[id] = search.value;
+  });
+
   const today = getTodayStr();
   const FREQ = { daily:'Daily', weekly:'Weekly', monthly:'Monthly', yearly:'Yearly' };
   // Update summary bar
@@ -5612,6 +5630,17 @@ function renderRecurring() {
     }
   });
 
+  // Restore open panels
+  openPanels.forEach(id => {
+    const btn = document.getElementById('hist-btn-' + id);
+    if (btn) toggleSubHistory(btn, id);
+    const search = document.getElementById('link-search-' + id);
+    if (search && searchQueries[id] !== undefined) {
+      search.value = searchQueries[id];
+      renderLinkPicker(id, searchQueries[id]);
+    }
+  });
+
   if (typeof twemoji !== 'undefined') twemoji.parse(area);
 }
 
@@ -5649,7 +5678,7 @@ function renderSubHistInner(recId) {
       return false;
     })
     .sort((a, b) => {
-      const dd = new Date(b.date + 'T00:00:00') - new Date(a.date + 'T00:00:00');
+      const dd = (b.date || '').localeCompare(a.date || '');
       return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
     });
 
@@ -5802,11 +5831,9 @@ async function linkSubTx(txId, recId) {
   showToast('Payment linked to subscription', 'ok');
 
   try {
-    const fullTx = { ...tx };
-    delete fullTx.id;
-    await setDoc(doc(db, 'users', userId, 'transactions', txId), fullTx);
+    await updateDoc(doc(db, 'users', userId, 'transactions', txId), linkData);
   } catch(e) {
-    queueFailedSync('setDoc', 'transactions', txId, linkData, true);
+    queueFailedSync('updateDoc', 'transactions', txId, linkData, true);
   }
 }
 
@@ -5830,11 +5857,9 @@ async function unlinkSubTx(txId, recId) {
 
   if (Object.keys(unlinkData).length > 0) {
     try {
-      const fullTx = { ...tx };
-      delete fullTx.id;
-      await setDoc(doc(db, 'users', userId, 'transactions', txId), fullTx);
+      await updateDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData);
     } catch(e) {
-      queueFailedSync('setDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
+      queueFailedSync('updateDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
     }
   }
 }
