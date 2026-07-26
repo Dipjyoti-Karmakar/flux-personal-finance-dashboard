@@ -2125,6 +2125,25 @@ let syncQueue = (function() {
 function queueFailedSync(op, col, id, data, isMerge=false, silent=false) {
   syncQueue.push({ op, col, id, data, isMerge, ts: Date.now() });
   localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
+  
+  // Instantly apply the failed sync to local state so it doesn't disappear from UI
+  if (col === 'transactions' && data && typeof txs !== 'undefined') {
+    const existingIdx = txs.findIndex(t => t.id === id);
+    if (existingIdx !== -1) {
+      if (op === 'setDoc' || op === 'updateDoc') {
+        txs[existingIdx] = { ...txs[existingIdx], ...data };
+      }
+    } else if (op === 'setDoc' || op === 'updateDoc') {
+       if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && data.amount > 0) {
+         txs.push({ id, ...data });
+       }
+    } else if (op === 'deleteDoc') {
+      const idx = txs.findIndex(t => t.id === id);
+      if (idx !== -1) txs.splice(idx, 1);
+    }
+    if (typeof debouncedRender === 'function') debouncedRender();
+  }
+
   if (!silent) showToast('Saved offline. Will sync when connected.', 'ok');
 }
 async function processSyncQueue() {
