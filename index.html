@@ -5802,9 +5802,11 @@ async function linkSubTx(txId, recId) {
   showToast('Payment linked to subscription', 'ok');
 
   try {
-    await updateDoc(doc(db, 'users', userId, 'transactions', txId), linkData);
+    const fullTx = { ...tx };
+    delete fullTx.id;
+    await setDoc(doc(db, 'users', userId, 'transactions', txId), fullTx);
   } catch(e) {
-    queueFailedSync('updateDoc', 'transactions', txId, linkData, true);
+    queueFailedSync('setDoc', 'transactions', txId, linkData, true);
   }
 }
 
@@ -5828,10 +5830,11 @@ async function unlinkSubTx(txId, recId) {
 
   if (Object.keys(unlinkData).length > 0) {
     try {
-      await updateDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData);
+      const fullTx = { ...tx };
+      delete fullTx.id;
+      await setDoc(doc(db, 'users', userId, 'transactions', txId), fullTx);
     } catch(e) {
-      // For offline queue, use null since deleteField() is a sentinel
-      queueFailedSync('updateDoc', 'transactions', txId, { subId: null, _manualLink: null }, false);
+      queueFailedSync('setDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
     }
   }
 }
