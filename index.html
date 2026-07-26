@@ -2160,7 +2160,17 @@ async function processSyncQueue() {
   for (const item of queue) {
     try {
       if (item.op === 'setDoc') await setDoc(doc(db, 'users', userId, item.col, item.id), item.data, item.isMerge ? {merge:true} : undefined);
-      else if (item.op === 'updateDoc') await setDoc(doc(db, 'users', userId, item.col, item.id), item.data, {merge:true});
+      else if (item.op === 'updateDoc') {
+        // Translate __DELETE__ sentinels back to deleteField() for true field removal
+        const payload = {};
+        let hasDelete = false;
+        for (const [k, v] of Object.entries(item.data)) {
+          if (v === '__DELETE__') { payload[k] = deleteField(); hasDelete = true; }
+          else payload[k] = v;
+        }
+        if (hasDelete) await updateDoc(doc(db, 'users', userId, item.col, item.id), payload);
+        else await setDoc(doc(db, 'users', userId, item.col, item.id), item.data, {merge:true});
+      }
       else if (item.op === 'deleteDoc') await deleteDoc(doc(db, 'users', userId, item.col, item.id));
       // Only count user-facing operations (not activity log entries) for the toast
       if (item.col !== 'activities') c++;
@@ -2680,8 +2690,8 @@ async function undoDelete() {
 // FIXED: No longer suppresses ALL toasts during the undo window — only suppresses
 // neutral/success toasts. Error toasts always show so users see sync failures.
 function showToast(msg,type){if(_undoTimer && type !== 'er')return;const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
-function fmt(n){const a=Math.abs(n);return (n<0?'-':'')+'₹'+a.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmt(n){const a=Math.abs(n);const w=Math.floor(a);const p=Math.round((a-w)*100);return (n<0?'-':'')+'₹'+w.toLocaleString('en-IN')+'.'+String(p).padStart(2,'0');}
+function fmtS(n){const a=Math.abs(n);const w=Math.floor(a);const p=Math.round((a-w)*100);return '₹'+w.toLocaleString('en-IN')+'.'+String(p).padStart(2,'0');}
 function fmtDt(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
@@ -2766,7 +2776,7 @@ function debouncedRender() {
   _renderTimer = setTimeout(() => { 
     _renderTimer = null; 
     render(); 
-    tagPastSubscriptions().then(() => {
+    tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then(() => {
       detectEarlyPayments();
       // Re-render any open history panels so they reflect updated _recurring tags
       document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
@@ -4885,30 +4895,25 @@ async function deleteEvent(evtId) {
   if (!userId) return;
   const eventName = events[evtId]?.name || 'Event';
   const eventSrc = events[evtId]?._src;
-  // Step 1: remove tag from all linked transactions
+  // Step 1: remove event tags from linked transactions (tolerate offline)
   try {
     await removeEventFromTransactions(evtId);
   } catch(e) {
     console.error('Error removing event tag from transactions', e);
-    showToast('Failed to remove event tag. Tap to retry.', 'er');
-    return; // retain event, do not proceed to deletion
+    // Optimistic local removal so deletion can proceed offline
+    txs.forEach(t => { if (t.eventId === evtId) delete t.eventId; });
   }
   // Step 2: delete the event document (or queue if offline)
-  let saved = false;
   try {
     await deleteDoc(getEventDocRef(evtId, eventSrc));
-    saved = true;
   } catch(e) {
     console.error('Error deleting event doc (queuing)', e);
     queueFailedSync('deleteDoc', eventSrc === 'transactions' || eventsUseFallback ? 'transactions' : 'events', evtId, null);
-    saved = true;
   }
-  if (saved) {
-    delete events[evtId];
-    renderEvents();
-    showToast(navigator.onLine ? 'Event deleted' : 'Saved offline. Will sync when connected.', 'ok');
-    writeLog('DELETE', { desc: eventName, isDelEvent: true });
-  }
+  delete events[evtId];
+  renderEvents();
+  showToast(navigator.onLine ? 'Event deleted' : 'Saved offline. Will sync when connected.', 'ok');
+  writeLog('DELETE', { desc: eventName, isDelEvent: true });
 }
 
 async function assignTransactionsToEvent(evtId, start, end) {
@@ -5669,12 +5674,17 @@ function renderSubHistInner(recId) {
   const rec = recurringList.find(r => r.id === recId);
   if (!rec) { inner.innerHTML = '<div class="sub-hist-empty">Subscription not found.</div>'; return; }
 
-  // Match by subId (auto-linked) OR by name+amount+type fuzzy match for _recurring-tagged past txs
+  // Match by subId (linked) OR by _manualLink flag (if subId was lost during a past sync)
+  // OR by name+amount+type fuzzy match for auto-tagged past payments
   const nameLow = (rec.name || '').trim().toLowerCase();
   const subTxs = txs
     .filter(t => {
       if (t.subId === recId) return true;
-      // Fuzzy match only for _recurring txs that have NO subId (unlinked past tags)
+      // Catch manually linked payments where subId was cleared by a past sync/write bug
+      if (t._manualLink && !t.subId && t.type === rec.type &&
+          Math.abs(t.amount) === Math.abs(rec.amount) &&
+          (t.desc || '').trim().toLowerCase() === nameLow) return true;
+      // Fuzzy match for auto-tagged past payments (no subId, has _recurring flag)
       if (!t.subId && t._recurring && t.type === rec.type &&
           Math.abs(t.amount) === Math.abs(rec.amount) &&
           (t.desc || '').trim().toLowerCase() === nameLow) return true;
@@ -5868,13 +5878,10 @@ async function unlinkSubTx(txId, recId) {
     try {
       await updateDoc(doc(db, 'users', userId, 'transactions', txId), updatePayload);
     } catch(e) {
-      // For offline queue: store a sentinel object that marks fields for deletion.
-      // processSyncQueue uses setDoc+merge which can't deleteField from localStorage,
-      // so we keep the local optimistic state correct and re-queue as updateDoc with
-      // a _unlinkFields marker that processSyncQueue will handle via updateDoc.
-      // Since processSyncQueue already maps 'updateDoc' -> setDoc merge, we queue
-      // the full tx data minus the unlinked fields so the merge replaces the doc correctly.
-      const safePayload = { subId: null, _manualLink: null };
+      // Use __DELETE__ sentinel so processSyncQueue can translate back to deleteField()
+      const safePayload = {};
+      if (hadSubId) safePayload.subId = '__DELETE__';
+      if (hadManualLink) safePayload._manualLink = '__DELETE__';
       // silent=true: toast was already shown
       queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
     }
