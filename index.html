@@ -5563,10 +5563,7 @@ function renderRecurring() {
     return;
   }
   
-  const openPanels = [];
-  area.querySelectorAll('.sub-hist-panel.open').forEach(p => {
-    openPanels.push(p.id.replace('hist-panel-', ''));
-  });
+  // openPanels previously populated at the top of the function
 
   area.innerHTML = recurringList.map((rec, index) => {
     const isDue = rec.nextDue && rec.nextDue <= today;
@@ -5619,17 +5616,6 @@ function renderRecurring() {
       </div>
     </div>`;
   }).join('');
-  
-  openPanels.forEach(id => {
-    const p = document.getElementById('hist-panel-' + id);
-    const btn = document.getElementById('hist-btn-' + id);
-    if (p) {
-      p.classList.add('open');
-      if (btn) { btn.classList.add('act'); btn.innerHTML = '▲ Close'; }
-      renderSubHistInner(id);
-    }
-  });
-
   // Restore open panels
   openPanels.forEach(id => {
     const btn = document.getElementById('hist-btn-' + id);
@@ -5639,9 +5625,7 @@ function renderRecurring() {
       search.value = searchQueries[id];
       renderLinkPicker(id, searchQueries[id]);
     }
-  });
-
-  if (typeof twemoji !== 'undefined') twemoji.parse(area);
+  });  if (typeof twemoji !== 'undefined') twemoji.parse(area);
 }
 
 function toggleSubHistory(btn, recId) {
