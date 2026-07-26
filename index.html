@@ -2042,7 +2042,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const CICO={food:'🍜',transport:'🚗',housing:'🏠',entertainment:'🎮',health:'💊',shopping:'🛍',utilities:'🔌',utility:'🔌',occasions:'🎉',salary:'💼',freelance:'💻',investment:'📈',stationery:'📝',other:'✦'};
 const CAT_COLOR = {
@@ -2137,6 +2137,7 @@ async function processSyncQueue() {
   for (const item of queue) {
     try {
       if (item.op === 'setDoc') await setDoc(doc(db, 'users', userId, item.col, item.id), item.data, item.isMerge ? {merge:true} : undefined);
+      else if (item.op === 'updateDoc') await updateDoc(doc(db, 'users', userId, item.col, item.id), item.data);
       else if (item.op === 'deleteDoc') await deleteDoc(doc(db, 'users', userId, item.col, item.id));
       // Only count user-facing operations (not activity log entries) for the toast
       if (item.col !== 'activities') c++;
@@ -2325,7 +2326,7 @@ function loadDataFromCloud() {
     });
     // Merge any pending offline transactions from syncQueue that aren't in the snapshot yet
     syncQueue.forEach(q => {
-      if (q.col === 'transactions' && q.op === 'setDoc' && q.data) {
+      if (q.col === 'transactions' && (q.op === 'setDoc' || q.op === 'updateDoc') && q.data) {
         const existingIdx = txs.findIndex(t => t.id === q.id);
         if (existingIdx !== -1) {
           txs[existingIdx] = { ...txs[existingIdx], ...q.data };
@@ -5782,9 +5783,9 @@ async function linkSubTx(txId, recId) {
   showToast('Payment linked to subscription', 'ok');
 
   try {
-    await setDoc(doc(db, 'users', userId, 'transactions', txId), linkData, { merge: true });
+    await updateDoc(doc(db, 'users', userId, 'transactions', txId), linkData);
   } catch(e) {
-    queueFailedSync('setDoc', 'transactions', txId, linkData, true);
+    queueFailedSync('updateDoc', 'transactions', txId, linkData, true);
   }
 }
 
@@ -5808,10 +5809,10 @@ async function unlinkSubTx(txId, recId) {
 
   if (Object.keys(unlinkData).length > 0) {
     try {
-      await setDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData, { merge: true });
+      await updateDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData);
     } catch(e) {
       // For offline queue, use null since deleteField() is a sentinel
-      queueFailedSync('setDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
+      queueFailedSync('updateDoc', 'transactions', txId, { subId: null, _manualLink: null }, false);
     }
   }
 }
