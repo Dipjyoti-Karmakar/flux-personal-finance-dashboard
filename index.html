@@ -5666,8 +5666,8 @@ function renderSubHistInner(recId) {
   if (!subTxs.length) {
     listHtml = '<div class="sub-hist-empty">No matched payments yet.<br>Payments will appear here once transactions are auto-added or matched.</div>';
   } else {
-    const isCapped = subTxs.length > 50;
-    const rows = (isCapped ? subTxs.slice(0, 50) : subTxs).map(t => {
+    const isCapped = subTxs.length > 500;
+    const rows = (isCapped ? subTxs.slice(0, 500) : subTxs).map(t => {
       const d = t.desc || '';
       const isManual = !!(t._manualLink);
       const unlinkBtn = t.subId === recId
@@ -5682,7 +5682,7 @@ function renderSubHistInner(recId) {
       </div>`;
     }).join('');
     listHtml = `<div class="sub-hist-list">${rows}${
-      isCapped ? `<div class="sub-hist-cap">Showing latest 50 of ${subTxs.length} payments</div>` : ''
+      isCapped ? `<div class="sub-hist-cap">Showing latest 500 of ${subTxs.length} payments</div>` : ''
     }</div>`;
   }
 
