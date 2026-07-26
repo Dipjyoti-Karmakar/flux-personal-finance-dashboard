@@ -5524,6 +5524,12 @@ function renderRecurring() {
     </div>`;
     return;
   }
+  
+  const openPanels = [];
+  area.querySelectorAll('.sub-hist-panel.open').forEach(p => {
+    openPanels.push(p.id.replace('hist-panel-', ''));
+  });
+
   area.innerHTML = recurringList.map((rec, index) => {
     const isDue = rec.nextDue && rec.nextDue <= today;
     const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
@@ -5575,6 +5581,17 @@ function renderRecurring() {
       </div>
     </div>`;
   }).join('');
+  
+  openPanels.forEach(id => {
+    const p = document.getElementById('hist-panel-' + id);
+    const btn = document.getElementById('hist-btn-' + id);
+    if (p) {
+      p.classList.add('open');
+      if (btn) { btn.classList.add('act'); btn.innerHTML = '▲ Close'; }
+      renderSubHistInner(id);
+    }
+  });
+
   if (typeof twemoji !== 'undefined') twemoji.parse(area);
 }
 
@@ -5717,8 +5734,8 @@ function renderLinkPicker(recId, query) {
   const historyIds = inner._historyIds || new Set();
   const q = (query || '').trim().toLowerCase();
 
-  // Filter candidates: not already in this sub's history, and not assigned to a different subscription
-  let candidates = txs.filter(t => !historyIds.has(t.id) && (!t.subId || t.subId === recId));
+  // Filter candidates: not already in this sub's history, and not assigned to ANY subscription
+  let candidates = txs.filter(t => !historyIds.has(t.id) && !t.subId);
   // Apply search filter
   if (q) candidates = candidates.filter(t => (t.desc || '').toLowerCase().includes(q));
   // Sort by date descending
@@ -5752,11 +5769,6 @@ async function linkSubTx(txId, recId) {
   const tx = txs.find(t => t.id === txId);
   if (!tx) return;
   const linkData = { subId: recId, _recurring: true, _manualLink: true };
-  try {
-    await setDoc(doc(db, 'users', userId, 'transactions', txId), linkData, { merge: true });
-  } catch(e) {
-    queueFailedSync('setDoc', 'transactions', txId, linkData, true);
-  }
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
@@ -5768,19 +5780,21 @@ async function linkSubTx(txId, recId) {
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
   showToast('Payment linked to subscription', 'ok');
+
+  try {
+    await setDoc(doc(db, 'users', userId, 'transactions', txId), linkData, { merge: true });
+  } catch(e) {
+    queueFailedSync('setDoc', 'transactions', txId, linkData, true);
+  }
 }
 
 async function unlinkSubTx(txId, recId) {
   if (!userId) { showToast('Sign in first', 'er'); return; }
   const tx = txs.find(t => t.id === txId);
   if (!tx) return;
-  const unlinkData = { subId: deleteField(), _manualLink: deleteField() };
-  try {
-    await setDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData, { merge: true });
-  } catch(e) {
-    // For offline queue, use null since deleteField() is a sentinel
-    queueFailedSync('setDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
-  }
+  const unlinkData = {};
+  if (tx.subId !== undefined) unlinkData.subId = deleteField();
+  if (tx._manualLink !== undefined) unlinkData._manualLink = deleteField();
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
@@ -5791,6 +5805,15 @@ async function unlinkSubTx(txId, recId) {
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
   showToast('Payment removed from history', 'ok');
+
+  if (Object.keys(unlinkData).length > 0) {
+    try {
+      await setDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData, { merge: true });
+    } catch(e) {
+      // For offline queue, use null since deleteField() is a sentinel
+      queueFailedSync('setDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
+    }
+  }
 }
 
 function openAddRecurring() {
