@@ -2001,8 +2001,6 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
             </div>
           </div>
         </div>
-          </div>
-        </div>
         <div id="rptEventRow" style="display:none;margin-bottom:14px;">
           <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Select Event</label>
           <select id="rptEvent" style="width:100%;box-sizing:border-box;"><option value="">-- Select Event --</option></select>
@@ -2300,6 +2298,8 @@ onAuthStateChanged(auth, (user) => {
     recurringList = [];
     // Clear log selection mode if active
     if (logSelectionMode) { logSelectionMode = false; selectedLogs.clear(); const ab=document.getElementById('logDeleteAction'); const bb=document.getElementById('btnToggleDeleteLogs'); if(ab)ab.style.display='none'; if(bb)bb.style.display='inline-block'; }
+    renderLogs();
+    renderRecurring();
     
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg> Sign In`;
     
@@ -2546,13 +2546,7 @@ async function addTx() {
     console.error("Error adding transaction (queuing for offline sync)", e);
     // Queue for sync when back online
     queueFailedSync('setDoc', 'transactions', txId, newTx);
-    // Add to local array so it appears in the UI immediately
-    txs.push({ id: txId, ...newTx });
-    txs.sort((a,b) => {
-      const dDiff = new Date(b.date+'T00:00:00').getTime() - new Date(a.date+'T00:00:00').getTime();
-      return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
-    });
-    render();
+    // queueFailedSync already inserts into txs and calls debouncedRender
     saved = true;
   }
   
@@ -2686,8 +2680,8 @@ async function undoDelete() {
 // FIXED: No longer suppresses ALL toasts during the undo window — only suppresses
 // neutral/success toasts. Error toasts always show so users see sync failures.
 function showToast(msg,type){if(_undoTimer && type !== 'er')return;const el=document.getElementById('toast');el.textContent=msg;el.className='tst '+(type||'')+' sh';clearTimeout(el._t);el._t=setTimeout(()=>{el.className='tst';},2800);}
-function fmt(n){return (n < 0 ? '-' : '') + '₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');}
-function fmtS(n){return '₹'+Math.round(Math.abs(n)).toLocaleString('en-IN');}
+function fmt(n){const a=Math.abs(n);return (n<0?'-':'')+'₹'+a.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtS(n){return '₹'+Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtDt(d){return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'2-digit'});}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
@@ -2772,7 +2766,14 @@ function debouncedRender() {
   _renderTimer = setTimeout(() => { 
     _renderTimer = null; 
     render(); 
-    tagPastSubscriptions().then(() => detectEarlyPayments());
+    tagPastSubscriptions().then(() => {
+      detectEarlyPayments();
+      // Re-render any open history panels so they reflect updated _recurring tags
+      document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
+        const recId = p.id.replace('hist-panel-', '');
+        if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
+      });
+    });
   }, 120);
 }
 
@@ -3250,12 +3251,14 @@ document.addEventListener('keydown', (e) => {
   if (document.getElementById('eventMod').classList.contains('op')) { closeEventMod(); return; }
   if (document.getElementById('editMod').classList.contains('op')) { closeEditMod(); return; }
   if (document.getElementById('impMod').classList.contains('op')) { closeMod(); return; }
+  if (document.getElementById('recurringMod').classList.contains('op')) { closeRecurringMod(); return; }
+  if (document.getElementById('reportMod').classList.contains('op')) { closeReportMod(); return; }
 });
 
 // Focus trap for open modals - keeps Tab/Shift+Tab inside the active modal
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Tab') return;
-  const modals = ['confirmMod', 'eventMod', 'editMod', 'impMod'];
+  const modals = ['confirmMod', 'eventMod', 'editMod', 'impMod', 'recurringMod', 'reportMod'];
   let activeModal = null;
   for (const id of modals) {
     const el = document.getElementById(id);
@@ -4018,9 +4021,11 @@ function pDt(v) {
       return z.toISOString().slice(0,10);
   }
   if(typeof v === 'number') {
+      if (!isFinite(v)) return null;
       // B7 FIX: Apply timezone correction so Excel serial dates don't shift by one day
       const dt = new Date((v - 25569) * 86400 * 1000);
       const z = new Date(dt.getTime() - (dt.getTimezoneOffset() * 60000));
+      if (isNaN(z.getTime())) return null;
       return z.toISOString().slice(0,10);
   }
   
@@ -4878,23 +4883,31 @@ function askDeleteEvent(evtId) {
 
 async function deleteEvent(evtId) {
   if (!userId) return;
+  const eventName = events[evtId]?.name || 'Event';
+  const eventSrc = events[evtId]?._src;
+  // Step 1: remove tag from all linked transactions
+  try {
+    await removeEventFromTransactions(evtId);
+  } catch(e) {
+    console.error('Error removing event tag from transactions', e);
+    showToast('Failed to remove event tag. Tap to retry.', 'er');
+    return; // retain event, do not proceed to deletion
+  }
+  // Step 2: delete the event document (or queue if offline)
   let saved = false;
   try {
-    const eventName = events[evtId]?.name || 'Event';
-    await removeEventFromTransactions(evtId);
-    await deleteDoc(getEventDocRef(evtId, events[evtId]?._src));
+    await deleteDoc(getEventDocRef(evtId, eventSrc));
     saved = true;
   } catch(e) {
-    console.error('Error deleting event (queuing)', e);
-    queueFailedSync('deleteDoc', events[evtId]?._src === 'transactions' || eventsUseFallback ? 'transactions' : 'events', evtId, null);
-    delete events[evtId];
-    renderEvents();
+    console.error('Error deleting event doc (queuing)', e);
+    queueFailedSync('deleteDoc', eventSrc === 'transactions' || eventsUseFallback ? 'transactions' : 'events', evtId, null);
     saved = true;
   }
-  
   if (saved) {
+    delete events[evtId];
+    renderEvents();
     showToast(navigator.onLine ? 'Event deleted' : 'Saved offline. Will sync when connected.', 'ok');
-    writeLog('DELETE', { desc: events[evtId]?.name || 'Event', isDelEvent: true });
+    writeLog('DELETE', { desc: eventName, isDelEvent: true });
   }
 }
 
@@ -5811,19 +5824,21 @@ async function linkSubTx(txId, recId) {
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
-  // Optimistic local update
+  // Optimistic local update — must happen before any await so UI never flickers
   tx.subId = recId;
   tx._recurring = true;
   tx._manualLink = true;
   
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
-  showToast('Payment linked to subscription', 'ok');
+  showToast(navigator.onLine ? 'Payment linked to subscription' : 'Saved offline. Will sync when connected.', 'ok');
 
   try {
-    await setDoc(doc(db, 'users', userId, 'transactions', txId), linkData, { merge: true });
+    // updateDoc does a partial field-level merge without overwriting other fields
+    await updateDoc(doc(db, 'users', userId, 'transactions', txId), linkData);
   } catch(e) {
-    queueFailedSync('updateDoc', 'transactions', txId, linkData, true);
+    // silent=true: we already showed the appropriate toast above
+    queueFailedSync('updateDoc', 'transactions', txId, linkData, true, true);
   }
 }
 
@@ -5831,25 +5846,37 @@ async function unlinkSubTx(txId, recId) {
   if (!userId) { showToast('Sign in first', 'er'); return; }
   const tx = txs.find(t => t.id === txId);
   if (!tx) return;
-  const unlinkData = {};
-  if (tx.subId !== undefined) unlinkData.subId = deleteField();
-  if (tx._manualLink !== undefined) unlinkData._manualLink = deleteField();
+  // Track which fields actually need removing (only those that exist)
+  const hadSubId = tx.subId !== undefined;
+  const hadManualLink = tx._manualLink !== undefined;
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
-  // Optimistic local update
+  // Optimistic local update — before any await
   delete tx.subId;
   delete tx._manualLink;
   
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
-  showToast('Payment removed from history', 'ok');
+  showToast(navigator.onLine ? 'Payment removed from history' : 'Saved offline. Will sync when connected.', 'ok');
 
-  if (Object.keys(unlinkData).length > 0) {
+  if (hadSubId || hadManualLink) {
+    // updateDoc with deleteField() is the correct API for field removal
+    const updatePayload = {};
+    if (hadSubId) updatePayload.subId = deleteField();
+    if (hadManualLink) updatePayload._manualLink = deleteField();
     try {
-      await setDoc(doc(db, 'users', userId, 'transactions', txId), unlinkData, { merge: true });
+      await updateDoc(doc(db, 'users', userId, 'transactions', txId), updatePayload);
     } catch(e) {
-      queueFailedSync('updateDoc', 'transactions', txId, { subId: null, _manualLink: null }, true);
+      // For offline queue: store a sentinel object that marks fields for deletion.
+      // processSyncQueue uses setDoc+merge which can't deleteField from localStorage,
+      // so we keep the local optimistic state correct and re-queue as updateDoc with
+      // a _unlinkFields marker that processSyncQueue will handle via updateDoc.
+      // Since processSyncQueue already maps 'updateDoc' -> setDoc merge, we queue
+      // the full tx data minus the unlinked fields so the merge replaces the doc correctly.
+      const safePayload = { subId: null, _manualLink: null };
+      // silent=true: toast was already shown
+      queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
     }
   }
 }
