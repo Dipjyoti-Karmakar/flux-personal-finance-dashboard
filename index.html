@@ -983,7 +983,7 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
 
 /* ── Subscription History Panel ── */
 .sub-hist-panel { overflow:hidden; max-height:0; transition:max-height .38s cubic-bezier(0.16,1,0.3,1); }
-.sub-hist-panel.open { max-height:800px; }
+.sub-hist-panel.open { max-height:2000px; }
 .sub-hist-inner { margin-top:14px; border-top:1px solid var(--bd); padding-top:14px; }
 .sub-hist-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--bd); border:1px solid var(--bd); border-radius:10px; overflow:hidden; margin-bottom:12px; }
 .sub-hist-stat { display:flex; flex-direction:column; gap:4px; padding:11px 14px; background:var(--s2); align-items:center; text-align:center; }
@@ -2545,6 +2545,12 @@ async function addTx() {
   const newTx = { type: cType, mode: cMode, desc, amount: amt, cat, date, createdAt: Date.now() };
   if (eventId) newTx.eventId = eventId;
   const txId = uid();
+
+  // OPTIMISTIC: Insert into local txs immediately so subscription history panels
+  // and all other views reflect the new transaction without waiting for Firestore.
+  const optimisticTx = { id: txId, ...newTx };
+  txs.unshift(optimisticTx);
+  debouncedRender();
   
   const btn = document.querySelector('.fb2 .sbtn');
   let saved = false;
@@ -2555,6 +2561,9 @@ async function addTx() {
   } catch(e) {
     console.error("Error adding transaction (queuing for offline sync)", e);
     // Queue for sync when back online
+    // Remove the optimistic entry first so queueFailedSync re-inserts cleanly
+    const optIdx = txs.findIndex(t => t.id === txId);
+    if (optIdx !== -1) txs.splice(optIdx, 1);
     queueFailedSync('setDoc', 'transactions', txId, newTx);
     // queueFailedSync already inserts into txs and calls debouncedRender
     saved = true;
@@ -2582,7 +2591,7 @@ async function addTx() {
     window._highlightTxId = txId;
     
     // Confetti on milestones: 1st, 10th, 25th, every 50th
-    const mc = txs.length + 1;
+    const mc = txs.length;
     if (mc === 1 || mc === 10 || mc === 25 || mc % 50 === 0) launchConfetti();
   }
 }
@@ -2760,13 +2769,19 @@ function render(){
       if (el) twemoji.parse(el);
     });
   }
-  // Keep open history panels updated with new transaction data
-  document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
-    const recId = p.id.replace('hist-panel-', '');
-    if (typeof renderSubHistInner === 'function') {
-      renderSubHistInner(recId);
-    }
-  });
+  // Keep open history panels updated with new transaction data.
+  // If subscription view is visible, call renderRecurring() to fully rebuild
+  // card DOM (including badge/status) and restore open panels with fresh data.
+  const subViewEl = document.getElementById('subView');
+  if (subViewEl && subViewEl.style.display !== 'none') {
+    if (typeof renderRecurring === 'function') renderRecurring();
+  } else {
+    // Sub view hidden: still refresh any open panels in the background DOM
+    document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
+      const recId = p.id.replace('hist-panel-', '');
+      if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
+    });
+  }
 }
 
 // Debounced render - coalesces rapid Firestore snapshot fires (e.g. during batch imports)
@@ -2778,11 +2793,16 @@ function debouncedRender() {
     render(); 
     tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then(() => {
       detectEarlyPayments();
-      // Re-render any open history panels so they reflect updated _recurring tags
-      document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
-        const recId = p.id.replace('hist-panel-', '');
-        if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
-      });
+      // Re-render the subscription view so all panels (open or closed) reflect updated tags
+      const subViewElD = document.getElementById('subView');
+      if (subViewElD && subViewElD.style.display !== 'none') {
+        if (typeof renderRecurring === 'function') renderRecurring();
+      } else {
+        document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
+          const recId = p.id.replace('hist-panel-', '');
+          if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
+        });
+      }
     });
   }, 120);
 }
@@ -3204,6 +3224,19 @@ async function saveEditTx() {
   }
   
   let saved = false;
+  // OPTIMISTIC: Apply edit to local txs immediately so history panels and list
+  // update without waiting for Firestore snapshot round-trip.
+  const localIdx = txs.findIndex(t => t.id === editingTxId);
+  let prevTxState = null;
+  if (localIdx !== -1) {
+    prevTxState = { ...txs[localIdx] };
+    const mergePayload = { ...updatedTx };
+    if (removingEventId) delete mergePayload.eventId;
+    // Preserve subscription-related flags not touched by the edit form
+    txs[localIdx] = { ...txs[localIdx], ...mergePayload };
+    if (removingEventId) delete txs[localIdx].eventId;
+    debouncedRender();
+  }
   try {
     const docRef = doc(db, 'users', userId, 'transactions', editingTxId);
     await setDoc(docRef, updatedTx, { merge: true });
@@ -3215,15 +3248,8 @@ async function saveEditTx() {
     if (removingEventId) {
       delete queueData.eventId; // Can't serialize deleteField(); will be handled as a merge without eventId
     }
+    // Optimistic update already applied above; just queue for sync
     queueFailedSync('setDoc', 'transactions', editingTxId, queueData, true);
-    // Update local txs array so UI reflects the edit immediately
-    const localIdx = txs.findIndex(t => t.id === editingTxId);
-    if (localIdx !== -1) {
-      const merged = { ...txs[localIdx], ...queueData };
-      if (removingEventId) delete merged.eventId;
-      txs[localIdx] = merged;
-    }
-    render();
     saved = true;
   }
   
@@ -5677,15 +5703,41 @@ function renderSubHistInner(recId) {
   // Match by subId (linked) OR by _manualLink flag (if subId was lost during a past sync)
   // OR by name+amount+type fuzzy match for auto-tagged past payments
   const nameLow = (rec.name || '').trim().toLowerCase();
-  const subTxs = txs
+
+  // Build a set of IDs from syncQueue pending writes so we include transactions
+  // that have been locally updated (e.g. linkSubTx) but not yet confirmed by Firestore.
+  const pendingLinkIds = new Map(); // txId -> merged data from syncQueue
+  if (typeof syncQueue !== 'undefined') {
+    syncQueue.forEach(q => {
+      if (q.col === 'transactions' && (q.op === 'setDoc' || q.op === 'updateDoc') && q.data) {
+        const existing = pendingLinkIds.get(q.id) || {};
+        pendingLinkIds.set(q.id, { ...existing, ...q.data });
+      }
+    });
+  }
+
+  // Merge any pending syncQueue data into txs for matching purposes
+  const effectiveTxs = txs.map(t => {
+    const pending = pendingLinkIds.get(t.id);
+    return pending ? { ...t, ...pending } : t;
+  });
+  // Also add any queued NEW transactions not yet in txs (e.g. addTx while offline,
+  // before queueFailedSync has run its own insert)
+  pendingLinkIds.forEach((data, id) => {
+    if (!effectiveTxs.find(t => t.id === id)) {
+      if (data.date && data.amount) effectiveTxs.push({ id, ...data });
+    }
+  });
+
+  const subTxs = effectiveTxs
     .filter(t => {
       if (t.subId === recId) return true;
       // Catch manually linked payments where subId was cleared by a past sync/write bug
-      if (t._manualLink && !t.subId && t.type === rec.type &&
+      if (t._manualLink && t.type === rec.type &&
           Math.abs(t.amount) === Math.abs(rec.amount) &&
           (t.desc || '').trim().toLowerCase() === nameLow) return true;
-      // Fuzzy match for auto-tagged past payments and manually added ones (no subId)
-      if (!t.subId && t.type === rec.type &&
+      // Fuzzy match: same name + amount + type, not linked to a different subscription
+      if ((!t.subId || t.subId === recId) && t.type === rec.type &&
           Math.abs(t.amount) === Math.abs(rec.amount) &&
           (t.desc || '').trim().toLowerCase() === nameLow) return true;
       return false;
@@ -5730,14 +5782,19 @@ function renderSubHistInner(recId) {
     const isCapped = subTxs.length > 500;
     const rows = (isCapped ? subTxs.slice(0, 500) : subTxs).map(t => {
       const d = t.desc || '';
-      const isManual = !!(t._manualLink);
-      const unlinkBtn = t.subId === recId
+      // Determine how this tx was matched:
+      // subId match = auto-triggered by system; _manualLink = linked via picker; neither = fuzzy-name match
+      const isLinked = t.subId === recId;
+      const isManualPick = !!(t._manualLink);
+      const isFuzzy = !isLinked && !isManualPick;
+      const manualPill = isManualPick ? '<span class="sub-tx-manual-pill">linked</span>' : (isFuzzy ? '<span class="sub-tx-manual-pill" style="opacity:0.6;">auto</span>' : '');
+      // Allow unlink for any explicitly linked tx (by subId or _manualLink)
+      const unlinkBtn = (isLinked || isManualPick)
         ? `<button class="sub-tx-unlink" onclick="event.stopPropagation();unlinkSubTx('${esc(t.id)}','${esc(recId)}')" title="Remove from history">×</button>`
         : '';
-      const manualPill = isManual ? '<span class="sub-tx-manual-pill">manual</span>' : '';
       return `<div class="sub-tx-row">
         <div class="sub-tx-date">${fmtDt(t.date)}</div>
-        <div class="sub-tx-desc" title="${esc(d)}">${esc(d)}${manualPill}</div>
+        <div class="sub-tx-desc" title="${esc(d)}"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d)}</span>${manualPill}</div>
         <div class="sub-tx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${fmt(t.amount)}</div>
         ${unlinkBtn}
       </div>`;
