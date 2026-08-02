@@ -2752,6 +2752,23 @@ function getActiveTxs() {
   return txs; // 'all'
 }
 
+// When a link/unlink sub-panel operation is in progress, redirect onSnapshot-driven
+// full renderRecurring() rebuilds into targeted renderSubHistInner() calls only.
+// This prevents the picker search bar from being wiped and stops the multiple-refresh flicker.
+let _subPanelLock = null; // { recId: string, query: string } | null
+let _subPanelLockTimer = null;
+function _setSubPanelLock(recId, query) {
+  _subPanelLock = { recId, query };
+  if (_subPanelLockTimer) clearTimeout(_subPanelLockTimer);
+  // Auto-expire after 4s so the lock never gets permanently stuck
+  _subPanelLockTimer = setTimeout(() => { _subPanelLock = null; _subPanelLockTimer = null; }, 4000);
+}
+function _clearSubPanelLock() {
+  if (_subPanelLockTimer) clearTimeout(_subPanelLockTimer);
+  _subPanelLock = null;
+  _subPanelLockTimer = null;
+}
+
 function render(){
   // I2 FIX: Compute active transactions once and pass to all sub-renderers
   const aTxs = getActiveTxs();
@@ -2770,9 +2787,21 @@ function render(){
     });
   }
   // Keep open history panels updated with new transaction data.
-  // If subscription view is visible, call renderRecurring() to fully rebuild
-  // card DOM (including badge/status) and restore open panels with fresh data.
+  // If a sub-panel link/unlink is in progress (_subPanelLock set), skip the full
+  // renderRecurring() DOM rebuild and only re-render that specific panel + picker.
+  // This prevents the picker search bar from being wiped by onSnapshot-triggered rerenders.
   const subViewEl = document.getElementById('subView');
+  if (_subPanelLock) {
+    const { recId, query } = _subPanelLock;
+    if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
+    // Restore picker results and search value without nuking the picker DOM
+    const searchEl = document.getElementById('link-search-' + recId);
+    if (searchEl && query !== undefined) {
+      searchEl.value = query;
+      if (typeof renderLinkPicker === 'function') renderLinkPicker(recId, query);
+    }
+    return;
+  }
   if (subViewEl && subViewEl.style.display !== 'none') {
     if (typeof renderRecurring === 'function') renderRecurring();
   } else {
@@ -2791,24 +2820,31 @@ function debouncedRender() {
   _renderTimer = setTimeout(() => { 
     _renderTimer = null; 
     render(); 
-    tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then(() => {
+    // tagPastSubscriptions tags old txs with _recurring:true and detectEarlyPayments links
+    // subId. Neither needs a second full renderRecurring() — render() already did it above.
+    // We only re-render AFTER if tagPastSubscriptions actually mutated something, to avoid
+    // a second DOM rebuild that could undo the correctly-populated history panel.
+    tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then((tagged) => {
       detectEarlyPayments();
-      // Re-render the subscription view so all panels (open or closed) reflect updated tags
-      const subViewElD = document.getElementById('subView');
-      if (subViewElD && subViewElD.style.display !== 'none') {
-        if (typeof renderRecurring === 'function') renderRecurring();
-      } else {
-        document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
-          const recId = p.id.replace('hist-panel-', '');
-          if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
-        });
+      // Only re-render sub panels if tagPastSubscriptions actually tagged something new
+      // (it returns the count/truthy value). If nothing changed, skip to avoid flicker.
+      if (tagged) {
+        const subViewElD = document.getElementById('subView');
+        if (subViewElD && subViewElD.style.display !== 'none') {
+          if (typeof renderRecurring === 'function') renderRecurring();
+        } else {
+          document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
+            const recId = p.id.replace('hist-panel-', '');
+            if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
+          });
+        }
       }
     });
   }, 120);
 }
 
 async function tagPastSubscriptions() {
-  if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return;
+  if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return 0;
   const toTag = [];
   txs.forEach(tx => {
     if (tx._recurring) return;
@@ -2828,7 +2864,7 @@ async function tagPastSubscriptions() {
     if (matchingRec) toTag.push(tx.id);
   });
   
-  if (!toTag.length) return;
+  if (!toTag.length) return 0; // Signal: nothing tagged, skip second render
   
   try {
     for (let i = 0; i < toTag.length; i += 450) {
@@ -2841,7 +2877,8 @@ async function tagPastSubscriptions() {
     toTag.forEach(id => { const tx = txs.find(t => t.id === id); if (tx) tx._recurring = true; });
     showToast(`Auto-tagged ${toTag.length} past subscriptions!`, 'ok');
     console.log(`Auto-tagged ${toTag.length} past transactions as subscriptions.`);
-  } catch(e) { console.error('Failed to auto-tag past subscriptions:', e); }
+    return toTag.length; // Signal: re-render needed
+  } catch(e) { console.error('Failed to auto-tag past subscriptions:', e); return 0; }
 }
 
 // ─── Animated number counter ────────────────────────────────────────────────
@@ -5814,13 +5851,12 @@ function renderSubHistInner(recId) {
   const histContentHtml = `<div id="hist-content-${recId}">${statsHtml + listHtml + linkBtnHtml}</div>`;
   
   if (existingPicker) {
-    let contentWrap = document.getElementById('hist-content-' + recId);
-    if (!contentWrap) {
-      inner.innerHTML = histContentHtml;
-      inner.appendChild(existingPicker);
-    } else {
-      contentWrap.outerHTML = histContentHtml;
-    }
+    // Detach picker before clearing inner so it isn't garbage-collected
+    const pickerParent = existingPicker.parentNode;
+    if (pickerParent) pickerParent.removeChild(existingPicker);
+    // Replace all inner content then re-append the picker
+    inner.innerHTML = histContentHtml;
+    inner.appendChild(existingPicker);
   } else {
     inner.innerHTML = histContentHtml + pickerHtml;
   }
@@ -5895,6 +5931,10 @@ async function linkSubTx(txId, recId) {
   tx.subId = recId;
   tx._recurring = true;
   tx._manualLink = true;
+
+  // Lock: redirect any onSnapshot-triggered render() calls into targeted panel-only
+  // refreshes so the picker DOM (and the user's search query) is never destroyed.
+  _setSubPanelLock(recId, currentQuery);
   
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
@@ -5906,6 +5946,11 @@ async function linkSubTx(txId, recId) {
   } catch(e) {
     // silent=true: we already showed the appropriate toast above
     queueFailedSync('updateDoc', 'transactions', txId, linkData, true, true);
+  } finally {
+    // Release lock: allow a single clean renderRecurring() to finish syncing badges/stats.
+    // Small delay so the onSnapshot that just fired (from the updateDoc above) is absorbed
+    // by the lock, and the next debouncedRender after the lock expires does the real rebuild.
+    setTimeout(_clearSubPanelLock, 800);
   }
 }
 
@@ -5922,6 +5967,9 @@ async function unlinkSubTx(txId, recId) {
   // Optimistic local update — before any await
   delete tx.subId;
   delete tx._manualLink;
+
+  // Lock: same pattern as linkSubTx — protect the picker from onSnapshot rebuilds
+  _setSubPanelLock(recId, currentQuery);
   
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
@@ -5941,7 +5989,11 @@ async function unlinkSubTx(txId, recId) {
       if (hadManualLink) safePayload._manualLink = '__DELETE__';
       // silent=true: toast was already shown
       queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
+    } finally {
+      setTimeout(_clearSubPanelLock, 800);
     }
+  } else {
+    setTimeout(_clearSubPanelLock, 800);
   }
 }
 
