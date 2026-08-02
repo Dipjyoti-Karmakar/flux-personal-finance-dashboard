@@ -2383,7 +2383,23 @@ function loadDataFromCloud() {
     }
     // Exclude tx pending soft-delete during undo window
     if (_undoTxData) txs = txs.filter(t => t.id !== _undoTxData.id);
-    
+    // Re-apply any in-flight optimistic mutations (link/unlink) that haven't been
+    // confirmed by Firestore yet. This prevents a concurrent onSnapshot — e.g. the
+    // tagPastSubscriptions batch write — from erasing subId/_manualLink fields that
+    // the updateDoc hasn't committed yet, which caused the intermittent missing-
+    // transaction bug on desktop and the cross-device sync bug on mobile.
+    if (_pendingTxUpdates.size > 0) {
+      _pendingTxUpdates.forEach((updates, id) => {
+        const tx = txs.find(t => t.id === id);
+        if (tx) {
+          Object.entries(updates).forEach(([k, v]) => {
+            if (v === null) delete tx[k]; // null-sentinel = delete field
+            else tx[k] = v;
+          });
+        }
+      });
+    }
+
     const dot = document.getElementById('cloudDot');
     dot.className = 'sync-dot online';
     dot.style.background = ''; dot.style.boxShadow = ''; dot.style.animation = '';
@@ -2758,21 +2774,27 @@ function getActiveTxs() {
 let _subPanelLock = null; // { recId: string, query: string, token: number } | null
 let _subPanelLockTimer = null;
 let _subPanelLockSeq = 0; // monotonic counter — incremented on every new lock
+// Tracks in-flight optimistic tx mutations so onSnapshot rebuilds of txs never
+// lose optimistic state that hasn't been confirmed by Firestore yet.
+// Values: plain field map for links; null-sentinel per key for unlinks (delete that field).
+const _pendingTxUpdates = new Map(); // Map<txId, { field: value|null }>
 function _setSubPanelLock(recId, query) {
   const token = ++_subPanelLockSeq;
   _subPanelLock = { recId, query, token };
   if (_subPanelLockTimer) clearTimeout(_subPanelLockTimer);
   // Auto-expire after 4s so the lock never gets permanently stuck
-  _subPanelLockTimer = setTimeout(() => { if (_subPanelLock?.token === token) { _subPanelLock = null; _subPanelLockTimer = null; } }, 4000);
+  _subPanelLockTimer = setTimeout(() => { if (_subPanelLock?.token === token) { _subPanelLock = null; _subPanelLockTimer = null; debouncedRender(); } }, 4000);
   return token;
 }
 // Only clears the lock when the supplied token still matches the active one,
 // preventing a stale setTimeout from operation A from evicting operation B's lock.
+// Triggers one final debouncedRender so the settled Firestore state is always shown.
 function _clearSubPanelLock(token) {
   if (_subPanelLock?.token !== token) return; // stale caller — do nothing
   if (_subPanelLockTimer) clearTimeout(_subPanelLockTimer);
   _subPanelLock = null;
   _subPanelLockTimer = null;
+  debouncedRender(); // one final full render with settled state
 }
 
 function render(){
@@ -5938,6 +5960,10 @@ async function linkSubTx(txId, recId) {
   tx._recurring = true;
   tx._manualLink = true;
 
+  // Register optimistic state so onSnapshot rebuilds of txs re-apply it
+  // until Firestore confirms the write (or error path clears it).
+  _pendingTxUpdates.set(txId, { subId: recId, _recurring: true, _manualLink: true });
+
   // Lock: redirect any onSnapshot-triggered render() calls into targeted panel-only
   // refreshes so the picker DOM (and the user's search query) is never destroyed.
   const _lockToken = _setSubPanelLock(recId, currentQuery);
@@ -5953,9 +5979,10 @@ async function linkSubTx(txId, recId) {
     // silent=true: we already showed the appropriate toast above
     queueFailedSync('updateDoc', 'transactions', txId, linkData, true, true);
   } finally {
-    // Release lock: allow a single clean renderRecurring() to finish syncing badges/stats.
-    // Small delay so the onSnapshot that just fired (from the updateDoc above) is absorbed
-    // by the lock, and the next debouncedRender after the lock expires does the real rebuild.
+    // Firestore confirmed (or queued): remove from pending. The next onSnapshot
+    // will have the correct subId from Firestore, so the optimistic map is no longer needed.
+    _pendingTxUpdates.delete(txId);
+    // Release lock after a short delay to absorb the onSnapshot that fires from updateDoc.
     setTimeout(() => _clearSubPanelLock(_lockToken), 800);
   }
 }
@@ -5973,6 +6000,13 @@ async function unlinkSubTx(txId, recId) {
   // Optimistic local update — before any await
   delete tx.subId;
   delete tx._manualLink;
+
+  // Register deletion intent so onSnapshot rebuilds of txs re-apply the removal.
+  // null-sentinel means 'delete this field from the rebuilt tx object'.
+  const pendingUnlink = {};
+  if (hadSubId) pendingUnlink.subId = null;
+  if (hadManualLink) pendingUnlink._manualLink = null;
+  if (Object.keys(pendingUnlink).length) _pendingTxUpdates.set(txId, pendingUnlink);
 
   // Lock: same pattern as linkSubTx — protect the picker from onSnapshot rebuilds
   const _lockToken = _setSubPanelLock(recId, currentQuery);
@@ -5996,9 +6030,11 @@ async function unlinkSubTx(txId, recId) {
       // silent=true: toast was already shown
       queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
     } finally {
+      _pendingTxUpdates.delete(txId);
       setTimeout(() => _clearSubPanelLock(_lockToken), 800);
     }
   } else {
+    _pendingTxUpdates.delete(txId);
     setTimeout(() => _clearSubPanelLock(_lockToken), 800);
   }
 }
