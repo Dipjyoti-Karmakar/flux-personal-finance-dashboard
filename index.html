@@ -2755,15 +2755,21 @@ function getActiveTxs() {
 // When a link/unlink sub-panel operation is in progress, redirect onSnapshot-driven
 // full renderRecurring() rebuilds into targeted renderSubHistInner() calls only.
 // This prevents the picker search bar from being wiped and stops the multiple-refresh flicker.
-let _subPanelLock = null; // { recId: string, query: string } | null
+let _subPanelLock = null; // { recId: string, query: string, token: number } | null
 let _subPanelLockTimer = null;
+let _subPanelLockSeq = 0; // monotonic counter — incremented on every new lock
 function _setSubPanelLock(recId, query) {
-  _subPanelLock = { recId, query };
+  const token = ++_subPanelLockSeq;
+  _subPanelLock = { recId, query, token };
   if (_subPanelLockTimer) clearTimeout(_subPanelLockTimer);
   // Auto-expire after 4s so the lock never gets permanently stuck
-  _subPanelLockTimer = setTimeout(() => { _subPanelLock = null; _subPanelLockTimer = null; }, 4000);
+  _subPanelLockTimer = setTimeout(() => { if (_subPanelLock?.token === token) { _subPanelLock = null; _subPanelLockTimer = null; } }, 4000);
+  return token;
 }
-function _clearSubPanelLock() {
+// Only clears the lock when the supplied token still matches the active one,
+// preventing a stale setTimeout from operation A from evicting operation B's lock.
+function _clearSubPanelLock(token) {
+  if (_subPanelLock?.token !== token) return; // stale caller — do nothing
   if (_subPanelLockTimer) clearTimeout(_subPanelLockTimer);
   _subPanelLock = null;
   _subPanelLockTimer = null;
@@ -5934,7 +5940,7 @@ async function linkSubTx(txId, recId) {
 
   // Lock: redirect any onSnapshot-triggered render() calls into targeted panel-only
   // refreshes so the picker DOM (and the user's search query) is never destroyed.
-  _setSubPanelLock(recId, currentQuery);
+  const _lockToken = _setSubPanelLock(recId, currentQuery);
   
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
@@ -5950,7 +5956,7 @@ async function linkSubTx(txId, recId) {
     // Release lock: allow a single clean renderRecurring() to finish syncing badges/stats.
     // Small delay so the onSnapshot that just fired (from the updateDoc above) is absorbed
     // by the lock, and the next debouncedRender after the lock expires does the real rebuild.
-    setTimeout(_clearSubPanelLock, 800);
+    setTimeout(() => _clearSubPanelLock(_lockToken), 800);
   }
 }
 
@@ -5969,7 +5975,7 @@ async function unlinkSubTx(txId, recId) {
   delete tx._manualLink;
 
   // Lock: same pattern as linkSubTx — protect the picker from onSnapshot rebuilds
-  _setSubPanelLock(recId, currentQuery);
+  const _lockToken = _setSubPanelLock(recId, currentQuery);
   
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
@@ -5990,10 +5996,10 @@ async function unlinkSubTx(txId, recId) {
       // silent=true: toast was already shown
       queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
     } finally {
-      setTimeout(_clearSubPanelLock, 800);
+      setTimeout(() => _clearSubPanelLock(_lockToken), 800);
     }
   } else {
-    setTimeout(_clearSubPanelLock, 800);
+    setTimeout(() => _clearSubPanelLock(_lockToken), 800);
   }
 }
 
