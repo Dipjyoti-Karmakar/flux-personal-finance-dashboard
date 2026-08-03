@@ -153,7 +153,7 @@ Flux uses two independent offline layers:
 
 ## Data Model
 
-```
+```text
 users/
   {uid}/
     transactions/             # one doc per transaction
@@ -341,7 +341,7 @@ Then open `http://localhost:8000`.
 
 ## Project Structure
 
-```
+```text
 flux-webapp/
 ├── index.html      # Entire application: HTML, CSS, and JS in a single file (~7,200 lines)
 ├── manifest.json   # PWA Web App Manifest
