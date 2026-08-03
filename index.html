@@ -2865,25 +2865,12 @@ function debouncedRender() {
   _renderTimer = setTimeout(() => { 
     _renderTimer = null; 
     render(); 
-    // tagPastSubscriptions tags old txs with _recurring:true and detectEarlyPayments links
-    // subId. Neither needs a second full renderRecurring() — render() already did it above.
-    // We only re-render AFTER if tagPastSubscriptions actually mutated something, to avoid
-    // a second DOM rebuild that could undo the correctly-populated history panel.
-    tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then((tagged) => {
+    // tagPastSubscriptions tags old txs with _recurring:true and subId.
+    // Its optimistic update applies to the in-memory txs array, so the NEXT
+    // onSnapshot-driven render() will show the correct state. No extra
+    // renderRecurring() call is needed here — render() already handles it.
+    tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then(() => {
       detectEarlyPayments();
-      // Only re-render sub panels if tagPastSubscriptions actually tagged something new
-      // (it returns the count/truthy value). If nothing changed, skip to avoid flicker.
-      if (tagged) {
-        const subViewElD = document.getElementById('subView');
-        if (subViewElD && subViewElD.style.display !== 'none') {
-          if (typeof renderRecurring === 'function') renderRecurring();
-        } else {
-          document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
-            const recId = p.id.replace('hist-panel-', '');
-            if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
-          });
-        }
-      }
     });
   }, 120);
 }
@@ -5432,7 +5419,10 @@ function loadRecurring() {
     recurringList.sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
     if (document.getElementById('subView').style.display !== 'none') renderRecurring();
     checkAndTriggerRecurring().then(() => detectEarlyPayments());
-    tagPastSubscriptions(); // safe: re-entrancy guard prevents overlap with debouncedRender's call
+    // tagPastSubscriptions is NOT called here — debouncedRender (triggered by the
+    // tx onSnapshot that fires after any Firestore writes) already calls it.
+    // Calling it from both places caused a cascade: tagPast writes batch →
+    // tx onSnapshot → debouncedRender → tagPast again → visible refresh loop.
   }, err => console.error('Recurring sync error:', err));
 }
 
