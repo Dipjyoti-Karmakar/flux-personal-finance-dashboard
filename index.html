@@ -2988,7 +2988,12 @@ function animateVal(el, target, formatter, duration) {
       const currentVal = cur + diff * ease;
       // Animate only the integer part to prevent rapidly spinning decimals,
       // but ensure the exact final value (with its true decimals) is shown at the end.
-      el.textContent = formatter(progress < 1 ? Math.trunc(currentVal) : target);
+      // If we are within 0.5 of the target, snap to the target's integer part to prevent 
+      // getting stuck at target-1 when the target is a whole number.
+      const displayVal = progress < 1 
+        ? (Math.abs(target - currentVal) < 0.5 ? Math.trunc(target) : Math.trunc(currentVal)) 
+        : target;
+      el.textContent = formatter(displayVal);
       if (progress < 1) requestAnimationFrame(tick);
       else if (el._animCancel === cancelFn) el._animCancel = null; // done — clean up
     }
