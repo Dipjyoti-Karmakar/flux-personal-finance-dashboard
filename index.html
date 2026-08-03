@@ -2384,20 +2384,33 @@ function loadDataFromCloud() {
     // Exclude tx pending soft-delete during undo window
     if (_undoTxData) txs = txs.filter(t => t.id !== _undoTxData.id);
     // Re-apply any in-flight optimistic mutations (link/unlink) that haven't been
-    // confirmed by Firestore yet. This prevents a concurrent onSnapshot — e.g. the
-    // tagPastSubscriptions batch write — from erasing subId/_manualLink fields that
-    // the updateDoc hasn't committed yet, which caused the intermittent missing-
-    // transaction bug on desktop and the cross-device sync bug on mobile.
+    // confirmed by Firestore yet. Uses a confirm-then-clear pattern: only remove
+    // entries from the pending map once the snapshot data matches. This prevents
+    // a concurrent onSnapshot (e.g. tagPastSubscriptions batch) from erasing
+    // subId/_manualLink fields before the updateDoc has been confirmed.
     if (_pendingTxUpdates.size > 0) {
+      const confirmedIds = [];
       _pendingTxUpdates.forEach((updates, id) => {
         const tx = txs.find(t => t.id === id);
         if (tx) {
-          Object.entries(updates).forEach(([k, v]) => {
-            if (v === null) delete tx[k]; // null-sentinel = delete field
-            else tx[k] = v;
+          // Check if Firestore already has the correct values
+          const allConfirmed = Object.entries(updates).every(([k, v]) => {
+            if (v === null) return !(k in tx); // deletion confirmed
+            return tx[k] === v;                // value confirmed
           });
+          if (allConfirmed) {
+            confirmedIds.push(id);  // Firestore caught up — safe to clear
+          } else {
+            // Re-apply optimistic state — Firestore hasn't caught up yet
+            Object.entries(updates).forEach(([k, v]) => {
+              if (v === null) delete tx[k];
+              else tx[k] = v;
+            });
+          }
         }
       });
+      // Only clear confirmed entries
+      confirmedIds.forEach(id => _pendingTxUpdates.delete(id));
     }
 
     const dot = document.getElementById('cloudDot');
@@ -2778,6 +2791,8 @@ let _subPanelLockSeq = 0; // monotonic counter — incremented on every new lock
 // lose optimistic state that hasn't been confirmed by Firestore yet.
 // Values: plain field map for links; null-sentinel per key for unlinks (delete that field).
 const _pendingTxUpdates = new Map(); // Map<txId, { field: value|null }>
+const _txWriteLocks = new Set();     // Prevent concurrent writers on same txId
+let _tagPastRunning = false;         // Re-entrancy guard for tagPastSubscriptions
 function _setSubPanelLock(recId, query) {
   const token = ++_subPanelLockSeq;
   _subPanelLock = { recId, query, token };
@@ -2872,41 +2887,51 @@ function debouncedRender() {
 }
 
 async function tagPastSubscriptions() {
+  if (_tagPastRunning) return 0;  // Re-entrancy guard
   if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return 0;
-  const toTag = [];
-  txs.forEach(tx => {
-    if (tx._recurring) return;
-    // Don't steal transactions that the subscription matcher may need
-    if (globallyMatchedTxIds && globallyMatchedTxIds.has(tx.id)) return;
-    const matchingRec = recurringList.find(rec => {
-      if (!rec.name || !tx.desc) return false;
-      if (rec.name.trim().toLowerCase() !== tx.desc.trim().toLowerCase()) return false;
-      if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
-      if (rec.type !== tx.type) return false;
-      // Category must match to prevent false positives on same-name/amount transactions
-      if (rec.cat && tx.cat && rec.cat !== tx.cat) return false;
-      // Date guard: only tag transactions on or before the subscription's current nextDue
-      if (rec.nextDue && tx.date > rec.nextDue) return false;
-      return true;
-    });
-    if (matchingRec) toTag.push(tx.id);
-  });
-  
-  if (!toTag.length) return 0; // Signal: nothing tagged, skip second render
-  
+  _tagPastRunning = true;
   try {
+    const toTag = [];
+    txs.forEach(tx => {
+      if (tx._recurring) return;           // Already tagged
+      if (tx.subId) return;                // Already linked to a subscription
+      if (tx._manualLink) return;          // Manually linked
+      if (_txWriteLocks.has(tx.id)) return; // Being actively modified by linkSubTx/unlinkSubTx
+      if (_pendingTxUpdates.has(tx.id)) return; // In-flight optimistic mutation
+      // Don't steal transactions that the subscription matcher may need
+      if (globallyMatchedTxIds && globallyMatchedTxIds.has(tx.id)) return;
+      const matchingRec = recurringList.find(rec => {
+        if (!rec.name || !tx.desc) return false;
+        if (rec.name.trim().toLowerCase() !== tx.desc.trim().toLowerCase()) return false;
+        if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
+        if (rec.type !== tx.type) return false;
+        // Category must match to prevent false positives on same-name/amount transactions
+        if (rec.cat && tx.cat && rec.cat !== tx.cat) return false;
+        // Date guard: only tag transactions on or before the subscription's current nextDue
+        if (rec.nextDue && tx.date > rec.nextDue) return false;
+        return true;
+      });
+      // KEY FIX: push both txId AND recId so we can write subId alongside _recurring
+      if (matchingRec) toTag.push({ txId: tx.id, recId: matchingRec.id });
+    });
+    
+    if (!toTag.length) return 0; // Signal: nothing tagged, skip second render
+    
     for (let i = 0; i < toTag.length; i += 450) {
       const chunk = toTag.slice(i, i + 450);
       const batch = writeBatch(db);
-      chunk.forEach(id => batch.update(doc(db, 'users', userId, 'transactions', id), { _recurring: true }));
+      // KEY FIX: Write subId alongside _recurring to prevent the race condition
+      // where a snapshot with only _recurring:true would erase the subId set by linkSubTx
+      chunk.forEach(({ txId, recId }) => batch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId }));
       await batch.commit();
     }
-    // Optimistic local update to prevent re-tagging on next render before Firestore snapshot returns
-    toTag.forEach(id => { const tx = txs.find(t => t.id === id); if (tx) tx._recurring = true; });
+    // Optimistic local update — includes subId to prevent re-tagging and match history filter
+    toTag.forEach(({ txId, recId }) => { const tx = txs.find(t => t.id === txId); if (tx) { tx._recurring = true; tx.subId = recId; } });
     showToast(`Auto-tagged ${toTag.length} past subscriptions!`, 'ok');
     console.log(`Auto-tagged ${toTag.length} past transactions as subscriptions.`);
     return toTag.length; // Signal: re-render needed
   } catch(e) { console.error('Failed to auto-tag past subscriptions:', e); return 0; }
+  finally { _tagPastRunning = false; }
 }
 
 // ─── Animated number counter ────────────────────────────────────────────────
@@ -5389,7 +5414,7 @@ function loadRecurring() {
     recurringList.sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
     if (document.getElementById('subView').style.display !== 'none') renderRecurring();
     checkAndTriggerRecurring().then(() => detectEarlyPayments());
-    tagPastSubscriptions();
+    tagPastSubscriptions(); // safe: re-entrancy guard prevents overlap with debouncedRender's call
   }, err => console.error('Recurring sync error:', err));
 }
 
@@ -5587,6 +5612,7 @@ async function detectEarlyPayments() {
       (!rec.cat || !t.cat || rec.cat === t.cat) &&
       t.date >= minD && t.date <= maxD &&
       !globallyMatchedTxIds.has(t.id) &&
+      !_txWriteLocks.has(t.id) &&
       (!t._auto || t.subId === rec.id)
     );
 
@@ -5798,18 +5824,7 @@ function renderSubHistInner(recId) {
   });
 
   const subTxs = effectiveTxs
-    .filter(t => {
-      if (t.subId === recId) return true;
-      // Catch manually linked payments where subId was cleared by a past sync/write bug
-      if (t._manualLink && t.type === rec.type &&
-          Math.abs(t.amount) === Math.abs(rec.amount) &&
-          (t.desc || '').trim().toLowerCase() === nameLow) return true;
-      // Fuzzy match: same name + amount + type, not linked to a different subscription
-      if ((!t.subId || t.subId === recId) && t.type === rec.type &&
-          Math.abs(t.amount) === Math.abs(rec.amount) &&
-          (t.desc || '').trim().toLowerCase() === nameLow) return true;
-      return false;
-    })
+    .filter(t => t.subId === recId)  // ONLY explicit subId links — no fuzzy matching
     .sort((a, b) => {
       const dd = (b.date || '').localeCompare(a.date || '');
       return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
@@ -5958,14 +5973,21 @@ async function linkSubTx(txId, recId) {
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
+  // Write lock: prevent tagPastSubscriptions and detectEarlyPayments from touching this tx
+  _txWriteLocks.add(txId);
+
   // Optimistic local update — must happen before any await so UI never flickers
   tx.subId = recId;
   tx._recurring = true;
   tx._manualLink = true;
 
   // Register optimistic state so onSnapshot rebuilds of txs re-apply it
-  // until Firestore confirms the write (or error path clears it).
+  // until Firestore confirms the write (confirmed by the confirm-then-clear pattern).
   _pendingTxUpdates.set(txId, { subId: recId, _recurring: true, _manualLink: true });
+
+  // Safety: clear pending after 10s no matter what (prevents memory leaks if onSnapshot
+  // never confirms, e.g. during prolonged offline periods)
+  setTimeout(() => _pendingTxUpdates.delete(txId), 10000);
 
   // Lock: redirect any onSnapshot-triggered render() calls into targeted panel-only
   // refreshes so the picker DOM (and the user's search query) is never destroyed.
@@ -5982,11 +6004,11 @@ async function linkSubTx(txId, recId) {
     // silent=true: we already showed the appropriate toast above
     queueFailedSync('updateDoc', 'transactions', txId, linkData, true, true);
   } finally {
-    // Firestore confirmed (or queued): remove from pending. The next onSnapshot
-    // will have the correct subId from Firestore, so the optimistic map is no longer needed.
-    _pendingTxUpdates.delete(txId);
+    // DON'T clear _pendingTxUpdates here — let onSnapshot's confirm-then-clear handle it.
     // Release lock after a short delay to absorb the onSnapshot that fires from updateDoc.
     setTimeout(() => _clearSubPanelLock(_lockToken), 800);
+    // Clear write lock after enough time for snapshots to settle
+    setTimeout(() => _txWriteLocks.delete(txId), 3000);
   }
 }
 
@@ -6000,6 +6022,9 @@ async function unlinkSubTx(txId, recId) {
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
+  // Write lock: prevent tagPastSubscriptions and detectEarlyPayments from touching this tx
+  _txWriteLocks.add(txId);
+
   // Optimistic local update — before any await
   delete tx.subId;
   delete tx._manualLink;
@@ -6009,7 +6034,11 @@ async function unlinkSubTx(txId, recId) {
   const pendingUnlink = {};
   if (hadSubId) pendingUnlink.subId = null;
   if (hadManualLink) pendingUnlink._manualLink = null;
-  if (Object.keys(pendingUnlink).length) _pendingTxUpdates.set(txId, pendingUnlink);
+  if (Object.keys(pendingUnlink).length) {
+    _pendingTxUpdates.set(txId, pendingUnlink);
+    // Safety: clear pending after 10s no matter what (prevents memory leaks)
+    setTimeout(() => _pendingTxUpdates.delete(txId), 10000);
+  }
 
   // Lock: same pattern as linkSubTx — protect the picker from onSnapshot rebuilds
   const _lockToken = _setSubPanelLock(recId, currentQuery);
@@ -6033,12 +6062,14 @@ async function unlinkSubTx(txId, recId) {
       // silent=true: toast was already shown
       queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
     } finally {
-      _pendingTxUpdates.delete(txId);
+      // DON'T clear _pendingTxUpdates here — let onSnapshot's confirm-then-clear handle it.
       setTimeout(() => _clearSubPanelLock(_lockToken), 800);
+      setTimeout(() => _txWriteLocks.delete(txId), 3000);
     }
   } else {
-    _pendingTxUpdates.delete(txId);
+    // No Firestore fields to remove — just release locks
     setTimeout(() => _clearSubPanelLock(_lockToken), 800);
+    setTimeout(() => _txWriteLocks.delete(txId), 3000);
   }
 }
 
