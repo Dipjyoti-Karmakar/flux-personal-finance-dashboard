@@ -2409,8 +2409,8 @@ function loadDataFromCloud() {
           }
         }
       });
-      // Only clear confirmed entries
-      confirmedIds.forEach(id => _pendingTxUpdates.delete(id));
+      // Only clear confirmed entries — also clear their identity tokens
+      confirmedIds.forEach(id => { _pendingTxUpdates.delete(id); _pendingTxTokens.delete(id); });
     }
 
     const dot = document.getElementById('cloudDot');
@@ -2791,7 +2791,9 @@ let _subPanelLockSeq = 0; // monotonic counter — incremented on every new lock
 // lose optimistic state that hasn't been confirmed by Firestore yet.
 // Values: plain field map for links; null-sentinel per key for unlinks (delete that field).
 const _pendingTxUpdates = new Map(); // Map<txId, { field: value|null }>
-const _txWriteLocks = new Set();     // Prevent concurrent writers on same txId
+const _pendingTxTokens = new Map();  // Per-operation identity tokens for _pendingTxUpdates safety timeouts
+let _txOpSeq = 0;                    // Monotonic counter — incremented for each link/unlink/autoTag op
+const _txWriteLocks = new Map();     // Prevent concurrent writers on same txId (txId -> opToken)
 let _tagPastRunning = false;         // Re-entrancy guard for tagPastSubscriptions
 function _setSubPanelLock(recId, query) {
   const token = ++_subPanelLockSeq;
@@ -2916,20 +2918,51 @@ async function tagPastSubscriptions() {
     });
     
     if (!toTag.length) return 0; // Signal: nothing tagged, skip second render
-    
+
+    let totalTagged = 0;
     for (let i = 0; i < toTag.length; i += 450) {
       const chunk = toTag.slice(i, i + 450);
+      // Re-check locks immediately before writing — a concurrent linkSubTx may have
+      // acquired a write lock or pending entry since toTag was built earlier
+      const eligible = chunk.filter(({ txId }) =>
+        !_txWriteLocks.has(txId) && !_pendingTxUpdates.has(txId)
+      );
+      if (!eligible.length) continue;
       const batch = writeBatch(db);
-      // KEY FIX: Write subId alongside _recurring to prevent the race condition
-      // where a snapshot with only _recurring:true would erase the subId set by linkSubTx
-      chunk.forEach(({ txId, recId }) => batch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId }));
+      eligible.forEach(({ txId, recId }) =>
+        batch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId })
+      );
       await batch.commit();
+      // Register each written tx in _pendingTxUpdates so the confirm-then-clear in
+      // onSnapshot guards the window between commit and the resulting snapshot. Uses
+      // a shared opToken per chunk; linkSubTx/unlinkSubTx will overwrite the token
+      // if they run next, preventing this timer from clearing their newer entry.
+      const opToken = ++_txOpSeq;
+      eligible.forEach(({ txId, recId }) => {
+        _pendingTxUpdates.set(txId, { _recurring: true, subId: recId });
+        _pendingTxTokens.set(txId, opToken);
+        const capturedTxId = txId;
+        setTimeout(() => {
+          if (_pendingTxTokens.get(capturedTxId) === opToken) {
+            _pendingTxUpdates.delete(capturedTxId);
+            _pendingTxTokens.delete(capturedTxId);
+          }
+        }, 10000);
+      });
+      totalTagged += eligible.length;
     }
-    // Optimistic local update — includes subId to prevent re-tagging and match history filter
-    toTag.forEach(({ txId, recId }) => { const tx = txs.find(t => t.id === txId); if (tx) { tx._recurring = true; tx.subId = recId; } });
-    showToast(`Auto-tagged ${toTag.length} past subscriptions!`, 'ok');
-    console.log(`Auto-tagged ${toTag.length} past transactions as subscriptions.`);
-    return toTag.length; // Signal: re-render needed
+    // Optimistic local update — re-check eligibility before applying to avoid
+    // overwriting a concurrent manual linkSubTx that ran during the awaited commits
+    toTag.forEach(({ txId, recId }) => {
+      const tx = txs.find(t => t.id === txId);
+      if (!tx || _txWriteLocks.has(txId) || tx._manualLink) return;
+      tx._recurring = true;
+      tx.subId = recId;
+    });
+    if (!totalTagged) return 0;
+    showToast(`Auto-tagged ${totalTagged} past subscriptions!`, 'ok');
+    console.log(`Auto-tagged ${totalTagged} past transactions as subscriptions.`);
+    return totalTagged; // Signal: re-render needed
   } catch(e) { console.error('Failed to auto-tag past subscriptions:', e); return 0; }
   finally { _tagPastRunning = false; }
 }
@@ -5973,8 +6006,12 @@ async function linkSubTx(txId, recId) {
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
+  // Per-operation identity token — guards deferred cleanups so a stale timer from
+  // an earlier link/unlink call cannot evict a newer operation's pending state.
+  const opToken = ++_txOpSeq;
+
   // Write lock: prevent tagPastSubscriptions and detectEarlyPayments from touching this tx
-  _txWriteLocks.add(txId);
+  _txWriteLocks.set(txId, opToken);
 
   // Optimistic local update — must happen before any await so UI never flickers
   tx.subId = recId;
@@ -5984,15 +6021,22 @@ async function linkSubTx(txId, recId) {
   // Register optimistic state so onSnapshot rebuilds of txs re-apply it
   // until Firestore confirms the write (confirmed by the confirm-then-clear pattern).
   _pendingTxUpdates.set(txId, { subId: recId, _recurring: true, _manualLink: true });
+  _pendingTxTokens.set(txId, opToken);
 
   // Safety: clear pending after 10s no matter what (prevents memory leaks if onSnapshot
-  // never confirms, e.g. during prolonged offline periods)
-  setTimeout(() => _pendingTxUpdates.delete(txId), 10000);
+  // never confirms, e.g. during prolonged offline periods). Token-guarded so a stale
+  // timer from an earlier operation doesn't evict a newer operation's entry.
+  setTimeout(() => {
+    if (_pendingTxTokens.get(txId) === opToken) {
+      _pendingTxUpdates.delete(txId);
+      _pendingTxTokens.delete(txId);
+    }
+  }, 10000);
 
   // Lock: redirect any onSnapshot-triggered render() calls into targeted panel-only
   // refreshes so the picker DOM (and the user's search query) is never destroyed.
   const _lockToken = _setSubPanelLock(recId, currentQuery);
-  
+
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
   showToast(navigator.onLine ? 'Payment linked to subscription' : 'Saved offline. Will sync when connected.', 'ok');
@@ -6007,8 +6051,8 @@ async function linkSubTx(txId, recId) {
     // DON'T clear _pendingTxUpdates here — let onSnapshot's confirm-then-clear handle it.
     // Release lock after a short delay to absorb the onSnapshot that fires from updateDoc.
     setTimeout(() => _clearSubPanelLock(_lockToken), 800);
-    // Clear write lock after enough time for snapshots to settle
-    setTimeout(() => _txWriteLocks.delete(txId), 3000);
+    // Token-guarded write-lock release — only removes the lock if this operation still owns it
+    setTimeout(() => { if (_txWriteLocks.get(txId) === opToken) _txWriteLocks.delete(txId); }, 3000);
   }
 }
 
@@ -6022,8 +6066,11 @@ async function unlinkSubTx(txId, recId) {
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
+  // Per-operation identity token — same pattern as linkSubTx
+  const opToken = ++_txOpSeq;
+
   // Write lock: prevent tagPastSubscriptions and detectEarlyPayments from touching this tx
-  _txWriteLocks.add(txId);
+  _txWriteLocks.set(txId, opToken);
 
   // Optimistic local update — before any await
   delete tx.subId;
@@ -6036,13 +6083,20 @@ async function unlinkSubTx(txId, recId) {
   if (hadManualLink) pendingUnlink._manualLink = null;
   if (Object.keys(pendingUnlink).length) {
     _pendingTxUpdates.set(txId, pendingUnlink);
-    // Safety: clear pending after 10s no matter what (prevents memory leaks)
-    setTimeout(() => _pendingTxUpdates.delete(txId), 10000);
+    _pendingTxTokens.set(txId, opToken);
+    // Safety: token-guarded so a stale timer from an earlier operation doesn't evict
+    // a newer operation's pending entry (e.g. rapid unlink → link on same tx)
+    setTimeout(() => {
+      if (_pendingTxTokens.get(txId) === opToken) {
+        _pendingTxUpdates.delete(txId);
+        _pendingTxTokens.delete(txId);
+      }
+    }, 10000);
   }
 
   // Lock: same pattern as linkSubTx — protect the picker from onSnapshot rebuilds
   const _lockToken = _setSubPanelLock(recId, currentQuery);
-  
+
   renderSubHistInner(recId);
   renderLinkPicker(recId, currentQuery);
   showToast(navigator.onLine ? 'Payment removed from history' : 'Saved offline. Will sync when connected.', 'ok');
@@ -6064,12 +6118,12 @@ async function unlinkSubTx(txId, recId) {
     } finally {
       // DON'T clear _pendingTxUpdates here — let onSnapshot's confirm-then-clear handle it.
       setTimeout(() => _clearSubPanelLock(_lockToken), 800);
-      setTimeout(() => _txWriteLocks.delete(txId), 3000);
+      setTimeout(() => { if (_txWriteLocks.get(txId) === opToken) _txWriteLocks.delete(txId); }, 3000);
     }
   } else {
     // No Firestore fields to remove — just release locks
     setTimeout(() => _clearSubPanelLock(_lockToken), 800);
-    setTimeout(() => _txWriteLocks.delete(txId), 3000);
+    setTimeout(() => { if (_txWriteLocks.get(txId) === opToken) _txWriteLocks.delete(txId); }, 3000);
   }
 }
 
