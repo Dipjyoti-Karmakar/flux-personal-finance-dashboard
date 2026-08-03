@@ -2895,11 +2895,11 @@ async function tagPastSubscriptions() {
   try {
     const toTag = [];
     txs.forEach(tx => {
-      if (tx._recurring) return;           // Already tagged
-      if (tx.subId) return;                // Already linked to a subscription
-      if (tx._manualLink) return;          // Manually linked
       if (_txWriteLocks.has(tx.id)) return; // Being actively modified by linkSubTx/unlinkSubTx
       if (_pendingTxUpdates.has(tx.id)) return; // In-flight optimistic mutation
+      if (tx._manualLink) return;          // Manually linked — don't touch
+      // Skip if already fully tagged (has both _recurring AND subId)
+      if (tx._recurring && tx.subId) return;
       // Don't steal transactions that the subscription matcher may need
       if (globallyMatchedTxIds && globallyMatchedTxIds.has(tx.id)) return;
       const matchingRec = recurringList.find(rec => {
@@ -2913,13 +2913,11 @@ async function tagPastSubscriptions() {
         if (rec.nextDue && tx.date > rec.nextDue) return false;
         return true;
       });
-      // KEY FIX: push both txId AND recId so we can write subId alongside _recurring
       if (matchingRec) toTag.push({ txId: tx.id, recId: matchingRec.id });
     });
     
     if (!toTag.length) return 0; // Signal: nothing tagged, skip second render
-
-    let totalTagged = 0;
+    
     for (let i = 0; i < toTag.length; i += 450) {
       const chunk = toTag.slice(i, i + 450);
       // Re-check locks immediately before writing — a concurrent linkSubTx may have
@@ -2933,23 +2931,6 @@ async function tagPastSubscriptions() {
         batch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId })
       );
       await batch.commit();
-      // Register each written tx in _pendingTxUpdates so the confirm-then-clear in
-      // onSnapshot guards the window between commit and the resulting snapshot. Uses
-      // a shared opToken per chunk; linkSubTx/unlinkSubTx will overwrite the token
-      // if they run next, preventing this timer from clearing their newer entry.
-      const opToken = ++_txOpSeq;
-      eligible.forEach(({ txId, recId }) => {
-        _pendingTxUpdates.set(txId, { _recurring: true, subId: recId });
-        _pendingTxTokens.set(txId, opToken);
-        const capturedTxId = txId;
-        setTimeout(() => {
-          if (_pendingTxTokens.get(capturedTxId) === opToken) {
-            _pendingTxUpdates.delete(capturedTxId);
-            _pendingTxTokens.delete(capturedTxId);
-          }
-        }, 10000);
-      });
-      totalTagged += eligible.length;
     }
     // Optimistic local update — re-check eligibility before applying to avoid
     // overwriting a concurrent manual linkSubTx that ran during the awaited commits
@@ -2959,10 +2940,9 @@ async function tagPastSubscriptions() {
       tx._recurring = true;
       tx.subId = recId;
     });
-    if (!totalTagged) return 0;
-    showToast(`Auto-tagged ${totalTagged} past subscriptions!`, 'ok');
-    console.log(`Auto-tagged ${totalTagged} past transactions as subscriptions.`);
-    return totalTagged; // Signal: re-render needed
+    showToast(`Auto-tagged ${toTag.length} past subscriptions!`, 'ok');
+    console.log(`Auto-tagged ${toTag.length} past transactions as subscriptions.`);
+    return toTag.length; // Signal: re-render needed
   } catch(e) { console.error('Failed to auto-tag past subscriptions:', e); return 0; }
   finally { _tagPastRunning = false; }
 }
@@ -5857,7 +5837,16 @@ function renderSubHistInner(recId) {
   });
 
   const subTxs = effectiveTxs
-    .filter(t => t.subId === recId)  // ONLY explicit subId links — no fuzzy matching
+    .filter(t => {
+      // Primary: explicit subId link
+      if (t.subId === recId) return true;
+      // Fallback: fuzzy match for legacy transactions tagged with _recurring but no subId
+      // (these will be progressively backfilled with subId by tagPastSubscriptions)
+      if ((!t.subId || t.subId === recId) && t._recurring && t.type === rec.type &&
+          Math.abs(t.amount) === Math.abs(rec.amount) &&
+          (t.desc || '').trim().toLowerCase() === nameLow) return true;
+      return false;
+    })
     .sort((a, b) => {
       const dd = (b.date || '').localeCompare(a.date || '');
       return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
