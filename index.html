@@ -1927,8 +1927,8 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
         <div style="margin-bottom:14px;">
           <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Mode</label>
           <div class="tg" style="grid-template-columns:1fr 1fr;">
-            <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')">📱 Online</button>
-            <button class="tb" id="recModeOfl" onclick="setRecMode('offline')">💵 Offline</button>
+            <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true">📱 Online</button>
+            <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false">💵 Offline</button>
           </div>
         </div>
         <div style="margin-bottom:14px;">
@@ -2346,6 +2346,16 @@ function loadDataFromCloud() {
   const colRef = collection(db, 'users', userId, 'transactions');
   
   unsubscribeFirestore = onSnapshot(colRef, (snapshot) => {
+    let hasNonEchoChange = false;
+    snapshot.docChanges().forEach(change => {
+      if (change.type === 'added' || change.type === 'removed') hasNonEchoChange = true;
+      else if (change.type === 'modified' && !_sessionTaggedTxIds.has(change.doc.id)) hasNonEchoChange = true;
+    });
+    if (hasNonEchoChange) {
+      _tagPastDone = false;
+      _earlyPayDone = false;
+    }
+
     const loadedTxs = [];
     snapshot.forEach(doc => {
       const data = doc.data();
@@ -2919,13 +2929,16 @@ async function tagPastSubscriptions() {
         // Exact match first, then fuzzy (contains) for names >= 4 chars
         const recName = rec.name.trim().toLowerCase();
         const txDesc = tx.desc.trim().toLowerCase();
+        if (!recName || !txDesc) return false;
         if (recName !== txDesc) {
-          if (recName.length < 4 || !(txDesc.includes(recName) || recName.includes(txDesc))) return false;
+          if (recName.length < 4 || txDesc.length < 4 || !(txDesc.includes(recName) || recName.includes(txDesc))) return false;
         }
         if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
         if (rec.type !== tx.type) return false;
         // Mode must match if subscription specifies one
-        if (rec.mode && tx.mode && rec.mode !== tx.mode) return false;
+        const rMode = rec.mode || 'online';
+        const tMode = tx.mode || 'online';
+        if (rMode !== tMode) return false;
         // Category must match to prevent false positives on same-name/amount transactions
         if (rec.cat && tx.cat && rec.cat !== tx.cat) return false;
         // Date guard: only tag transactions on or before the subscription's current nextDue
@@ -5557,18 +5570,21 @@ async function checkAndTriggerRecurring() {
           if (maxD > today) maxD = today;
 
           const allTxs = [...txs, ...newTxs];
-          const _recNameLc = data.name.trim().toLowerCase();
+          const _recNameLc = data.name ? data.name.trim().toLowerCase() : '';
           const matchedTx = allTxs.find(t => {
             if (t.type !== data.type) return false;
             if (!t.desc) return false;
             // Exact match first, then fuzzy (contains) for names >= 4 chars
             const _txDescLc = t.desc.trim().toLowerCase();
+            if (!_recNameLc || !_txDescLc) return false;
             if (_recNameLc !== _txDescLc) {
-              if (_recNameLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
+              if (_recNameLc.length < 4 || _txDescLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
             }
             if (Math.abs(t.amount) !== Math.abs(data.amount)) return false;
             // Mode matching: if subscription specifies mode, transaction must match
-            if (data.mode && t.mode && data.mode !== t.mode) return false;
+            const rMode = data.mode || 'online';
+            const tMode = t.mode || 'online';
+            if (rMode !== tMode) return false;
             if (data.cat && t.cat && data.cat !== t.cat) return false;
             if (t.date < minD || t.date > maxD) return false;
             if (matchedTxIds.has(t.id)) return false;
@@ -5688,12 +5704,15 @@ async function detectEarlyPayments() {
       if (!t.desc || !_recNameLc) return false;
       // Exact match first, then fuzzy (contains) for names >= 4 chars
       const _txDescLc = t.desc.trim().toLowerCase();
+      if (!_txDescLc) return false;
       if (_recNameLc !== _txDescLc) {
-        if (_recNameLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
+        if (_recNameLc.length < 4 || _txDescLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
       }
       if (Math.abs(t.amount) !== Math.abs(rec.amount)) return false;
       // Mode matching: if subscription specifies mode, transaction must match
-      if (rec.mode && t.mode && rec.mode !== t.mode) return false;
+      const rMode = rec.mode || 'online';
+      const tMode = t.mode || 'online';
+      if (rMode !== tMode) return false;
       if (rec.cat && t.cat && rec.cat !== t.cat) return false;
       if (t.date < minD || t.date > maxD) return false;
       if (globallyMatchedTxIds.has(t.id)) return false;
@@ -6268,8 +6287,12 @@ function setRecFreq(freq) {
 
 function setRecMode(m) {
   currentRecMode = m;
-  document.getElementById('recModeOnl').className = 'tb' + (m === 'online' ? ' ao' : '');
-  document.getElementById('recModeOfl').className = 'tb' + (m === 'offline' ? ' af' : '');
+  const onlBtn = document.getElementById('recModeOnl');
+  const oflBtn = document.getElementById('recModeOfl');
+  onlBtn.className = 'tb' + (m === 'online' ? ' ao' : '');
+  oflBtn.className = 'tb' + (m === 'offline' ? ' af' : '');
+  onlBtn.setAttribute('aria-pressed', m === 'online' ? 'true' : 'false');
+  oflBtn.setAttribute('aria-pressed', m === 'offline' ? 'true' : 'false');
 }
 
 async function saveRecurringMod() {
