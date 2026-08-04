@@ -1925,6 +1925,13 @@ table.pt tr.sk td{color:var(--di);opacity:.5}
           </div>
         </div>
         <div style="margin-bottom:14px;">
+          <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Mode</label>
+          <div class="tg" style="grid-template-columns:1fr 1fr;">
+            <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')">📱 Online</button>
+            <button class="tb" id="recModeOfl" onclick="setRecMode('offline')">💵 Offline</button>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
           <label style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Frequency</label>
           <div class="freq-grid" style="grid-template-columns:repeat(5,1fr);">
             <button class="freq-btn act" id="freqMonthly" onclick="setRecFreq('monthly')">Monthly</button>
@@ -2101,6 +2108,7 @@ let recurringList = [];
 let editingRecurringId = null;
 let currentRecType = 'expense';
 let currentRecFreq = 'monthly';
+let currentRecMode = 'online';
 let reportPeriodMode = 'month';
 let trendAbort = null;
 let trendMode = 'expense'; // 'expense' | 'income' | 'both'
@@ -2795,6 +2803,9 @@ const _pendingTxTokens = new Map();  // Per-operation identity tokens for _pendi
 let _txOpSeq = 0;                    // Monotonic counter — incremented for each link/unlink/autoTag op
 const _txWriteLocks = new Map();     // Prevent concurrent writers on same txId (txId -> opToken)
 let _tagPastRunning = false;         // Re-entrancy guard for tagPastSubscriptions
+let _tagPastDone = false;            // Set after tagPast finds nothing to tag — prevents loop
+let _earlyPayDone = false;           // Set after detectEarlyPayments finds nothing — prevents loop
+const _sessionTaggedTxIds = new Set(); // Tracks txs tagged this session to prevent re-tagging on echo snapshots
 function _setSubPanelLock(recId, query) {
   const token = ++_subPanelLockSeq;
   _subPanelLock = { recId, query, token };
@@ -2866,12 +2877,24 @@ function debouncedRender() {
     _renderTimer = null; 
     render(); 
     // tagPastSubscriptions tags old txs with _recurring:true and subId.
-    // Its optimistic update applies to the in-memory txs array, so the NEXT
-    // onSnapshot-driven render() will show the correct state. No extra
-    // renderRecurring() call is needed here — render() already handles it.
-    tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then(() => {
-      detectEarlyPayments();
-    });
+    // Gated by _tagPastDone to prevent the infinite loop:
+    // tagPast writes → onSnapshot → debouncedRender → tagPast again.
+    // Once tagPast finds nothing to tag, _tagPastDone is set and further
+    // snapshot echoes skip re-running it. Reset only on recurring list changes.
+    if (!_tagPastDone) {
+      tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then((count) => {
+        if (count === 0) _tagPastDone = true;
+        if (!_earlyPayDone) {
+          detectEarlyPayments().then((matched) => {
+            if (!matched) _earlyPayDone = true;
+          });
+        }
+      });
+    } else if (!_earlyPayDone) {
+      detectEarlyPayments().then((matched) => {
+        if (!matched) _earlyPayDone = true;
+      });
+    }
   }, 120);
 }
 
@@ -2887,13 +2910,22 @@ async function tagPastSubscriptions() {
       if (tx._manualLink) return;          // Manually linked — don't touch
       // Skip if already fully tagged (has both _recurring AND subId)
       if (tx._recurring && tx.subId) return;
+      // Skip if already tagged in this session (prevents re-tagging on echo snapshots)
+      if (_sessionTaggedTxIds.has(tx.id)) return;
       // Don't steal transactions that the subscription matcher may need
       if (globallyMatchedTxIds && globallyMatchedTxIds.has(tx.id)) return;
       const matchingRec = recurringList.find(rec => {
         if (!rec.name || !tx.desc) return false;
-        if (rec.name.trim().toLowerCase() !== tx.desc.trim().toLowerCase()) return false;
+        // Exact match first, then fuzzy (contains) for names >= 4 chars
+        const recName = rec.name.trim().toLowerCase();
+        const txDesc = tx.desc.trim().toLowerCase();
+        if (recName !== txDesc) {
+          if (recName.length < 4 || !(txDesc.includes(recName) || recName.includes(txDesc))) return false;
+        }
         if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
         if (rec.type !== tx.type) return false;
+        // Mode must match if subscription specifies one
+        if (rec.mode && tx.mode && rec.mode !== tx.mode) return false;
         // Category must match to prevent false positives on same-name/amount transactions
         if (rec.cat && tx.cat && rec.cat !== tx.cat) return false;
         // Date guard: only tag transactions on or before the subscription's current nextDue
@@ -2905,12 +2937,33 @@ async function tagPastSubscriptions() {
     
     if (!toTag.length) return 0; // Signal: nothing tagged, skip second render
     
+    // Register in _pendingTxUpdates BEFORE batch commit so onSnapshot rebuilds
+    // of txs re-apply the tags even if Firestore hasn't confirmed yet.
+    // Also add to _sessionTaggedTxIds to prevent re-processing on echo snapshots.
+    const opToken = ++_txOpSeq;
+    toTag.forEach(({ txId, recId }) => {
+      if (!_txWriteLocks.has(txId) && !_pendingTxUpdates.has(txId)) {
+        _pendingTxUpdates.set(txId, { _recurring: true, subId: recId });
+        _pendingTxTokens.set(txId, opToken);
+      }
+      _sessionTaggedTxIds.add(txId);
+    });
+    // Safety: clear pending entries after 15s (batch writes may be slower than single docs)
+    setTimeout(() => {
+      toTag.forEach(({ txId }) => {
+        if (_pendingTxTokens.get(txId) === opToken) {
+          _pendingTxUpdates.delete(txId);
+          _pendingTxTokens.delete(txId);
+        }
+      });
+    }, 15000);
+
     for (let i = 0; i < toTag.length; i += 450) {
       const chunk = toTag.slice(i, i + 450);
       // Re-check locks immediately before writing — a concurrent linkSubTx may have
       // acquired a write lock or pending entry since toTag was built earlier
       const eligible = chunk.filter(({ txId }) =>
-        !_txWriteLocks.has(txId) && !_pendingTxUpdates.has(txId)
+        !_txWriteLocks.has(txId)
       );
       if (!eligible.length) continue;
       const batch = writeBatch(db);
@@ -5402,6 +5455,11 @@ function loadRecurring() {
   if (unsubscribeRecurring) unsubscribeRecurring();
   const recRef = collection(db, 'users', userId, 'recurring');
   unsubscribeRecurring = onSnapshot(recRef, (snap) => {
+    // Reset loop-prevention flags — recurring data changed, need fresh tag/detect runs
+    _tagPastDone = false;
+    _earlyPayDone = false;
+    _sessionTaggedTxIds.clear();
+    _sessionEarlyPayRecs.clear();
     recurringList = [];
     snap.forEach(d => recurringList.push({ id: d.id, ...d.data() }));
     // Merge offline entries from syncQueue
@@ -5499,16 +5557,25 @@ async function checkAndTriggerRecurring() {
           if (maxD > today) maxD = today;
 
           const allTxs = [...txs, ...newTxs];
-          const matchedTx = allTxs.find(t => 
-            t.type === data.type &&
-            t.desc && t.desc.trim().toLowerCase() === data.name.trim().toLowerCase() && 
-            Math.abs(t.amount) === Math.abs(data.amount) &&
-            (!data.cat || !t.cat || data.cat === t.cat) &&
-            t.date >= minD && t.date <= maxD &&
-            !matchedTxIds.has(t.id) &&
-            !globallyMatchedTxIds.has(t.id) &&
-            (!t._auto || t.subId === rec.id)
-          );
+          const _recNameLc = data.name.trim().toLowerCase();
+          const matchedTx = allTxs.find(t => {
+            if (t.type !== data.type) return false;
+            if (!t.desc) return false;
+            // Exact match first, then fuzzy (contains) for names >= 4 chars
+            const _txDescLc = t.desc.trim().toLowerCase();
+            if (_recNameLc !== _txDescLc) {
+              if (_recNameLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
+            }
+            if (Math.abs(t.amount) !== Math.abs(data.amount)) return false;
+            // Mode matching: if subscription specifies mode, transaction must match
+            if (data.mode && t.mode && data.mode !== t.mode) return false;
+            if (data.cat && t.cat && data.cat !== t.cat) return false;
+            if (t.date < minD || t.date > maxD) return false;
+            if (matchedTxIds.has(t.id)) return false;
+            if (globallyMatchedTxIds.has(t.id)) return false;
+            if (t._auto && t.subId !== rec.id) return false;
+            return true;
+          });
 
           if (!matchedTx) {
             const txId = uid();
@@ -5584,8 +5651,9 @@ async function checkAndTriggerRecurring() {
 // If a user pays a subscription before its due date, match the transaction and
 // advance nextDue so the card shows "Active" / "✓ Paid" instead of "In Xd".
 const _earlyPayProcessing = new Set();
+const _sessionEarlyPayRecs = new Set(); // Tracks recs already handled — prevents re-processing on echo snapshots
 async function detectEarlyPayments() {
-  if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return;
+  if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return false;
   const today = getTodayStr();
   let anyMatched = false;
 
@@ -5593,6 +5661,8 @@ async function detectEarlyPayments() {
     // Only consider active subs whose nextDue is still in the future
     if (!rec.active || !rec.nextDue || rec.nextDue <= today) continue;
     if (_earlyPayProcessing.has(rec.id)) continue;
+    // Skip if already processed this rec in the current session (prevents echo loop)
+    if (_sessionEarlyPayRecs.has(rec.id + ':' + rec.nextDue)) continue;
 
     // Compute the prepayment window (same window sizes used in checkAndTriggerRecurring)
     let wDays = 15;
@@ -5612,26 +5682,48 @@ async function detectEarlyPayments() {
     // Don't bother if today is before the window even opens
     if (today < minD) continue;
 
-    const matchedTx = txs.find(t =>
-      t.type === rec.type &&
-      t.desc && rec.name &&
-      t.desc.trim().toLowerCase() === rec.name.trim().toLowerCase() &&
-      Math.abs(t.amount) === Math.abs(rec.amount) &&
-      (!rec.cat || !t.cat || rec.cat === t.cat) &&
-      t.date >= minD && t.date <= maxD &&
-      !globallyMatchedTxIds.has(t.id) &&
-      !_txWriteLocks.has(t.id) &&
-      (!t._auto || t.subId === rec.id)
-    );
+    const _recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
+    const matchedTx = txs.find(t => {
+      if (t.type !== rec.type) return false;
+      if (!t.desc || !_recNameLc) return false;
+      // Exact match first, then fuzzy (contains) for names >= 4 chars
+      const _txDescLc = t.desc.trim().toLowerCase();
+      if (_recNameLc !== _txDescLc) {
+        if (_recNameLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
+      }
+      if (Math.abs(t.amount) !== Math.abs(rec.amount)) return false;
+      // Mode matching: if subscription specifies mode, transaction must match
+      if (rec.mode && t.mode && rec.mode !== t.mode) return false;
+      if (rec.cat && t.cat && rec.cat !== t.cat) return false;
+      if (t.date < minD || t.date > maxD) return false;
+      if (globallyMatchedTxIds.has(t.id)) return false;
+      if (_txWriteLocks.has(t.id)) return false;
+      if (t._auto && t.subId !== rec.id) return false;
+      return true;
+    });
 
     if (!matchedTx) continue;
 
     _earlyPayProcessing.add(rec.id);
+    // Mark as processed for this session (rec.id + nextDue combo is unique per cycle)
+    _sessionEarlyPayRecs.add(rec.id + ':' + rec.nextDue);
     anyMatched = true;
     try {
       const newNextDue = computeNextDue(rec.nextDue, rec.freq, rec.customDays, rec.billingDay);
       const recRef = doc(db, 'users', userId, 'recurring', rec.id);
       const txRef = doc(db, 'users', userId, 'transactions', matchedTx.id);
+      // Register in _pendingTxUpdates before commit to prevent echo snapshot re-processing
+      const opToken = ++_txOpSeq;
+      _pendingTxUpdates.set(matchedTx.id, { _recurring: true, subId: rec.id });
+      _pendingTxTokens.set(matchedTx.id, opToken);
+      _sessionTaggedTxIds.add(matchedTx.id);
+      setTimeout(() => {
+        if (_pendingTxTokens.get(matchedTx.id) === opToken) {
+          _pendingTxUpdates.delete(matchedTx.id);
+          _pendingTxTokens.delete(matchedTx.id);
+        }
+      }, 10000);
+
       const batch = writeBatch(db);
       const recUpdate = { nextDue: newNextDue };
       const newPaymentsMade = (rec.paymentsMade || 0) + 1;
@@ -5663,6 +5755,7 @@ async function detectEarlyPayments() {
   }
   // Re-render subscription cards so badges update (only if we actually found an early payment)
   if (anyMatched && document.getElementById('subView').style.display !== 'none') renderRecurring();
+  return anyMatched;
 }
 
 function renderRecurring() {
@@ -6116,6 +6209,7 @@ function openAddRecurring() {
   editingRecurringId = null;
   currentRecType = 'expense';
   currentRecFreq = 'monthly';
+  currentRecMode = 'online';
   document.getElementById('recurringModTitle').textContent = 'New Subscription';
   document.getElementById('recurringModSaveBtn').textContent = 'Create Subscription';
   document.getElementById('recName').value = '';
@@ -6125,6 +6219,7 @@ function openAddRecurring() {
   document.getElementById('recTimesActive').value = '';
   setRecType('expense');
   setRecFreq('monthly');
+  setRecMode('online');
   document.getElementById('recurringMod').classList.add('op');
 }
 
@@ -6134,6 +6229,7 @@ function openEditRecurring(id) {
   editingRecurringId = id;
   currentRecType = rec.type || 'expense';
   currentRecFreq = rec.freq || 'monthly';
+  currentRecMode = rec.mode || 'online';
   document.getElementById('recurringModTitle').textContent = 'Edit Subscription';
   document.getElementById('recurringModSaveBtn').textContent = 'Save Changes';
   document.getElementById('recName').value = rec.name || '';
@@ -6145,6 +6241,7 @@ function openEditRecurring(id) {
   document.getElementById('recTimesActive').value = rec.paymentsLimit || '';
   setRecType(currentRecType);
   setRecFreq(currentRecFreq);
+  setRecMode(currentRecMode);
   document.getElementById('recurringMod').classList.add('op');
 }
 
@@ -6169,6 +6266,12 @@ function setRecFreq(freq) {
   }
 }
 
+function setRecMode(m) {
+  currentRecMode = m;
+  document.getElementById('recModeOnl').className = 'tb' + (m === 'online' ? ' ao' : '');
+  document.getElementById('recModeOfl').className = 'tb' + (m === 'offline' ? ' af' : '');
+}
+
 async function saveRecurringMod() {
   const name = document.getElementById('recName').value.trim();
   const amount = parseFloat(document.getElementById('recAmount').value);
@@ -6188,7 +6291,7 @@ async function saveRecurringMod() {
     : parseInt(nextDue.split('-')[2], 10);
   // Preserve active state on edit — don't silently re-activate a paused subscription
   const activeState = existingRec ? existingRec.active : true;
-  const data = { name, amount, type: currentRecType, mode: 'online', cat, freq: currentRecFreq, nextDue, billingDay, active: activeState };
+  const data = { name, amount, type: currentRecType, mode: currentRecMode, cat, freq: currentRecFreq, nextDue, billingDay, active: activeState };
   if (currentRecFreq === 'custom') {
     data.customDays = customDays;
   } else {
@@ -7274,6 +7377,7 @@ window.closeRecurringMod = closeRecurringMod;
 window.saveRecurringMod = saveRecurringMod;
 window.setRecType = setRecType;
 window.setRecFreq = setRecFreq;
+window.setRecMode = setRecMode;
 window.toggleRecurringActive = toggleRecurringActive;
 window.askDeleteRecurring = askDeleteRecurring;
 window.toggleSubHistory = toggleSubHistory;
