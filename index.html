@@ -3802,24 +3802,26 @@ function renderTrend(passedTxs) {
           if (showExp && ePts[closestIdx]) tipHTML += `<div class="val" style="color:${expColor}">Exp: ${fmt(ePts[closestIdx].val)}</div>`;
           if (showInc && iPts[closestIdx]) tipHTML += `<div class="val" style="color:${incColor}">Inc: ${fmt(iPts[closestIdx].val)}</div>`;
           tip.innerHTML = tipHTML;
-          // Use scrollY so tooltip is correct regardless of page scroll position
+          // Tooltip uses position: fixed and transform: translate(-50%, -100%)
+          // so it's relative to viewport and centered horizontally / aligned bottom
           const ptX = currentRect.left + refPts[closestIdx].x;
-          let displayY = currentRect.top + window.scrollY + refPts[closestIdx].y - 10;
+          let displayY = currentRect.top + refPts[closestIdx].y - 10;
           tip.style.left = '0px'; tip.style.top = '0px'; tip.classList.add('sh');
           const tipRect = tip.getBoundingClientRect();
           const tipW = tipRect.width, tipH = tipRect.height;
           // Clamp horizontally: keep tip fully inside viewport
           let displayX = Math.max(tipW / 2 + 8, Math.min(ptX, window.innerWidth - tipW / 2 - 8));
           // Flip below point if too close to top
-          if (displayY - tipH < window.scrollY + 8) displayY = currentRect.top + window.scrollY + refPts[closestIdx].y + tipH + 14;
-          // Anchor by left edge, not center
-          tip.style.left = (displayX - tipW / 2) + 'px'; tip.style.top = displayY + 'px';
+          if (displayY - tipH < 8) displayY = currentRect.top + refPts[closestIdx].y + tipH + 14;
+          
+          tip.style.left = displayX + 'px'; tip.style.top = displayY + 'px';
       };
 
       const handleLeave = () => { drawBase(); tip.classList.remove('sh'); };
       const handleGlobalTap = (e) => { if (!cv.contains(e.target)) handleLeave(); };
 
       cv.addEventListener('mousemove', handleMove, { signal });
+      cv.addEventListener('click', handleMove, { signal });
       cv.addEventListener('touchstart', handleMove, { passive: false, signal });
       cv.addEventListener('touchmove', handleMove, { passive: false, signal });
       cv.addEventListener('mouseleave', handleLeave, { signal });
