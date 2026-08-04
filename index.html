@@ -2349,7 +2349,12 @@ function loadDataFromCloud() {
     let hasNonEchoChange = false;
     snapshot.docChanges().forEach(change => {
       if (change.type === 'added' || change.type === 'removed') hasNonEchoChange = true;
-      else if (change.type === 'modified' && !_sessionTaggedTxIds.has(change.doc.id)) hasNonEchoChange = true;
+      else if (change.type === 'modified') {
+        const cid = change.doc.id;
+        // Treat modifications to txs we tagged, or have pending writes for
+        // (link/unlink/autoTag), as echoes — don't reset done flags for these
+        if (!_sessionTaggedTxIds.has(cid) && !_pendingTxUpdates.has(cid)) hasNonEchoChange = true;
+      }
     });
     if (hasNonEchoChange) {
       _tagPastDone = false;
@@ -5589,7 +5594,10 @@ async function checkAndTriggerRecurring() {
             if (t.date < minD || t.date > maxD) return false;
             if (matchedTxIds.has(t.id)) return false;
             if (globallyMatchedTxIds.has(t.id)) return false;
+            // Don't steal manually-linked txs or txs already linked to a different sub
+            if (t._manualLink) return false;
             if (t._auto && t.subId !== rec.id) return false;
+            if (t.subId && t.subId !== rec.id) return false;
             return true;
           });
 
@@ -5717,7 +5725,11 @@ async function detectEarlyPayments() {
       if (t.date < minD || t.date > maxD) return false;
       if (globallyMatchedTxIds.has(t.id)) return false;
       if (_txWriteLocks.has(t.id)) return false;
+      if (_pendingTxUpdates.has(t.id)) return false;
+      // Don't steal manually-linked txs or txs already linked to a different sub
+      if (t._manualLink) return false;
       if (t._auto && t.subId !== rec.id) return false;
+      if (t.subId && t.subId !== rec.id) return false;
       return true;
     });
 
