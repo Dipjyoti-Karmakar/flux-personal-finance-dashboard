@@ -2821,6 +2821,8 @@ let _tagPastRunning = false;         // Re-entrancy guard for tagPastSubscriptio
 let _tagPastDone = false;            // Set after tagPast finds nothing to tag — prevents loop
 let _earlyPayDone = false;           // Set after detectEarlyPayments finds nothing — prevents loop
 const _sessionTaggedTxIds = new Set(); // Tracks txs tagged this session to prevent re-tagging on echo snapshots
+const _pendingRecUpdates = new Set();  // Tracks recurring IDs written by our own code (echo detection)
+let _recCatchUpDone = false;           // Gates checkAndTriggerRecurring to run only once per session
 function _setSubPanelLock(recId, query) {
   const token = ++_subPanelLockSeq;
   _subPanelLock = { recId, query, token };
@@ -5473,11 +5475,32 @@ function loadRecurring() {
   if (unsubscribeRecurring) unsubscribeRecurring();
   const recRef = collection(db, 'users', userId, 'recurring');
   unsubscribeRecurring = onSnapshot(recRef, (snap) => {
-    // Reset loop-prevention flags — recurring data changed, need fresh tag/detect runs
-    _tagPastDone = false;
-    _earlyPayDone = false;
-    _sessionTaggedTxIds.clear();
-    _sessionEarlyPayRecs.clear();
+    // Echo detection: only reset loop flags when there are genuine external changes.
+    // Our own writes (from checkAndTriggerRecurring / detectEarlyPayments) register
+    // their rec IDs in _pendingRecUpdates. Changes to those IDs are echoes.
+    let hasStructuralChange = false;
+    snap.docChanges().forEach(change => {
+      if (change.type === 'added' || change.type === 'removed') {
+        hasStructuralChange = true;
+      } else if (change.type === 'modified') {
+        if (_pendingRecUpdates.has(change.doc.id)) {
+          _pendingRecUpdates.delete(change.doc.id); // Confirmed — clear echo marker
+        } else {
+          hasStructuralChange = true; // External edit (e.g. other device, user edit)
+        }
+      }
+    });
+
+    if (hasStructuralChange) {
+      // Only reset on real structural changes (new/deleted/externally-edited subs)
+      _tagPastDone = false;
+      _earlyPayDone = false;
+      _sessionEarlyPayRecs.clear();
+      _recCatchUpDone = false;
+      // NOTE: _sessionTaggedTxIds is NOT cleared here — it tracks tx-level echoes
+      // and must persist regardless of recurring changes.
+    }
+
     recurringList = [];
     snap.forEach(d => recurringList.push({ id: d.id, ...d.data() }));
     // Merge offline entries from syncQueue
@@ -5494,11 +5517,15 @@ function loadRecurring() {
     });
     recurringList.sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
     if (document.getElementById('subView').style.display !== 'none') renderRecurring();
-    checkAndTriggerRecurring().then(() => detectEarlyPayments());
+    // Only run catch-up once per session. Without this gate, every echo snapshot
+    // from our own writes (nextDue updates) would re-invoke checkAndTrigger +
+    // detectEarlyPayments, creating a chain: write → echo → re-run → write.
+    if (!_recCatchUpDone) {
+      _recCatchUpDone = true;
+      checkAndTriggerRecurring().then(() => detectEarlyPayments());
+    }
     // tagPastSubscriptions is NOT called here — debouncedRender (triggered by the
     // tx onSnapshot that fires after any Firestore writes) already calls it.
-    // Calling it from both places caused a cascade: tagPast writes batch →
-    // tx onSnapshot → debouncedRender → tagPast again → visible refresh loop.
   }, err => console.error('Recurring sync error:', err));
 }
 
@@ -5637,6 +5664,10 @@ async function checkAndTriggerRecurring() {
 
       // Optimistic UI updates (only happens if transaction succeeds)
       if (updatesMade) {
+        // Register echo marker for recurring doc so the recurring onSnapshot
+        // doesn't reset session flags when it sees our own write
+        _pendingRecUpdates.add(rec.id);
+        setTimeout(() => _pendingRecUpdates.delete(rec.id), 10000); // Safety clear
         // Commit local matches to global pool to prevent stealing by subsequent subscriptions in this run
         matchedTxIds.forEach(id => globallyMatchedTxIds.add(id));
         
@@ -5743,6 +5774,9 @@ async function detectEarlyPayments() {
       const newNextDue = computeNextDue(rec.nextDue, rec.freq, rec.customDays, rec.billingDay);
       const recRef = doc(db, 'users', userId, 'recurring', rec.id);
       const txRef = doc(db, 'users', userId, 'transactions', matchedTx.id);
+      // Register recurring echo marker BEFORE commit so the recurring onSnapshot
+      // recognizes this as our own write and doesn't reset session flags
+      _pendingRecUpdates.add(rec.id);
       // Register in _pendingTxUpdates before commit to prevent echo snapshot re-processing
       const opToken = ++_txOpSeq;
       _pendingTxUpdates.set(matchedTx.id, { _recurring: true, subId: rec.id });
@@ -5753,6 +5787,7 @@ async function detectEarlyPayments() {
           _pendingTxUpdates.delete(matchedTx.id);
           _pendingTxTokens.delete(matchedTx.id);
         }
+        _pendingRecUpdates.delete(rec.id); // Safety clear
       }, 10000);
 
       const batch = writeBatch(db);
