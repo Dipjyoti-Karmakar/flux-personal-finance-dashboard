@@ -3643,16 +3643,6 @@ function renderTrend(passedTxs) {
   // Drawing helper for one line series
   const drawSeries = (pts, color, glowColor, gradTop, gradMid, highlightIdx) => {
       if (!pts.length) return;
-      if (pts.length === 1) {
-          ctx.beginPath(); ctx.moveTo(px, pts[0].y); ctx.lineTo(w-px, pts[0].y);
-          ctx.strokeStyle = color; ctx.lineWidth = 2.5;
-          ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
-          ctx.beginPath(); ctx.arc(w/2, pts[0].y, 5, 0, 2*Math.PI);
-          ctx.fillStyle = color; ctx.fill();
-          ctx.lineWidth = 2; ctx.strokeStyle = theme === 'dark' ? '#13161e' : '#fff'; ctx.stroke();
-          return;
-      }
-      
       const pathLines = (fill) => {
           ctx.beginPath();
           if (pts.length === 0) return;
@@ -3691,26 +3681,29 @@ function renderTrend(passedTxs) {
           }
       };
 
-      // Area fill
-      pathLines(true);
-      const grad = ctx.createLinearGradient(0, pyT, 0, h - pyB);
-      grad.addColorStop(0, gradTop); grad.addColorStop(0.6, gradMid); grad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = grad; ctx.fill();
-      
-      // Line glow
-      pathLines(false);
-      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-      ctx.strokeStyle = glowColor; ctx.lineWidth = 5; ctx.stroke();
-      
-      // Main line
-      pathLines(false);
-      const lineGrad = ctx.createLinearGradient(pts[0].x, 0, pts[pts.length-1].x, 0);
-      // FIXED: The previous approach tried to convert a hex color to rgba using string
-      // replace(), which silently failed on hex strings like '#e07070'. Now we use
-      // globalAlpha on a cloned path for the faded start effect instead.
-      lineGrad.addColorStop(0, color); lineGrad.addColorStop(0.3, color); lineGrad.addColorStop(1, color);
-      ctx.strokeStyle = lineGrad; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
-      ctx.globalAlpha = 1; // always reset after stroke
+      if (pts.length > 1) {
+          // Area fill
+          pathLines(true);
+          const grad = ctx.createLinearGradient(0, pyT, 0, h - pyB);
+          grad.addColorStop(0, gradTop); grad.addColorStop(0.6, gradMid); grad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = grad; ctx.fill();
+          
+          // Line glow
+          pathLines(false);
+          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+          ctx.strokeStyle = glowColor; ctx.lineWidth = 5; ctx.stroke();
+          
+          // Main line
+          pathLines(false);
+          const lineGrad = ctx.createLinearGradient(pts[0].x, 0, pts[pts.length-1].x, 0);
+          lineGrad.addColorStop(0, color); lineGrad.addColorStop(0.3, color); lineGrad.addColorStop(1, color);
+          ctx.strokeStyle = lineGrad; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
+          ctx.globalAlpha = 1; // always reset after stroke
+      } else if (pts.length === 1) {
+          ctx.beginPath(); ctx.moveTo(px, pts[0].y); ctx.lineTo(w-px, pts[0].y);
+          ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+          ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+      }
       
       // Dots
       pts.forEach((p, i) => {
@@ -3770,24 +3763,29 @@ function renderTrend(passedTxs) {
 
       // X-axis labels
       const refP = refPts.length ? refPts : [];
-      if (refP.length < 2) return;
+      if (refP.length === 0) return;
       ctx.fillStyle = theme === 'dark' ? '#7a8099' : '#6d7283'; ctx.textBaseline = 'top'; ctx.font = '11px DM Mono';
-      const maxLabels = 5, skip = Math.max(1, Math.ceil(refP.length / maxLabels));
-      const firstLbl = refP[0].label, lastLbl = refP[refP.length - 1].label;
-      const firstLblW = ctx.measureText(firstLbl).width, lastLblW = ctx.measureText(lastLbl).width;
-      const firstLblEnd = refP[0].x + firstLblW + 12, lastLblStart = refP[refP.length - 1].x - lastLblW - 12;
-      let lastDrawnX = -Infinity;
-      for (let i = 0; i < refP.length; i++) {
-          if (i === 0) { ctx.textAlign = 'left'; ctx.fillText(firstLbl, refP[i].x, h - pyB + 6); lastDrawnX = refP[i].x + firstLblW; }
-          else if (i === refP.length - 1) { if (lastLblStart > lastDrawnX + 8) { ctx.textAlign = 'right'; ctx.fillText(lastLbl, refP[i].x, h - pyB + 6); } }
-          else if (i % skip === 0) { const lW = ctx.measureText(refP[i].label).width, lL = refP[i].x - lW/2, lR = refP[i].x + lW/2; if (lL > firstLblEnd && lR < lastLblStart && lL > lastDrawnX + 8) { ctx.textAlign = 'center'; ctx.fillText(refP[i].label, refP[i].x, h - pyB + 6); lastDrawnX = lR; } }
+      
+      if (refP.length === 1) {
+          ctx.textAlign = 'center'; ctx.fillText(refP[0].label, refP[0].x, h - pyB + 6);
+      } else {
+          const maxLabels = 5, skip = Math.max(1, Math.ceil(refP.length / maxLabels));
+          const firstLbl = refP[0].label, lastLbl = refP[refP.length - 1].label;
+          const firstLblW = ctx.measureText(firstLbl).width, lastLblW = ctx.measureText(lastLbl).width;
+          const firstLblEnd = refP[0].x + firstLblW + 12, lastLblStart = refP[refP.length - 1].x - lastLblW - 12;
+          let lastDrawnX = -Infinity;
+          for (let i = 0; i < refP.length; i++) {
+              if (i === 0) { ctx.textAlign = 'left'; ctx.fillText(firstLbl, refP[i].x, h - pyB + 6); lastDrawnX = refP[i].x + firstLblW; }
+              else if (i === refP.length - 1) { if (lastLblStart > lastDrawnX + 8) { ctx.textAlign = 'right'; ctx.fillText(lastLbl, refP[i].x, h - pyB + 6); } }
+              else if (i % skip === 0) { const lW = ctx.measureText(refP[i].label).width, lL = refP[i].x - lW/2, lR = refP[i].x + lW/2; if (lL > firstLblEnd && lR < lastLblStart && lL > lastDrawnX + 8) { ctx.textAlign = 'center'; ctx.fillText(refP[i].label, refP[i].x, h - pyB + 6); lastDrawnX = lR; } }
+          }
       }
   };
 
   drawBase(); 
 
   const refPts = ePts.length ? ePts : iPts;
-  if(refPts.length > 1) {
+  if(refPts.length > 0) {
       const handleMove = (e) => {
           if (e.cancelable) e.preventDefault(); 
           const currentRect = cv.getBoundingClientRect();
@@ -3819,12 +3817,15 @@ function renderTrend(passedTxs) {
       };
 
       const handleLeave = () => { drawBase(); tip.classList.remove('sh'); };
+      const handleGlobalTap = (e) => { if (!cv.contains(e.target)) handleLeave(); };
 
       cv.addEventListener('mousemove', handleMove, { signal });
       cv.addEventListener('touchstart', handleMove, { passive: false, signal });
       cv.addEventListener('touchmove', handleMove, { passive: false, signal });
       cv.addEventListener('mouseleave', handleLeave, { signal });
-      cv.addEventListener('touchend', handleLeave, { signal });
+      // Listen for taps outside the canvas to dismiss the tooltip on mobile
+      document.addEventListener('touchstart', handleGlobalTap, { signal });
+      document.addEventListener('mousedown', handleGlobalTap, { signal });
   }
 }
 
