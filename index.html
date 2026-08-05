@@ -3280,7 +3280,7 @@ function renderTxList(){
     }
 
     let savRateHtml = '';
-    if ((isEventFilter || cDtFilt !== 'today') && filtIncome > 0) {
+    if ((isEventFilter || cDtFilt !== 'today') && filtIncome > 0 && cTyFilt === 'all') {
       const savRate = Math.round((net / filtIncome) * 100);
       savRateHtml = `
         <div class="stat-div"></div>
@@ -3291,9 +3291,23 @@ function renderTxList(){
       `;
     }
 
-    html = `<div class="tx-totals-bar">
-      ${evtHeader}
-      <div class="totals-row">
+    let statsHtml = '';
+    if (cTyFilt === 'income') {
+      statsHtml = `
+        <div class="stat-group">
+          <span class="stat-label">Income</span>
+          <span class="stat-val stat-val-in">${fmt(filtIncome)}</span>
+        </div>
+      `;
+    } else if (cTyFilt === 'expense') {
+      statsHtml = `
+        <div class="stat-group">
+          <span class="stat-label">Expense</span>
+          <span class="stat-val stat-val-ex">${fmt(filtExpense)}</span>
+        </div>
+      `;
+    } else {
+      statsHtml = `
         <div class="stat-group">
           <span class="stat-label">Income</span>
           <span class="stat-val stat-val-in">${fmt(filtIncome)}</span>
@@ -3309,6 +3323,13 @@ function renderTxList(){
           <span class="stat-val ${net >= 0 ? 'stat-val-in' : 'stat-val-ex'}">${fmt(Math.abs(net))}</span>
         </div>
         ${savRateHtml}
+      `;
+    }
+
+    html = `<div class="tx-totals-bar">
+      ${evtHeader}
+      <div class="totals-row">
+        ${statsHtml}
       </div>
     </div>` + html;
   }
