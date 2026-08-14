@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V43: Bumped to v32 — manual link persistence fix (manualLinks subcollection), fuzzy match tightening, launch_handler
-const CACHE_NAME = 'flux-v32';
+// V44: Bumped to v33 — unlink fix (_recurring removal), ML error handler retry, auth state reset
+const CACHE_NAME = 'flux-v33';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',

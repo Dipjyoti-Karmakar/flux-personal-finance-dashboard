@@ -2302,6 +2302,11 @@ onAuthStateChanged(auth, (user) => {
     if (unsubscribeActivityLog) unsubscribeActivityLog();
     if (unsubscribeRecurring) unsubscribeRecurring();
     if (unsubscribeManualLinks) unsubscribeManualLinks();
+    // Reset manual-link state before loading new user's data — prevents stale
+    // data from a prior user leaking into matching guards.
+    manualLinksMap = new Map();
+    _pendingManualLinks.clear();
+    _manualLinksReady = false;
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Sign Out`;
     loadDataFromCloud();
     loadEvents();
@@ -5601,7 +5606,18 @@ function loadManualLinks() {
       const recId = p.id.replace('hist-panel-', '');
       if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
     });
-  }, err => console.error('Manual links sync error:', err));
+  }, err => {
+    console.error('Manual links sync error:', err);
+    // Fail-closed: _manualLinksReady stays false, so matching guards remain active.
+    // Notify user and expose retry via loadManualLinks() which cleans up the old
+    // listener before creating a new one, preventing duplicates.
+    showToast('Subscription links failed to sync. Tap to retry.', 'er');
+    const toastEl = document.getElementById('toast');
+    if (toastEl) {
+      toastEl.style.cursor = 'pointer';
+      toastEl.onclick = () => { toastEl.onclick = null; toastEl.style.cursor = ''; loadManualLinks(); };
+    }
+  });
 }
 
 function loadRecurring() {
@@ -6368,6 +6384,7 @@ async function unlinkSubTx(txId, recId) {
   // Track which fields actually need removing (only those that exist)
   const hadSubId = tx.subId !== undefined;
   const hadManualLink = tx._manualLink !== undefined;
+  const hadRecurring = tx._recurring !== undefined;
   const hadManualLinkRecord = manualLinksMap.has(txId);
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
@@ -6381,6 +6398,7 @@ async function unlinkSubTx(txId, recId) {
   // Optimistic local update — before any await
   delete tx.subId;
   delete tx._manualLink;
+  delete tx._recurring;
   manualLinksMap.delete(txId);
   _pendingManualLinks.set(txId, null);  // Overlay: null = pending delete, survives snapshot rebuilds
 
@@ -6389,6 +6407,7 @@ async function unlinkSubTx(txId, recId) {
   const pendingUnlink = {};
   if (hadSubId) pendingUnlink.subId = null;
   if (hadManualLink) pendingUnlink._manualLink = null;
+  if (hadRecurring) pendingUnlink._recurring = null;
   if (Object.keys(pendingUnlink).length) {
     _pendingTxUpdates.set(txId, pendingUnlink);
     _pendingTxTokens.set(txId, opToken);
@@ -6409,13 +6428,14 @@ async function unlinkSubTx(txId, recId) {
   renderLinkPicker(recId, currentQuery);
   showToast(navigator.onLine ? 'Payment removed from history' : 'Saved offline. Will sync when connected.', 'ok');
 
-  if (hadSubId || hadManualLink || hadManualLinkRecord) {
+  if (hadSubId || hadManualLink || hadRecurring || hadManualLinkRecord) {
     // Batch: remove fields from transaction doc AND delete manualLinks record
     try {
       const batch = writeBatch(db);
       const updatePayload = {};
       if (hadSubId) updatePayload.subId = deleteField();
       if (hadManualLink) updatePayload._manualLink = deleteField();
+      if (hadRecurring) updatePayload._recurring = deleteField();
       if (Object.keys(updatePayload).length) {
         batch.update(doc(db, 'users', userId, 'transactions', txId), updatePayload);
       }
@@ -6424,10 +6444,11 @@ async function unlinkSubTx(txId, recId) {
       await batch.commit();
     } catch(e) {
       // Use __DELETE__ sentinel so processSyncQueue can translate back to deleteField()
-      if (hadSubId || hadManualLink) {
+      if (hadSubId || hadManualLink || hadRecurring) {
         const safePayload = {};
         if (hadSubId) safePayload.subId = '__DELETE__';
         if (hadManualLink) safePayload._manualLink = '__DELETE__';
+        if (hadRecurring) safePayload._recurring = '__DELETE__';
         queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
       }
       // Queue manualLinks deletion
