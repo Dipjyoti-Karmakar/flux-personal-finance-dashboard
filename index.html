@@ -2103,6 +2103,10 @@ let unsubscribeFirestore = null;
 let unsubscribeEvents = null;
 let unsubscribeActivityLog = null;
 let unsubscribeRecurring = null;
+let unsubscribeManualLinks = null;
+let manualLinksMap = new Map();         // Map<txId, { subId, txId, createdAt }> — server-confirmed state
+const _pendingManualLinks = new Map();  // Map<txId, { subId, txId, createdAt } | null> — null = pending delete
+let _manualLinksReady = false;          // True after first manualLinks snapshot has been applied
 let eventsUseFallback = false;
 let activityLogs = [];
 let recurringList = [];
@@ -2297,11 +2301,13 @@ onAuthStateChanged(auth, (user) => {
     if (unsubscribeEvents) unsubscribeEvents();
     if (unsubscribeActivityLog) unsubscribeActivityLog();
     if (unsubscribeRecurring) unsubscribeRecurring();
+    if (unsubscribeManualLinks) unsubscribeManualLinks();
     document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Sign Out`;
     loadDataFromCloud();
     loadEvents();
     loadActivityLog();
     loadRecurring();
+    loadManualLinks();
     // Clear stale localStorage activity log (migrated to Firestore)
     try { localStorage.removeItem('flux_activity_log'); } catch(_) {}
     showSkeletons();
@@ -2313,8 +2319,12 @@ onAuthStateChanged(auth, (user) => {
     if(unsubscribeEvents) unsubscribeEvents();
     if(unsubscribeActivityLog) unsubscribeActivityLog();
     if(unsubscribeRecurring) unsubscribeRecurring();
+    if(unsubscribeManualLinks) unsubscribeManualLinks();
     activityLogs = [];
     recurringList = [];
+    manualLinksMap = new Map();
+    _pendingManualLinks.clear();
+    _manualLinksReady = false;
     // Clear log selection mode if active
     if (logSelectionMode) { logSelectionMode = false; selectedLogs.clear(); const ab=document.getElementById('logDeleteAction'); const bb=document.getElementById('btnToggleDeleteLogs'); if(ab)ab.style.display='none'; if(bb)bb.style.display='inline-block'; }
     renderLogs();
@@ -2702,6 +2712,7 @@ function executeSoftDelete(id) {
     if (txData._recurring) undoData._recurring = true;
     if (txData._auto) undoData._auto = true;
     if (txData.subId) undoData.subId = txData.subId;
+    if (txData._manualLink) undoData._manualLink = true;
     if (txData.createdAt) undoData.createdAt = txData.createdAt;
     _undoTxData = { id, data: undoData };
     // Remove from local array immediately for responsive feel
@@ -2928,6 +2939,7 @@ function debouncedRender() {
 
 async function tagPastSubscriptions() {
   if (_tagPastRunning) return 0;  // Re-entrancy guard
+  if (!_manualLinksReady) return 0;  // Wait for manualLinks snapshot before running
   if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return 0;
   _tagPastRunning = true;
   try {
@@ -2935,7 +2947,7 @@ async function tagPastSubscriptions() {
     txs.forEach(tx => {
       if (_txWriteLocks.has(tx.id)) return; // Being actively modified by linkSubTx/unlinkSubTx
       if (_pendingTxUpdates.has(tx.id)) return; // In-flight optimistic mutation
-      if (tx._manualLink) return;          // Manually linked — don't touch
+      if (tx._manualLink || manualLinksMap.has(tx.id)) return;  // Manually linked — don't touch
       // Skip if already fully tagged (has both _recurring AND subId)
       if (tx._recurring && tx.subId) return;
       // Skip if already tagged in this session (prevents re-tagging on echo snapshots)
@@ -2950,6 +2962,11 @@ async function tagPastSubscriptions() {
         if (!recName || !txDesc) return false;
         if (recName !== txDesc) {
           if (recName.length < 4 || txDesc.length < 4 || !(txDesc.includes(recName) || recName.includes(txDesc))) return false;
+          // Length ratio guard: prevent short names from matching long descriptions
+          // e.g. "Food" (4) matching "Fast Food Delivery Corp" (24) — ratio 0.17 < 0.5
+          const shorter = Math.min(recName.length, txDesc.length);
+          const longer = Math.max(recName.length, txDesc.length);
+          if (shorter / longer < 0.5) return false;
         }
         if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
         if (rec.type !== tx.type) return false;
@@ -5524,6 +5541,69 @@ function getMonthKey() {
   return t.slice(0, 7);   // e.g. "2026-06"
 }
 
+function loadManualLinks() {
+  if (!userId) return;
+  if (unsubscribeManualLinks) unsubscribeManualLinks();
+  const mlRef = collection(db, 'users', userId, 'manualLinks');
+  unsubscribeManualLinks = onSnapshot(mlRef, (snap) => {
+    // Rebuild from server snapshot
+    const fromServer = new Map();
+    snap.forEach(d => {
+      const data = d.data();
+      fromServer.set(d.id, { txId: d.id, subId: data.subId, createdAt: data.createdAt || 0 });
+    });
+
+    // Apply pending overlay, confirming entries whose server state now matches,
+    // and clearing those that have been confirmed (upserts and deletes).
+    const confirmedIds = [];
+    _pendingManualLinks.forEach((pending, txId) => {
+      if (pending === null) {
+        // Pending delete: confirmed when server no longer has the record
+        if (!fromServer.has(txId)) confirmedIds.push(txId);
+        else fromServer.delete(txId); // Server not yet caught up — suppress from map
+      } else {
+        // Pending upsert: confirmed when server record has matching subId
+        const srv = fromServer.get(txId);
+        if (srv && srv.subId === pending.subId) confirmedIds.push(txId);
+        else fromServer.set(txId, pending); // Server not yet caught up — keep optimistic state
+      }
+    });
+    confirmedIds.forEach(id => _pendingManualLinks.delete(id));
+
+    manualLinksMap = fromServer;
+
+    // On first snapshot, mark ready and trigger a reconciliation pass so any
+    // tagPastSubscriptions/detectEarlyPayments that fired before this snapshot
+    // (while _manualLinksReady was false) now re-run with the correct guard data.
+    const wasReady = _manualLinksReady;
+    if (!wasReady) {
+      _manualLinksReady = true;
+      // If transactions and recurring are already loaded, run all deferred matching
+      if (txs && txs.length && recurringList && recurringList.length) {
+        // Re-run checkAndTriggerRecurring if it was deferred earlier
+        if (!_recCatchUpDone) {
+          _recCatchUpDone = true;
+          checkAndTriggerRecurring().then(() => detectEarlyPayments());
+        }
+        if (!_tagPastDone) {
+          tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions (ML reconcile) failed:', e)).then(count => {
+            if (count === 0) _tagPastDone = true;
+            if (!_earlyPayDone) detectEarlyPayments().then(m => { if (!m) _earlyPayDone = true; });
+          });
+        } else if (!_earlyPayDone) {
+          detectEarlyPayments().then(m => { if (!m) _earlyPayDone = true; });
+        }
+      }
+    }
+
+    // Refresh open subscription history panels to incorporate manual links
+    document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
+      const recId = p.id.replace('hist-panel-', '');
+      if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
+    });
+  }, err => console.error('Manual links sync error:', err));
+}
+
 function loadRecurring() {
   if (!userId) return;
   if (unsubscribeRecurring) unsubscribeRecurring();
@@ -5576,7 +5656,14 @@ function loadRecurring() {
     // detectEarlyPayments, creating a chain: write → echo → re-run → write.
     if (!_recCatchUpDone) {
       _recCatchUpDone = true;
-      checkAndTriggerRecurring().then(() => detectEarlyPayments());
+      // If manualLinks aren't ready yet, defer catch-up — loadManualLinks' first
+      // snapshot will trigger tagPast/detectEarly, and reset _recCatchUpDone so
+      // the next recurring snapshot retries checkAndTrigger.
+      if (!_manualLinksReady) {
+        _recCatchUpDone = false;  // Allow retry on next snapshot after ML is ready
+      } else {
+        checkAndTriggerRecurring().then(() => detectEarlyPayments());
+      }
     }
     // tagPastSubscriptions is NOT called here — debouncedRender (triggered by the
     // tx onSnapshot that fires after any Firestore writes) already calls it.
@@ -5587,6 +5674,7 @@ const triggeringRecs = new Set();
 let globallyMatchedTxIds = new Set();
 async function checkAndTriggerRecurring() {
   if (!userId || !recurringList.length) return;
+  if (!_manualLinksReady) return;  // Wait for manualLinks snapshot before matching
   // Reset per-run so stale IDs don't accumulate across Firestore snapshot callbacks
   globallyMatchedTxIds = new Set();
   const today = getTodayStr();
@@ -5676,7 +5764,7 @@ async function checkAndTriggerRecurring() {
             if (matchedTxIds.has(t.id)) return false;
             if (globallyMatchedTxIds.has(t.id)) return false;
             // Don't steal manually-linked txs or txs already linked to a different sub
-            if (t._manualLink) return false;
+            if (t._manualLink || manualLinksMap.has(t.id)) return false;
             if (t._auto && t.subId !== rec.id) return false;
             if (t.subId && t.subId !== rec.id) return false;
             return true;
@@ -5763,6 +5851,7 @@ const _earlyPayProcessing = new Set();
 const _sessionEarlyPayRecs = new Set(); // Tracks recs already handled — prevents re-processing on echo snapshots
 async function detectEarlyPayments() {
   if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return false;
+  if (!_manualLinksReady) return false;  // Wait for manualLinks snapshot before matching
   const today = getTodayStr();
   let anyMatched = false;
 
@@ -5812,7 +5901,7 @@ async function detectEarlyPayments() {
       if (_txWriteLocks.has(t.id)) return false;
       if (_pendingTxUpdates.has(t.id)) return false;
       // Don't steal manually-linked txs or txs already linked to a different sub
-      if (t._manualLink) return false;
+      if (t._manualLink || manualLinksMap.has(t.id)) return false;
       if (t._auto && t.subId !== rec.id) return false;
       if (t.subId && t.subId !== rec.id) return false;
       return true;
@@ -6044,10 +6133,18 @@ function renderSubHistInner(recId) {
     }
   });
 
+  // Build a set of txIds manually linked to this subscription via the manualLinks subcollection
+  const manualLinkTxIds = new Set();
+  manualLinksMap.forEach((link, txId) => {
+    if (link.subId === recId) manualLinkTxIds.add(txId);
+  });
+
   const subTxs = effectiveTxs
     .filter(t => {
-      // Primary: explicit subId link
+      // Primary: explicit subId link (covers both auto-tagged and manual links)
       if (t.subId === recId) return true;
+      // Secondary: manualLinks subcollection record (bulletproof cross-device fallback)
+      if (manualLinkTxIds.has(t.id)) return true;
       // Fallback: fuzzy match for legacy transactions tagged with _recurring but no subId
       // (these will be progressively backfilled with subId by tagPastSubscriptions)
       if ((!t.subId || t.subId === recId) && t._recurring && t.type === rec.type &&
@@ -6098,7 +6195,7 @@ function renderSubHistInner(recId) {
       // Determine how this tx was matched:
       // subId match = auto-triggered by system; _manualLink = linked via picker; neither = fuzzy-name match
       const isLinked = t.subId === recId;
-      const isManualPick = !!(t._manualLink);
+      const isManualPick = !!(t._manualLink) || manualLinkTxIds.has(t.id);
       const isFuzzy = !isLinked && !isManualPick;
       const manualPill = isManualPick ? '<span class="sub-tx-manual-pill">linked</span>' : (isFuzzy ? '<span class="sub-tx-manual-pill" style="opacity:0.6;">auto</span>' : '');
       // Allow unlink for any explicitly linked tx (by subId or _manualLink)
@@ -6166,7 +6263,7 @@ function renderLinkPicker(recId, query) {
   const q = (query || '').trim().toLowerCase();
 
   // Filter candidates: not already in this sub's history, and not assigned to ANY subscription
-  let candidates = txs.filter(t => !historyIds.has(t.id) && !t.subId);
+  let candidates = txs.filter(t => !historyIds.has(t.id) && !t.subId && !manualLinksMap.has(t.id));
   // Apply search filter
   if (q) candidates = candidates.filter(t => (t.desc || '').toLowerCase().includes(q));
   // Sort by date descending
@@ -6215,12 +6312,17 @@ async function linkSubTx(txId, recId) {
   tx._recurring = true;
   tx._manualLink = true;
 
+  // Optimistic local update for manualLinksMap so history renders immediately
+  const mlEntry = { txId, subId: recId, createdAt: Date.now() };
+  manualLinksMap.set(txId, mlEntry);
+  _pendingManualLinks.set(txId, mlEntry);  // Overlay: survives snapshot rebuilds until confirmed
+
   // Register optimistic state so onSnapshot rebuilds of txs re-apply it
   // until Firestore confirms the write (confirmed by the confirm-then-clear pattern).
   _pendingTxUpdates.set(txId, { subId: recId, _recurring: true, _manualLink: true });
   _pendingTxTokens.set(txId, opToken);
 
-  // Safety: clear pending after 10s no matter what (prevents memory leaks if onSnapshot
+  // Safety: clear pending after 30s no matter what (prevents memory leaks if onSnapshot
   // never confirms, e.g. during prolonged offline periods). Token-guarded so a stale
   // timer from an earlier operation doesn't evict a newer operation's entry.
   setTimeout(() => {
@@ -6228,7 +6330,7 @@ async function linkSubTx(txId, recId) {
       _pendingTxUpdates.delete(txId);
       _pendingTxTokens.delete(txId);
     }
-  }, 10000);
+  }, 30000);
 
   // Lock: redirect any onSnapshot-triggered render() calls into targeted panel-only
   // refreshes so the picker DOM (and the user's search query) is never destroyed.
@@ -6239,11 +6341,17 @@ async function linkSubTx(txId, recId) {
   showToast(navigator.onLine ? 'Payment linked to subscription' : 'Saved offline. Will sync when connected.', 'ok');
 
   try {
-    // updateDoc does a partial field-level merge without overwriting other fields
-    await updateDoc(doc(db, 'users', userId, 'transactions', txId), linkData);
+    // Dual-write: update the transaction doc AND create a manualLinks record.
+    // The manualLinks record is the durable, cross-device source of truth.
+    const mlData = { subId: recId, txId, createdAt: Date.now() };
+    const batch = writeBatch(db);
+    batch.update(doc(db, 'users', userId, 'transactions', txId), linkData);
+    batch.set(doc(db, 'users', userId, 'manualLinks', txId), mlData);
+    await batch.commit();
   } catch(e) {
-    // silent=true: we already showed the appropriate toast above
+    // Queue both writes for offline sync
     queueFailedSync('updateDoc', 'transactions', txId, linkData, true, true);
+    queueFailedSync('setDoc', 'manualLinks', txId, { subId: recId, txId, createdAt: Date.now() }, false, true);
   } finally {
     // DON'T clear _pendingTxUpdates here — let onSnapshot's confirm-then-clear handle it.
     // Release lock after a short delay to absorb the onSnapshot that fires from updateDoc.
@@ -6260,6 +6368,7 @@ async function unlinkSubTx(txId, recId) {
   // Track which fields actually need removing (only those that exist)
   const hadSubId = tx.subId !== undefined;
   const hadManualLink = tx._manualLink !== undefined;
+  const hadManualLinkRecord = manualLinksMap.has(txId);
   const searchInput = document.getElementById('link-search-' + recId);
   const currentQuery = searchInput ? searchInput.value : '';
 
@@ -6272,6 +6381,8 @@ async function unlinkSubTx(txId, recId) {
   // Optimistic local update — before any await
   delete tx.subId;
   delete tx._manualLink;
+  manualLinksMap.delete(txId);
+  _pendingManualLinks.set(txId, null);  // Overlay: null = pending delete, survives snapshot rebuilds
 
   // Register deletion intent so onSnapshot rebuilds of txs re-apply the removal.
   // null-sentinel means 'delete this field from the rebuilt tx object'.
@@ -6288,7 +6399,7 @@ async function unlinkSubTx(txId, recId) {
         _pendingTxUpdates.delete(txId);
         _pendingTxTokens.delete(txId);
       }
-    }, 10000);
+    }, 30000);
   }
 
   // Lock: same pattern as linkSubTx — protect the picker from onSnapshot rebuilds
@@ -6298,20 +6409,29 @@ async function unlinkSubTx(txId, recId) {
   renderLinkPicker(recId, currentQuery);
   showToast(navigator.onLine ? 'Payment removed from history' : 'Saved offline. Will sync when connected.', 'ok');
 
-  if (hadSubId || hadManualLink) {
-    // updateDoc with deleteField() is the correct API for field removal
-    const updatePayload = {};
-    if (hadSubId) updatePayload.subId = deleteField();
-    if (hadManualLink) updatePayload._manualLink = deleteField();
+  if (hadSubId || hadManualLink || hadManualLinkRecord) {
+    // Batch: remove fields from transaction doc AND delete manualLinks record
     try {
-      await updateDoc(doc(db, 'users', userId, 'transactions', txId), updatePayload);
+      const batch = writeBatch(db);
+      const updatePayload = {};
+      if (hadSubId) updatePayload.subId = deleteField();
+      if (hadManualLink) updatePayload._manualLink = deleteField();
+      if (Object.keys(updatePayload).length) {
+        batch.update(doc(db, 'users', userId, 'transactions', txId), updatePayload);
+      }
+      // Always attempt to delete the manualLinks record (it may exist even if tx fields don't)
+      batch.delete(doc(db, 'users', userId, 'manualLinks', txId));
+      await batch.commit();
     } catch(e) {
       // Use __DELETE__ sentinel so processSyncQueue can translate back to deleteField()
-      const safePayload = {};
-      if (hadSubId) safePayload.subId = '__DELETE__';
-      if (hadManualLink) safePayload._manualLink = '__DELETE__';
-      // silent=true: toast was already shown
-      queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
+      if (hadSubId || hadManualLink) {
+        const safePayload = {};
+        if (hadSubId) safePayload.subId = '__DELETE__';
+        if (hadManualLink) safePayload._manualLink = '__DELETE__';
+        queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
+      }
+      // Queue manualLinks deletion
+      queueFailedSync('deleteDoc', 'manualLinks', txId, null, false, true);
     } finally {
       // DON'T clear _pendingTxUpdates here — let onSnapshot's confirm-then-clear handle it.
       setTimeout(() => _clearSubPanelLock(_lockToken), 800);

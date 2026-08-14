@@ -5,6 +5,10 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone"],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "orientation": "portrait",
   "background_color": "#0d0f14",
   "theme_color": "#c8a96e",

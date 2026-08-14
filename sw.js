@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V42: Bumped to v31 to invalidate cache and push recent subscription history fixes to desktop
-const CACHE_NAME = 'flux-v31';
+// V43: Bumped to v32 — manual link persistence fix (manualLinks subcollection), fuzzy match tightening, launch_handler
+const CACHE_NAME = 'flux-v32';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
