@@ -323,6 +323,7 @@ select option{background:var(--s2)}
 .sbtn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,0.15));pointer-events:none}
 .sbtn:hover{transform:translateY(-3px);box-shadow:var(--sh-btn);}
 .sbtn:active{transform:translateY(0) scale(0.96);box-shadow:none;}
+.sbtn:disabled{opacity:.5;cursor:wait;transform:none;box-shadow:none;pointer-events:none;}
 .fltr{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--bd);flex-wrap:wrap;align-items:center;min-width:0;max-width:100%;}
 .ft{padding:5px 14px;border-radius:20px;border:1px solid var(--bd);background:transparent;color:var(--mu);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .25s cubic-bezier(0.16, 1, 0.3, 1);font-weight:600;white-space:nowrap;}
 .ft:hover{border-color:var(--bs);color:var(--tx);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.08)}
@@ -2576,17 +2577,23 @@ function setEventFilter(eventId) {
 }
 
 const MAX_AMOUNT = 900000000000000; // 900 Trillion
+let _addTxBusy = false;
 
 async function addTx() {
+  if (_addTxBusy) return;
+  _addTxBusy = true;
+  const _addBtn = document.querySelector('.fb2 .sbtn');
+  if (_addBtn) _addBtn.disabled = true;
+  try {
   const desc = document.getElementById('txD').value.trim();
   const amt = parseFloat(document.getElementById('txA').value);
   const cat = document.getElementById('txC').value;
   const date = document.getElementById('txDt').value;
   
-  if(!desc) return shake('txD');
+  if(!desc) { shake('txD'); return; }
   // FIXED: Explicitly guard against NaN (empty/text input), Infinity, negative, and excessive amounts
-  if(isNaN(amt) || !isFinite(amt) || amt <= 0 || amt > MAX_AMOUNT) return shake('txA');
-  if(!date) return shake('txDt');
+  if(isNaN(amt) || !isFinite(amt) || amt <= 0 || amt > MAX_AMOUNT) { shake('txA'); return; }
+  if(!date) { shake('txDt'); return; }
   
   if (!userId) {
      showToast('Please Sign In to save transactions', 'er');
@@ -2645,6 +2652,10 @@ async function addTx() {
     // Confetti on milestones: 1st, 10th, 25th, every 50th
     const mc = txs.length;
     if (mc === 1 || mc === 10 || mc === 25 || mc % 50 === 0) launchConfetti();
+  }
+  } finally {
+    _addTxBusy = false;
+    if (_addBtn) _addBtn.disabled = false;
   }
 }
 
@@ -3379,9 +3390,14 @@ function closeEditMod() {
   editingTxId = null;
 }
 
+let _saveEditBusy = false;
 async function saveEditTx() {
+  if (_saveEditBusy) return;
   if(!editingTxId || !userId) return;
-  
+  _saveEditBusy = true;
+  const _editSaveBtn = document.querySelector('#editMod .btn.pr');
+  if (_editSaveBtn) _editSaveBtn.disabled = true;
+  try {
   const desc = document.getElementById('eDesc').value.trim();
   const amt = parseFloat(document.getElementById('eAmt').value);
   const cat = document.getElementById('eCat').value;
@@ -3389,12 +3405,12 @@ async function saveEditTx() {
   const type = document.getElementById('eTy').value;
   const mode = document.getElementById('eMo').value;
 
-  if(!desc) return shake('eDesc');
+  if(!desc) { shake('eDesc'); return; }
   // FIXED: Same NaN/Infinity guard as addTx — parseFloat("") gives NaN (!NaN=true passes
   // incorrectly), and parseFloat("1e500") gives Infinity (> 0 passes incorrectly).
   // V13: Also guard against excessive amounts.
-  if(isNaN(amt) || !isFinite(amt) || amt <= 0 || amt > MAX_AMOUNT) return shake('eAmt');
-  if(!date) return shake('eDt');
+  if(isNaN(amt) || !isFinite(amt) || amt <= 0 || amt > MAX_AMOUNT) { shake('eAmt'); return; }
+  if(!date) { shake('eDt'); return; }
 
   const eventId = document.getElementById('eEvent').value || '';
   // FIXED: When the user clears the event selection, we must remove the eventId field
@@ -3467,6 +3483,10 @@ async function saveEditTx() {
 
     closeEditMod();
     showToast(navigator.onLine ? 'Transaction updated' : 'Saved offline. Will sync when connected.', 'ok');
+  }
+  } finally {
+    _saveEditBusy = false;
+    if (_editSaveBtn) _editSaveBtn.disabled = false;
   }
 }
 
@@ -5060,7 +5080,13 @@ function showEditEvent(evtId) {
   document.getElementById('eventMod').classList.add('op');
 }
 
+let _saveEventBusy = false;
 async function saveEventMod() {
+  if (_saveEventBusy) return;
+  _saveEventBusy = true;
+  const _evtSaveBtn = document.getElementById('eventModSaveBtn');
+  if (_evtSaveBtn) _evtSaveBtn.disabled = true;
+  try {
   const name = document.getElementById('evtName').value.trim();
   const start = document.getElementById('evtStart').value;
   const end = document.getElementById('evtEnd').value;
@@ -5077,6 +5103,10 @@ async function saveEventMod() {
     await editEvent(evtId, { name, start, end, color });
   } else {
     await createEvent({ name, start, end, color });
+  }
+  } finally {
+    _saveEventBusy = false;
+    if (_evtSaveBtn) _evtSaveBtn.disabled = false;
   }
 }
 
@@ -6366,7 +6396,13 @@ function setRecMode(m) {
   oflBtn.setAttribute('aria-pressed', m === 'offline' ? 'true' : 'false');
 }
 
+let _saveRecBusy = false;
 async function saveRecurringMod() {
+  if (_saveRecBusy) return;
+  _saveRecBusy = true;
+  const _recSaveBtn = document.getElementById('recurringModSaveBtn');
+  if (_recSaveBtn) _recSaveBtn.disabled = true;
+  try {
   const name = document.getElementById('recName').value.trim();
   const amount = parseFloat(document.getElementById('recAmount').value);
   const cat = document.getElementById('recCat').value;
@@ -6438,6 +6474,10 @@ async function saveRecurringMod() {
       showToast(navigator.onLine ? 'Subscription created' : 'Saved offline. Will sync when connected.', 'ok');
       writeLog('ADD', { desc: name, isNewRec: true }, currentRecType);
     }
+  }
+  } finally {
+    _saveRecBusy = false;
+    if (_recSaveBtn) _recSaveBtn.disabled = false;
   }
 }
 
