@@ -6784,7 +6784,7 @@
     })();
     let _syncRetryTimer = null;
     function queueFailedSync(op, col, id, data, isMerge = false, silent = false) {
-      syncQueue.push({ op, col, id, data, isMerge, ts: Date.now() });
+      syncQueue.push({ op, col, id, data, isMerge, ts: Date.now(), uid: userId || null });
       localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
 
       // Instantly apply the failed sync to local state so it doesn't disappear from UI
@@ -6814,9 +6814,12 @@
     }
     async function processSyncQueue() {
       if (syncQueue.length === 0 || !navigator.onLine || !userId) return;
-      const queue = [...syncQueue];
-      syncQueue = [];
-      localStorage.setItem('flux_sync_queue', '[]');
+      // Only process entries belonging to the current user (or legacy entries with no uid)
+      const queue = syncQueue.filter(item => !item.uid || item.uid === userId);
+      const otherUserQueue = syncQueue.filter(item => item.uid && item.uid !== userId);
+      syncQueue = otherUserQueue;
+      localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
+      if (!queue.length) return;
       let c = 0;
       const failed = [];
       for (const item of queue) {
@@ -7435,8 +7438,8 @@
     // FIXED: No longer suppresses ALL toasts during the undo window — only suppresses
     // neutral/success toasts. Error toasts always show so users see sync failures.
     function showToast(msg, type) { if (_undoTimer && type !== 'er') return; const el = document.getElementById('toast'); el.textContent = msg; el.className = 'tst ' + (type || '') + ' sh'; clearTimeout(el._t); el._t = setTimeout(() => { el.className = 'tst'; }, 2800); }
-    function fmt(n) { const a = Math.abs(n); const w = Math.floor(a); const p = Math.round((a - w) * 100); return (n < 0 ? '-' : '') + '₹' + w.toLocaleString('en-IN') + '.' + String(p).padStart(2, '0'); }
-    function fmtS(n) { const a = Math.abs(n); const w = Math.floor(a); const p = Math.round((a - w) * 100); return '₹' + w.toLocaleString('en-IN') + '.' + String(p).padStart(2, '0'); }
+    function fmt(n) { const a = Math.abs(n); let w = Math.floor(a); let p = Math.round((a - w) * 100); if (p >= 100) { w += 1; p = 0; } return (n < 0 ? '-' : '') + '₹' + w.toLocaleString('en-IN') + '.' + String(p).padStart(2, '0'); }
+    function fmtS(n) { const a = Math.abs(n); let w = Math.floor(a); let p = Math.round((a - w) * 100); if (p >= 100) { w += 1; p = 0; } return '₹' + w.toLocaleString('en-IN') + '.' + String(p).padStart(2, '0'); }
     function fmtDt(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }); }
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
@@ -8147,10 +8150,14 @@
           // Strip non-serializable deleteField() sentinel before queuing to localStorage
           const queueData = { ...updatedTx };
           if (removingEventId) {
-            delete queueData.eventId; // Can't serialize deleteField(); will be handled as a merge without eventId
+            // Replace deleteField() with __DELETE__ sentinel and use updateDoc so
+            // processSyncQueue translates it back to deleteField() for true removal.
+            queueData.eventId = '__DELETE__';
+            queueFailedSync('updateDoc', 'transactions', editingTxId, queueData, false);
+          } else {
+            // Optimistic update already applied above; just queue for sync
+            queueFailedSync('setDoc', 'transactions', editingTxId, queueData, true);
           }
-          // Optimistic update already applied above; just queue for sync
-          queueFailedSync('setDoc', 'transactions', editingTxId, queueData, true);
           saved = true;
         }
 
@@ -8212,9 +8219,17 @@
         if (el && el.classList.contains('op')) { activeModal = el; break; }
       }
       if (!activeModal) return;
-      const focusable = activeModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+      // Filter to enabled, visible focusable controls only
+      const focusable = [...activeModal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+        .filter(el => !el.disabled && !el.closest('[style*="display: none"], [style*="display:none"], [hidden]') && el.offsetParent !== null);
       if (!focusable.length) return;
       const first = focusable[0], last = focusable[focusable.length - 1];
+      // If focus is outside the modal, pull it back in
+      if (!activeModal.contains(document.activeElement)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
       if (e.shiftKey) {
         if (document.activeElement === first) { e.preventDefault(); last.focus(); }
       } else {
@@ -9846,13 +9861,25 @@
       if (!userId) return;
       const eventName = events[evtId]?.name || 'Event';
       const eventSrc = events[evtId]?._src;
-      // Step 1: remove event tags from linked transactions (tolerate offline)
+      // Step 1: remove event tags from linked transactions
       try {
         await removeEventFromTransactions(evtId);
       } catch (e) {
         console.error('Error removing event tag from transactions', e);
-        // Optimistic local removal so deletion can proceed offline
-        txs.forEach(t => { if (t.eventId === evtId) delete t.eventId; });
+        if (navigator.onLine) {
+          // Online failure means server transactions still reference the event.
+          // Abort deletion to prevent orphaned eventId references.
+          showToast('Failed to remove event tags. Event not deleted.', 'er');
+          return;
+        }
+        // Offline: optimistic local removal; queue individual eventId deletions
+        // for each affected transaction so they sync when back online.
+        txs.forEach(t => {
+          if (t.eventId === evtId) {
+            delete t.eventId;
+            queueFailedSync('updateDoc', 'transactions', t.id, { eventId: '__DELETE__' }, false, true);
+          }
+        });
       }
       // Step 2: delete the event document (or queue if offline)
       try {
