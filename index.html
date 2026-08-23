@@ -10766,13 +10766,26 @@
           if (t.subId === recId) return true;
           // Secondary: manualLinks subcollection record (bulletproof cross-device fallback)
           if (manualLinkTxIds.has(t.id)) return true;
-          // Fallback: fuzzy match for legacy transactions tagged with _recurring but no subId
-          // (these will be progressively backfilled with subId by tagPastSubscriptions)
+          // Fallback: fuzzy match for transactions tagged with _recurring OR untagged-but-matching
+          // (untagged ones are progressively backfilled with subId by tagPastSubscriptions)
           const _allRecAmtsH = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
-          if ((!t.subId || t.subId === recId) && t._recurring && t.type === rec.type &&
-            _allRecAmtsH.includes(Math.abs(t.amount)) &&
-            (t.desc || '').trim().toLowerCase() === nameLow) return true;
-          return false;
+          if (t.subId && t.subId !== recId) return false; // Owned by a different sub — skip
+          if (t._manualLink || manualLinksMap.has(t.id)) return false; // Manually linked elsewhere
+          const tDescLow = (t.desc || '').trim().toLowerCase();
+          if (!tDescLow || !nameLow) return false;
+          // Name must match (exact or fuzzy contains, with length ratio guard)
+          if (tDescLow !== nameLow) {
+            if (nameLow.length < 4 || tDescLow.length < 4) return false;
+            if (!(tDescLow.includes(nameLow) || nameLow.includes(tDescLow))) return false;
+            const shorter = Math.min(nameLow.length, tDescLow.length);
+            const longer = Math.max(nameLow.length, tDescLow.length);
+            if (shorter / longer < 0.5) return false;
+          }
+          if (t.type !== rec.type) return false;
+          if (!_allRecAmtsH.includes(Math.abs(t.amount))) return false;
+          if ((rec.mode || 'online') !== (t.mode || 'online')) return false;
+          if (rec.cat && t.cat && rec.cat !== t.cat) return false;
+          return true;
         })
         .sort((a, b) => {
           const dd = (b.date || '').localeCompare(a.date || '');
