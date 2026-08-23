@@ -10336,6 +10336,7 @@
 
               const allTxs = [...txs, ...newTxs];
               const _recNameLc = data.name ? data.name.trim().toLowerCase() : '';
+              const _allDataAmts = [Math.abs(data.amount), ...(data.altAmounts || []).map(a => Math.abs(a))];
               const matchedTx = allTxs.find(t => {
                 if (t.type !== data.type) return false;
                 if (!t.desc) return false;
@@ -10349,7 +10350,6 @@
                   const longer = Math.max(_recNameLc.length, _txDescLc.length);
                   if (shorter / longer < 0.5) return false;
                 }
-                const _allDataAmts = [Math.abs(data.amount), ...(data.altAmounts || []).map(a => Math.abs(a))];
                 if (!_allDataAmts.includes(Math.abs(t.amount))) return false;
                 // Mode matching: if subscription specifies mode, transaction must match
                 const rMode = data.mode || 'online';
@@ -10511,6 +10511,7 @@
         if (today < minD) continue;
 
         const _recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
+        const _allRecAmtsEP = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
         const matchedTx = txs.find(t => {
           if (t.type !== rec.type) return false;
           if (!t.desc || !_recNameLc) return false;
@@ -10524,7 +10525,6 @@
             const longer = Math.max(_recNameLc.length, _txDescLc.length);
             if (shorter / longer < 0.5) return false;
           }
-          const _allRecAmtsEP = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
           if (!_allRecAmtsEP.includes(Math.abs(t.amount))) return false;
           // Mode matching: if subscription specifies mode, transaction must match
           const rMode = rec.mode || 'online';
@@ -10539,6 +10539,8 @@
           if (t._manualLink || manualLinksMap.has(t.id)) return false;
           if (t._auto && t.subId !== rec.id) return false;
           if (t.subId && t.subId !== rec.id) return false;
+          // Skip txs already matched to THIS sub (by tagPast or checkAndTrigger)
+          if (t._recurring && t.subId === rec.id) return false;
           return true;
         });
 
@@ -10853,6 +10855,7 @@
       if (!input) return;
       const val = parseFloat(input.value);
       if (isNaN(val) || !isFinite(val) || val <= 0) { shake('altAmountInput'); return; }
+      if (_editingAltAmounts.length >= 10) { showToast('Maximum 10 past amounts allowed', 'er'); return; }
       // Prevent duplicates (same as primary or already in list)
       const primaryAmt = parseFloat(document.getElementById('recAmount').value) || 0;
       if (Math.abs(val - primaryAmt) < 0.01) { showToast('This is already the current amount', 'er'); return; }
