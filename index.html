@@ -7868,23 +7868,31 @@
       `;
         }
 
+        const txCountHtml = `
+        <div class="stat-group">
+          <span class="stat-label">Transactions</span>
+          <span class="stat-val" style="color:var(--tx1)">${list.length}</span>
+        </div>
+        <div class="stat-div"></div>
+        `;
+
         let statsHtml = '';
         if (cTyFilt === 'income') {
-          statsHtml = `
+          statsHtml = txCountHtml + `
         <div class="stat-group">
           <span class="stat-label">Income</span>
           <span class="stat-val stat-val-in">${fmt(filtIncome)}</span>
         </div>
       `;
         } else if (cTyFilt === 'expense') {
-          statsHtml = `
+          statsHtml = txCountHtml + `
         <div class="stat-group">
           <span class="stat-label">Expense</span>
           <span class="stat-val stat-val-ex">${fmt(filtExpense)}</span>
         </div>
       `;
         } else {
-          statsHtml = `
+          statsHtml = txCountHtml + `
         <div class="stat-group">
           <span class="stat-label">Income</span>
           <span class="stat-val stat-val-in">${fmt(filtIncome)}</span>
