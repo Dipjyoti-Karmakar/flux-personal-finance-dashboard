@@ -10184,14 +10184,6 @@
       }, err => {
         console.error('Manual links sync error:', err);
         _manualLinksReady = false;
-        // Fail-closed: _manualLinksReady stays false, so matching guards remain active.
-        // Notify user and expose retry via loadManualLinks() which cleans up the old
-        // listener before creating a new one, preventing duplicates.
-        showToast('Subscription links failed to sync. Tap to retry.', 'er'); const toastEl = document.getElementById('toast');
-        if (toastEl) {
-          toastEl.style.cursor = 'pointer';
-          toastEl.onclick = () => { toastEl.onclick = null; toastEl.style.cursor = ''; loadManualLinks(); };
-        }
       });
     }
 
