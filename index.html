@@ -7520,10 +7520,6 @@
             const _allRecAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
             if (!_allRecAmts.includes(Math.abs(tx.amount || 0))) return false;
             if (rec.type !== tx.type) return false;
-            // Mode must match if subscription specifies one
-            const rMode = rec.mode || 'online';
-            const tMode = tx.mode || 'online';
-            if (rMode !== tMode) return false;
             // Category must match to prevent false positives on same-name/amount transactions
             if (rec.cat && tx.cat && rec.cat !== tx.cat) return false;
             // Date guard: only tag transactions on or before the subscription's current nextDue
@@ -10352,10 +10348,6 @@
                   if (shorter / longer < 0.5) return false;
                 }
                 if (!_allDataAmts.includes(Math.abs(t.amount))) return false;
-                // Mode matching: if subscription specifies mode, transaction must match
-                const rMode = data.mode || 'online';
-                const tMode = t.mode || 'online';
-                if (rMode !== tMode) return false;
                 if (data.cat && t.cat && data.cat !== t.cat) return false;
                 if (t.date < minD || t.date > maxD) return false;
                 if (matchedTxIds.has(t.id)) return false;
@@ -10527,10 +10519,6 @@
             if (shorter / longer < 0.5) return false;
           }
           if (!_allRecAmtsEP.includes(Math.abs(t.amount))) return false;
-          // Mode matching: if subscription specifies mode, transaction must match
-          const rMode = rec.mode || 'online';
-          const tMode = t.mode || 'online';
-          if (rMode !== tMode) return false;
           if (rec.cat && t.cat && rec.cat !== t.cat) return false;
           if (t.date < minD || t.date > maxD) return false;
           if (globallyMatchedTxIds.has(t.id)) return false;
@@ -10792,7 +10780,6 @@
           }
           if (t.type !== rec.type) return false;
           if (!_allRecAmtsH.includes(Math.abs(t.amount))) return false;
-          if ((rec.mode || 'online') !== (t.mode || 'online')) return false;
           if (rec.cat && t.cat && rec.cat !== t.cat) return false;
           return true;
         })
