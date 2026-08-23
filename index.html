@@ -7496,10 +7496,21 @@
         const recIds = new Set(recurringList.map(r => r.id));
         const toUntag = txs.filter(tx => tx.subId && !recIds.has(tx.subId) && !_txWriteLocks.has(tx.id) && !_pendingTxUpdates.has(tx.id));
         if (toUntag.length) {
-          const batch = writeBatch(db);
-          toUntag.forEach(tx => batch.update(doc(db, 'users', userId, 'transactions', tx.id), { _recurring: deleteField(), subId: deleteField() }));
-          await batch.commit();
-          toUntag.forEach(tx => { delete tx._recurring; delete tx.subId; });
+          for (let i = 0; i < toUntag.length; i += 450) {
+            const chunk = toUntag.slice(i, i + 450);
+            const eligible = chunk.filter(tx => !_txWriteLocks.has(tx.id) && !_pendingTxUpdates.has(tx.id));
+            if (!eligible.length) continue;
+            
+            const batch = writeBatch(db);
+            eligible.forEach(tx => batch.update(doc(db, 'users', userId, 'transactions', tx.id), { _recurring: deleteField(), subId: deleteField() }));
+            await batch.commit();
+            
+            eligible.forEach(tx => {
+              if (_txWriteLocks.has(tx.id) || _pendingTxUpdates.has(tx.id)) return;
+              delete tx._recurring;
+              delete tx.subId;
+            });
+          }
           console.log(`Cleaned ${toUntag.length} orphaned subscription tags.`);
         }
 
