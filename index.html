@@ -4494,158 +4494,92 @@
       border-top: 1px solid var(--bd);
     }
 
-    /* ── Manual Link Picker ── */
-    .sub-link-btn {
+    /* ── Alt Amounts (Past Prices) in Edit Modal ── */
+    .alt-amounts-section {
+      margin-top: 2px;
+      margin-bottom: 14px;
+    }
+
+    .alt-amounts-label {
+      font-size: 10px;
+      color: var(--mu);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .alt-amounts-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .alt-amt-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 50px;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--tx);
+      transition: all .18s;
+    }
+
+    .alt-amt-chip:hover {
+      border-color: color-mix(in srgb, var(--ex) 40%, transparent);
+    }
+
+    .alt-amt-chip-remove {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--di);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
-      width: 100%;
-      padding: 9px 0;
-      margin-top: 10px;
-      border-radius: 10px;
-      border: 1px dashed color-mix(in srgb, var(--ac) 45%, transparent);
-      background: color-mix(in srgb, var(--ac) 6%, transparent);
-      color: var(--ac);
-      font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: .4px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all .22s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 0;
+      transition: all .15s;
     }
 
-    .sub-link-btn:hover {
-      background: color-mix(in srgb, var(--ac) 14%, transparent);
-      border-color: var(--ac);
-      transform: translateY(-1px);
+    .alt-amt-chip-remove:hover {
+      background: color-mix(in srgb, var(--ex) 18%, transparent);
+      color: var(--ex);
     }
 
-    .sub-link-picker {
-      overflow: hidden;
-      max-height: 0;
-      opacity: 0;
-      transition: max-height .32s cubic-bezier(0.16, 1, 0.3, 1), opacity .25s ease;
-      margin-top: 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .sub-link-picker.open {
-      max-height: 320px;
-      opacity: 1;
-      margin-top: 10px;
-    }
-
-    .sub-link-picker-inner {
-      border: 1px solid var(--bd);
-      border-radius: 10px;
-      background: var(--s2);
-      overflow: hidden;
-      min-width: 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .sub-link-search {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px 12px;
-      border: none;
-      border-bottom: 1px solid var(--bd);
-      background: var(--sf);
-      color: var(--tx);
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      outline: none;
-      min-width: 0;
-    }
-
-    .sub-link-search::placeholder {
-      color: var(--di);
-    }
-
-    .sub-link-search:focus {
-      background: var(--s2);
-      box-shadow: inset 0 -2px 0 0 var(--ac);
-    }
-
-    .sub-link-results {
-      max-height: 220px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      scrollbar-width: thin;
-      scrollbar-color: var(--s3) transparent;
-    }
-
-    .sub-link-results::-webkit-scrollbar {
-      width: 5px;
-    }
-
-    .sub-link-results::-webkit-scrollbar-thumb {
-      background: var(--s3);
-      border-radius: 6px;
-    }
-
-    .sub-link-item {
+    .alt-amt-add-row {
       display: flex;
+      gap: 6px;
       align-items: center;
-      gap: 8px;
-      padding: 7px 12px;
-      border-bottom: 1px solid var(--bd);
-      transition: background .12s;
-      cursor: pointer;
-      min-width: 0;
-      overflow: hidden;
-      width: 100%;
-      box-sizing: border-box;
     }
 
-    .sub-link-item:last-child {
-      border-bottom: none;
-    }
-
-    .sub-link-item:hover {
-      background: var(--s3);
-    }
-
-    .sub-link-item-date {
-      font-family: 'DM Mono', monospace;
-      font-size: 9.5px;
-      color: var(--mu);
-      flex-shrink: 0;
-      width: 62px;
-    }
-
-    .sub-link-item-desc {
+    .alt-amt-add-row input {
       flex: 1;
-      font-size: 11.5px;
-      color: var(--tx);
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       min-width: 0;
     }
 
-    .sub-link-item-amt {
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      font-weight: 700;
+    .alt-amt-add-btn {
       flex-shrink: 0;
-      margin-right: 6px;
-    }
-
-    .sub-link-item-add {
-      flex-shrink: 0;
-      padding: 3px 10px;
-      border-radius: 50px;
+      padding: 7px 14px;
+      border-radius: 8px;
       border: 1px solid color-mix(in srgb, var(--ac) 40%, transparent);
       background: color-mix(in srgb, var(--ac) 10%, transparent);
       color: var(--ac);
       font-family: 'DM Mono', monospace;
-      font-size: 8.5px;
+      font-size: 9px;
       font-weight: 700;
       letter-spacing: .5px;
       text-transform: uppercase;
@@ -4654,59 +4588,18 @@
       white-space: nowrap;
     }
 
-    .sub-link-item-add:hover {
+    .alt-amt-add-btn:hover {
       background: var(--ac);
       color: #0d0f14;
       border-color: var(--ac);
     }
 
-    .sub-link-empty {
-      text-align: center;
-      padding: 16px 12px;
+    .alt-amt-empty {
       font-family: 'DM Mono', monospace;
-      font-size: 10px;
+      font-size: 9px;
       color: var(--di);
       letter-spacing: .3px;
-    }
-
-    .sub-tx-unlink {
-      flex-shrink: 0;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--di);
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 1;
-      cursor: pointer;
-      transition: all .18s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-    }
-
-    .sub-tx-unlink:hover {
-      background: color-mix(in srgb, var(--ex) 14%, transparent);
-      color: var(--ex);
-      border-color: color-mix(in srgb, var(--ex) 35%, transparent);
-    }
-
-    .sub-tx-manual-pill {
-      font-family: 'DM Mono', monospace;
-      font-size: 7.5px;
-      font-weight: 700;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      padding: 1.5px 5px;
-      border-radius: 50px;
-      background: color-mix(in srgb, var(--ac) 12%, transparent);
-      color: var(--ac);
-      margin-left: 4px;
-      flex-shrink: 0;
-      white-space: nowrap;
+      padding: 4px 0;
     }
 
     @media(max-width:600px) {
@@ -4777,32 +4670,6 @@
 
       .sub-tx-amt {
         font-size: 11px;
-      }
-
-      .sub-link-results {
-        max-height: 180px;
-      }
-
-      .sub-link-item-date {
-        width: 54px;
-        font-size: 9px;
-      }
-
-      .sub-link-item-desc {
-        font-size: 10.5px;
-      }
-
-      .sub-link-item-amt {
-        font-size: 10px;
-      }
-
-      .sub-link-item-add {
-        font-size: 8px;
-        padding: 3px 8px;
-      }
-
-      .sub-tx-manual-pill {
-        font-size: 7px;
       }
     }
 
@@ -6522,6 +6389,14 @@
               </select>
             </div>
           </div>
+          <div class="alt-amounts-section" id="altAmountsSection" style="display:none;">
+            <label class="alt-amounts-label">Past Amounts (₹) — for matching price changes</label>
+            <div class="alt-amounts-chips" id="altAmountsChips"></div>
+            <div class="alt-amt-add-row">
+              <input type="number" id="altAmountInput" placeholder="e.g. 499" min="0.01" step="0.01" style="width:100%;box-sizing:border-box;">
+              <button class="alt-amt-add-btn" type="button" onclick="addAltAmount()">＋ Add</button>
+            </div>
+          </div>
           <div style="margin-bottom:14px;">
             <label
               style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Type</label>
@@ -7552,14 +7427,8 @@
       // This prevents the picker search bar from being wiped by onSnapshot-triggered rerenders.
       const subViewEl = document.getElementById('subView');
       if (_subPanelLock) {
-        const { recId, query } = _subPanelLock;
+        const { recId } = _subPanelLock;
         if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
-        // Restore picker results and search value without nuking the picker DOM
-        const searchEl = document.getElementById('link-search-' + recId);
-        if (searchEl && query !== undefined) {
-          searchEl.value = query;
-          if (typeof renderLinkPicker === 'function') renderLinkPicker(recId, query);
-        }
         return;
       }
       if (subViewEl && subViewEl.style.display !== 'none') {
@@ -7647,7 +7516,8 @@
               const longer = Math.max(recName.length, txDesc.length);
               if (shorter / longer < 0.5) return false;
             }
-            if (Math.abs(rec.amount || 0) !== Math.abs(tx.amount || 0)) return false;
+            const _allRecAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+            if (!_allRecAmts.includes(Math.abs(tx.amount || 0))) return false;
             if (rec.type !== tx.type) return false;
             // Mode must match if subscription specifies one
             const rMode = rec.mode || 'online';
@@ -10479,7 +10349,8 @@
                   const longer = Math.max(_recNameLc.length, _txDescLc.length);
                   if (shorter / longer < 0.5) return false;
                 }
-                if (Math.abs(t.amount) !== Math.abs(data.amount)) return false;
+                const _allDataAmts = [Math.abs(data.amount), ...(data.altAmounts || []).map(a => Math.abs(a))];
+                if (!_allDataAmts.includes(Math.abs(t.amount))) return false;
                 // Mode matching: if subscription specifies mode, transaction must match
                 const rMode = data.mode || 'online';
                 const tMode = t.mode || 'online';
@@ -10653,7 +10524,8 @@
             const longer = Math.max(_recNameLc.length, _txDescLc.length);
             if (shorter / longer < 0.5) return false;
           }
-          if (Math.abs(t.amount) !== Math.abs(rec.amount)) return false;
+          const _allRecAmtsEP = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+          if (!_allRecAmtsEP.includes(Math.abs(t.amount))) return false;
           // Mode matching: if subscription specifies mode, transaction must match
           const rMode = rec.mode || 'online';
           const tMode = t.mode || 'online';
@@ -10734,14 +10606,11 @@
       const area = document.getElementById('subList');
       if (!area) return;
 
-      // Preserve open panels and their search queries
+      // Preserve open panels
       const openPanels = new Set();
-      const searchQueries = {};
       area.querySelectorAll('.sub-hist-panel.open').forEach(p => {
         const id = p.id.replace('hist-panel-', '');
         openPanels.add(id);
-        const search = document.getElementById('link-search-' + id);
-        if (search) searchQueries[id] = search.value;
       });
 
       const today = getTodayStr();
@@ -10837,11 +10706,6 @@
       openPanels.forEach(id => {
         const btn = document.getElementById('hist-btn-' + id);
         if (btn) toggleSubHistory(btn, id);
-        const search = document.getElementById('link-search-' + id);
-        if (search && searchQueries[id] !== undefined) {
-          search.value = searchQueries[id];
-          renderLinkPicker(id, searchQueries[id]);
-        }
       }); if (typeof twemoji !== 'undefined') twemoji.parse(area);
     }
 
@@ -10910,8 +10774,9 @@
           if (manualLinkTxIds.has(t.id)) return true;
           // Fallback: fuzzy match for legacy transactions tagged with _recurring but no subId
           // (these will be progressively backfilled with subId by tagPastSubscriptions)
+          const _allRecAmtsH = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
           if ((!t.subId || t.subId === recId) && t._recurring && t.type === rec.type &&
-            Math.abs(t.amount) === Math.abs(rec.amount) &&
+            _allRecAmtsH.includes(Math.abs(t.amount)) &&
             (t.desc || '').trim().toLowerCase() === nameLow) return true;
           return false;
         })
@@ -10955,260 +10820,51 @@
         const isCapped = subTxs.length > 500;
         const rows = (isCapped ? subTxs.slice(0, 500) : subTxs).map(t => {
           const d = t.desc || '';
-          // Determine how this tx was matched:
-          // subId match = auto-triggered by system; _manualLink = linked via picker; neither = fuzzy-name match
-          const isLinked = t.subId === recId;
-          const isManualPick = !!(t._manualLink) || manualLinkTxIds.has(t.id);
-          const isFuzzy = !isLinked && !isManualPick;
-          const manualPill = isManualPick ? '<span class="sub-tx-manual-pill">linked</span>' : (isFuzzy ? '<span class="sub-tx-manual-pill" style="opacity:0.6;">auto</span>' : '');
-          // Allow unlink for any explicitly linked tx (by subId or _manualLink)
-          const unlinkBtn = (isLinked || isManualPick)
-            ? `<button class="sub-tx-unlink" onclick="event.stopPropagation();unlinkSubTx('${esc(t.id)}','${esc(recId)}')" title="Remove from history">×</button>`
-            : '';
           return `<div class="sub-tx-row">
         <div class="sub-tx-date">${fmtDt(t.date)}</div>
-        <div class="sub-tx-desc" title="${esc(d)}"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d)}</span>${manualPill}</div>
+        <div class="sub-tx-desc" title="${esc(d)}"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d)}</span></div>
         <div class="sub-tx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${fmt(t.amount)}</div>
-        ${unlinkBtn}
       </div>`;
         }).join('');
         listHtml = `<div class="sub-hist-list">${rows}${isCapped ? `<div class="sub-hist-cap">Showing latest 500 of ${subTxs.length} payments</div>` : ''
           }</div>`;
       }
 
-      const linkBtnHtml = `<button class="sub-link-btn" onclick="openLinkPicker('${esc(recId)}')">＋ Add Past Payment</button>`;
-      const pickerHtml = `<div class="sub-link-picker" id="link-picker-${recId}"><div class="sub-link-picker-inner">
-    <input class="sub-link-search" id="link-search-${recId}" type="text" placeholder="Search transactions..." oninput="renderLinkPicker('${esc(recId)}',this.value)">
-    <div class="sub-link-results" id="link-results-${recId}"></div>
-  </div></div>`;
-
-      const existingPicker = document.getElementById('link-picker-' + recId);
-      const histContentHtml = `<div id="hist-content-${recId}">${statsHtml + listHtml + linkBtnHtml}</div>`;
-
-      if (existingPicker) {
-        // Detach picker before clearing inner so it isn't garbage-collected
-        const pickerParent = existingPicker.parentNode;
-        if (pickerParent) pickerParent.removeChild(existingPicker);
-        // Replace all inner content then re-append the picker
-        inner.innerHTML = histContentHtml;
-        inner.appendChild(existingPicker);
-      } else {
-        inner.innerHTML = histContentHtml + pickerHtml;
-      }
-
-      // Store historyIds on inner element for picker to reference
-      inner._historyIds = historyIds;
+      inner.innerHTML = statsHtml + listHtml;
     }
 
-    function openLinkPicker(recId) {
-      const picker = document.getElementById('link-picker-' + recId);
-      if (!picker) return;
-      const isOpen = picker.classList.contains('open');
-      picker.classList.toggle('open', !isOpen);
-      if (!isOpen) {
-        // Focus the search field
-        const search = document.getElementById('link-search-' + recId);
-        if (search) { search.value = ''; setTimeout(() => search.focus(), 100); }
-        renderLinkPicker(recId, '');
-      }
-    }
+    // ── Alt Amounts (Secondary Prices) Management ──
+    let _editingAltAmounts = []; // Temp array used during modal editing
 
-    function renderLinkPicker(recId, query) {
-      const container = document.getElementById('link-results-' + recId);
-      const inner = document.getElementById('hist-inner-' + recId);
-      if (!container || !inner) return;
-
-      const rec = recurringList.find(r => r.id === recId);
-      if (!rec) { container.innerHTML = '<div class="sub-link-empty">Subscription not found.</div>'; return; }
-
-      const historyIds = inner._historyIds || new Set();
-      const q = (query || '').trim().toLowerCase();
-
-      // Filter candidates: not already in this sub's history, and not assigned to ANY subscription
-      let candidates = txs.filter(t => !historyIds.has(t.id) && !t.subId && !manualLinksMap.has(t.id));
-      // Apply search filter
-      if (q) candidates = candidates.filter(t => (t.desc || '').toLowerCase().includes(q));
-      // Sort by date descending
-      candidates.sort((a, b) => {
-        const dd = (b.date || '').localeCompare(a.date || '');
-        return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
-      });
-      // Cap at 40 to keep DOM lean
-      const capped = candidates.length > 40;
-      const shown = capped ? candidates.slice(0, 40) : candidates;
-
-      if (!shown.length) {
-        container.innerHTML = `<div class="sub-link-empty">${q ? 'No matching transactions found.' : 'No unlinked transactions available.'}</div>`;
+    function renderAltAmountsChips() {
+      const container = document.getElementById('altAmountsChips');
+      if (!container) return;
+      if (!_editingAltAmounts.length) {
+        container.innerHTML = '<span class="alt-amt-empty">No past amounts added yet.</span>';
         return;
       }
-
-      container.innerHTML = shown.map(t => {
-        const d = t.desc || '';
-        const amtCls = t.type === 'income' ? 'inc' : 'exp';
-        return `<div class="sub-link-item">
-      <div class="sub-link-item-date">${fmtDt(t.date)}</div>
-      <div class="sub-link-item-desc" title="${esc(d)}">${esc(d)}</div>
-      <div class="sub-link-item-amt ${amtCls}">${fmt(t.amount)}</div>
-      <button class="sub-link-item-add" onclick="event.stopPropagation();linkSubTx('${esc(t.id)}','${esc(recId)}')">＋ Link</button>
-    </div>`;
-      }).join('') + (capped ? `<div class="sub-link-empty">Showing first 40 results. Use search to narrow down.</div>` : '');
+      container.innerHTML = _editingAltAmounts.map((amt, i) =>
+        `<span class="alt-amt-chip">₹${Math.abs(amt).toLocaleString('en-IN', { maximumFractionDigits: 2 })}<button class="alt-amt-chip-remove" onclick="removeAltAmount(${i})" title="Remove">×</button></span>`
+      ).join('');
     }
 
-    async function linkSubTx(txId, recId) {
-      if (!userId) { showToast('Sign in first', 'er'); return; }
-      const tx = txs.find(t => t.id === txId);
-      if (!tx) return;
-      const linkData = { subId: recId, _recurring: true, _manualLink: true };
-      const searchInput = document.getElementById('link-search-' + recId);
-      const currentQuery = searchInput ? searchInput.value : '';
-
-      // Per-operation identity token — guards deferred cleanups so a stale timer from
-      // an earlier link/unlink call cannot evict a newer operation's pending state.
-      const opToken = ++_txOpSeq;
-
-      // Write lock: prevent tagPastSubscriptions and detectEarlyPayments from touching this tx
-      _txWriteLocks.set(txId, opToken);
-
-      // Optimistic local update — must happen before any await so UI never flickers
-      tx.subId = recId;
-      tx._recurring = true;
-      tx._manualLink = true;
-
-      // Optimistic local update for manualLinksMap so history renders immediately
-      const mlEntry = { txId, subId: recId, createdAt: Date.now() };
-      manualLinksMap.set(txId, mlEntry);
-      _pendingManualLinks.set(txId, mlEntry);  // Overlay: survives snapshot rebuilds until confirmed
-
-      // Register optimistic state so onSnapshot rebuilds of txs re-apply it
-      // until Firestore confirms the write (confirmed by the confirm-then-clear pattern).
-      _pendingTxUpdates.set(txId, { subId: recId, _recurring: true, _manualLink: true });
-      _pendingTxTokens.set(txId, opToken);
-
-      // Safety: clear pending after 30s no matter what (prevents memory leaks if onSnapshot
-      // never confirms, e.g. during prolonged offline periods). Token-guarded so a stale
-      // timer from an earlier operation doesn't evict a newer operation's entry.
-      setTimeout(() => {
-        if (_pendingTxTokens.get(txId) === opToken) {
-          _pendingTxUpdates.delete(txId);
-          _pendingTxTokens.delete(txId);
-        }
-      }, 30000);
-
-      // Lock: redirect any onSnapshot-triggered render() calls into targeted panel-only
-      // refreshes so the picker DOM (and the user's search query) is never destroyed.
-      const _lockToken = _setSubPanelLock(recId, currentQuery);
-
-      renderSubHistInner(recId);
-      renderLinkPicker(recId, currentQuery);
-      showToast(navigator.onLine ? 'Payment linked to subscription' : 'Saved offline. Will sync when connected.', 'ok');
-
-      try {
-        // Dual-write: update the transaction doc AND create a manualLinks record.
-        // The manualLinks record is the durable, cross-device source of truth.
-        const mlData = { subId: recId, txId, createdAt: Date.now() };
-        const batch = writeBatch(db);
-        batch.update(doc(db, 'users', userId, 'transactions', txId), linkData);
-        batch.set(doc(db, 'users', userId, 'manualLinks', txId), mlData);
-        await batch.commit();
-      } catch (e) {
-        // Queue both writes for offline sync
-        queueFailedSync('updateDoc', 'transactions', txId, linkData, true, true);
-        queueFailedSync('setDoc', 'manualLinks', txId, { subId: recId, txId, createdAt: Date.now() }, false, true);
-      } finally {
-        // DON'T clear _pendingTxUpdates here — let onSnapshot's confirm-then-clear handle it.
-        // Release lock after a short delay to absorb the onSnapshot that fires from updateDoc.
-        setTimeout(() => _clearSubPanelLock(_lockToken), 800);
-        // Token-guarded write-lock release — only removes the lock if this operation still owns it
-        setTimeout(() => { if (_txWriteLocks.get(txId) === opToken) _txWriteLocks.delete(txId); }, 3000);
-      }
+    function addAltAmount() {
+      const input = document.getElementById('altAmountInput');
+      if (!input) return;
+      const val = parseFloat(input.value);
+      if (isNaN(val) || !isFinite(val) || val <= 0) { shake('altAmountInput'); return; }
+      // Prevent duplicates (same as primary or already in list)
+      const primaryAmt = parseFloat(document.getElementById('recAmount').value) || 0;
+      if (Math.abs(val - primaryAmt) < 0.01) { showToast('This is already the current amount', 'er'); return; }
+      if (_editingAltAmounts.some(a => Math.abs(a - val) < 0.01)) { showToast('Amount already added', 'er'); return; }
+      _editingAltAmounts.push(val);
+      input.value = '';
+      renderAltAmountsChips();
     }
 
-    async function unlinkSubTx(txId, recId) {
-      if (!userId) { showToast('Sign in first', 'er'); return; }
-      const tx = txs.find(t => t.id === txId);
-      if (!tx) return;
-      // Track which fields actually need removing (only those that exist)
-      const hadSubId = tx.subId !== undefined;
-      const hadManualLink = tx._manualLink !== undefined;
-      const hadRecurring = tx._recurring !== undefined;
-      const hadManualLinkRecord = manualLinksMap.has(txId);
-      const searchInput = document.getElementById('link-search-' + recId);
-      const currentQuery = searchInput ? searchInput.value : '';
-
-      // Per-operation identity token — same pattern as linkSubTx
-      const opToken = ++_txOpSeq;
-
-      // Write lock: prevent tagPastSubscriptions and detectEarlyPayments from touching this tx
-      _txWriteLocks.set(txId, opToken);
-
-      // Optimistic local update — before any await
-      delete tx.subId;
-      delete tx._manualLink;
-      delete tx._recurring;
-      manualLinksMap.delete(txId);
-      _pendingManualLinks.set(txId, null);  // Overlay: null = pending delete, survives snapshot rebuilds
-
-      // Register deletion intent so onSnapshot rebuilds of txs re-apply the removal.
-      // null-sentinel means 'delete this field from the rebuilt tx object'.
-      const pendingUnlink = {};
-      if (hadSubId) pendingUnlink.subId = null;
-      if (hadManualLink) pendingUnlink._manualLink = null;
-      if (hadRecurring) pendingUnlink._recurring = null;
-      if (Object.keys(pendingUnlink).length) {
-        _pendingTxUpdates.set(txId, pendingUnlink);
-        _pendingTxTokens.set(txId, opToken);
-        // Safety: token-guarded so a stale timer from an earlier operation doesn't evict
-        // a newer operation's pending entry (e.g. rapid unlink → link on same tx)
-        setTimeout(() => {
-          if (_pendingTxTokens.get(txId) === opToken) {
-            _pendingTxUpdates.delete(txId);
-            _pendingTxTokens.delete(txId);
-          }
-        }, 30000);
-      }
-
-      // Lock: same pattern as linkSubTx — protect the picker from onSnapshot rebuilds
-      const _lockToken = _setSubPanelLock(recId, currentQuery);
-
-      renderSubHistInner(recId);
-      renderLinkPicker(recId, currentQuery);
-      showToast(navigator.onLine ? 'Payment removed from history' : 'Saved offline. Will sync when connected.', 'ok');
-
-      if (hadSubId || hadManualLink || hadRecurring || hadManualLinkRecord) {
-        // Batch: remove fields from transaction doc AND delete manualLinks record
-        try {
-          const batch = writeBatch(db);
-          const updatePayload = {};
-          if (hadSubId) updatePayload.subId = deleteField();
-          if (hadManualLink) updatePayload._manualLink = deleteField();
-          if (hadRecurring) updatePayload._recurring = deleteField();
-          if (Object.keys(updatePayload).length) {
-            batch.update(doc(db, 'users', userId, 'transactions', txId), updatePayload);
-          }
-          // Always attempt to delete the manualLinks record (it may exist even if tx fields don't)
-          batch.delete(doc(db, 'users', userId, 'manualLinks', txId));
-          await batch.commit();
-        } catch (e) {
-          // Use __DELETE__ sentinel so processSyncQueue can translate back to deleteField()
-          if (hadSubId || hadManualLink || hadRecurring) {
-            const safePayload = {};
-            if (hadSubId) safePayload.subId = '__DELETE__';
-            if (hadManualLink) safePayload._manualLink = '__DELETE__';
-            if (hadRecurring) safePayload._recurring = '__DELETE__';
-            queueFailedSync('updateDoc', 'transactions', txId, safePayload, true, true);
-          }
-          // Queue manualLinks deletion
-          queueFailedSync('deleteDoc', 'manualLinks', txId, null, false, true);
-        } finally {
-          // DON'T clear _pendingTxUpdates here — let onSnapshot's confirm-then-clear handle it.
-          setTimeout(() => _clearSubPanelLock(_lockToken), 800);
-          setTimeout(() => { if (_txWriteLocks.get(txId) === opToken) _txWriteLocks.delete(txId); }, 3000);
-        }
-      } else {
-        // No Firestore fields to remove — just release locks
-        setTimeout(() => _clearSubPanelLock(_lockToken), 800);
-        setTimeout(() => { if (_txWriteLocks.get(txId) === opToken) _txWriteLocks.delete(txId); }, 3000);
-      }
+    function removeAltAmount(index) {
+      _editingAltAmounts.splice(index, 1);
+      renderAltAmountsChips();
     }
 
     function openAddRecurring() {
@@ -11227,6 +10883,11 @@
       setRecType('expense');
       setRecFreq('monthly');
       setRecMode('online');
+      // Alt amounts: clear and hide for new subscription
+      _editingAltAmounts = [];
+      document.getElementById('altAmountsSection').style.display = 'none';
+      document.getElementById('altAmountInput').value = '';
+      renderAltAmountsChips();
       document.getElementById('recurringMod').classList.add('op');
     }
 
@@ -11249,6 +10910,11 @@
       setRecType(currentRecType);
       setRecFreq(currentRecFreq);
       setRecMode(currentRecMode);
+      // Alt amounts: load from record and show section
+      _editingAltAmounts = Array.isArray(rec.altAmounts) ? [...rec.altAmounts] : [];
+      document.getElementById('altAmountsSection').style.display = '';
+      document.getElementById('altAmountInput').value = '';
+      renderAltAmountsChips();
       document.getElementById('recurringMod').classList.add('op');
     }
 
@@ -11320,6 +10986,8 @@
         } else {
           data.paymentsLimit = null;
         }
+        // Alt amounts: save the secondary prices array
+        data.altAmounts = _editingAltAmounts.length ? [..._editingAltAmounts] : null;
         closeRecurringMod();
         if (editingRecurringId) {
           let saved = false;
@@ -11365,6 +11033,12 @@
       } finally {
         _saveRecBusy = false;
         if (_recSaveBtn) _recSaveBtn.disabled = false;
+        // Reset matching flags so next render cycle re-runs matchers
+        // with the updated amounts and subscription data
+        _earlyPayDone = false;
+        _recCatchUpDone = false;
+        _sessionEarlyPayRecs.clear();
+        debouncedRender();
       }
     }
 
@@ -12402,10 +12076,8 @@
     window.toggleRecurringActive = toggleRecurringActive;
     window.askDeleteRecurring = askDeleteRecurring;
     window.toggleSubHistory = toggleSubHistory;
-    window.openLinkPicker = openLinkPicker;
-    window.renderLinkPicker = renderLinkPicker;
-    window.linkSubTx = linkSubTx;
-    window.unlinkSubTx = unlinkSubTx;
+    window.addAltAmount = addAltAmount;
+    window.removeAltAmount = removeAltAmount;
     // PDF
     window.openReportMod = openReportMod;
     window.closeReportMod = closeReportMod;
