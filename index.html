@@ -7483,7 +7483,71 @@
             if (!matched) _earlyPayDone = true;
           });
         }
+        
+        // Background sweep to ensure any transaction that matches a subscription
+        // (including via altAmounts) gets the _recurring tag, even if it was skipped 
+        // by the strict date guards of checkAndTrigger / detectEarlyPayments.
+        if (_recCatchUpDone && _tagPastDone && _earlyPayDone) {
+          syncUntaggedMatches();
+        }
       }, 120);
+    }
+    
+    async function syncUntaggedMatches() {
+      if (!userId || !recurringList.length || !txs.length) return;
+      const toTag = [];
+      const batch = writeBatch(db);
+      
+      for (const t of txs) {
+        if (t._recurring || t.subId) continue;
+        if (_txWriteLocks.has(t.id) || _pendingTxUpdates.has(t.id)) continue;
+        if (t._manualLink || manualLinksMap.has(t.id)) continue;
+        
+        const tDescLow = (t.desc || '').trim().toLowerCase();
+        if (!tDescLow) continue;
+        
+        for (const rec of recurringList) {
+          const nameLow = (rec.name || '').trim().toLowerCase();
+          if (!nameLow) continue;
+          if (tDescLow !== nameLow) {
+            if (nameLow.length < 4 || tDescLow.length < 4) continue;
+            if (!(tDescLow.includes(nameLow) || nameLow.includes(tDescLow))) continue;
+            const shorter = Math.min(nameLow.length, tDescLow.length);
+            const longer = Math.max(nameLow.length, tDescLow.length);
+            if (shorter / longer < 0.5) continue;
+          }
+          if (t.type !== rec.type) continue;
+          const _allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+          if (!_allAmts.includes(Math.abs(t.amount || 0))) continue;
+          if (rec.cat && t.cat && rec.cat !== t.cat) continue;
+          
+          toTag.push({ txId: t.id, recId: rec.id });
+          break;
+        }
+      }
+      
+      if (!toTag.length) return;
+      
+      const opToken = ++_txOpSeq;
+      try {
+        for (let i = 0; i < toTag.length; i += 450) {
+          const chunk = toTag.slice(i, i + 450);
+          const currentBatch = writeBatch(db);
+          chunk.forEach(({txId, recId}) => {
+            currentBatch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId });
+            _pendingTxUpdates.set(txId, { _recurring: true, subId: recId });
+            _pendingTxTokens.set(txId, opToken);
+            _sessionTaggedTxIds.add(txId);
+          });
+          await currentBatch.commit();
+          chunk.forEach(({txId, recId}) => {
+            const tx = txs.find(x => x.id === txId);
+            if (tx) { tx._recurring = true; tx.subId = recId; }
+          });
+        }
+      } catch (e) {
+        console.error("Background auto-tag failed:", e);
+      }
     }
 
     async function tagPastSubscriptions() {
