@@ -10813,6 +10813,27 @@
       // Build a set of IDs in this history for quick lookup
       const historyIds = new Set(subTxs.map(t => t.id));
 
+      // Auto-tag: any transaction shown in history but missing _recurring/subId gets tagged
+      const untagged = subTxs.filter(t => (!t._recurring || t.subId !== recId) && !_txWriteLocks.has(t.id) && !_pendingTxUpdates.has(t.id));
+      if (untagged.length && userId) {
+        (async () => {
+          try {
+            for (let i = 0; i < untagged.length; i += 450) {
+              const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id) && !_pendingTxUpdates.has(t.id));
+              if (!chunk.length) continue;
+              const batch = writeBatch(db);
+              chunk.forEach(t => batch.update(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId }));
+              await batch.commit();
+              chunk.forEach(t => {
+                if (_txWriteLocks.has(t.id) || _pendingTxUpdates.has(t.id)) return;
+                t._recurring = true; t.subId = recId;
+                _sessionTaggedTxIds.add(t.id);
+              });
+            }
+          } catch (e) { console.error('History auto-tag failed:', e); }
+        })();
+      }
+
       const totalPaid = subTxs.reduce((s, t) => s + t.amount, 0);
       const amtCls = rec.type === 'income' ? 'inc' : 'exp';
       const sign = rec.type === 'income' ? '+' : '-';
