@@ -10474,6 +10474,10 @@
                 if (!_recNameLc || !_txDescLc) return false;
                 if (_recNameLc !== _txDescLc) {
                   if (_recNameLc.length < 4 || _txDescLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
+                  // Length ratio guard: prevent short names from matching long descriptions
+                  const shorter = Math.min(_recNameLc.length, _txDescLc.length);
+                  const longer = Math.max(_recNameLc.length, _txDescLc.length);
+                  if (shorter / longer < 0.5) return false;
                 }
                 if (Math.abs(t.amount) !== Math.abs(data.amount)) return false;
                 // Mode matching: if subscription specifies mode, transaction must match
@@ -10506,6 +10510,10 @@
                 paymentsMade++;
               } else {
                 matchedTxIds.add(matchedTx.id);
+                // Tag the matched transaction with subId so it appears in subscription history
+                if (!matchedTx.subId || matchedTx.subId !== rec.id || !matchedTx._recurring) {
+                  transaction.update(doc(db, 'users', userId, 'transactions', matchedTx.id), { _recurring: true, subId: rec.id });
+                }
                 updatesNeeded = true;
                 paymentsMade++;
               }
@@ -10534,6 +10542,32 @@
             // Commit local matches to global pool to prevent stealing by subsequent subscriptions in this run
             matchedTxIds.forEach(id => globallyMatchedTxIds.add(id));
 
+            // Optimistically tag matched existing transactions locally so subscription
+            // history panels update immediately without waiting for Firestore echo
+            if (matchedTxIds.size > 0) {
+              const opToken = ++_txOpSeq;
+              matchedTxIds.forEach(id => {
+                const tx = txs.find(t => t.id === id);
+                if (tx) {
+                  tx._recurring = true;
+                  tx.subId = rec.id;
+                }
+                // Register pending updates so echo snapshots don't wipe the tags
+                _pendingTxUpdates.set(id, { _recurring: true, subId: rec.id });
+                _pendingTxTokens.set(id, opToken);
+                _sessionTaggedTxIds.add(id);
+              });
+              // Safety clear pending entries after 15s
+              setTimeout(() => {
+                matchedTxIds.forEach(id => {
+                  if (_pendingTxTokens.get(id) === opToken) {
+                    _pendingTxUpdates.delete(id);
+                    _pendingTxTokens.delete(id);
+                  }
+                });
+              }, 15000);
+            }
+
             // Only run optimistics and log if we generated new transactions
             if (newTxs.length > 0) {
               triggeredCount += newTxs.length;
@@ -10543,7 +10577,6 @@
                 const dDiff = b.date.localeCompare(a.date);
                 return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
               });
-              debouncedRender();
 
               const sortedDates = newTxs.map(t => t.date).sort();
               const minDt = sortedDates[0];
@@ -10551,6 +10584,11 @@
               let dRange = minDt === maxDt ? fmtDt(minDt) : `${fmtDt(minDt)} to ${fmtDt(maxDt)}`;
 
               writeLog('ADD', { desc: newTxs.length > 1 ? `${rec.name} (Auto Catch-up)` : rec.name, amt: rec.amount * newTxs.length, type: rec.type, isAuto: true, dateRange: dRange }, rec.type);
+            }
+
+            // Re-render if any matches or new txs were processed
+            if (matchedTxIds.size > 0 || newTxs.length > 0) {
+              debouncedRender();
             }
           }
         } catch (e) {
@@ -10610,6 +10648,10 @@
           if (!_txDescLc) return false;
           if (_recNameLc !== _txDescLc) {
             if (_recNameLc.length < 4 || _txDescLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
+            // Length ratio guard: prevent short names from matching long descriptions
+            const shorter = Math.min(_recNameLc.length, _txDescLc.length);
+            const longer = Math.max(_recNameLc.length, _txDescLc.length);
+            if (shorter / longer < 0.5) return false;
           }
           if (Math.abs(t.amount) !== Math.abs(rec.amount)) return false;
           // Mode matching: if subscription specifies mode, transaction must match
