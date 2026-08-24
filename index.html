@@ -7167,7 +7167,7 @@
               if (cType !== rec.type) return false;
               const _allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
               if (!_allAmts.includes(Math.abs(amt))) return false;
-              if (rec.cat && cat && rec.cat !== cat) return false;
+              if (!rec.cat || !cat || rec.cat !== cat) return false;
               return true;
             });
             if (matchedRec) {
