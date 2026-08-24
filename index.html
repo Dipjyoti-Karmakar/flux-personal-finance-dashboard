@@ -7149,6 +7149,34 @@
         if (eventId) newTx.eventId = eventId;
         const txId = uid();
 
+        // IMMEDIATE subscription matching: tag the new tx right away if it matches
+        // a subscription (including via altAmounts) so the badge appears instantly.
+        if (recurringList && recurringList.length) {
+          const _txDescLc = desc.trim().toLowerCase();
+          if (_txDescLc) {
+            const matchedRec = recurringList.find(rec => {
+              if (!rec.name || !rec.active) return false;
+              const recNameLc = rec.name.trim().toLowerCase();
+              if (!recNameLc) return false;
+              if (recNameLc !== _txDescLc) {
+                if (recNameLc.length < 4 || _txDescLc.length < 4 || !(recNameLc.includes(_txDescLc) || _txDescLc.includes(recNameLc))) return false;
+                const shorter = Math.min(recNameLc.length, _txDescLc.length);
+                const longer = Math.max(recNameLc.length, _txDescLc.length);
+                if (shorter / longer < 0.5) return false;
+              }
+              if (cType !== rec.type) return false;
+              const _allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+              if (!_allAmts.includes(Math.abs(amt))) return false;
+              if (rec.cat && cat && rec.cat !== cat) return false;
+              return true;
+            });
+            if (matchedRec) {
+              newTx._recurring = true;
+              newTx.subId = matchedRec.id;
+            }
+          }
+        }
+
         // OPTIMISTIC: Insert into local txs immediately so subscription history panels
         // and all other views reflect the new transaction without waiting for Firestore.
         const optimisticTx = { id: txId, ...newTx };
@@ -7182,10 +7210,12 @@
 
           showToast(navigator.onLine ? 'Transaction added' : 'Saved offline. Will sync when connected.', 'ok');
 
-          // Reset early payment & catch-up flags so the next debouncedRender cycle
-          // can match this new transaction against active subscriptions.
+          // Reset ALL matching flags so the next debouncedRender cycle
+          // can match this new transaction against active subscriptions,
+          // including secondary/alt amounts via tagPastSubscriptions.
           _earlyPayDone = false;
           _recCatchUpDone = false;
+          _tagPastDone = false;
           _sessionEarlyPayRecs.clear();
 
           // Button checkmark animation
@@ -7487,7 +7517,9 @@
         // Background sweep to ensure any transaction that matches a subscription
         // (including via altAmounts) gets the _recurring tag, even if it was skipped 
         // by the strict date guards of checkAndTrigger / detectEarlyPayments.
-        if (_recCatchUpDone && _tagPastDone && _earlyPayDone) {
+        // Run whenever at least the primary tagging pass (tagPast) is done, so
+        // secondary-amount transactions are not left waiting for all async gates.
+        if (_tagPastDone) {
           syncUntaggedMatches();
         }
       }, 120);
@@ -7545,6 +7577,8 @@
             if (tx) { tx._recurring = true; tx.subId = recId; }
           });
         }
+        // Re-render so subscription badges appear immediately in the transaction list
+        debouncedRender();
       } catch (e) {
         console.error("Background auto-tag failed:", e);
       }
@@ -8123,10 +8157,12 @@
         }
 
         if (saved) {
-          // Reset early payment & catch-up flags so the next debouncedRender cycle
-          // can match edited transactions against active subscriptions.
+          // Reset ALL matching flags so the next debouncedRender cycle
+          // can match edited transactions against active subscriptions,
+          // including secondary/alt amounts via tagPastSubscriptions.
           _earlyPayDone = false;
           _recCatchUpDone = false;
+          _tagPastDone = false;
           _sessionEarlyPayRecs.clear();
 
           // Generate diff for logging
@@ -11144,10 +11180,12 @@
       } finally {
         _saveRecBusy = false;
         if (_recSaveBtn) _recSaveBtn.disabled = false;
-        // Reset matching flags so next render cycle re-runs matchers
-        // with the updated amounts and subscription data
+        // Reset ALL matching flags so next render cycle re-runs matchers
+        // with the updated amounts and subscription data, including
+        // tagPastSubscriptions which catches secondary/alt amount matches.
         _earlyPayDone = false;
         _recCatchUpDone = false;
+        _tagPastDone = false;
         _sessionEarlyPayRecs.clear();
         debouncedRender();
       }
