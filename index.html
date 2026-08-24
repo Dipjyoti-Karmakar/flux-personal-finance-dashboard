@@ -7590,9 +7590,18 @@
       if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return 0;
       _tagPastRunning = true;
       try {
-        // Orphan cleanup: clear stale _recurring/subId on txs whose subId points to a non-existent subscription
+        // Orphan cleanup: clear stale _recurring/subId on txs whose subId points
+        // to a non-existent subscription, OR txs that have _recurring but no subId
+        // (standalone tagged txs not connected to any subscription card).
         const recIds = new Set(recurringList.map(r => r.id));
-        const toUntag = txs.filter(tx => tx.subId && !recIds.has(tx.subId) && !_txWriteLocks.has(tx.id) && !_pendingTxUpdates.has(tx.id));
+        const toUntag = txs.filter(tx => {
+          if (_txWriteLocks.has(tx.id) || _pendingTxUpdates.has(tx.id)) return false;
+          // Case 1: has subId but it points to a deleted/non-existent subscription
+          if (tx.subId && !recIds.has(tx.subId)) return true;
+          // Case 2: has _recurring tag but no subId — standalone, not connected to any card
+          if (tx._recurring && !tx.subId) return true;
+          return false;
+        });
         if (toUntag.length) {
           for (let i = 0; i < toUntag.length; i += 450) {
             const chunk = toUntag.slice(i, i + 450);
@@ -10913,22 +10922,38 @@
       // Build a set of IDs in this history for quick lookup
       const historyIds = new Set(subTxs.map(t => t.id));
 
-      // Auto-tag: any transaction shown in history but missing _recurring/subId gets tagged
+      // Auto-tag: any transaction shown in history but missing _recurring/subId gets tagged.
+      // Register _pendingTxUpdates BEFORE batch.commit() so the onSnapshot rebuild
+      // preserves the tags — prevents the flickering appear/disappear cycle.
       const untagged = subTxs.filter(t => (!t._recurring || t.subId !== recId) && !_txWriteLocks.has(t.id) && !_pendingTxUpdates.has(t.id));
       if (untagged.length && userId) {
+        const opToken = ++_txOpSeq;
+        // Pre-register all pending updates + session markers BEFORE commit
+        untagged.forEach(t => {
+          _pendingTxUpdates.set(t.id, { _recurring: true, subId: recId });
+          _pendingTxTokens.set(t.id, opToken);
+          _sessionTaggedTxIds.add(t.id);
+          // Optimistic local update so the tag is visible immediately
+          t._recurring = true;
+          t.subId = recId;
+        });
+        // Safety clear pending entries after 15s
+        setTimeout(() => {
+          untagged.forEach(t => {
+            if (_pendingTxTokens.get(t.id) === opToken) {
+              _pendingTxUpdates.delete(t.id);
+              _pendingTxTokens.delete(t.id);
+            }
+          });
+        }, 15000);
         (async () => {
           try {
             for (let i = 0; i < untagged.length; i += 450) {
-              const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id) && !_pendingTxUpdates.has(t.id));
+              const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id));
               if (!chunk.length) continue;
               const batch = writeBatch(db);
               chunk.forEach(t => batch.update(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId }));
               await batch.commit();
-              chunk.forEach(t => {
-                if (_txWriteLocks.has(t.id) || _pendingTxUpdates.has(t.id)) return;
-                t._recurring = true; t.subId = recId;
-                _sessionTaggedTxIds.add(t.id);
-              });
             }
           } catch (e) { console.error('History auto-tag failed:', e); }
         })();
