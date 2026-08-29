@@ -8758,16 +8758,24 @@
       renderCats();
     }
 
+    let _splitLastHtml = ''; // Cache to skip re-render when split data hasn't changed
     function renderSplit(passedTxs) {
       const exp = (passedTxs || getActiveTxs()).filter(t => t.type === 'expense'), area = document.getElementById('spArea');
-      if (!exp.length) { area.innerHTML = '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div>'; return; }
+      if (!exp.length) {
+        const emptyHtml = '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div>';
+        if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _splitLastHtml = ''; }
+        return;
+      }
       const onl = exp.filter(t => t.mode === 'online'), ofl = exp.filter(t => t.mode !== 'online');
       const oA = onl.reduce((s, t) => s + t.amount, 0), fA = ofl.reduce((s, t) => s + t.amount, 0), tot = oA + fA;
       const opRaw = tot > 0 ? (oA / tot * 100) : 0; const op = opRaw.toFixed(0), fp = (100 - opRaw).toFixed(0);
       // FIXED: Use Set size with a minimum of 1 to prevent division by zero / Infinity avg/day
       const onlDays = Math.max(1, new Set(onl.map(t => t.date)).size);
       const oflDays = Math.max(1, new Set(ofl.map(t => t.date)).size);
-      area.innerHTML = `<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">⚡ Online ${op}%</span><span class="splb" style="color:var(--of)">🏪 Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length > 0 ? fmtS(oA / onlDays) + ' avg/day' : '—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)">Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length > 0 ? fmtS(fA / oflDays) + ' avg/day' : '—'}</div></div></div>`;
+      const newHtml = `<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">⚡ Online ${op}%</span><span class="splb" style="color:var(--of)">🏪 Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length > 0 ? fmtS(oA / onlDays) + ' avg/day' : '—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)">Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length > 0 ? fmtS(fA / oflDays) + ' avg/day' : '—'}</div></div></div>`;
+      if (newHtml === _splitLastHtml) return;
+      _splitLastHtml = newHtml;
+      area.innerHTML = newHtml;
     }
 
     // ── Month-over-Month Insights (max 8, high-impact) ──
@@ -10821,6 +10829,7 @@
       return anyMatched;
     }
 
+    let _recurringLastHtml = ''; // Cache to skip re-render when recurring data hasn't changed
     function renderRecurring() {
       const area = document.getElementById('subList');
       if (!area) return;
@@ -10860,17 +10869,18 @@
       if (el('subActiveCount')) el('subActiveCount').textContent = activeCount;
 
       if (!recurringList.length) {
-        area.innerHTML = `<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)">
+        const emptyHtml = `<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)">
       <div class="empty-icon" style="font-size:36px;margin-bottom:12px">🔁</div>
       <div class="empty-title">No subscriptions yet</div>
       <div class="empty-sub">Add recurring transactions like rent, Netflix, or salary to auto-track them every month.</div>
     </div>`;
+        if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _recurringLastHtml = ''; }
         return;
       }
 
       // openPanels previously populated at the top of the function
 
-      area.innerHTML = recurringList.map((rec, index) => {
+      const newHtml = recurringList.map((rec, index) => {
         const isDue = rec.nextDue && rec.nextDue <= today;
         const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
 
@@ -10897,7 +10907,8 @@
         const pauseLabel = rec.active ? '⏸ Pause' : '▶ Resume';
 
         const recIdJson = esc(JSON.stringify(rec.id));
-        return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}" style="animation: fdI 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: ${index * 0.05}s;">
+        const animStyle = _initialAnimsDone ? 'animation:none;' : `animation: fdI 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: ${index * 0.05}s;`;
+        return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}" style="${animStyle}">
       <div class="sub-card-top">
         <div class="sub-card-icon">${catIcon}</div>
         <div class="sub-card-info">
@@ -10921,6 +10932,19 @@
       </div>
     </div>`;
       }).join('');
+
+      // Skip DOM rebuild entirely when content is identical — prevents flicker and closing of panels
+      if (newHtml === _recurringLastHtml) {
+        // Still update the open panels' content internally in case their tx data changed
+        openPanels.forEach(id => {
+          if (typeof renderSubHistInner === 'function') renderSubHistInner(id);
+        });
+        return;
+      }
+      _recurringLastHtml = newHtml;
+
+      area.innerHTML = newHtml;
+
       // Restore open panels
       openPanels.forEach(id => {
         const btn = document.getElementById('hist-btn-' + id);
