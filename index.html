@@ -6932,6 +6932,14 @@
             if (_auto) clean._auto = true;
             if (subId) clean.subId = subId;
             if (_manualLink) clean._manualLink = true;
+
+            // Apply pending updates to ensure optimistic tags survive echo snapshots
+            if (_pendingTxUpdates.has(doc.id)) {
+              const pending = _pendingTxUpdates.get(doc.id);
+              if (pending._recurring !== undefined) clean._recurring = pending._recurring;
+              if (pending.subId !== undefined) clean.subId = pending.subId;
+            }
+
             loadedTxs.push({ id: doc.id, ...clean });
           }
         });
@@ -7677,8 +7685,6 @@
             if (rec.type !== tx.type) return false;
             // Category must match to prevent false positives on same-name/amount transactions
             if (rec.cat && tx.cat && rec.cat !== tx.cat) return false;
-            // Date guard: only tag transactions on or before the subscription's current nextDue
-            if (rec.nextDue && tx.date > rec.nextDue) return false;
             return true;
           });
           if (matchingRec) toTag.push({ txId: tx.id, recId: matchingRec.id });
@@ -10933,15 +10939,17 @@
     </div>`;
       }).join('');
 
-      // Skip DOM rebuild entirely when content is identical — prevents flicker and closing of panels
-      if (newHtml === _recurringLastHtml) {
+      const stableHtml = newHtml.replace(/style="animation:[^"]*"/g, 'style=""');
+
+      // Skip DOM rebuild entirely when stable content is identical — prevents flicker and closing of panels
+      if (stableHtml === _recurringLastHtml) {
         // Still update the open panels' content internally in case their tx data changed
         openPanels.forEach(id => {
           if (typeof renderSubHistInner === 'function') renderSubHistInner(id);
         });
         return;
       }
-      _recurringLastHtml = newHtml;
+      _recurringLastHtml = stableHtml;
 
       area.innerHTML = newHtml;
 
