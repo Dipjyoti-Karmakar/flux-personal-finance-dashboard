@@ -3540,6 +3540,10 @@
       animation: cardIn .6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
     }
 
+    .section-in.anim-done {
+      animation: none;
+    }
+
     /* ── Scroll-to-Top Button ── */
     .scroll-top {
       position: fixed;
@@ -5357,6 +5361,10 @@
 
     .section-in {
       animation: sectionIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+
+    .section-in.anim-done {
+      animation: none;
     }
 
     /* ── Insight Card Panel (full-width panel below the grid) ── */
@@ -7435,6 +7443,7 @@
       debouncedRender(); // one final full render with settled state
     }
 
+    let _initialAnimsDone = false; // Tracks whether first-render entrance animations have played
     function render() {
       // I2 FIX: Compute active transactions once and pass to all sub-renderers
       const aTxs = getActiveTxs();
@@ -7451,6 +7460,19 @@
           const el = document.getElementById(id);
           if (el) twemoji.parse(el);
         });
+      }
+      // After first render, mark entrance animations as done so re-renders
+      // (triggered by onSnapshot echoes from history auto-tagging etc.) don't
+      // replay the fade-in/slide-in, which causes visible flickering.
+      if (!_initialAnimsDone) {
+        _initialAnimsDone = true;
+        // Wait for the longest entrance animation to finish (0.6s + 0.3s delay)
+        // before disabling replay.
+        setTimeout(() => {
+          document.querySelectorAll('#splitEventCard.section-in, #insightCard.section-in').forEach(el => {
+            el.classList.add('anim-done');
+          });
+        }, 1000);
       }
       // Keep open history panels updated with new transaction data.
       // If a sub-panel link/unlink is in progress (_subPanelLock set), skip the full
@@ -8843,7 +8865,10 @@
         area.innerHTML = !prevTxs.length && curTxs.length ? '<div class="insight-empty">No previous month data to compare — insights will appear next month</div>' : '<div class="insight-empty">Spending is roughly the same as last month</div>';
         return;
       }
-      area.innerHTML = insights.map(i => `<div class="insight-item"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
+      // Skip the fdI animation on re-renders to prevent flicker when onSnapshot
+      // triggers a full render cycle (e.g. after opening subscription history).
+      const itemAnimStyle = _initialAnimsDone ? 'animation:none;' : '';
+      area.innerHTML = insights.map(i => `<div class="insight-item" style="${itemAnimStyle}"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
     }
 
     function renderYearly() {
@@ -8862,8 +8887,43 @@
         if (!txByYM[y][m]) txByYM[y][m] = [];
         txByYM[y][m].push(t);
       });
+      // Preserve expanded yearly block and month card states before DOM rebuild
+      const openYears = new Set();
+      const openMonths = new Map(); // yearId -> Set of mc element indices with .op-tx
+      area.querySelectorAll('.yb.op').forEach(el => {
+        if (el.id) openYears.add(el.id);
+      });
+      area.querySelectorAll('.yb').forEach(ybEl => {
+        if (!ybEl.id) return;
+        const mcEls = ybEl.querySelectorAll('.mc.op-tx');
+        if (mcEls.length) {
+          const indices = new Set();
+          const allMc = ybEl.querySelectorAll('.mc');
+          allMc.forEach((mc, idx) => { if (mc.classList.contains('op-tx')) indices.add(idx); });
+          openMonths.set(ybEl.id, indices);
+        }
+      });
       const yrs = [...yearSet].sort((a, b) => b - a);
       area.innerHTML = yrs.map(yr => mkYrBlock(yr, txByYM[yr] || {}, todayISO, cY, cM, cD)).join('');
+      // Restore expanded states after DOM rebuild
+      openYears.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('op');
+      });
+      openMonths.forEach((indices, ybId) => {
+        const ybEl = document.getElementById(ybId);
+        if (!ybEl) return;
+        const mcEls = ybEl.querySelectorAll('.mc');
+        indices.forEach(idx => {
+          if (mcEls[idx]) {
+            mcEls[idx].classList.add('op-tx');
+            // Re-inject lazy-loaded transaction list since innerHTML destroyed it
+            const yr = parseInt(ybId.replace('yb', ''));
+            const m = idx; // month index corresponds to mc position
+            lazyLoadMonthTxs(mcEls[idx], yr, m);
+          }
+        });
+      });
     }
 
     function mkYrBlock(yr, yrMonths, todayISO, cY, cM, cD) {
@@ -9678,7 +9738,10 @@
     </div>
   `;
       }).join('');
-      area.innerHTML = '<div class="split-fade-in event-list-container">' + itemsHtml + '</div>';
+      // Skip the fade animation on re-renders to prevent flicker when onSnapshot
+      // triggers a full render cycle (e.g. after opening subscription history).
+      const fadeClass = _initialAnimsDone ? 'event-list-container' : 'split-fade-in event-list-container';
+      area.innerHTML = '<div class="' + fadeClass + '">' + itemsHtml + '</div>';
     }
 
     function setSplitView(view) {
