@@ -8623,10 +8623,16 @@
       window._resizeT = setTimeout(() => { renderTrend(); }, 200);
     });
 
+    let _catLastHtml = ''; // Cache to skip re-render when category data hasn't changed
     function renderCats(passedTxs) {
       const aTxs = passedTxs || lastCatList || getActiveTxs();
       const exp = aTxs.filter(t => t.type === 'expense'), area = document.getElementById('ctArea');
-      if (!exp.length) { activeCatFilter = null; area.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Your expense categories will appear here once you start tracking</div></div>'; return; }
+      if (!exp.length) {
+        activeCatFilter = null;
+        const emptyHtml = '<div class="empty-state"><div class="empty-icon">📂</div><div class="empty-title">No data yet</div><div class="empty-sub">Your expense categories will appear here once you start tracking</div></div>';
+        if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _catLastHtml = ''; }
+        return;
+      }
       const tot = {};
       let totalExp = 0;
       exp.forEach(t => { tot[t.cat || 'other'] = (tot[t.cat || 'other'] || 0) + t.amount; totalExp += t.amount; });
@@ -8646,9 +8652,14 @@
       if (activeCatFilter) {
         detHtml += '<div class="cat-tx-panel cat-tx-open" id="catTxPanel"></div>';
       }
-      area.innerHTML = barHtml + detHtml;
+      const newHtml = barHtml + detHtml;
+      // Skip DOM rebuild entirely when content is identical — prevents flicker on re-renders
+      if (newHtml === _catLastHtml) return;
+      _catLastHtml = newHtml;
+      area.innerHTML = newHtml;
       if (activeCatFilter) renderCatTxList(aTxs);
     }
+
 
     function toggleCatFilter(cat) {
       if (activeCatFilter === cat) {
@@ -8657,6 +8668,7 @@
         activeCatFilter = cat;
         catTxVisibleCount = CAT_TX_PAGE_SIZE;
       }
+      _catLastHtml = ''; // Force re-render on user interaction
       renderCats();
     }
 
