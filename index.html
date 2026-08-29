@@ -1846,6 +1846,10 @@
       animation: fdI .25s cubic-bezier(0.16, 1, 0.3, 1)
     }
 
+    .yb.op.no-anim .mng {
+      animation: none;
+    }
+
     @keyframes fdI {
       from {
         opacity: 0;
@@ -8871,11 +8875,17 @@
       area.innerHTML = insights.map(i => `<div class="insight-item" style="${itemAnimStyle}"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
     }
 
+    let _yrLastHtml = ''; // Cache to skip re-render when yearly data hasn't changed
     function renderYearly() {
       const area = document.getElementById('yrArea');
       const now = new Date(), todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10), cY = now.getFullYear(), cM = now.getMonth(), cD = now.getDate();
 
-      if (!txs.length) { area.innerHTML = '<div class="empty-state"><div class="empty-icon">📆</div><div class="empty-title">Yearly Overview</div><div class="empty-sub">Add transactions to see your year at a glance</div></div>'; return; }
+      if (!txs.length) {
+        const emptyHtml = '<div class="empty-state"><div class="empty-icon">📆</div><div class="empty-title">Yearly Overview</div><div class="empty-sub">Add transactions to see your year at a glance</div></div>';
+        if (area.innerHTML !== emptyHtml) area.innerHTML = emptyHtml;
+        _yrLastHtml = '';
+        return;
+      }
       // I1 FIX: Pre-compute year/month index to avoid thousands of redundant new Date() calls
       const txByYM = {}; // { year: { month: [txs] } }
       const yearSet = new Set([cY]);
@@ -8887,6 +8897,13 @@
         if (!txByYM[y][m]) txByYM[y][m] = [];
         txByYM[y][m].push(t);
       });
+      const yrs = [...yearSet].sort((a, b) => b - a);
+      const newHtml = yrs.map(yr => mkYrBlock(yr, txByYM[yr] || {}, todayISO, cY, cM, cD)).join('');
+
+      // Skip DOM rebuild entirely when content is identical — prevents flicker on re-renders
+      if (newHtml === _yrLastHtml) return;
+      _yrLastHtml = newHtml;
+
       // Preserve expanded yearly block and month card states before DOM rebuild
       const openYears = new Set();
       const openMonths = new Map(); // yearId -> Set of mc element indices with .op-tx
@@ -8895,20 +8912,24 @@
       });
       area.querySelectorAll('.yb').forEach(ybEl => {
         if (!ybEl.id) return;
-        const mcEls = ybEl.querySelectorAll('.mc.op-tx');
-        if (mcEls.length) {
+        const allMc = ybEl.querySelectorAll('.mc');
+        if (ybEl.querySelectorAll('.mc.op-tx').length) {
           const indices = new Set();
-          const allMc = ybEl.querySelectorAll('.mc');
           allMc.forEach((mc, idx) => { if (mc.classList.contains('op-tx')) indices.add(idx); });
           openMonths.set(ybEl.id, indices);
         }
       });
-      const yrs = [...yearSet].sort((a, b) => b - a);
-      area.innerHTML = yrs.map(yr => mkYrBlock(yr, txByYM[yr] || {}, todayISO, cY, cM, cD)).join('');
-      // Restore expanded states after DOM rebuild
+
+      area.innerHTML = newHtml;
+
+      // Restore expanded states — suppress entrance animation so restore is instant/silent
       openYears.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.classList.add('op');
+        if (!el) return;
+        el.classList.add('no-anim'); // suppress .mng fdI animation during restore
+        el.classList.add('op');
+        // Remove no-anim after one frame so future user-toggled opens still animate
+        requestAnimationFrame(() => requestAnimationFrame(() => el.classList.remove('no-anim')));
       });
       openMonths.forEach((indices, ybId) => {
         const ybEl = document.getElementById(ybId);
@@ -8919,8 +8940,7 @@
             mcEls[idx].classList.add('op-tx');
             // Re-inject lazy-loaded transaction list since innerHTML destroyed it
             const yr = parseInt(ybId.replace('yb', ''));
-            const m = idx; // month index corresponds to mc position
-            lazyLoadMonthTxs(mcEls[idx], yr, m);
+            lazyLoadMonthTxs(mcEls[idx], yr, idx);
           }
         });
       });
@@ -9694,13 +9714,15 @@
       }
     }
 
+    let _eventsLastHtml = ''; // Cache to skip re-render when events data hasn't changed
     function renderEvents() {
       const area = document.getElementById('eventList');
       if (!area) return;
       const evts = Object.values(events);
       evts.sort((a, b) => (b.start || '').localeCompare(a.start || ''));
       if (!evts.length) {
-        area.innerHTML = '<div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div>';
+        const emptyHtml = '<div class="empty-state" style="padding:24px 16px"><div class="empty-icon" style="font-size:28px">🎯</div><div class="empty-title">No events yet</div><div class="empty-sub">Create events to group spending</div></div>';
+        if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _eventsLastHtml = ''; }
         return;
       }
       const safeColor = getLegibleColor;
