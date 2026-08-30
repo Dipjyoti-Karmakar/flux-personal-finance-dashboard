@@ -2138,10 +2138,9 @@
     }
     
     .extreme-warn {
-      position: absolute;
-      right: 0;
-      top: -12px;
-      font-size: 10px;
+      color: var(--ex);
+      font-weight: 700;
+      margin-right: 4px;
     }
 
     .mbb.tp {
@@ -9243,9 +9242,11 @@
     <div class="mbw">
       <div class="mbb${isCur ? ' tp' : ''}${isRedPacing ? ' r-stripe' : ''}${isExtreme ? ' extreme' : ''}" style="width:${baseWidth}%; background:${isExtreme ? '' : barColor}"></div>
       ${overfillWidth > 0 && !isExtreme ? `<div class="mbb-overfill${isCur ? ' tp' : ''}" style="width:${overfillWidth}%; background:${barColor}"></div>` : ''}
-      ${isExtreme ? `<div class="extreme-warn">⚠️</div>` : ''}
     </div>
-    <div class="mpr" title="Deviation: ${dev > 0 ? '+' : ''}${Math.round(dev)}%">${truePercent.toFixed(1)}% of Yearly Spend</div>
+    <div class="mpr" title="Deviation: ${dev > 0 ? '+' : ''}${Math.round(dev)}%">
+      ${isExtreme ? `<span class="extreme-warn">⚠️ EXTREME</span> &bull; ` : ''}
+      ${truePercent.toFixed(1)}% of Yearly Spend
+    </div>
     <div class="mc-hint"><span class="mc-hint-show">▼ View ${mTxCount} Txs</span><span class="mc-hint-hide">▲ Hide ${mTxCount} Txs</span></div>
   </div>`;
     }
