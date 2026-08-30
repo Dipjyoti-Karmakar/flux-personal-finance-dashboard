@@ -3153,35 +3153,70 @@
 
     .insight-item {
       display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 18px;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 16px 20px;
       border-radius: var(--rs);
       background: var(--s2);
       border: 1px solid var(--bd);
-      transition: all .25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-left-width: 4px;
+      transition: all .3s cubic-bezier(0.16, 1, 0.3, 1);
       animation: fdI .3s ease;
     }
 
+    .insight-item.pos {
+      border-left-color: var(--in);
+      background: linear-gradient(90deg, color-mix(in srgb, var(--in) 6%, var(--s2)), var(--s2) 60%);
+    }
+    
+    .insight-item.neg {
+      border-left-color: var(--ex);
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ex) 6%, var(--s2)), var(--s2) 60%);
+    }
+    
+    .insight-item.neu {
+      border-left-color: var(--ac);
+    }
+
     .insight-item:hover {
-      transform: translateX(4px);
-      border-color: var(--bs);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      border-right-color: var(--bs);
+      border-top-color: var(--bs);
+      border-bottom-color: var(--bs);
     }
 
     .insight-icon {
-      font-size: 18px;
+      font-size: 22px;
       flex-shrink: 0;
-      width: 28px;
-      text-align: center;
-      line-height: 1.4;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--sf);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .insight-item.pos .insight-icon {
+      background: color-mix(in srgb, var(--in) 15%, var(--sf));
+    }
+    
+    .insight-item.neg .insight-icon {
+      background: color-mix(in srgb, var(--ex) 15%, var(--sf));
+    }
+    
+    .insight-item.neu .insight-icon {
+      background: color-mix(in srgb, var(--ac) 15%, var(--sf));
     }
 
     .insight-text {
-      font-size: 13px;
+      font-size: 13.5px;
       color: var(--tx);
-      line-height: 1.5;
+      line-height: 1.55;
       font-weight: 500;
+      margin-top: 1px;
     }
 
     .insight-text strong {
@@ -8830,11 +8865,11 @@
         const projected = Math.round((pastExp / cD) * daysInMonth);
         if (prevExp > 0) {
           const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
-          if (overPct > 5) insights.push({ icon: '⚠️', text: `<strong>Pacing High:</strong> Projected to spend <strong>${fmtS(projected)}</strong> by month-end (<span class="up">${overPct}% over</span> last month).` });
-          else if (overPct < -5) insights.push({ icon: '🎯', text: `<strong>Great Pace:</strong> On track to spend <strong>${fmtS(projected)}</strong> (<span class="down">${Math.abs(overPct)}% under</span> last month).` });
-          else insights.push({ icon: '⏱️', text: `<strong>On Track:</strong> Spending <strong>${fmtS(dailyBurn)}/day</strong>, on pace to match last month.` });
+          if (overPct > 5) insights.push({ type: 'neg', icon: '⚠️', text: `<strong>Pacing High:</strong> Projected to spend <strong>${fmtS(projected)}</strong> by month-end (<span class="up">${overPct}% over</span> last month).` });
+          else if (overPct < -5) insights.push({ type: 'pos', icon: '🎯', text: `<strong>Great Pace:</strong> On track to spend <strong>${fmtS(projected)}</strong> (<span class="down">${Math.abs(overPct)}% under</span> last month).` });
+          else insights.push({ type: 'neu', icon: '⏱️', text: `<strong>On Track:</strong> Spending <strong>${fmtS(dailyBurn)}/day</strong>, on pace to match last month.` });
         } else {
-          insights.push({ icon: '⏱️', text: `<strong>Pacing:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong> (Projected: <strong>${fmtS(projected)}</strong>).` });
+          insights.push({ type: 'neu', icon: '⏱️', text: `<strong>Pacing:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong> (Projected: <strong>${fmtS(projected)}</strong>).` });
         }
       }
 
@@ -8847,11 +8882,11 @@
           if (savDiff > 0) vsPrev = ` (<span class="down">improved by ${fmtS(savDiff)}</span>)`;
           else if (savDiff < 0) vsPrev = ` (<span class="up">dropped by ${fmtS(Math.abs(savDiff))}</span>)`;
         }
-        if (savRate >= 20) insights.push({ icon: '🏆', text: `<strong>Strong Savings:</strong> Saved <strong>${savRate}%</strong> of income (<strong>${fmtS(curSav)}</strong>)${vsPrev}. Excellent health!` });
-        else if (savRate > 0) insights.push({ icon: '💵', text: `<strong>Savings Health:</strong> Saved <strong>${savRate}%</strong> of income (<strong>${fmtS(curSav)}</strong>)${vsPrev}. Aim for 20%.` });
-        else if (savRate <= 0) insights.push({ icon: '🚨', text: `<strong>Overspending:</strong> Expenses exceeded income by <strong><span class="up">${fmtS(Math.abs(curSav))}</span></strong>${vsPrev}.` });
+        if (savRate >= 20) insights.push({ type: 'pos', icon: '🏆', text: `<strong>Strong Savings:</strong> Saved <strong>${savRate}%</strong> of income (<strong>${fmtS(curSav)}</strong>)${vsPrev}. Excellent health!` });
+        else if (savRate > 0) insights.push({ type: 'neu', icon: '💵', text: `<strong>Savings Health:</strong> Saved <strong>${savRate}%</strong> of income (<strong>${fmtS(curSav)}</strong>)${vsPrev}. Aim for 20%.` });
+        else if (savRate <= 0) insights.push({ type: 'neg', icon: '🚨', text: `<strong>Overspending:</strong> Expenses exceeded income by <strong><span class="up">${fmtS(Math.abs(curSav))}</span></strong>${vsPrev}.` });
       } else if (prevInc > 0 && curInc === 0) {
-        insights.push({ icon: '⏳', text: `<strong>Income Gap:</strong> No income logged yet. Last month was <strong>${fmtS(prevInc)}</strong>.` });
+        insights.push({ type: 'neg', icon: '⏳', text: `<strong>Income Gap:</strong> No income logged yet. Last month was <strong>${fmtS(prevInc)}</strong>.` });
       }
 
       // 3. Top Expense Driver (The Main Drain)
@@ -8861,12 +8896,14 @@
         const pct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 0;
         const prevA = prevCats[topCat] || 0;
         let vsLast = '';
+        let type = 'neu';
         if (prevA > 0) { 
           const cc = Math.round(((topAmt - prevA) / prevA) * 100); 
           if (Math.abs(cc) >= 10) vsLast = ` — <span class="${cc > 0 ? 'up' : 'down'}">${cc > 0 ? 'up' : 'down'} ${Math.abs(cc)}%</span> vs last month`; 
+          if (cc > 15) type = 'neg'; else if (cc < -15) type = 'pos';
         }
         const cn = topCat.charAt(0).toUpperCase() + topCat.slice(1);
-        insights.push({ icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> consumed <strong>${pct}%</strong> of your budget (<strong>${fmtS(topAmt)}</strong>)${vsLast}.` });
+        insights.push({ type, icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> consumed <strong>${pct}%</strong> of your budget (<strong>${fmtS(topAmt)}</strong>)${vsLast}.` });
       }
 
       // 4. The Outlier (Notable Category Swing)
@@ -8884,11 +8921,24 @@
         });
         if (bCat) { 
           const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1); 
-          insights.push({ icon: bDir === 'up' ? '🔺' : '🔻', text: `<strong>Notable Change:</strong> <strong>${cn}</strong> is <span class="${bDir === 'up' ? 'up' : 'down'}">${bDir} ${Math.round(Math.abs(bPct))}%</span> from last month (${fmtS(bPrev)} → ${fmtS(bCur)}).` }); 
+          const type = bDir === 'up' ? 'neg' : 'pos';
+          insights.push({ type, icon: bDir === 'up' ? '🔺' : '🔻', text: `<strong>Notable Change:</strong> <strong>${cn}</strong> is <span class="${bDir === 'up' ? 'up' : 'down'}">${bDir} ${Math.round(Math.abs(bPct))}%</span> from last month (${fmtS(bPrev)} → ${fmtS(bCur)}).` }); 
         }
       }
 
-      // 5. Spending Habits (Peak Day & Streaks)
+      // 5. Largest Single Expense
+      const expTxs = curTxs.filter(t => t.type === 'expense').sort((a, b) => b.amount - a.amount);
+      if (expTxs.length > 0) {
+        const topTx = expTxs[0];
+        const pct = curExp > 0 ? Math.round((topTx.amount / curExp) * 100) : 0;
+        if (pct >= 20) {
+          insights.push({ type: 'neg', icon: '💳', text: `<strong>Big Hit:</strong> A single <strong>${topTx.cat}</strong> purchase of <strong>${fmtS(topTx.amount)}</strong> took up <strong>${pct}%</strong> of your monthly spending.` });
+        } else {
+          insights.push({ type: 'neu', icon: '🏷️', text: `<strong>Largest Purchase:</strong> <strong>${fmtS(topTx.amount)}</strong> spent on <strong>${topTx.cat}</strong> on ${fmtDt(topTx.date)}.` });
+        }
+      }
+
+      // 6. Spending Habits (Peak Day & Streaks)
       const sortedExpDays = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
       if (sortedExpDays.length > 0) {
         const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000); 
@@ -8896,12 +8946,12 @@
         const [topDay, topDayAmt] = dayEntries[0] || [];
         
         if (gap >= 3) {
-          insights.push({ icon: '🔥', text: `<strong>Hot Streak:</strong> You haven't spent any money in <strong>${gap} days</strong>! Keep it going.` });
+          insights.push({ type: 'pos', icon: '🔥', text: `<strong>Hot Streak:</strong> You haven't spent any money in <strong>${gap} days</strong>! Keep it going.` });
         } else if (topDay && topDayAmt > 0) {
           const avgDay = curExp / Math.max(1, curExpDays.size);
           const ratio = topDayAmt / avgDay;
           if (ratio >= 2.5) {
-            insights.push({ icon: '📅', text: `<strong>Peak Day:</strong> <strong>${fmtDt(topDay)}</strong> saw a massive <strong>${fmtS(topDayAmt)}</strong> spend (${ratio.toFixed(1)}x your daily avg).` });
+            insights.push({ type: 'neg', icon: '📅', text: `<strong>Peak Day:</strong> <strong>${fmtDt(topDay)}</strong> saw a massive <strong>${fmtS(topDayAmt)}</strong> spend (${ratio.toFixed(1)}x your daily avg).` });
           }
         }
       }
@@ -8913,7 +8963,7 @@
       // Skip the fdI animation on re-renders to prevent flicker when onSnapshot
       // triggers a full render cycle (e.g. after opening subscription history).
       const itemAnimStyle = _initialAnimsDone ? 'animation:none;' : '';
-      const newInsightsHtml = insights.map(i => `<div class="insight-item" style="${itemAnimStyle}"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
+      const newInsightsHtml = insights.map(i => `<div class="insight-item ${i.type || 'neu'}" style="${itemAnimStyle}"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
       // Content-hash guard: skip DOM rebuild when insights haven't changed
       const stableInsights = newInsightsHtml.replace(/style="animation:[^"]*"/g, 'style=""');
       if (stableInsights === _insightsLastHtml) return;
