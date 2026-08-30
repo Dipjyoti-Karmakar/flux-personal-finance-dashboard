@@ -7712,15 +7712,25 @@
             const chunk = toTag.slice(i, i + 450);
             const eligible = chunk.filter(({ txId }) => !_txWriteLocks.has(txId));
             if (!eligible.length) continue;
-            const currentBatch = writeBatch(db);
-            eligible.forEach(({txId, recId}) => {
-              currentBatch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId });
+            
+            // BUGFIX: Use individual updateDoc calls to prevent atomic batch failures
+            // from ruining the whole chunk if one document is missing or invalid.
+            const promises = eligible.map(({txId, recId}) => {
+              return updateDoc(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId })
+                .then(() => ({ txId, recId }))
+                .catch(e => {
+                  console.warn(`Background auto-tag failed for ${txId}:`, e);
+                  throw e;
+                });
             });
-            await currentBatch.commit();
-            eligible.forEach(({txId, recId}) => {
-              successfullyCommitted.add(txId);
-              const tx = txs.find(x => x.id === txId);
-              if (tx) { tx._recurring = true; tx.subId = recId; }
+            const results = await Promise.allSettled(promises);
+            results.forEach(res => {
+              if (res.status === 'fulfilled') {
+                const { txId, recId } = res.value;
+                successfullyCommitted.add(txId);
+                const tx = txs.find(x => x.id === txId);
+                if (tx) { tx._recurring = true; tx.subId = recId; }
+              }
             });
           }
         } finally {
@@ -7835,6 +7845,7 @@
           });
         }, 15000);
 
+        const successfullyCommitted = new Set();
         for (let i = 0; i < toTag.length; i += 450) {
           const chunk = toTag.slice(i, i + 450);
           // Re-check locks immediately before writing — a concurrent linkSubTx may have
@@ -7843,25 +7854,45 @@
             !_txWriteLocks.has(txId)
           );
           if (!eligible.length) continue;
-          const batch = writeBatch(db);
-          eligible.forEach(({ txId, recId }) =>
-            batch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId })
-          );
-          await batch.commit();
+          
+          const promises = eligible.map(({ txId, recId }) => {
+            return updateDoc(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId })
+              .then(() => ({ txId, recId }))
+              .catch(e => {
+                console.warn(`tagPastSubscriptions auto-tag failed for ${txId}:`, e);
+                throw e;
+              });
+          });
+          
+          const results = await Promise.allSettled(promises);
+          results.forEach(res => {
+            if (res.status === 'fulfilled') {
+              const { txId, recId } = res.value;
+              successfullyCommitted.add(txId);
+              // Optimistic local update
+              const tx = txs.find(t => t.id === txId);
+              if (tx && !_txWriteLocks.has(txId) && !tx._manualLink) {
+                tx._recurring = true;
+                tx.subId = recId;
+              }
+            }
+          });
         }
-        // Optimistic local update — re-check eligibility before applying to avoid
-        // overwriting a concurrent manual linkSubTx that ran during the awaited commits
-        toTag.forEach(({ txId, recId }) => {
-          const tx = txs.find(t => t.id === txId);
-          if (!tx || _txWriteLocks.has(txId) || tx._manualLink) return;
-          tx._recurring = true;
-          tx.subId = recId;
-        });
-        showToast(`Auto-tagged ${toTag.length} past subscriptions!`, 'ok');
-        console.log(`Auto-tagged ${toTag.length} past transactions as subscriptions.`);
+        
+        showToast(`Auto-tagged ${successfullyCommitted.size} past subscriptions!`, 'ok');
+        console.log(`Auto-tagged ${successfullyCommitted.size} past transactions as subscriptions.`);
         return toTag.length; // Signal: re-render needed
-      } catch (e) { console.error('Failed to auto-tag past subscriptions:', e); return 0; }
-      finally { _tagPastRunning = false; }
+      } catch (e) { 
+        console.error('Failed to auto-tag past subscriptions:', e); 
+        return 0; 
+      } finally { 
+        toTag.forEach(({ txId }) => {
+          if (!successfullyCommitted.has(txId)) {
+            _sessionTaggedTxIds.delete(txId);
+          }
+        });
+        _tagPastRunning = false; 
+      }
     }
 
     // ─── Animated number counter ────────────────────────────────────────────────
@@ -11342,9 +11373,15 @@
             for (let i = 0; i < untagged.length; i += 450) {
               const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id));
               if (!chunk.length) continue;
-              const batch = writeBatch(db);
-              chunk.forEach(t => batch.update(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId }));
-              await batch.commit();
+              
+              const promises = chunk.map(t => {
+                return updateDoc(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId })
+                  .catch(e => {
+                    console.warn(`History auto-tag failed for ${t.id}:`, e);
+                    throw e;
+                  });
+              });
+              await Promise.allSettled(promises);
             }
           } catch (e) { console.error('History auto-tag failed:', e); }
         })();
