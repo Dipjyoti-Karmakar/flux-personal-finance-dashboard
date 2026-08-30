@@ -7491,9 +7491,7 @@
     // When a link/unlink sub-panel operation is in progress, redirect onSnapshot-driven
     // full renderRecurring() rebuilds into targeted renderSubHistInner() calls only.
     // This prevents the picker search bar from being wiped and stops the multiple-refresh flicker.
-    let _subPanelLock = null; // { recId: string, query: string, token: number } | null
-    let _subPanelLockTimer = null;
-    let _subPanelLockSeq = 0; // monotonic counter — incremented on every new lock
+    let _subPanelLock = null; // { recId: string } | null
     // Tracks in-flight optimistic tx mutations so onSnapshot rebuilds of txs never
     // lose optimistic state that hasn't been confirmed by Firestore yet.
     // Values: plain field map for links; null-sentinel per key for unlinks (delete that field).
@@ -7508,24 +7506,6 @@
     const _sessionTaggedTxIds = new Set(); // Tracks txs tagged this session to prevent re-tagging on echo snapshots
     const _pendingRecUpdates = new Set();  // Tracks recurring IDs written by our own code (echo detection)
     let _recCatchUpDone = false;           // Gates checkAndTriggerRecurring to run only once per session
-    function _setSubPanelLock(recId, query) {
-      const token = ++_subPanelLockSeq;
-      _subPanelLock = { recId, query, token };
-      if (_subPanelLockTimer) clearTimeout(_subPanelLockTimer);
-      // Auto-expire after 4s so the lock never gets permanently stuck
-      _subPanelLockTimer = setTimeout(() => { if (_subPanelLock?.token === token) { _subPanelLock = null; _subPanelLockTimer = null; debouncedRender(); } }, 4000);
-      return token;
-    }
-    // Only clears the lock when the supplied token still matches the active one,
-    // preventing a stale setTimeout from operation A from evicting operation B's lock.
-    // Triggers one final debouncedRender so the settled Firestore state is always shown.
-    function _clearSubPanelLock(token) {
-      if (_subPanelLock?.token !== token) return; // stale caller — do nothing
-      if (_subPanelLockTimer) clearTimeout(_subPanelLockTimer);
-      _subPanelLock = null;
-      _subPanelLockTimer = null;
-      debouncedRender(); // one final full render with settled state
-    }
 
     let _initialAnimsDone = false; // Tracks whether first-render entrance animations have played
     function render() {
@@ -7559,9 +7539,8 @@
         }, 1000);
       }
       // Keep open history panels updated with new transaction data.
-      // If a sub-panel link/unlink is in progress (_subPanelLock set), skip the full
-      // renderRecurring() DOM rebuild and only re-render that specific panel + picker.
-      // This prevents the picker search bar from being wiped by onSnapshot-triggered rerenders.
+      // If a sub-panel operation is in progress (_subPanelLock set), skip the full
+      // renderRecurring() DOM rebuild and only re-render that specific panel.
       const subViewEl = document.getElementById('subView');
       if (_subPanelLock) {
         const { recId } = _subPanelLock;
@@ -10623,11 +10602,6 @@
       }
 
       return getLocalIsoDateStr(d);
-    }
-
-    function getMonthKey() {
-      const t = getTodayStr(); // e.g. "2026-06-05"
-      return t.slice(0, 7);   // e.g. "2026-06"
     }
 
     function loadRecurring() {
