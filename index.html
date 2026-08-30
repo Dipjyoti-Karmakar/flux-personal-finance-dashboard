@@ -9047,17 +9047,12 @@
 
       return `<div class="mc${isCur ? ' cm2' : ''}" onclick="lazyLoadMonthTxs(this, ${yr}, ${m})">
     <div class="mct"><span class="mcn">${MF[m]} ${isCur ? '<span class="now-badge">● NOW</span>' : ''}</span><span class="mcv">${tot > 0 ? fmt(tot) : '—'}</span></div>
-    <div class="mcs">
+    <div class="mcs" style="margin-bottom:${isCur ? '6px' : '10px'}">
       <div class="ms"><span class="msl">Total Trans</span><span class="msv${cnt > 0 ? ' h' : ''}">${mTxCount}</span></div>
       <div class="ms"><span class="msl">Active Days</span><span class="msv${days > 0 ? ' h' : ''}">${days}/${dim}</span></div>
       <div class="ms"><span class="msl">Avg/Day</span><span class="msv${avg > 0 ? ' h' : ''}">${avg > 0 ? fmtS(avg) : '—'}</span></div>
       <div class="ms"><span class="msl">% of Year</span><span class="msv${ys2 > 0 ? ' h' : ''}">${ys2 > 0 ? ys2 + '%' : '—'}</span></div>
-    </div>
-    ${(incRow || netRow || savRateRow) ? `
-    <div class="mcs">
       ${incRow}${netRow}${savRateRow}
-    </div>` : ''}
-    <div class="mcs" style="margin-bottom:${isCur ? '6px' : '0'}">
       <div class="ms"><span class="msl">⚡ Online</span><span class="msv" style="color:var(--on)">${onl > 0 ? fmtS(onl) : '—'}</span></div>
       <div class="ms"><span class="msl">🏪 Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtS(ofl) : '—'}</span></div>
     </div>
