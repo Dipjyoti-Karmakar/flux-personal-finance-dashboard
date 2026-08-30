@@ -6933,11 +6933,19 @@
             if (subId) clean.subId = subId;
             if (_manualLink) clean._manualLink = true;
 
-            // Apply pending updates to ensure optimistic tags survive echo snapshots
+            // Apply pending optimistic tags to ensure they survive echo snapshots
             if (_pendingTxUpdates.has(doc.id)) {
               const pending = _pendingTxUpdates.get(doc.id);
               if (pending._recurring !== undefined) clean._recurring = pending._recurring;
               if (pending.subId !== undefined) clean.subId = pending.subId;
+            }
+            // Session-tagged txs: if Firestore echo arrived without the tag yet
+            // (write still in-flight or cache stale), re-apply from session memory
+            if (_sessionTaggedTxIds.has(doc.id) && !clean._recurring) {
+              clean._recurring = true;
+              // Try to recover the subId from _pendingTxUpdates or keep existing
+              const pending = _pendingTxUpdates.get(doc.id);
+              if (pending && pending.subId) clean.subId = pending.subId;
             }
 
             loadedTxs.push({ id: doc.id, ...clean });
@@ -8785,6 +8793,7 @@
     }
 
     // ── Month-over-Month Insights (max 8, high-impact) ──
+    let _insightsLastHtml = ''; // Cache to skip re-render when insights data hasn't changed
     function renderInsights() {
       const area = document.getElementById('insightList');
       const periodEl = document.getElementById('insightPeriod');
@@ -8898,7 +8907,12 @@
       // Skip the fdI animation on re-renders to prevent flicker when onSnapshot
       // triggers a full render cycle (e.g. after opening subscription history).
       const itemAnimStyle = _initialAnimsDone ? 'animation:none;' : '';
-      area.innerHTML = insights.map(i => `<div class="insight-item" style="${itemAnimStyle}"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
+      const newInsightsHtml = insights.map(i => `<div class="insight-item" style="${itemAnimStyle}"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
+      // Content-hash guard: skip DOM rebuild when insights haven't changed
+      const stableInsights = newInsightsHtml.replace(/style="animation:[^"]*"/g, 'style=""');
+      if (stableInsights === _insightsLastHtml) return;
+      _insightsLastHtml = stableInsights;
+      area.innerHTML = newInsightsHtml;
     }
 
     let _yrLastHtml = ''; // Cache to skip re-render when yearly data hasn't changed
@@ -9789,7 +9803,13 @@
       // Skip the fade animation on re-renders to prevent flicker when onSnapshot
       // triggers a full render cycle (e.g. after opening subscription history).
       const fadeClass = _initialAnimsDone ? 'event-list-container' : 'split-fade-in event-list-container';
-      area.innerHTML = '<div class="' + fadeClass + '">' + itemsHtml + '</div>';
+      const newHtml = '<div class="' + fadeClass + '">' + itemsHtml + '</div>';
+      // Content-hash guard: skip DOM rebuild when event data hasn't changed
+      // Strip animation classes from comparison so initial-anim state changes don't trigger rebuild
+      const stableHtml = newHtml.replace(/split-fade-in /g, '');
+      if (stableHtml === _eventsLastHtml) return;
+      _eventsLastHtml = stableHtml;
+      area.innerHTML = newHtml;
     }
 
     function setSplitView(view) {
@@ -10975,12 +10995,13 @@
       renderSubHistInner(recId);
     }
 
+    const _subHistLastHtml = new Map(); // Per-panel content-hash cache to prevent scroll reset
     function renderSubHistInner(recId) {
       const inner = document.getElementById('hist-inner-' + recId);
       if (!inner) return;
 
       const rec = recurringList.find(r => r.id === recId);
-      if (!rec) { inner.innerHTML = '<div class="sub-hist-empty">Subscription not found.</div>'; return; }
+      if (!rec) { inner.innerHTML = '<div class="sub-hist-empty">Subscription not found.</div>'; _subHistLastHtml.delete(recId); return; }
 
       // Match by subId (linked) OR by _manualLink flag (if subId was lost during a past sync)
       // OR by name+amount+type fuzzy match for auto-tagged past payments
@@ -11130,7 +11151,12 @@
           }</div>`;
       }
 
-      inner.innerHTML = statsHtml + listHtml;
+      const newHistHtml = statsHtml + listHtml;
+      // Content-hash guard: skip DOM rebuild when history data hasn't changed
+      // This prevents scroll position from resetting on every render cycle
+      if (_subHistLastHtml.get(recId) === newHistHtml) return;
+      _subHistLastHtml.set(recId, newHistHtml);
+      inner.innerHTML = newHistHtml;
     }
 
     // ── Alt Amounts (Secondary Prices) Management ──
