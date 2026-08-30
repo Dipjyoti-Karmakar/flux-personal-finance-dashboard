@@ -7522,6 +7522,7 @@
     const _txWriteLocks = new Map();     // Prevent concurrent writers on same txId (txId -> opToken)
     let _tagPastRunning = false;         // Re-entrancy guard for tagPastSubscriptions
     let _tagPastDone = false;            // Set after tagPast finds nothing to tag — prevents loop
+    let _syncUntaggedRunning = false;    // Re-entrancy guard for syncUntaggedMatches
     let _earlyPayDone = false;           // Set after detectEarlyPayments finds nothing — prevents loop
     const _sessionTaggedTxIds = new Set(); // Tracks txs tagged this session to prevent re-tagging on echo snapshots
     const _pendingRecUpdates = new Set();  // Tracks recurring IDs written by our own code (echo detection)
@@ -7643,74 +7644,95 @@
         // by the strict date guards of checkAndTrigger / detectEarlyPayments.
         // Run whenever at least the primary tagging pass (tagPast) is done, so
         // secondary-amount transactions are not left waiting for all async gates.
-        if (_tagPastDone) {
+        if (_tagPastDone || _tagPastRunning) {
           syncUntaggedMatches();
         }
       }, 120);
     }
     
     async function syncUntaggedMatches() {
+      if (_syncUntaggedRunning) return;    // Re-entrancy guard
+      if (!_manualLinksReady) return;       // Wait for manualLinks before matching
       if (!userId || !recurringList.length || !txs.length) return;
-      const toTag = [];
-      const batch = writeBatch(db);
-      
-      for (const t of txs) {
-        if (t._recurring || t.subId) continue;
-        if (_txWriteLocks.has(t.id) || _pendingTxUpdates.has(t.id)) continue;
-        if (t._manualLink || manualLinksMap.has(t.id)) continue;
-        
-        const tDescLow = (t.desc || '').trim().toLowerCase();
-        if (!tDescLow) continue;
-        
-        for (const rec of recurringList) {
-          const nameLow = (rec.name || '').trim().toLowerCase();
-          if (!nameLow) continue;
-          if (tDescLow !== nameLow) {
-            if (nameLow.length < 4 || tDescLow.length < 4) continue;
-            if (!(tDescLow.includes(nameLow) || nameLow.includes(tDescLow))) continue;
-            const shorter = Math.min(nameLow.length, tDescLow.length);
-            const longer = Math.max(nameLow.length, tDescLow.length);
-            if (shorter / longer < 0.5) continue;
-          }
-          if (t.type !== rec.type) continue;
-          const _allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
-          if (!_allAmts.includes(Math.abs(t.amount || 0))) continue;
-          if (rec.cat && t.cat && rec.cat !== t.cat) continue;
-          
-          toTag.push({ txId: t.id, recId: rec.id });
-          break;
-        }
-      }
-      
-      if (!toTag.length) return;
-      
-      const opToken = ++_txOpSeq;
+      _syncUntaggedRunning = true;
       try {
+        const toTag = [];
+        
+        for (const t of txs) {
+          if (t._recurring || t.subId) continue;
+          if (_txWriteLocks.has(t.id) || _pendingTxUpdates.has(t.id)) continue;
+          if (t._manualLink || manualLinksMap.has(t.id)) continue;
+          
+          const tDescLow = (t.desc || '').trim().toLowerCase();
+          if (!tDescLow) continue;
+          
+          for (const rec of recurringList) {
+            const nameLow = (rec.name || '').trim().toLowerCase();
+            if (!nameLow) continue;
+            if (tDescLow !== nameLow) {
+              if (nameLow.length < 4 || tDescLow.length < 4) continue;
+              if (!(tDescLow.includes(nameLow) || nameLow.includes(tDescLow))) continue;
+              const shorter = Math.min(nameLow.length, tDescLow.length);
+              const longer = Math.max(nameLow.length, tDescLow.length);
+              if (shorter / longer < 0.5) continue;
+            }
+            if (t.type !== rec.type) continue;
+            const _allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+            if (!_allAmts.includes(Math.abs(t.amount || 0))) continue;
+            if (rec.cat && t.cat && rec.cat !== t.cat) continue;
+            
+            toTag.push({ txId: t.id, recId: rec.id });
+            break;
+          }
+        }
+        
+        if (!toTag.length) return;
+        
+        const opToken = ++_txOpSeq;
+        // Pre-register pending updates + session markers BEFORE commit so onSnapshot
+        // rebuilds preserve the tags even if Firestore hasn't confirmed yet.
+        toTag.forEach(({ txId, recId }) => {
+          _pendingTxUpdates.set(txId, { _recurring: true, subId: recId });
+          _pendingTxTokens.set(txId, opToken);
+          _sessionTaggedTxIds.add(txId);
+        });
+        // Safety: clear pending entries after 15s
+        setTimeout(() => {
+          toTag.forEach(({ txId }) => {
+            if (_pendingTxTokens.get(txId) === opToken) {
+              _pendingTxUpdates.delete(txId);
+              _pendingTxTokens.delete(txId);
+            }
+          });
+        }, 15000);
+
         for (let i = 0; i < toTag.length; i += 450) {
           const chunk = toTag.slice(i, i + 450);
+          const eligible = chunk.filter(({ txId }) => !_txWriteLocks.has(txId));
+          if (!eligible.length) continue;
           const currentBatch = writeBatch(db);
-          chunk.forEach(({txId, recId}) => {
+          eligible.forEach(({txId, recId}) => {
             currentBatch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId });
-            _pendingTxUpdates.set(txId, { _recurring: true, subId: recId });
-            _pendingTxTokens.set(txId, opToken);
-            _sessionTaggedTxIds.add(txId);
           });
           await currentBatch.commit();
-          chunk.forEach(({txId, recId}) => {
+          eligible.forEach(({txId, recId}) => {
             const tx = txs.find(x => x.id === txId);
             if (tx) { tx._recurring = true; tx.subId = recId; }
           });
         }
-        // Re-render so subscription badges appear immediately in the transaction list
-        debouncedRender();
+        // Firestore onSnapshot will trigger debouncedRender after batch commits.
+        // Do NOT call debouncedRender() here — it creates a self-triggering loop
+        // since debouncedRender calls syncUntaggedMatches.
       } catch (e) {
         console.error("Background auto-tag failed:", e);
+      } finally {
+        _syncUntaggedRunning = false;
       }
     }
 
     async function tagPastSubscriptions() {
-      if (_tagPastRunning) return 0;  // Re-entrancy guard
-      if (!_manualLinksReady) return 0;  // Wait for manualLinks snapshot before running
+      if (_tagPastRunning) return -1;  // Re-entrancy — not "nothing to tag", caller must not set _tagPastDone
+      if (!_manualLinksReady) return -1;  // Not ready — caller must not set _tagPastDone
       if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return 0;
       _tagPastRunning = true;
       try {
@@ -10723,8 +10745,9 @@
             checkAndTriggerRecurring().then(() => detectEarlyPayments());
           }
         }
-        // tagPastSubscriptions is NOT called here — debouncedRender (triggered by the
-        // tx onSnapshot that fires after any Firestore writes) already calls it.
+        // Ensure tagPastSubscriptions/syncUntaggedMatches run with the freshly loaded
+        // recurringList, even when checkAndTriggerRecurring made no Firestore writes.
+        debouncedRender();
       }, err => console.error('Recurring sync error:', err));
     }
 

@@ -52,7 +52,9 @@ The app is Indian-locale-first: all amounts are formatted in **INR (₹)** using
 | **Frequencies** | Monthly, weekly, yearly, daily, or custom day intervals |
 | **Auto-generation** | On login, Flux checks all subscriptions with a past `nextDue` date and auto-creates the corresponding transactions, then advances `nextDue` |
 | **Pause / Resume** | Each subscription can be individually paused and resumed without deletion |
-| **Visual Tags** | Auto-generated transactions carry a subscription badge in the list |
+| **Alt Amounts** | Each subscription supports up to 10 secondary/alternate prices so price changes are still auto-matched |
+| **Auto-tagging** | Past transactions matching a subscription by name, amount (including alt amounts), type, and category are permanently tagged with `_recurring` and linked via `subId` — no manual history panel open required |
+| **Visual Tags** | Auto-generated and auto-tagged transactions carry a subscription badge in the list and are filterable via the Subscription mode filter |
 | **Monthly + Yearly Cost Summary** | A footer row totals your projected monthly and annual recurring spend |
 
 ### PDF Reports
