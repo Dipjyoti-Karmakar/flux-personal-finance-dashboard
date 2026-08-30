@@ -7377,6 +7377,7 @@
     function showToast(msg, type) { if (_undoTimer && type !== 'er') return; const el = document.getElementById('toast'); el.textContent = msg; el.className = 'tst ' + (type || '') + ' sh'; clearTimeout(el._t); el._t = setTimeout(() => { el.className = 'tst'; }, 2800); }
     function fmt(n) { const a = Math.abs(n); let w = Math.floor(a); let p = Math.round((a - w) * 100); if (p >= 100) { w += 1; p = 0; } return (n < 0 ? '-' : '') + '₹' + w.toLocaleString('en-IN') + '.' + String(p).padStart(2, '0'); }
     function fmtS(n) { const a = Math.abs(n); let w = Math.floor(a); let p = Math.round((a - w) * 100); if (p >= 100) { w += 1; p = 0; } return '₹' + w.toLocaleString('en-IN') + '.' + String(p).padStart(2, '0'); }
+    function fmtW(n) { return (n < 0 ? '-' : '') + '₹' + Math.round(Math.abs(n)).toLocaleString('en-IN'); }
     function fmtRound(n) { return '₹' + Math.round(Math.abs(n)).toLocaleString('en-IN'); }
     function fmtDt(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }); }
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
@@ -9017,7 +9018,7 @@
       const mnHTML = Array.from({ length: 12 }, (_, m) => mkMnCard(m, yr, yrMonths, isCur, cM, cD, todayISO, mMax, yrTot, cY)).join('');
       const netClr = yrNet >= 0 ? 'var(--in)' : 'var(--ex)';
       const savRateHtml = yrSavRate !== null ? `<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${yrSavRate > 0 ? '+' : ''}${yrSavRate}%</span></div>` : '';
-      return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmt(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmt(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmt(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtS(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtS(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
+      return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
     }
 
     function mkMnCard(m, yr, yrMonths, isCurYr, cM, cD, todayISO, mMax, yrTot, cY) {
@@ -9044,8 +9045,8 @@
       if (isCur) { const tdS = mE.filter(t => t.date === todayISO).reduce((s, t) => s + t.amount, 0), tdC = mE.filter(t => t.date === todayISO).length; tdHTML = `<div class="tdc"><span class="tdcl">Today, ${cD} ${MN[m]}</span><span class="tdcv">${fmt(tdS)} <span style="font-size:10px;opacity:.7">${tdC} tx</span></span></div>`; }
       const mTxCount = mAll.length;
       const netClr = mNet >= 0 ? 'var(--in)' : 'var(--ex)';
-      const incRow = mInc > 0 ? `<div class="ms"><span class="msl">Income</span><span class="msv h" style="color:var(--in)">${fmtS(mInc)}</span></div>` : '';
-      const netRow = mInc > 0 || tot > 0 ? `<div class="ms"><span class="msl">Net</span><span class="msv" style="color:${netClr}">${fmtS(Math.abs(mNet))}</span></div>` : '';
+      const incRow = mInc > 0 ? `<div class="ms"><span class="msl">Income</span><span class="msv h" style="color:var(--in)">${fmtW(mInc)}</span></div>` : '';
+      const netRow = mInc > 0 || tot > 0 ? `<div class="ms"><span class="msl">Net</span><span class="msv" style="color:${netClr}">${fmtW(Math.abs(mNet))}</span></div>` : '';
       const savRateRow = mSavRate !== null ? `<div class="ms"><span class="msl">Savings Rate</span><span class="msv h" style="color:${mSavRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${mSavRate > 0 ? '+' : ''}${mSavRate}%</span></div>` : '';
 
       return `<div class="mc${isCur ? ' cm2' : ''}" onclick="lazyLoadMonthTxs(this, ${yr}, ${m})">
@@ -9053,13 +9054,13 @@
     <div class="mcs">
       <div class="ms"><span class="msl">Transactions</span><span class="msv${cnt > 0 ? ' h' : ''}">${mTxCount}</span></div>
       <div class="ms"><span class="msl">Active Days</span><span class="msv${days > 0 ? ' h' : ''}">${days}/${dim}</span></div>
-      <div class="ms"><span class="msl">Avg/Day</span><span class="msv${avg > 0 ? ' h' : ''}">${avg > 0 ? fmtS(avg) : '—'}</span></div>
+      <div class="ms"><span class="msl">Avg/Day</span><span class="msv${avg > 0 ? ' h' : ''}">${avg > 0 ? fmtW(avg) : '—'}</span></div>
       <div class="ms"><span class="msl">% of Year</span><span class="msv${ys2 > 0 ? ' h' : ''}">${ys2 > 0 ? ys2 + '%' : '—'}</span></div>
       ${incRow}${netRow}${savRateRow}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:${isCur ? '6px' : '0'}">
-      <div class="ms"><span class="msl">⚡ Online</span><span class="msv" style="color:var(--on)">${onl > 0 ? fmtS(onl) : '—'}</span></div>
-      <div class="ms"><span class="msl">🏪 Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtS(ofl) : '—'}</span></div>
+      <div class="ms"><span class="msl">⚡ Online</span><span class="msv" style="color:var(--on)">${onl > 0 ? fmtW(onl) : '—'}</span></div>
+      <div class="ms"><span class="msl">🏪 Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
     </div>
     ${tdHTML}
     <div class="mbw"><div class="mbb${isCur ? ' tp' : ''}" style="width:${bp}%"></div></div>
