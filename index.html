@@ -10397,6 +10397,7 @@
       if (action === 'UPDATE') {
         if (p.isRecPauseToggle) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription ${p.active ? 'resumed' : 'paused'}</div>`;
         if (p.isEventBulk) return `<div>${esc(p.desc)}</div><div class="log-meta">Bulk updated event tags</div>`;
+        if (p.isEarlyPay) return `<div>${esc(p.desc)}</div><div class="log-meta">Early payment detected — due date advanced${p.newNextDue ? ' to ' + fmtDt(p.newNextDue) : ''}.</div>`;
         if (p.isSkip) return `<div>${esc(p.desc)}</div><div class="log-meta">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`;
       }
       return `<div>${esc(p.desc || '')}</div>`;
@@ -10668,8 +10669,10 @@
     let globallyMatchedTxIds = new Set();
     async function checkAndTriggerRecurring() {
       if (!userId || !recurringList.length) return;
-      // Reset per-run so stale IDs don't accumulate across Firestore snapshot callbacks
-      globallyMatchedTxIds = new Set();
+      // Clear per-run so stale IDs don't accumulate across Firestore snapshot callbacks.
+      // Use .clear() instead of reassignment to avoid orphaning IDs added by
+      // concurrent detectEarlyPayments (which holds a reference to the same Set).
+      globallyMatchedTxIds.clear();
       const today = getTodayStr();
       let triggeredCount = 0;
 
@@ -10874,12 +10877,16 @@
     // ── Early-payment detection for subscriptions whose nextDue is still in the future ──
     // If a user pays a subscription before its due date, match the transaction and
     // advance nextDue so the card shows "Active" / "✓ Paid" instead of "In Xd".
+    let _earlyPayRunning = false; // Re-entrancy guard for detectEarlyPayments
     const _earlyPayProcessing = new Set();
     const _sessionEarlyPayRecs = new Set(); // Tracks recs already handled — prevents re-processing on echo snapshots
     async function detectEarlyPayments() {
+      if (_earlyPayRunning) return false; // Re-entrancy guard (mirrors tagPastSubscriptions pattern)
       if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return false;
+      _earlyPayRunning = true;
       const today = getTodayStr();
       let anyMatched = false;
+      try {
 
       for (const rec of recurringList) {
         // Only consider active subs whose nextDue is still in the future
@@ -10887,12 +10894,15 @@
         if (_earlyPayProcessing.has(rec.id)) continue;
         // Skip if already processed this rec in the current session (prevents echo loop)
         if (_sessionEarlyPayRecs.has(rec.id + ':' + rec.nextDue)) continue;
+        // Validate nextDue format — malformed strings create Invalid Date objects
+        // that crash getLocalIsoDateStr() with RangeError: Invalid time value
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(rec.nextDue)) continue;
 
         // Compute the prepayment window (same window sizes used in checkAndTriggerRecurring)
         let wDays = 15;
         if (rec.freq === 'yearly') wDays = 60;
         if (rec.freq === 'weekly') wDays = 3;
-        if (rec.freq === 'daily') wDays = 0;
+        if (rec.freq === 'daily') wDays = 1;
         if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
 
         const dueD = new Date(rec.nextDue + 'T00:00:00');
@@ -10908,7 +10918,7 @@
 
         const _recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
         const _allRecAmtsEP = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
-        const matchedTx = txs.find(t => {
+        const _epCandidates = txs.filter(t => {
           if (t.type !== rec.type) return false;
           if (!t.desc || !_recNameLc) return false;
           // Exact match first, then fuzzy (contains) for names >= 4 chars
@@ -10935,7 +10945,17 @@
           return true;
         });
 
-        if (!matchedTx) continue;
+        if (!_epCandidates.length) continue;
+
+        // Pick the candidate whose date is closest to the due date for best accuracy.
+        // txs.find() picked whichever came first in array order (most-recent-first),
+        // which could select a spurious same-name tx over the actual early payment.
+        const _dueDateMs = dueD.getTime();
+        const matchedTx = _epCandidates.length === 1 ? _epCandidates[0] : _epCandidates.reduce((best, t) => {
+          const tDist = Math.abs(new Date(t.date + 'T00:00:00').getTime() - _dueDateMs);
+          const bDist = Math.abs(new Date(best.date + 'T00:00:00').getTime() - _dueDateMs);
+          return tDist < bDist ? t : best;
+        });
 
         _earlyPayProcessing.add(rec.id);
         // Mark as processed for this session (rec.id + nextDue combo is unique per cycle)
@@ -10982,8 +11002,9 @@
           matchedTx.subId = rec.id;
           globallyMatchedTxIds.add(matchedTx.id);
 
-          writeLog('UPDATE', { desc: rec.name, isSkip: true }, rec.type);
+          writeLog('UPDATE', { desc: rec.name, isEarlyPay: true, newNextDue }, rec.type);
           console.log(`Early payment detected for "${rec.name}" — due date advanced to ${newNextDue}`);
+          showToast(`⚡ Early payment: "${rec.name}" — next due ${fmtDt(newNextDue)}`, 'ok');
         } catch (e) {
           console.error('Early payment detection failed for:', rec.name, e);
         } finally {
@@ -10993,6 +11014,12 @@
       // Re-render subscription cards so badges update (only if we actually found an early payment)
       if (anyMatched && document.getElementById('subView').style.display !== 'none') renderRecurring();
       return anyMatched;
+      } catch (e) {
+        console.error('detectEarlyPayments failed:', e);
+        return false;
+      } finally {
+        _earlyPayRunning = false;
+      }
     }
 
     let _recurringLastHtml = ''; // Cache to skip re-render when recurring data hasn't changed
