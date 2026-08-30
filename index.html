@@ -9083,13 +9083,27 @@
         const renderTxs = isCapped ? mTxs.slice(0, 50) : mTxs;
         html = `<div class="tx-cnt" onclick="event.stopPropagation();">` +
           renderTxs.map(t => `<div class="mtx-item"><div class="mtx-dt">${fmtDt(t.date)}</div><div class="mtx-desc" title="${esc(t.desc)}">${esc(t.desc)}</div><div class="mtx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${fmt(t.amount)}</div></div>`).join('') +
-          (isCapped ? `<div style="text-align:center;color:var(--mu);font-size:10px;padding:10px 0;font-family:'DM Mono',monospace;letter-spacing:.5px;border-top:1px solid var(--bd);margin-top:4px;">Showing latest 50 of ${mTxs.length} transactions</div>` : '') +
+          (isCapped ? `<div class="sub-hist-cap" style="cursor:pointer;color:var(--ac);transition:color 0.2s;" onmouseover="this.style.color='var(--on)'" onmouseout="this.style.color='var(--ac)'" onclick="showAllMonthTxs(this, ${yr}, ${m}, event)">Showing latest 50 of ${mTxs.length} transactions. Click to view all.</div>` : '') +
           `</div>`;
       } else {
         html = `<div class="tx-cnt" onclick="event.stopPropagation();"><div style="text-align:center;color:var(--di);font-size:10px;padding:12px 0;font-family:'DM Mono',monospace;">No transactions for this month</div></div>`;
       }
       el.insertAdjacentHTML('beforeend', html);
     }
+    
+    window.showAllMonthTxs = function(btn, yr, m, e) {
+      e.stopPropagation();
+      const txCnt = btn.closest('.tx-cnt');
+      if (!txCnt) return;
+      const mTxs = txs.filter(t => {
+        const d = new Date(t.date + 'T00:00:00');
+        return d.getFullYear() === yr && d.getMonth() === m;
+      }).sort((a, b) => {
+        const dDiff = new Date(b.date + 'T00:00:00').getTime() - new Date(a.date + 'T00:00:00').getTime();
+        return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
+      });
+      txCnt.innerHTML = mTxs.map(t => `<div class="mtx-item"><div class="mtx-dt">${fmtDt(t.date)}</div><div class="mtx-desc" title="${esc(t.desc)}">${esc(t.desc)}</div><div class="mtx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${fmt(t.amount)}</div></div>`).join('');
+    };
 
     const ALI = { date: ['date', 'transaction date', 'txn date', 'trans date', 'dt', 'value date'], desc: ['description', 'desc', 'particulars', 'narration', 'details', 'merchant', 'note', 'notes', 'remarks', 'item'], amount: ['amount', 'value', 'sum', 'total', 'amt', 'transaction amount', 'price'], income: ['credit', 'deposit', 'income', 'cr', 'in', 'credits', 'deposits'], expense: ['debit', 'withdrawal', 'expense', 'dr', 'out', 'debits', 'withdrawals'], type: ['type', 'transaction type', 'txn type', 'direction', 'dr/cr', 'dr cr'], mode: ['mode', 'payment mode', 'payment method', 'channel', 'medium', 'online/offline', 'pay mode', 'upi/cash'], cat: ['category', 'cat', 'tag'] };
     function nH(h) { return String(h).toLowerCase().trim().replace(/[\s_\-\/]+/g, ' '); }
