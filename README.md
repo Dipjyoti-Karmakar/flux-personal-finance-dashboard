@@ -18,7 +18,7 @@
 
 ## Overview
 
-Flux is a **12,000+ line single-file web application**, with all HTML, CSS, and JavaScript in one `index.html` file. It uses **Firebase Auth v11.6.1** (Google sign-in popup) and **Cloud Firestore** with persistent local cache for real-time sync across devices and full offline support.
+Flux is a **13,000+ line single-file web application**, with all HTML, CSS, and JavaScript in one `index.html` file. It uses **Firebase Auth v11.6.1** (Google sign-in popup) and **Cloud Firestore** with persistent local cache for real-time sync across devices and full offline support.
 
 The app is Indian-locale-first: all amounts are formatted in **INR (₹)** using `en-IN` locale conventions. There are no build steps, no `node_modules`, and no framework dependencies.
 
@@ -88,7 +88,7 @@ Every ADD, EDIT, DELETE, UPDATE, and IMPORT action is written as an entry to the
 | **Expense Trend Chart** | Canvas 2D line chart with Expense / Income / Both toggle, gradient fill, grid lines, crosshair hover, and edge-clamped tooltips |
 | **Category Breakdown** | Proportional bar visualization with clickable category cards that expand to show paginated transaction lists |
 | **Online vs Offline Split** | Percentage bar, side-by-side comparison cards with per-day averages |
-| **Yearly Overview** | Collapsible year blocks with month cards, sparkline bars, a today callout, progress percentage, and lazy-loaded transaction lists |
+| **Yearly Overview** | Collapsible year blocks with month cards, sparkline bars, lazy-loaded transaction lists, and an adaptive pacing progress bar featuring overfill limits, extreme spend warnings, and early-year volatility guards |
 | **Monthly Insights** | Auto-generated text comparing the current vs previous month: savings diff, spending % change, top category, per-category swings, exceeded-budget category count |
 
 ### Excel / CSV Import
