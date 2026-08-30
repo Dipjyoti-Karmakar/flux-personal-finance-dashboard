@@ -1,0 +1,71 @@
+// Firebase Console Rules Link:
+// https://console.firebase.google.com/u/0/project/my-ledger-8f8b5/firestore/databases/-default-/security/rules?fb_gclid=CjwKCAjwqc_UBhBKEiwAWbl25kg-iNrkiCp4ZLvyDU8s9DCooIct8FweZlpB4GQ3GNT3CP1N8PNoBBoCuRYQAvD_BwE&fb_utm_campaign=Cloud-SS-DR-Firebase-FY26-global-pmax-1713590&fb_utm_content=pmax&fb_utm_medium=display&fb_utm_source=PMAX
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    // Protect the root user document
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      // Transactions Collection
+      match /transactions/{txId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasAll(['desc', 'amount', 'type', 'date', 'createdAt'])
+          && request.resource.data.amount is number
+          && request.resource.data.desc is string
+          && request.resource.data.type in ['income', 'expense'];
+        allow update: if isOwner(userId)
+          && request.resource.data.amount is number
+          && request.resource.data.desc is string
+          && request.resource.data.type in ['income', 'expense'];
+      }
+
+      // Subscriptions (Recurring) Collection
+      match /recurring/{recId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasAll(['name', 'amount', 'freq', 'type', 'createdAt'])
+          && request.resource.data.amount is number
+          && request.resource.data.name is string
+          && request.resource.data.type in ['income', 'expense']
+          && request.resource.data.freq in ['daily', 'weekly', 'monthly', 'yearly', 'custom'];
+        allow update: if isOwner(userId)
+          && request.resource.data.amount is number
+          && request.resource.data.name is string
+          && request.resource.data.type in ['income', 'expense']
+          && request.resource.data.freq in ['daily', 'weekly', 'monthly', 'yearly', 'custom'];
+      }
+
+      // Events Collection
+      match /events/{evtId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasAll(['name', 'start', 'end', 'color'])
+          && request.resource.data.name is string;
+        allow update: if isOwner(userId)
+          && request.resource.data.name is string;
+      }
+
+      // Activity Logs Collection
+      match /activities/{actId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasAll(['a', 'm', 'ts'])
+          && request.resource.data.a in ['ADD', 'EDIT', 'DELETE', 'UPDATE', 'IMPORT']
+          && request.resource.data.ts is number;
+        allow update: if isOwner(userId)
+          && request.resource.data.a in ['ADD', 'EDIT', 'DELETE', 'UPDATE', 'IMPORT']
+          && request.resource.data.ts is number;
+      }
+    }
+  }
+}

@@ -5828,9 +5828,7 @@
       vertical-align: -0.1em;
     }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/twemoji.min.js"
-    integrity="sha512-oMnMpYV9/oA+Ly+0LTfsEzkvXfR3T0L2fQlBuSHAGNlHY5UPCoFnAHdRvTq1vFX5E9EV9NBYXm8hGNlkFqXQ=="
-    crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -6720,10 +6718,6 @@
     let unsubscribeEvents = null;
     let unsubscribeActivityLog = null;
     let unsubscribeRecurring = null;
-    let unsubscribeManualLinks = null;
-    let manualLinksMap = new Map();         // Map<txId, { subId, txId, createdAt }> — server-confirmed state
-    const _pendingManualLinks = new Map();  // Map<txId, { subId, txId, createdAt } | null> — null = pending delete
-    let _manualLinksReady = false;          // True after first manualLinks snapshot has been applied
     let eventsUseFallback = false;
     let activityLogs = [];
     let recurringList = [];
@@ -6921,18 +6915,11 @@
         if (unsubscribeEvents) unsubscribeEvents();
         if (unsubscribeActivityLog) unsubscribeActivityLog();
         if (unsubscribeRecurring) unsubscribeRecurring();
-        if (unsubscribeManualLinks) unsubscribeManualLinks();
-        // Reset manual-link state before loading new user's data — prevents stale
-        // data from a prior user leaking into matching guards.
-        manualLinksMap = new Map();
-        _pendingManualLinks.clear();
-        _manualLinksReady = false;
         document.getElementById('authBtn').innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg> Sign Out`;
         loadDataFromCloud();
         loadEvents();
         loadActivityLog();
         loadRecurring();
-        loadManualLinks();
         // Clear stale localStorage activity log (migrated to Firestore)
         try { localStorage.removeItem('flux_activity_log'); } catch (_) { }
         showSkeletons();
@@ -6944,12 +6931,8 @@
         if (unsubscribeEvents) unsubscribeEvents();
         if (unsubscribeActivityLog) unsubscribeActivityLog();
         if (unsubscribeRecurring) unsubscribeRecurring();
-        if (unsubscribeManualLinks) unsubscribeManualLinks();
         activityLogs = [];
         recurringList = [];
-        manualLinksMap = new Map();
-        _pendingManualLinks.clear();
-        _manualLinksReady = false;
         // Clear log selection mode if active
         if (logSelectionMode) { logSelectionMode = false; selectedLogs.clear(); const ab = document.getElementById('logDeleteAction'); const bb = document.getElementById('btnToggleDeleteLogs'); if (ab) ab.style.display = 'none'; if (bb) bb.style.display = 'inline-block'; }
         renderLogs();
@@ -7610,7 +7593,7 @@
         // Gated by _recCatchUpDone to prevent the infinite loop:
         // checkAndTrigger writes → onSnapshot → debouncedRender → checkAndTrigger again.
         // Reset on non-echo tx changes and recurring structural changes.
-        if (!_recCatchUpDone && recurringList && recurringList.length && _manualLinksReady) {
+        if (!_recCatchUpDone && recurringList && recurringList.length) {
           _recCatchUpDone = true;
           checkAndTriggerRecurring().then(() => {
             if (!_earlyPayDone) {
@@ -7645,7 +7628,6 @@
     
     async function syncUntaggedMatches() {
       if (_syncUntaggedRunning) return;    // Re-entrancy guard
-      if (!_manualLinksReady) return;       // Wait for manualLinks before matching
       if (!userId || !recurringList.length || !txs.length) return;
       _syncUntaggedRunning = true;
       try {
@@ -7654,7 +7636,7 @@
         for (const t of txs) {
           if (t._recurring || t.subId) continue;
           if (_txWriteLocks.has(t.id) || _pendingTxUpdates.has(t.id)) continue;
-          if (t._manualLink || manualLinksMap.has(t.id)) continue;
+          if (t._manualLink) continue;
           
           const tDescLow = (t.desc || '').trim().toLowerCase();
           if (!tDescLow) continue;
@@ -7745,7 +7727,6 @@
 
     async function tagPastSubscriptions() {
       if (_tagPastRunning) return -1;  // Re-entrancy — not "nothing to tag", caller must not set _tagPastDone
-      if (!_manualLinksReady) return -1;  // Not ready — caller must not set _tagPastDone
       if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return 0;
       _tagPastRunning = true;
       try {
@@ -7784,7 +7765,7 @@
         txs.forEach(tx => {
           if (_txWriteLocks.has(tx.id)) return; // Being actively modified by linkSubTx/unlinkSubTx
           if (_pendingTxUpdates.has(tx.id)) return; // In-flight optimistic mutation
-          if (tx._manualLink || manualLinksMap.has(tx.id)) return;  // Manually linked — don't touch
+          if (tx._manualLink) return;  // Manually linked — don't touch
           // Skip if already fully tagged (has both _recurring AND subId)
           if (tx._recurring && tx.subId) return;
           // Skip if already tagged in this session (prevents re-tagging on echo snapshots)
@@ -10652,72 +10633,6 @@
       return t.slice(0, 7);   // e.g. "2026-06"
     }
 
-    function loadManualLinks() {
-      if (!userId) return;
-      if (unsubscribeManualLinks) unsubscribeManualLinks();
-      const mlRef = collection(db, 'users', userId, 'manualLinks');
-      unsubscribeManualLinks = onSnapshot(mlRef, (snap) => {
-        // Rebuild from server snapshot
-        const fromServer = new Map();
-        snap.forEach(d => {
-          const data = d.data();
-          fromServer.set(d.id, { txId: d.id, subId: data.subId, createdAt: data.createdAt || 0 });
-        });
-
-        // Apply pending overlay, confirming entries whose server state now matches,
-        // and clearing those that have been confirmed (upserts and deletes).
-        const confirmedIds = [];
-        _pendingManualLinks.forEach((pending, txId) => {
-          if (pending === null) {
-            // Pending delete: confirmed when server no longer has the record
-            if (!fromServer.has(txId)) confirmedIds.push(txId);
-            else fromServer.delete(txId); // Server not yet caught up — suppress from map
-          } else {
-            // Pending upsert: confirmed when server record has matching subId
-            const srv = fromServer.get(txId);
-            if (srv && srv.subId === pending.subId) confirmedIds.push(txId);
-            else fromServer.set(txId, pending); // Server not yet caught up — keep optimistic state
-          }
-        });
-        confirmedIds.forEach(id => _pendingManualLinks.delete(id));
-
-        manualLinksMap = fromServer;
-
-        // On first snapshot, mark ready and trigger a reconciliation pass so any
-        // tagPastSubscriptions/detectEarlyPayments that fired before this snapshot
-        // (while _manualLinksReady was false) now re-run with the correct guard data.
-        const wasReady = _manualLinksReady;
-        if (!wasReady) {
-          _manualLinksReady = true;
-          // If transactions and recurring are already loaded, run all deferred matching
-          if (txs && txs.length && recurringList && recurringList.length) {
-            // Re-run checkAndTriggerRecurring if it was deferred earlier
-            if (!_recCatchUpDone) {
-              _recCatchUpDone = true;
-              checkAndTriggerRecurring().then(() => detectEarlyPayments());
-            }
-            if (!_tagPastDone) {
-              tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions (ML reconcile) failed:', e)).then(count => {
-                if (count === 0) _tagPastDone = true;
-                if (!_earlyPayDone) detectEarlyPayments().then(m => { if (!m) _earlyPayDone = true; });
-              });
-            } else if (!_earlyPayDone) {
-              detectEarlyPayments().then(m => { if (!m) _earlyPayDone = true; });
-            }
-          }
-        }
-
-        // Refresh open subscription history panels to incorporate manual links
-        document.querySelectorAll('.sub-hist-panel.open').forEach(p => {
-          const recId = p.id.replace('hist-panel-', '');
-          if (typeof renderSubHistInner === 'function') renderSubHistInner(recId);
-        });
-      }, err => {
-        console.error('Manual links sync error:', err);
-        _manualLinksReady = false;
-      });
-    }
-
     function loadRecurring() {
       if (!userId) return;
       if (unsubscribeRecurring) unsubscribeRecurring();
@@ -10770,14 +10685,7 @@
         // detectEarlyPayments, creating a chain: write → echo → re-run → write.
         if (!_recCatchUpDone) {
           _recCatchUpDone = true;
-          // If manualLinks aren't ready yet, defer catch-up — loadManualLinks' first
-          // snapshot will trigger tagPast/detectEarly, and reset _recCatchUpDone so
-          // the next recurring snapshot retries checkAndTrigger.
-          if (!_manualLinksReady) {
-            _recCatchUpDone = false;  // Allow retry on next snapshot after ML is ready
-          } else {
-            checkAndTriggerRecurring().then(() => detectEarlyPayments());
-          }
+          checkAndTriggerRecurring().then(() => detectEarlyPayments());
         }
         // Ensure tagPastSubscriptions/syncUntaggedMatches run with the freshly loaded
         // recurringList, even when checkAndTriggerRecurring made no Firestore writes.
@@ -10789,7 +10697,6 @@
     let globallyMatchedTxIds = new Set();
     async function checkAndTriggerRecurring() {
       if (!userId || !recurringList.length) return;
-      if (!_manualLinksReady) return;  // Wait for manualLinks snapshot before matching
       // Reset per-run so stale IDs don't accumulate across Firestore snapshot callbacks
       globallyMatchedTxIds = new Set();
       const today = getTodayStr();
@@ -10880,7 +10787,7 @@
                 if (matchedTxIds.has(t.id)) return false;
                 if (globallyMatchedTxIds.has(t.id)) return false;
                 // Don't steal manually-linked txs or txs already linked to a different sub
-                if (t._manualLink || manualLinksMap.has(t.id)) return false;
+                if (t._manualLink) return false;
                 if (t._auto && t.subId !== rec.id) return false;
                 if (t.subId && t.subId !== rec.id) return false;
                 return true;
@@ -11001,7 +10908,6 @@
     const _sessionEarlyPayRecs = new Set(); // Tracks recs already handled — prevents re-processing on echo snapshots
     async function detectEarlyPayments() {
       if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return false;
-      if (!_manualLinksReady) return false;  // Wait for manualLinks snapshot before matching
       const today = getTodayStr();
       let anyMatched = false;
 
@@ -11297,23 +11203,16 @@
         }
       });
 
-      // Build a set of txIds manually linked to this subscription via the manualLinks subcollection
-      const manualLinkTxIds = new Set();
-      manualLinksMap.forEach((link, txId) => {
-        if (link.subId === recId) manualLinkTxIds.add(txId);
-      });
 
       const subTxs = effectiveTxs
         .filter(t => {
           // Primary: explicit subId link (covers both auto-tagged and manual links)
           if (t.subId === recId) return true;
-          // Secondary: manualLinks subcollection record (bulletproof cross-device fallback)
-          if (manualLinkTxIds.has(t.id)) return true;
           // Fallback: fuzzy match for transactions tagged with _recurring OR untagged-but-matching
           // (untagged ones are progressively backfilled with subId by tagPastSubscriptions)
           const _allRecAmtsH = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
           if (t.subId && t.subId !== recId) return false; // Owned by a different sub — skip
-          if (t._manualLink || manualLinksMap.has(t.id)) return false; // Manually linked elsewhere
+          if (t._manualLink) return false; // Manually linked elsewhere
           const tDescLow = (t.desc || '').trim().toLowerCase();
           if (!tDescLow || !nameLow) return false;
           // Name must match (exact or fuzzy contains, with length ratio guard)
