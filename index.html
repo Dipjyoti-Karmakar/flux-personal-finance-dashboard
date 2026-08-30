@@ -10579,7 +10579,9 @@
 
     function computeNextDue(fromDate, freq, customDays, billingDay = null) {
       const d = new Date(fromDate + 'T00:00:00');
-      let targetDay = billingDay || d.getDate();
+      // Validate billingDay: must be 1–31. Zero is falsy in JS and would silently
+      // fall through to d.getDate(), as would NaN or negative values from corruption.
+      let targetDay = (billingDay && billingDay >= 1 && billingDay <= 31) ? billingDay : d.getDate();
 
       if (freq === 'daily') d.setDate(d.getDate() + 1);
       else if (freq === 'weekly') d.setDate(d.getDate() + 7);
@@ -10598,8 +10600,22 @@
       }
       else if (freq === 'custom') {
         const days = parseInt(customDays, 10);
-        if (!days || days <= 0 || !isFinite(days)) return getLocalIsoDateStr(d); // guard: return same date to prevent infinite loop
-        d.setDate(d.getDate() + days);
+        if (!days || days <= 0 || !isFinite(days)) {
+          // Invalid custom interval — advance by 30 days as fallback instead of
+          // returning the same date, which stalls the catch-up while-loop and
+          // creates up to MAX_CYCLES duplicate auto-transactions.
+          console.warn(`computeNextDue: invalid customDays (${customDays}) for freq "custom" — falling back to +30d`);
+          d.setDate(d.getDate() + 30);
+        } else {
+          d.setDate(d.getDate() + days);
+        }
+      }
+      else {
+        // Unrecognized frequency — advance by 30 days as a safe fallback.
+        // Without this, the function returns the unchanged input date, which
+        // stalls the catch-up while-loop (nextDue never advances past today).
+        console.warn(`computeNextDue: unrecognized freq "${freq}" — falling back to +30d`);
+        d.setDate(d.getDate() + 30);
       }
 
       return getLocalIsoDateStr(d);
@@ -10703,9 +10719,25 @@
             const data = recDoc.data();
             // If another device already updated nextDue, this will correctly abort
             if (!data.active || !data.nextDue || today < data.nextDue) throw "already_triggered_or_inactive";
+            // Validate nextDue format — malformed strings crash getLocalIsoDateStr
+            // with RangeError, killing the entire for-loop and leaving other subs unprocessed
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(data.nextDue)) throw "invalid_nextDue";
 
             let currentDue = data.nextDue;
             let paymentsMade = data.paymentsMade || 0;
+
+            // ── Hoist loop-invariant computations ──
+            // These depend on data.freq / data.name / data.amount which don't change
+            // across while-loop iterations. Previously recomputed every cycle.
+            let wDays = 15;
+            if (data.freq === 'yearly') wDays = 60;
+            if (data.freq === 'weekly') wDays = 3;
+            if (data.freq === 'daily') wDays = 0;
+            if (data.freq === 'custom') wDays = Math.max(1, Math.floor((data.customDays || 1) / 2));
+            const _recNameLc = data.name ? data.name.trim().toLowerCase() : '';
+            const _allDataAmts = [Math.abs(data.amount), ...(data.altAmounts || []).map(a => Math.abs(a))];
+            // Build allTxs once, then push newTxs incrementally (was re-spreading entire txs array every iteration)
+            const allTxs = [...txs];
 
             while (currentDue <= today && cyclesProcessed < MAX_CYCLES) {
               if (data.paymentsLimit && paymentsMade >= data.paymentsLimit) {
@@ -10716,11 +10748,6 @@
 
               // Manual payment check window around currentDue
               const dueD = new Date(currentDue + 'T00:00:00');
-              let wDays = 15;
-              if (data.freq === 'yearly') wDays = 60;
-              if (data.freq === 'weekly') wDays = 3;
-              if (data.freq === 'daily') wDays = 0;
-              if (data.freq === 'custom') wDays = Math.max(1, Math.floor((data.customDays || 1) / 2));
 
               const minDateObj = new Date(dueD);
               minDateObj.setDate(minDateObj.getDate() - wDays);
@@ -10732,6 +10759,15 @@
 
               const nextDueAfterThis = computeNextDue(currentDue, data.freq, data.customDays, data.billingDay);
 
+              // ── Stall guard ──
+              // If computeNextDue returns the same date (e.g. corrupted freq/customDays),
+              // break immediately. Without this, the loop creates MAX_CYCLES duplicate
+              // auto-transactions all dated on the same day.
+              if (nextDueAfterThis === currentDue) {
+                console.warn(`checkAndTriggerRecurring: stall detected for "${data.name}" — nextDue stuck at ${currentDue}`);
+                break;
+              }
+
               const nextDueDForMax = new Date(nextDueAfterThis + 'T00:00:00');
               nextDueDForMax.setDate(nextDueDForMax.getDate() - 1);
               const maxDCappedByNext = getLocalIsoDateStr(nextDueDForMax);
@@ -10739,9 +10775,6 @@
               let maxD = maxDTarget < maxDCappedByNext ? maxDTarget : maxDCappedByNext;
               if (maxD > today) maxD = today;
 
-              const allTxs = [...txs, ...newTxs];
-              const _recNameLc = data.name ? data.name.trim().toLowerCase() : '';
-              const _allDataAmts = [Math.abs(data.amount), ...(data.altAmounts || []).map(a => Math.abs(a))];
               const matchedTx = allTxs.find(t => {
                 if (t.type !== data.type) return false;
                 if (!t.desc) return false;
@@ -10777,6 +10810,7 @@
                 transaction.set(doc(db, 'users', userId, 'transactions', txId), txData);
 
                 newTxs.push({ id: txId, ...txData });
+                allTxs.push({ id: txId, ...txData }); // Keep allTxs in sync for subsequent iterations
                 updatesNeeded = true;
                 paymentsMade++;
               } else {
@@ -10863,7 +10897,7 @@
             }
           }
         } catch (e) {
-          if (e !== "already_triggered_or_inactive" && e !== "not_found") {
+          if (e !== "already_triggered_or_inactive" && e !== "not_found" && e !== "invalid_nextDue") {
             console.error('Failed to process recurring catch-up for:', rec.name, e);
           }
         } finally {
@@ -11572,6 +11606,14 @@
       if (saved) {
         showToast(navigator.onLine ? (active ? 'Subscription resumed' : 'Subscription paused') : 'Saved offline. Will sync when connected.', 'ok');
         if (rec) writeLog('UPDATE', { desc: rec.name, isRecPauseToggle: true, active }, rec.type);
+        // Reset ALL matching flags so the catch-up pipeline re-runs for the
+        // toggled subscription. Critical in offline mode where no Firestore
+        // snapshot fires to reset these flags automatically.
+        _recCatchUpDone = false;
+        _earlyPayDone = false;
+        _tagPastDone = false;
+        _sessionEarlyPayRecs.clear();
+        debouncedRender();
       }
     }
 
