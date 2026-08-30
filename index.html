@@ -14,7 +14,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
   <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=2">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com; worker-src 'self' blob:;">
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://cdnjs.cloudflare.com https://unpkg.com; worker-src 'self' blob:;">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap"
@@ -7729,6 +7729,7 @@
       if (_tagPastRunning) return -1;  // Re-entrancy — not "nothing to tag", caller must not set _tagPastDone
       if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return 0;
       _tagPastRunning = true;
+      let toTag = [];
       try {
         // Orphan cleanup: clear stale _recurring/subId on txs whose subId points
         // to a non-existent subscription, OR txs that have _recurring but no subId
@@ -7761,7 +7762,7 @@
           console.log(`Cleaned ${toUntag.length} orphaned subscription tags.`);
         }
 
-        const toTag = [];
+        toTag = [];
         txs.forEach(tx => {
           if (_txWriteLocks.has(tx.id)) return; // Being actively modified by linkSubTx/unlinkSubTx
           if (_pendingTxUpdates.has(tx.id)) return; // In-flight optimistic mutation
