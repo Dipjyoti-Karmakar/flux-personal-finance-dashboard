@@ -6940,11 +6940,11 @@
               if (pending.subId !== undefined) clean.subId = pending.subId;
             }
             // Session-tagged txs: if Firestore echo arrived without the tag yet
-            // (write still in-flight or cache stale), re-apply from session memory
-            if (_sessionTaggedTxIds.has(doc.id) && !clean._recurring) {
+            // (write still in-flight or cache stale), re-apply from session memory.
+            // Only apply if there's no explicitly pending _recurring state (which could be false).
+            const pending = _pendingTxUpdates.get(doc.id);
+            if (_sessionTaggedTxIds.has(doc.id) && !clean._recurring && (!pending || pending._recurring === undefined)) {
               clean._recurring = true;
-              // Try to recover the subId from _pendingTxUpdates or keep existing
-              const pending = _pendingTxUpdates.get(doc.id);
               if (pending && pending.subId) clean.subId = pending.subId;
             }
 
