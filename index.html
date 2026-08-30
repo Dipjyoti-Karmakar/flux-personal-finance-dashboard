@@ -9239,6 +9239,7 @@
       <div class="ms"><span class="msl">🏪 Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
     </div>
     ${tdHTML}
+    <!-- progress bar redesign -->
     <div class="mbw">
       <div class="mbb${isCur ? ' tp' : ''}${isRedPacing ? ' r-stripe' : ''}${isExtreme ? ' extreme' : ''}" style="width:${baseWidth}%; background:${isExtreme ? '' : barColor}"></div>
       ${overfillWidth > 0 && !isExtreme ? `<div class="mbb-overfill${isCur ? ' tp' : ''}" style="width:${overfillWidth}%; background:${barColor}"></div>` : ''}
