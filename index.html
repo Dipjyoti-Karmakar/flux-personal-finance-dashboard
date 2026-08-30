@@ -2102,7 +2102,7 @@
 
     .mbw {
       height: 4px;
-      background: var(--s3);
+      background: var(--s2);
       border-radius: 2px;
       overflow: hidden;
       margin-top: 8px
@@ -2111,12 +2111,17 @@
     .mbb {
       height: 100%;
       border-radius: 2px;
-      background: var(--ex);
-      transition: width 1.5s var(--ease-out-expo)
+      transition: width 1.5s var(--ease-out-expo), background-color 1s ease;
     }
 
     .mbb.tp {
-      background: linear-gradient(90deg, var(--ex), var(--ac))
+      animation: pulseBar 2.5s infinite ease-in-out;
+    }
+
+    @keyframes pulseBar {
+      0% { opacity: 0.8; filter: brightness(1); }
+      50% { opacity: 1; filter: brightness(1.3); }
+      100% { opacity: 0.8; filter: brightness(1); }
     }
 
     .mpr {
@@ -2127,7 +2132,6 @@
       text-align: right;
       font-weight: 500;
     }
-
     /* Modal and Mapper */
     .bk {
       position: fixed;
@@ -9065,13 +9069,13 @@
       });
       const mMax = Math.max(...mT, 1), lastM = isCur ? cM : 11;
       const sparks = mT.slice(0, lastM + 1).map((v, m) => { const h = Math.max(3, Math.round((v / mMax) * 28)); return `<div class="spk${isCur && m === cM ? ' cm' : ''}" style="height:${h}px" data-tip="${MN[m]}: ${fmtS(v)}"></div>`; }).join('');
-      const mnHTML = Array.from({ length: 12 }, (_, m) => mkMnCard(m, yr, yrMonths, isCur, cM, cD, todayISO, mMax, yrTot, cY)).join('');
+      const mnHTML = Array.from({ length: 12 }, (_, m) => mkMnCard(m, yr, yrMonths, isCur, cM, cD, todayISO, mMax, yrTot, cY, yrAvg)).join('');
       const netClr = yrNet >= 0 ? 'var(--in)' : 'var(--ex)';
       const savRateHtml = yrSavRate !== null ? `<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${yrSavRate > 0 ? '+' : ''}${yrSavRate}%</span></div>` : '';
       return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
     }
 
-    function mkMnCard(m, yr, yrMonths, isCurYr, cM, cD, todayISO, mMax, yrTot, cY) {
+    function mkMnCard(m, yr, yrMonths, isCurYr, cM, cD, todayISO, mMax, yrTot, cY, yrAvg) {
       if (yr > cY || (isCurYr && m > cM)) return '';
       const isCur = isCurYr && m === cM;
       const mAll = (yrMonths[m] || []);
@@ -9088,9 +9092,15 @@
       const avg = elapsedM > 0 ? tot / elapsedM : 0;
       const onl = mE.filter(t => t.mode === 'online').reduce((s, t) => s + t.amount, 0);
       const ofl = mE.filter(t => t.mode !== 'online').reduce((s, t) => s + t.amount, 0);
-      const prog = isCur ? Math.round((cD / dim) * 100) : 100;
-      const bp = mMax > 0 ? Math.round((tot / mMax) * 100) : 0;
       const ys2 = yrTot > 0 ? Math.round(tot / yrTot * 100) : 0;
+
+      // Progress bar calculations
+      let bp = yrTot > 0 ? (tot / yrTot) * 100 : 0;
+      bp = Math.max(2, bp); // min-width 2% protection
+      let dev = yrAvg > 0 ? ((avg - yrAvg) / yrAvg) * 100 : 0;
+      let intensity = Math.min(100, Math.abs(dev) * 3.33); // Max intensity at 30% dev
+      let barColor = dev > 0 ? `color-mix(in srgb, var(--ex) ${intensity}%, var(--ac))` : `color-mix(in srgb, var(--in) ${intensity}%, var(--ac))`;
+      if (yrTot === 0) barColor = 'var(--ac)'; // Zero expense year fallback
       let tdHTML = '';
       if (isCur) { const tdS = mE.filter(t => t.date === todayISO).reduce((s, t) => s + t.amount, 0), tdC = mE.filter(t => t.date === todayISO).length; tdHTML = `<div class="tdc"><span class="tdcl">Today, ${cD} ${MN[m]}</span><span class="tdcv">${fmt(tdS)} <span style="font-size:10px;opacity:.7">${tdC} tx</span></span></div>`; }
       const mTxCount = mAll.length;
@@ -9112,8 +9122,8 @@
       <div class="ms"><span class="msl">🏪 Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
     </div>
     ${tdHTML}
-    <div class="mbw"><div class="mbb${isCur ? ' tp' : ''}" style="width:${bp}%"></div></div>
-    ${isCur ? `<div class="mpr">${prog}% of month elapsed</div>` : ''}
+    <div class="mbw"><div class="mbb${isCur ? ' tp' : ''}" style="width:${bp}%; background:${barColor}"></div></div>
+    <div class="mpr" title="Deviation: ${dev > 0 ? '+' : ''}${Math.round(dev)}%">${(yrTot > 0 ? (tot / yrTot) * 100 : 0).toFixed(1)}% of Yearly Spend</div>
     <div class="mc-hint"><span class="mc-hint-show">▼ View ${mTxCount} Txs</span><span class="mc-hint-hide">▲ Hide ${mTxCount} Txs</span></div>
   </div>`;
     }
