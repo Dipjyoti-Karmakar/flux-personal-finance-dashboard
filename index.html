@@ -1994,9 +1994,9 @@
       font-weight: 600;
     }
 
-    .mc.op-tx .mc-hint {
-      display: none;
-    }
+    .mc-hint-hide { display: none; }
+    .mc.op-tx .mc-hint-show { display: none; }
+    .mc.op-tx .mc-hint-hide { display: inline; }
 
     .now-badge {
       display: inline-block;
@@ -9059,7 +9059,7 @@
     ${tdHTML}
     <div class="mbw"><div class="mbb${isCur ? ' tp' : ''}" style="width:${bp}%"></div></div>
     ${isCur ? `<div class="mpr">${prog}% of month elapsed</div>` : ''}
-    <div class="mc-hint">▼ View ${mTxCount} Txs</div>
+    <div class="mc-hint"><span class="mc-hint-show">▼ View ${mTxCount} Txs</span><span class="mc-hint-hide">▲ Hide ${mTxCount} Txs</span></div>
   </div>`;
     }
 
@@ -9088,7 +9088,12 @@
       } else {
         html = `<div class="tx-cnt" onclick="event.stopPropagation();"><div style="text-align:center;color:var(--di);font-size:10px;padding:12px 0;font-family:'DM Mono',monospace;">No transactions for this month</div></div>`;
       }
-      el.insertAdjacentHTML('beforeend', html);
+      const hint = el.querySelector('.mc-hint');
+      if (hint) {
+        hint.insertAdjacentHTML('beforebegin', html);
+      } else {
+        el.insertAdjacentHTML('beforeend', html);
+      }
     }
     
     window.showAllMonthTxs = function(btn, yr, m, e) {
