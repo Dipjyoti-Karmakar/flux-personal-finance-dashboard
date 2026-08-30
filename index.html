@@ -11909,11 +11909,21 @@
             const gridY = cY + padTop;
             const gridBottom = gridY + drawH;
 
+            const formatPdfAmt = (v) => {
+              if (v < 1000) return v.toFixed(0);
+              if (v < 100000) {
+                let kStr = (v / 1000).toFixed(1);
+                if (kStr.endsWith('.0')) kStr = kStr.slice(0, -2);
+                return kStr + 'k';
+              }
+              return Math.round(v / 1000) + 'k';
+            };
+
             doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
             for (let i = 0; i <= 4; i++) {
               const yPos = gridBottom - (i / 4) * drawH;
               const amtVal = (maxAmt * (i / 4));
-              const amtStr = amtVal >= 100000 ? (amtVal / 100000).toFixed(0) + 'L' : amtVal >= 1000 ? (amtVal / 1000).toFixed(0) + 'k' : amtVal.toFixed(0);
+              const amtStr = formatPdfAmt(amtVal);
 
               doc.text(amtStr, gridX - 3, yPos + 2.5, { align: 'right' });
               doc.setDrawColor(...bd); doc.setLineWidth(0.1);
@@ -11936,7 +11946,7 @@
             for (let i = 0; i < pts.length; i++) {
               const val = pts[i][dataKey];
               if (val > 0) {
-                const amtStr = val >= 100000 ? (val / 100000).toFixed(0) + 'L' : val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val.toFixed(0);
+                const amtStr = formatPdfAmt(val);
                 const currY = getY(val);
                 const prevY = i > 0 ? getY(pts[i - 1][dataKey]) : currY;
                 const nextY = i < pts.length - 1 ? getY(pts[i + 1][dataKey]) : currY;
