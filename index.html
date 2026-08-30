@@ -8822,85 +8822,86 @@
       const curSav = curInc - curExp, prevSav = prevInc - prevExp;
       const todayISO = getTodayStr();
 
-      // 1. Budget pacing with daily burn rate
+      // 1. Pacing & Projection (Forward-Looking)
       const pastExp = curTxs.filter(t => t.type === 'expense' && t.date <= todayISO).reduce((s, t) => s + t.amount, 0);
       if (cD > 2 && pastExp > 0) {
         const dailyBurn = Math.round(pastExp / cD);
         const projected = Math.round((pastExp / cD) * daysInMonth);
-        const rem = daysInMonth - cD;
         if (prevExp > 0) {
           const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
-          if (overPct >= 10) insights.push({ icon: '⚠️', text: `At <strong>${fmtS(dailyBurn)}/day</strong>, projected <strong>${fmtS(projected)}</strong> by month-end — <span class="up">${overPct}% over</span> last month. ${rem} days to adjust.` });
-          else if (overPct <= -10) insights.push({ icon: '🎯', text: `Great pace! <strong>${fmtS(dailyBurn)}/day</strong> → <strong>${fmtS(projected)}</strong> by month-end — <span class="down">${Math.abs(overPct)}% under</span> ${MF[pM]}'s ${fmtS(prevExp)}` });
+          if (overPct > 5) insights.push({ icon: '⚠️', text: `<strong>Pacing High:</strong> Projected to spend <strong>${fmtS(projected)}</strong> by month-end (<span class="up">${overPct}% over</span> last month).` });
+          else if (overPct < -5) insights.push({ icon: '🎯', text: `<strong>Great Pace:</strong> On track to spend <strong>${fmtS(projected)}</strong> (<span class="down">${Math.abs(overPct)}% under</span> last month).` });
+          else insights.push({ icon: '⏱️', text: `<strong>On Track:</strong> Spending <strong>${fmtS(dailyBurn)}/day</strong>, on pace to match last month.` });
         } else {
-          insights.push({ icon: '📐', text: `Burning <strong>${fmtS(dailyBurn)}/day</strong> — projected <strong>${fmtS(projected)}</strong> by month-end (${rem} days left)` });
+          insights.push({ icon: '⏱️', text: `<strong>Pacing:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong> (Projected: <strong>${fmtS(projected)}</strong>).` });
         }
       }
 
-      // 2. Savings rate with benchmark context
+      // 2. Savings & Income (The Bottom Line)
       if (curInc > 0) {
         const savRate = Math.round((curSav / curInc) * 100);
-        if (savRate >= 20) insights.push({ icon: '🏆', text: `Saving <strong><span class="down">${savRate}%</span></strong> of income — <strong>${fmtS(curSav)}</strong> kept. Above the 20% benchmark!` });
-        else if (savRate > 0) { const gap = fmtS(curInc * 0.2 - curSav); insights.push({ icon: '💵', text: `Saving <strong>${savRate}%</strong> of income (<strong>${fmtS(curSav)}</strong>). ${gap} more to hit the 20% target.` }); }
-        else if (savRate < 0) insights.push({ icon: '🔴', text: `Overspending by <strong><span class="up">${fmtS(Math.abs(curSav))}</span></strong> — expenses exceed income by ${Math.abs(savRate)}%` });
-      }
-
-      // 3. Savings momentum vs last month
-      if (prevTxs.length > 0) {
-        const savDiff = curSav - prevSav;
-        if (Math.abs(savDiff) > 0) {
-          if (savDiff > 0) insights.push({ icon: '💰', text: `Savings <span class="down">improved</span> by <strong>${fmtS(Math.abs(savDiff))}</strong> vs ${MF[pM]} (${fmtS(prevSav)} → ${fmtS(curSav)})` });
-          else insights.push({ icon: '📉', text: `Savings <span class="up">dropped</span> by <strong>${fmtS(Math.abs(savDiff))}</strong> vs ${MF[pM]} (${fmtS(prevSav)} → ${fmtS(curSav)})` });
+        let vsPrev = '';
+        if (prevTxs.length > 0) {
+          const savDiff = curSav - prevSav;
+          if (savDiff > 0) vsPrev = ` (<span class="down">improved by ${fmtS(savDiff)}</span>)`;
+          else if (savDiff < 0) vsPrev = ` (<span class="up">dropped by ${fmtS(Math.abs(savDiff))}</span>)`;
         }
+        if (savRate >= 20) insights.push({ icon: '🏆', text: `<strong>Strong Savings:</strong> Saved <strong>${savRate}%</strong> of income (<strong>${fmtS(curSav)}</strong>)${vsPrev}. Excellent health!` });
+        else if (savRate > 0) insights.push({ icon: '💵', text: `<strong>Savings Health:</strong> Saved <strong>${savRate}%</strong> of income (<strong>${fmtS(curSav)}</strong>)${vsPrev}. Aim for 20%.` });
+        else if (savRate <= 0) insights.push({ icon: '🚨', text: `<strong>Overspending:</strong> Expenses exceeded income by <strong><span class="up">${fmtS(Math.abs(curSav))}</span></strong>${vsPrev}.` });
+      } else if (prevInc > 0 && curInc === 0) {
+        insights.push({ icon: '⏳', text: `<strong>Income Gap:</strong> No income logged yet. Last month was <strong>${fmtS(prevInc)}</strong>.` });
       }
 
-      // 4. Total expense comparison
-      if (prevExp > 0) {
-        const expPct = ((curExp - prevExp) / prevExp) * 100;
-        if (Math.abs(expPct) >= 5) {
-          if (expPct > 0) insights.push({ icon: '📊', text: `Spending <span class="up">up ${Math.round(Math.abs(expPct))}%</span> vs ${MF[pM]} — <strong>${fmtS(curExp)}</strong> vs ${fmtS(prevExp)} (+${fmtS(curExp - prevExp)})` });
-          else insights.push({ icon: '✅', text: `Spending <span class="down">down ${Math.round(Math.abs(expPct))}%</span> vs ${MF[pM]} — <strong>${fmtS(curExp)}</strong> vs ${fmtS(prevExp)} (saved ${fmtS(prevExp - curExp)})` });
-        }
-      }
-
-      // 5. Peak spending day + no-spend streak
-      const dayEntries = Object.entries(curDayExp).sort((a, b) => b[1] - a[1]);
-      if (dayEntries.length > 0) {
-        const [topDay, topDayAmt] = dayEntries[0];
-        const avgDay = curExp / Math.max(1, curExpDays.size);
-        const ratio = topDayAmt / avgDay;
-        let extra = ratio >= 2 ? ` — <span class="up">${ratio.toFixed(0)}x daily avg</span>` : '';
-        const sorted = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
-        let streak = '';
-        if (sorted.length > 0) { const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sorted[0] + 'T00:00:00')) / 86400000); if (gap >= 2) streak = ` No-spend streak: <strong>${gap} days</strong> 🔥`; }
-        insights.push({ icon: '📅', text: `Peak spend: <strong>${fmtDt(topDay)}</strong> at <strong>${fmtS(topDayAmt)}</strong>${extra}.${streak}` });
-      }
-
-      // 6. Top expense category
+      // 3. Top Expense Driver (The Main Drain)
       const catEntries = Object.entries(curCats).sort((a, b) => b[1] - a[1]);
       if (catEntries.length > 0) {
         const [topCat, topAmt] = catEntries[0];
         const pct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 0;
         const prevA = prevCats[topCat] || 0;
         let vsLast = '';
-        if (prevA > 0) { const cc = Math.round(((topAmt - prevA) / prevA) * 100); if (Math.abs(cc) >= 10) vsLast = ` (<span class="${cc > 0 ? 'up' : 'down'}">${cc > 0 ? '+' : ''}${cc}%</span> vs last month)`; }
-        insights.push({ icon: CICO[topCat] || '✦', text: `Top expense: <strong>${topCat.charAt(0).toUpperCase() + topCat.slice(1)}</strong> at <strong>${fmtS(topAmt)}</strong> (${pct}%)${vsLast}` });
+        if (prevA > 0) { 
+          const cc = Math.round(((topAmt - prevA) / prevA) * 100); 
+          if (Math.abs(cc) >= 10) vsLast = ` — <span class="${cc > 0 ? 'up' : 'down'}">${cc > 0 ? 'up' : 'down'} ${Math.abs(cc)}%</span> vs last month`; 
+        }
+        const cn = topCat.charAt(0).toUpperCase() + topCat.slice(1);
+        insights.push({ icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> consumed <strong>${pct}%</strong> of your budget (<strong>${fmtS(topAmt)}</strong>)${vsLast}.` });
       }
 
-      // 7. Biggest category swing with amounts
+      // 4. The Outlier (Notable Category Swing)
       if (prevTxs.length > 0) {
         const allC = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
         let bCat = null, bPct = 0, bDir = '', bCur = 0, bPrev = 0;
-        allC.forEach(cat => { const cur = curCats[cat] || 0, prev = prevCats[cat] || 0; if (prev > 0) { const p = ((cur - prev) / prev) * 100; if (Math.abs(p) > Math.abs(bPct) && Math.abs(p) >= 10) { bPct = p; bCat = cat; bDir = p > 0 ? 'up' : 'down'; bCur = cur; bPrev = prev; } } });
-        if (bCat) { const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1); insights.push({ icon: bDir === 'up' ? '🔺' : '🔻', text: `<strong>${cn}</strong> <span class="${bDir === 'up' ? 'up' : 'down'}">${bDir} ${Math.round(Math.abs(bPct))}%</span> — ${fmtS(bPrev)} → ${fmtS(bCur)}` }); }
+        allC.forEach(cat => { 
+          const cur = curCats[cat] || 0, prev = prevCats[cat] || 0; 
+          if (prev > 0) { 
+            const p = ((cur - prev) / prev) * 100; 
+            if (cat !== (catEntries[0]?.[0]) && Math.abs(p) > Math.abs(bPct) && Math.abs(p) >= 20) { 
+              bPct = p; bCat = cat; bDir = p > 0 ? 'up' : 'down'; bCur = cur; bPrev = prev; 
+            } 
+          } 
+        });
+        if (bCat) { 
+          const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1); 
+          insights.push({ icon: bDir === 'up' ? '🔺' : '🔻', text: `<strong>Notable Change:</strong> <strong>${cn}</strong> is <span class="${bDir === 'up' ? 'up' : 'down'}">${bDir} ${Math.round(Math.abs(bPct))}%</span> from last month (${fmtS(bPrev)} → ${fmtS(bCur)}).` }); 
+        }
       }
 
-      // 8. Income comparison
-      if (prevInc > 0) {
-        const iPct = ((curInc - prevInc) / prevInc) * 100;
-        if (Math.abs(iPct) >= 5) {
-          if (iPct > 0) insights.push({ icon: '📈', text: `Income <span class="down">up ${Math.round(Math.abs(iPct))}%</span> vs ${MF[pM]} — <strong>${fmtS(curInc)}</strong> (+${fmtS(curInc - prevInc)})` });
-          else insights.push({ icon: '📉', text: `Income <span class="up">down ${Math.round(Math.abs(iPct))}%</span> vs ${MF[pM]} — <strong>${fmtS(curInc)}</strong> (-${fmtS(prevInc - curInc)})` });
+      // 5. Spending Habits (Peak Day & Streaks)
+      const sortedExpDays = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
+      if (sortedExpDays.length > 0) {
+        const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000); 
+        const dayEntries = Object.entries(curDayExp).sort((a, b) => b[1] - a[1]);
+        const [topDay, topDayAmt] = dayEntries[0] || [];
+        
+        if (gap >= 3) {
+          insights.push({ icon: '🔥', text: `<strong>Hot Streak:</strong> You haven't spent any money in <strong>${gap} days</strong>! Keep it going.` });
+        } else if (topDay && topDayAmt > 0) {
+          const avgDay = curExp / Math.max(1, curExpDays.size);
+          const ratio = topDayAmt / avgDay;
+          if (ratio >= 2.5) {
+            insights.push({ icon: '📅', text: `<strong>Peak Day:</strong> <strong>${fmtDt(topDay)}</strong> saw a massive <strong>${fmtS(topDayAmt)}</strong> spend (${ratio.toFixed(1)}x your daily avg).` });
+          }
         }
       }
 
