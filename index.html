@@ -7619,31 +7619,24 @@
               });
             }
           }).catch(e => console.error('checkAndTriggerRecurring (render) failed:', e));
-        } else if (!_tagPastDone) {
-          // tagPastSubscriptions tags old txs with _recurring:true and subId.
-          // Gated by _tagPastDone to prevent the infinite loop:
-          // tagPast writes → onSnapshot → debouncedRender → tagPast again.
-          // Once tagPast finds nothing to tag, _tagPastDone is set and further
-          // snapshot echoes skip re-running it. Reset only on recurring list changes.
-          tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then((count) => {
-            if (count === 0) _tagPastDone = true;
-            if (!_earlyPayDone) {
-              detectEarlyPayments().then((matched) => {
-                if (!matched) _earlyPayDone = true;
-              });
-            }
-          });
         } else if (!_earlyPayDone) {
           detectEarlyPayments().then((matched) => {
             if (!matched) _earlyPayDone = true;
           });
         }
-        
+
+        // FIX: independent of the block above now, so a fresh _recCatchUpDone=false
+        // (e.g. right after adding/editing a subscription's altAmounts) can no
+        // longer starve this call.
+        if (!_tagPastDone) {
+          tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then((count) => {
+            if (count === 0) _tagPastDone = true;
+          });
+        }
+
         // Background sweep to ensure any transaction that matches a subscription
-        // (including via altAmounts) gets the _recurring tag, even if it was skipped 
+        // (including via altAmounts) gets the _recurring tag, even if it was skipped
         // by the strict date guards of checkAndTrigger / detectEarlyPayments.
-        // Run whenever at least the primary tagging pass (tagPast) is done, so
-        // secondary-amount transactions are not left waiting for all async gates.
         if (_tagPastDone || _tagPastRunning) {
           syncUntaggedMatches();
         }
