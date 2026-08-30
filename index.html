@@ -2104,14 +2104,44 @@
       height: 4px;
       background: var(--s2);
       border-radius: 2px;
-      overflow: hidden;
+      position: relative;
       margin-top: 8px
     }
 
-    .mbb {
+    .mbb, .mbb-overfill {
       height: 100%;
       border-radius: 2px;
+      position: absolute;
+      top: 0;
+      left: 0;
       transition: width 1.5s var(--ease-out-expo), background-color 1s ease;
+    }
+    
+    .mbb-overfill {
+      filter: brightness(1.3);
+      box-shadow: 0 0 4px rgba(255,255,255,0.2);
+    }
+    
+    .mbb.extreme {
+      background: var(--ex) !important;
+      animation: pulseExtreme 1s infinite alternate;
+    }
+    
+    .r-stripe {
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px) !important;
+      background-size: 11px 11px;
+    }
+    
+    @keyframes pulseExtreme {
+      from { box-shadow: 0 0 0px var(--ex); }
+      to { box-shadow: 0 0 6px var(--ex); }
+    }
+    
+    .extreme-warn {
+      position: absolute;
+      right: 0;
+      top: -12px;
+      font-size: 10px;
     }
 
     .mbb.tp {
@@ -2125,10 +2155,10 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .mbb {
+      .mbb, .mbb-overfill {
         transition: none;
       }
-      .mbb.tp {
+      .mbb.tp, .mbb-overfill.tp, .mbb.extreme {
         animation: none;
       }
     }
@@ -9007,7 +9037,52 @@
         txByYM[y][m].push(t);
       });
       const yrs = [...yearSet].sort((a, b) => b - a);
-      const newHtml = yrs.map(yr => mkYrBlock(yr, txByYM[yr] || {}, todayISO, cY, cM, cD)).join('');
+      
+      const allTxDates = txs.map(t => new Date(t.date + 'T00:00:00'));
+      const firstTxDate = allTxDates.length ? new Date(Math.min(...allTxDates)) : now;
+      const daysSinceFirstTransaction = Math.max(0, Math.floor((now - firstTxDate) / 86400000));
+      
+      let trailing12MonthMaxSpend = 0;
+      let trailing12MonthTotal = 0;
+      
+      for (let i = 0; i < 12; i++) {
+        let d = new Date(cY, cM - i, 1);
+        let y = d.getFullYear();
+        let m = d.getMonth();
+        if (txByYM[y] && txByYM[y][m]) {
+          let mExp = txByYM[y][m].filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+          trailing12MonthTotal += mExp;
+          if (mExp > trailing12MonthMaxSpend) trailing12MonthMaxSpend = mExp;
+        }
+      }
+      
+      let totalMonthsOfHistory = 0;
+      yrs.forEach(y => {
+        if (txByYM[y]) {
+          for (let m = 0; m < 12; m++) {
+            if (txByYM[y][m] && txByYM[y][m].length > 0) totalMonthsOfHistory++;
+          }
+        }
+      });
+      
+      let lastCompletedYearActualTotal = 0;
+      if (txByYM[cY - 1]) {
+        lastCompletedYearActualTotal = Object.values(txByYM[cY - 1]).flat().filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+      }
+      
+      let boundarySpend = trailing12MonthMaxSpend * 1.2;
+      let stableYearTotal = lastCompletedYearActualTotal || ((trailing12MonthTotal / Math.max(1, totalMonthsOfHistory)) * 12);
+      
+      let adaptiveMultiplier = 5;
+      if (daysSinceFirstTransaction < 14) {
+        adaptiveMultiplier = 1;
+      } else if (totalMonthsOfHistory < 3) {
+        adaptiveMultiplier = 5;
+      } else {
+        adaptiveMultiplier = Math.max(3, Math.min(10, stableYearTotal / boundarySpend));
+      }
+      
+      const newHtml = yrs.map(yr => mkYrBlock(yr, txByYM[yr] || {}, todayISO, cY, cM, cD, adaptiveMultiplier, lastCompletedYearActualTotal)).join('');
 
       // Skip DOM rebuild entirely when content is identical — prevents flicker on re-renders
       if (newHtml === _yrLastHtml) return;
@@ -9055,7 +9130,7 @@
       });
     }
 
-    function mkYrBlock(yr, yrMonths, todayISO, cY, cM, cD) {
+    function mkYrBlock(yr, yrMonths, todayISO, cY, cM, cD, adaptiveMultiplier, lastCompletedYearActualTotal) {
       const isCur = yr === cY;
       const yrTxs = Object.values(yrMonths).flat();
       const yrExp = yrTxs.filter(t => t.type === 'expense');
@@ -9078,13 +9153,13 @@
       });
       const mMax = Math.max(...mT, 1), lastM = isCur ? cM : 11;
       const sparks = mT.slice(0, lastM + 1).map((v, m) => { const h = Math.max(3, Math.round((v / mMax) * 28)); return `<div class="spk${isCur && m === cM ? ' cm' : ''}" style="height:${h}px" data-tip="${MN[m]}: ${fmtS(v)}"></div>`; }).join('');
-      const mnHTML = Array.from({ length: 12 }, (_, m) => mkMnCard(m, yr, yrMonths, isCur, cM, cD, todayISO, mMax, yrTot, cY, yrAvg)).join('');
+      const mnHTML = Array.from({ length: 12 }, (_, m) => mkMnCard(m, yr, yrMonths, isCur, cM, cD, todayISO, mMax, yrTot, cY, yrAvg, adaptiveMultiplier, lastCompletedYearActualTotal)).join('');
       const netClr = yrNet >= 0 ? 'var(--in)' : 'var(--ex)';
       const savRateHtml = yrSavRate !== null ? `<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${yrSavRate > 0 ? '+' : ''}${yrSavRate}%</span></div>` : '';
       return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
     }
 
-    function mkMnCard(m, yr, yrMonths, isCurYr, cM, cD, todayISO, mMax, yrTot, cY, yrAvg) {
+    function mkMnCard(m, yr, yrMonths, isCurYr, cM, cD, todayISO, mMax, yrTot, cY, yrAvg, adaptiveMultiplier, lastCompletedYearActualTotal) {
       if (yr > cY || (isCurYr && m > cM)) return '';
       const isCur = isCurYr && m === cM;
       const mAll = (yrMonths[m] || []);
@@ -9103,13 +9178,47 @@
       const ofl = mE.filter(t => t.mode !== 'online').reduce((s, t) => s + t.amount, 0);
       const ys2 = yrTot > 0 ? Math.round(tot / yrTot * 100) : 0;
 
+      // Volatility Guard for Current Year
+      let projectedYearTotal = yrTot; 
+      if (isCurYr) {
+        const startDt = new Date(cY, 0, 1);
+        const curDt = new Date(todayISO + 'T00:00:00');
+        const daysElapsedYr = Math.max(1, Math.floor((curDt - startDt) / 86400000) + 1);
+        
+        let rawProjection = yrAvg * 365;
+        if (lastCompletedYearActualTotal > 0 && daysElapsedYr <= 14) {
+          projectedYearTotal = (daysElapsedYr / 14) * rawProjection + (1 - daysElapsedYr / 14) * lastCompletedYearActualTotal;
+        } else {
+          projectedYearTotal = rawProjection;
+        }
+      }
+
       // Progress bar calculations
-      let bp = yrTot > 0 ? (tot / yrTot) * 100 : 0;
-      if (bp > 0) bp = Math.max(2, bp); // min-width 2% protection for positive shares
+      let truePercent = projectedYearTotal > 0 ? (tot / projectedYearTotal) * 100 : 0;
+      let boundary = 100 / adaptiveMultiplier;
+      let baseWidth = Math.min(100, (truePercent / boundary) * 100);
+      let overfillWidth = 0;
+      let isExtreme = false;
+      
+      if (truePercent > boundary) {
+        if (truePercent > boundary * 2) {
+          isExtreme = true;
+          baseWidth = 100;
+        } else {
+          let overfillPercent = truePercent - boundary;
+          overfillWidth = (overfillPercent / boundary) * 100;
+          if (overfillWidth < 0.5) overfillWidth = 0; // Epsilon guard
+        }
+      }
+
       let dev = yrAvg > 0 ? ((avg - yrAvg) / yrAvg) * 100 : 0;
       let intensity = Math.min(100, Math.abs(dev) * 3.33); // Max intensity at 30% dev
       let barColor = dev > 0 ? `color-mix(in srgb, var(--ex) ${intensity}%, var(--ac))` : `color-mix(in srgb, var(--in) ${intensity}%, var(--ac))`;
       if (yrTot === 0) barColor = 'var(--ac)'; // Zero expense year fallback
+      
+      // Determine if pacing is in Red state for striped pattern
+      let isRedPacing = dev > 0;
+
       let tdHTML = '';
       if (isCur) { const tdS = mE.filter(t => t.date === todayISO).reduce((s, t) => s + t.amount, 0), tdC = mE.filter(t => t.date === todayISO).length; tdHTML = `<div class="tdc"><span class="tdcl">Today, ${cD} ${MN[m]}</span><span class="tdcv">${fmt(tdS)} <span style="font-size:10px;opacity:.7">${tdC} tx</span></span></div>`; }
       const mTxCount = mAll.length;
@@ -9131,8 +9240,12 @@
       <div class="ms"><span class="msl">🏪 Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
     </div>
     ${tdHTML}
-    <div class="mbw"><div class="mbb${isCur ? ' tp' : ''}" style="width:${bp}%; background:${barColor}"></div></div>
-    <div class="mpr" title="Deviation: ${dev > 0 ? '+' : ''}${Math.round(dev)}%">${(yrTot > 0 ? (tot / yrTot) * 100 : 0).toFixed(1)}% of Yearly Spend</div>
+    <div class="mbw">
+      <div class="mbb${isCur ? ' tp' : ''}${isRedPacing ? ' r-stripe' : ''}${isExtreme ? ' extreme' : ''}" style="width:${baseWidth}%; background:${isExtreme ? '' : barColor}"></div>
+      ${overfillWidth > 0 && !isExtreme ? `<div class="mbb-overfill${isCur ? ' tp' : ''}" style="width:${overfillWidth}%; background:${barColor}"></div>` : ''}
+      ${isExtreme ? `<div class="extreme-warn">⚠️</div>` : ''}
+    </div>
+    <div class="mpr" title="Deviation: ${dev > 0 ? '+' : ''}${Math.round(dev)}%">${truePercent.toFixed(1)}% of Yearly Spend</div>
     <div class="mc-hint"><span class="mc-hint-show">▼ View ${mTxCount} Txs</span><span class="mc-hint-hide">▲ Hide ${mTxCount} Txs</span></div>
   </div>`;
     }
