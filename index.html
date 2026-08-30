@@ -7688,6 +7688,7 @@
         
         if (!toTag.length) return;
         
+        const successfullyCommitted = new Set();
         const opToken = ++_txOpSeq;
         // Pre-register pending updates + session markers BEFORE commit so onSnapshot
         // rebuilds preserve the tags even if Firestore hasn't confirmed yet.
@@ -7706,18 +7707,27 @@
           });
         }, 15000);
 
-        for (let i = 0; i < toTag.length; i += 450) {
-          const chunk = toTag.slice(i, i + 450);
-          const eligible = chunk.filter(({ txId }) => !_txWriteLocks.has(txId));
-          if (!eligible.length) continue;
-          const currentBatch = writeBatch(db);
-          eligible.forEach(({txId, recId}) => {
-            currentBatch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId });
-          });
-          await currentBatch.commit();
-          eligible.forEach(({txId, recId}) => {
-            const tx = txs.find(x => x.id === txId);
-            if (tx) { tx._recurring = true; tx.subId = recId; }
+        try {
+          for (let i = 0; i < toTag.length; i += 450) {
+            const chunk = toTag.slice(i, i + 450);
+            const eligible = chunk.filter(({ txId }) => !_txWriteLocks.has(txId));
+            if (!eligible.length) continue;
+            const currentBatch = writeBatch(db);
+            eligible.forEach(({txId, recId}) => {
+              currentBatch.update(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId });
+            });
+            await currentBatch.commit();
+            eligible.forEach(({txId, recId}) => {
+              successfullyCommitted.add(txId);
+              const tx = txs.find(x => x.id === txId);
+              if (tx) { tx._recurring = true; tx.subId = recId; }
+            });
+          }
+        } finally {
+          toTag.forEach(({ txId }) => {
+            if (!successfullyCommitted.has(txId)) {
+              _sessionTaggedTxIds.delete(txId);
+            }
           });
         }
         // Firestore onSnapshot will trigger debouncedRender after batch commits.
@@ -9262,8 +9272,8 @@
     ${tdHTML}
     <!-- progress bar redesign -->
     <div class="mbw">
-      <div class="mbb${isCur ? ' tp' : ''}${isRedPacing ? ' r-stripe' : ''}${isExtreme ? ' extreme' : ''}" style="width:${baseWidth}%; background:${isExtreme ? '' : barColor}"></div>
-      ${overfillWidth > 0 && !isExtreme ? `<div class="mbb-overfill${isCur ? ' tp' : ''}" style="width:${overfillWidth}%; background:${barColor}"></div>` : ''}
+      <div class="mbb${isCur ? ' tp' : ''}${isRedPacing ? ' r-stripe' : ''}${isExtreme ? ' extreme' : ''}" style="width:${baseWidth}%; background:${isExtreme ? 'transparent' : barColor}"></div>
+      ${overfillWidth > 0 && !isExtreme ? `<div class="mbb-overfill${isCur ? ' tp' : ''}" style="left:${baseWidth}%; width:${overfillWidth}%; background:${barColor}"></div>` : ''}
     </div>
     <div class="mpr" title="Deviation: ${dev > 0 ? '+' : ''}${Math.round(dev)}%">
       ${isExtreme ? `<span class="extreme-warn">⚠️ EXTREME</span> &bull; ` : ''}
