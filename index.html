@@ -6988,14 +6988,13 @@
           if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount > 0) {
             // V8: Explicit property pick to prevent prototype pollution — Object.assign
             // copies __proto__ as a regular key which can still pollute downstream spreads.
-            const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId, _manualLink } = data;
+            const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId } = data;
             const clean = { date, amount, type, mode, desc, cat, createdAt };
             if (eventId) clean.eventId = eventId;
             if (_imp) clean._imp = true;
             if (_recurring) clean._recurring = true;
             if (_auto) clean._auto = true;
             if (subId) clean.subId = subId;
-            if (_manualLink) clean._manualLink = true;
 
             // Apply pending optimistic tags to ensure they survive echo snapshots
             if (_pendingTxUpdates.has(doc.id)) {
@@ -7043,11 +7042,11 @@
         }
         // Exclude tx pending soft-delete during undo window
         if (_undoTxData) txs = txs.filter(t => t.id !== _undoTxData.id);
-        // Re-apply any in-flight optimistic mutations (link/unlink) that haven't been
+        // Re-apply any in-flight optimistic mutations that haven't been
         // confirmed by Firestore yet. Uses a confirm-then-clear pattern: only remove
         // entries from the pending map once the snapshot data matches. This prevents
         // a concurrent onSnapshot (e.g. tagPastSubscriptions batch) from erasing
-        // subId/_manualLink fields before the updateDoc has been confirmed.
+        // subId fields before the updateDoc has been confirmed.
         if (_pendingTxUpdates.size > 0) {
           const confirmedIds = [];
           _pendingTxUpdates.forEach((updates, id) => {
@@ -7374,7 +7373,6 @@
       if (txData._recurring) undoData._recurring = true;
       if (txData._auto) undoData._auto = true;
       if (txData.subId) undoData.subId = txData.subId;
-      if (txData._manualLink) undoData._manualLink = true;
       if (txData.createdAt) undoData.createdAt = txData.createdAt;
       _undoTxData = { id, data: undoData };
       // Remove from local array immediately for responsive feel
@@ -7636,7 +7634,6 @@
         for (const t of txs) {
           if (t._recurring || t.subId) continue;
           if (_txWriteLocks.has(t.id) || _pendingTxUpdates.has(t.id)) continue;
-          if (t._manualLink) continue;
           
           const tDescLow = (t.desc || '').trim().toLowerCase();
           if (!tDescLow) continue;
@@ -7764,9 +7761,8 @@
 
         toTag = [];
         txs.forEach(tx => {
-          if (_txWriteLocks.has(tx.id)) return; // Being actively modified by linkSubTx/unlinkSubTx
+          if (_txWriteLocks.has(tx.id)) return; // Being actively modified
           if (_pendingTxUpdates.has(tx.id)) return; // In-flight optimistic mutation
-          if (tx._manualLink) return;  // Manually linked — don't touch
           // Skip if already fully tagged (has both _recurring AND subId)
           if (tx._recurring && tx.subId) return;
           // Skip if already tagged in this session (prevents re-tagging on echo snapshots)
@@ -7823,7 +7819,7 @@
         const successfullyCommitted = new Set();
         for (let i = 0; i < toTag.length; i += 450) {
           const chunk = toTag.slice(i, i + 450);
-          // Re-check locks immediately before writing — a concurrent linkSubTx may have
+          // Re-check locks immediately before writing — a concurrent operation may have
           // acquired a write lock or pending entry since toTag was built earlier
           const eligible = chunk.filter(({ txId }) =>
             !_txWriteLocks.has(txId)
@@ -7846,7 +7842,7 @@
               successfullyCommitted.add(txId);
               // Optimistic local update
               const tx = txs.find(t => t.id === txId);
-              if (tx && !_txWriteLocks.has(txId) && !tx._manualLink) {
+              if (tx && !_txWriteLocks.has(txId)) {
                 tx._recurring = true;
                 tx.subId = recId;
               }
@@ -10787,8 +10783,7 @@
                 if (t.date < minD || t.date > maxD) return false;
                 if (matchedTxIds.has(t.id)) return false;
                 if (globallyMatchedTxIds.has(t.id)) return false;
-                // Don't steal manually-linked txs or txs already linked to a different sub
-                if (t._manualLink) return false;
+                // Don't steal txs already linked to a different sub
                 if (t._auto && t.subId !== rec.id) return false;
                 if (t.subId && t.subId !== rec.id) return false;
                 return true;
@@ -10958,8 +10953,7 @@
           if (globallyMatchedTxIds.has(t.id)) return false;
           if (_txWriteLocks.has(t.id)) return false;
           if (_pendingTxUpdates.has(t.id)) return false;
-          // Don't steal manually-linked txs or txs already linked to a different sub
-          if (t._manualLink || manualLinksMap.has(t.id)) return false;
+          // Don't steal txs already linked to a different sub
           if (t._auto && t.subId !== rec.id) return false;
           if (t.subId && t.subId !== rec.id) return false;
           // Skip txs already matched to THIS sub (by tagPast or checkAndTrigger)
@@ -11175,12 +11169,11 @@
       const rec = recurringList.find(r => r.id === recId);
       if (!rec) { inner.innerHTML = '<div class="sub-hist-empty">Subscription not found.</div>'; _subHistLastHtml.delete(recId); return; }
 
-      // Match by subId (linked) OR by _manualLink flag (if subId was lost during a past sync)
-      // OR by name+amount+type fuzzy match for auto-tagged past payments
+      // Match by subId (linked) OR by name+amount+type fuzzy match for auto-tagged past payments
       const nameLow = (rec.name || '').trim().toLowerCase();
 
       // Build a set of IDs from syncQueue pending writes so we include transactions
-      // that have been locally updated (e.g. linkSubTx) but not yet confirmed by Firestore.
+      // that have been locally updated but not yet confirmed by Firestore.
       const pendingLinkIds = new Map(); // txId -> merged data from syncQueue
       if (typeof syncQueue !== 'undefined') {
         syncQueue.forEach(q => {
@@ -11207,13 +11200,12 @@
 
       const subTxs = effectiveTxs
         .filter(t => {
-          // Primary: explicit subId link (covers both auto-tagged and manual links)
+          // Primary: explicit subId link (covers both auto-tagged links)
           if (t.subId === recId) return true;
           // Fallback: fuzzy match for transactions tagged with _recurring OR untagged-but-matching
           // (untagged ones are progressively backfilled with subId by tagPastSubscriptions)
           const _allRecAmtsH = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
           if (t.subId && t.subId !== recId) return false; // Owned by a different sub — skip
-          if (t._manualLink) return false; // Manually linked elsewhere
           const tDescLow = (t.desc || '').trim().toLowerCase();
           if (!tDescLow || !nameLow) return false;
           // Name must match (exact or fuzzy contains, with length ratio guard)
