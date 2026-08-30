@@ -9079,7 +9079,7 @@
       } else if (totalMonthsOfHistory < 3) {
         adaptiveMultiplier = 5;
       } else {
-        adaptiveMultiplier = Math.max(3, Math.min(10, stableYearTotal / boundarySpend));
+        adaptiveMultiplier = boundarySpend === 0 ? 10 : Math.max(3, Math.min(10, stableYearTotal / boundarySpend));
       }
       
       const newHtml = yrs.map(yr => mkYrBlock(yr, txByYM[yr] || {}, todayISO, cY, cM, cD, adaptiveMultiplier, lastCompletedYearActualTotal)).join('');
@@ -9230,9 +9230,8 @@
       return `<div class="mc${isCur ? ' cm2' : ''}" onclick="lazyLoadMonthTxs(this, ${yr}, ${m})">
     <div class="mct"><span class="mcn">${MF[m]} ${isCur ? '<span class="now-badge">● NOW</span>' : ''}</span><span class="mcv">${tot > 0 ? fmt(tot) : '—'}</span></div>
     <div class="mcs">
-      <div class="ms"><span class="msl">Active Days</span><span class="msv${days > 0 ? ' h' : ''}">${days}/${dim}</span></div>
-      <div class="ms"><span class="msl">Avg/Day</span><span class="msv${avg > 0 ? ' h' : ''}">${avg > 0 ? fmtW(avg) : '—'}</span></div>
-      <div class="ms"><span class="msl">% of Year</span><span class="msv${ys2 > 0 ? ' h' : ''}">${ys2 > 0 ? ys2 + '%' : '—'}</span></div>
+      <div class="ms"><span class="msl">Active Days</span><span class="msv">${days}/${dim}</span></div>
+      <div class="ms"><span class="msl">Avg/Day</span><span class="msv" style="color:${avg > 0 ? barColor : 'var(--tx)'}">${avg > 0 ? fmtW(avg) : '—'}</span></div>
       ${incRow}${netRow}${savRateRow}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:${isCur ? '6px' : '0'}">
