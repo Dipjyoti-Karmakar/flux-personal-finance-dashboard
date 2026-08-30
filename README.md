@@ -227,7 +227,7 @@ The app ships with a default Firebase project so it works out of the box. To con
 
 ### Step 4: Apply Security Rules
 
-In the Firestore console, go to the **Rules** tab and replace the contents with the following:
+In the Firestore console, go to the **Rules** tab and replace the contents with the rules below. (You can also find these in the `firestore.rules` file included in this repository):
 
 ```js
 rules_version = '2';
@@ -243,37 +243,55 @@ service cloud.firestore {
     // Protect the root user document
     match /users/{userId} {
       allow read, write: if isOwner(userId);
+
       // Transactions Collection
       match /transactions/{txId} {
         allow read, delete: if isOwner(userId);
-        allow create, update: if isOwner(userId)
+        allow create: if isOwner(userId)
           && request.resource.data.keys().hasAll(['desc', 'amount', 'type', 'date', 'createdAt'])
           && request.resource.data.amount is number
           && request.resource.data.desc is string
           && request.resource.data.type in ['income', 'expense'];
+        allow update: if isOwner(userId)
+          && request.resource.data.amount is number
+          && request.resource.data.desc is string
+          && request.resource.data.type in ['income', 'expense'];
       }
+
       // Subscriptions (Recurring) Collection
       match /recurring/{recId} {
         allow read, delete: if isOwner(userId);
-        allow create, update: if isOwner(userId)
+        allow create: if isOwner(userId)
           && request.resource.data.keys().hasAll(['name', 'amount', 'freq', 'type', 'createdAt'])
           && request.resource.data.amount is number
           && request.resource.data.name is string
           && request.resource.data.type in ['income', 'expense']
           && request.resource.data.freq in ['daily', 'weekly', 'monthly', 'yearly', 'custom'];
+        allow update: if isOwner(userId)
+          && request.resource.data.amount is number
+          && request.resource.data.name is string
+          && request.resource.data.type in ['income', 'expense']
+          && request.resource.data.freq in ['daily', 'weekly', 'monthly', 'yearly', 'custom'];
       }
+
       // Events Collection
       match /events/{evtId} {
         allow read, delete: if isOwner(userId);
-        allow create, update: if isOwner(userId)
+        allow create: if isOwner(userId)
           && request.resource.data.keys().hasAll(['name', 'start', 'end', 'color'])
           && request.resource.data.name is string;
+        allow update: if isOwner(userId)
+          && request.resource.data.name is string;
       }
+
       // Activity Logs Collection
       match /activities/{actId} {
         allow read, delete: if isOwner(userId);
-        allow create, update: if isOwner(userId)
+        allow create: if isOwner(userId)
           && request.resource.data.keys().hasAll(['a', 'm', 'ts'])
+          && request.resource.data.a in ['ADD', 'EDIT', 'DELETE', 'UPDATE', 'IMPORT']
+          && request.resource.data.ts is number;
+        allow update: if isOwner(userId)
           && request.resource.data.a in ['ADD', 'EDIT', 'DELETE', 'UPDATE', 'IMPORT']
           && request.resource.data.ts is number;
       }
@@ -298,7 +316,7 @@ Click **Publish**. These rules lock every collection to its owner. No other auth
 
 ### Step 7: Replace the Config in index.html
 
-Open `index.html` and find the `firebaseConfig` object near line 2004. Replace the entire object with your own credentials:
+Open `index.html` and search for the `firebaseConfig` object (usually near the top of the main `<script>` tag). Replace the entire object with your own credentials:
 
 ```js
 const firebaseConfig = {
@@ -345,7 +363,8 @@ Then open `http://localhost:8000`.
 
 ```text
 flux-webapp/
-├── index.html      # Entire application: HTML, CSS, and JS in a single file (~7,200 lines)
+├── index.html      # Entire application: HTML, CSS, and JS in a single file (~13,000+ lines)
+├── firestore.rules # Firebase security rules for data validation and access control
 ├── manifest.json   # PWA Web App Manifest
 ├── sw.js           # Service Worker: offline caching, network-first for navigation
 ├── icon-192.png    # PWA icon
