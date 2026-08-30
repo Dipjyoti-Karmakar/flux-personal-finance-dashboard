@@ -10691,6 +10691,7 @@
       globallyMatchedTxIds.clear();
       const today = getTodayStr();
       let triggeredCount = 0;
+      let matchedCount = 0;
 
       for (const rec of recurringList) {
         if (!rec.active || !rec.nextDue || today < rec.nextDue) continue;
@@ -10815,6 +10816,7 @@
                 paymentsMade++;
               } else {
                 matchedTxIds.add(matchedTx.id);
+                matchedCount++;
                 // Tag the matched transaction with subId so it appears in subscription history
                 if (!matchedTx.subId || matchedTx.subId !== rec.id || !matchedTx._recurring) {
                   transaction.update(doc(db, 'users', userId, 'transactions', matchedTx.id), { _recurring: true, subId: rec.id });
@@ -10905,7 +10907,14 @@
         }
       }
 
-      if (triggeredCount > 0) showToast(`✓ Auto-added: ${triggeredCount} past subscriptions`, 'ok');
+      if (triggeredCount > 0 || matchedCount > 0) {
+        let toastMsg = '✓ Auto-recurring: ';
+        const parts = [];
+        if (triggeredCount > 0) parts.push(`${triggeredCount} transaction${triggeredCount > 1 ? 's' : ''} added`);
+        if (matchedCount > 0) parts.push(`${matchedCount} existing payment${matchedCount > 1 ? 's' : ''} matched`);
+        toastMsg += parts.join(', ');
+        showToast(toastMsg, 'ok');
+      }
     }
 
     // ── Early-payment detection for subscriptions whose nextDue is still in the future ──
@@ -11057,12 +11066,15 @@
     }
 
     let _recurringLastHtml = ''; // Cache to skip re-render when recurring data hasn't changed
+    const _openSubHistPanels = new Set(); // Track open history panels across DOM rebuilds
     function renderRecurring() {
       const area = document.getElementById('subList');
       if (!area) return;
 
-      // Preserve open panels
-      const openPanels = new Set();
+      // Preserve open panels — use the persistent Set rather than querying DOM
+      // (DOM-based detection fails when renderRecurring is called during a transition)
+      const openPanels = new Set(_openSubHistPanels);
+      // Also check DOM in case a panel was opened by user click that didn't go through our Set
       area.querySelectorAll('.sub-hist-panel.open').forEach(p => {
         const id = p.id.replace('hist-panel-', '');
         openPanels.add(id);
@@ -11174,10 +11186,22 @@
 
       area.innerHTML = newHtml;
 
-      // Restore open panels
+      // Restore open panels — directly set state instead of calling toggleSubHistory
+      // which triggers renderSubHistInner → auto-tag writes → onSnapshot → re-render loop
+      // that causes the panel to get stuck in a perpetual rebuild cycle.
       openPanels.forEach(id => {
+        const panel = document.getElementById('hist-panel-' + id);
         const btn = document.getElementById('hist-btn-' + id);
-        if (btn) toggleSubHistory(btn, id);
+        if (panel) {
+          panel.classList.add('open');
+          _openSubHistPanels.add(id);
+        }
+        if (btn) {
+          btn.classList.add('act');
+          btn.innerHTML = '▲ Close';
+        }
+        // Render content without triggering auto-tag (which causes re-render loop)
+        renderSubHistInner(id);
       }); if (typeof twemoji !== 'undefined') twemoji.parse(area);
     }
 
@@ -11190,6 +11214,13 @@
       panel.classList.toggle('open', !isOpen);
       btn.classList.toggle('act', !isOpen);
       btn.innerHTML = isOpen ? '📋 History' : '▲ Close';
+
+      // Track in persistent Set so renderRecurring can restore across DOM rebuilds
+      if (isOpen) {
+        _openSubHistPanels.delete(recId);
+      } else {
+        _openSubHistPanels.add(recId);
+      }
 
       if (isOpen) return;
       // Always re-render on open so new transactions (sync, auto-match) appear immediately
