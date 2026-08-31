@@ -10515,8 +10515,11 @@
 
     // FAB: scroll to New Transaction form & auto-hide when form is visible
     function scrollToForm() {
-      const form = document.querySelector('.fb2');
-      if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (typeof switchTab === 'function') switchTab('dashboard');
+      setTimeout(() => {
+        const form = document.querySelector('.fb2');
+        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
     }
     (function initFab() {
       const fab = document.getElementById('fab');
