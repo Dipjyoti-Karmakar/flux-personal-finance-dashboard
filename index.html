@@ -6409,7 +6409,7 @@
 
         <!-- By Category -->
         <div class="pn pn-fixed" id="catAreaWrap">
-          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="document.body.classList.toggle('mob-cat-expanded'); this.innerText = document.body.classList.contains('mob-cat-expanded') ? 'Show Less' : 'View All'; renderCats();">View All</span></div>
+          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="document.body.classList.toggle('mob-cat-expanded'); forceRenderCats();">View All</span></div>
           <div class="ca" style="padding: 12px 16px; flex:1; min-height:0; overflow-y:auto;" id="ctArea">
             <div class="empty-state" style="padding:24px 16px">
               <div class="empty-icon">📂</div>
@@ -9139,7 +9139,8 @@
       // Handle the View All text
       const viewAllBtn = document.querySelector('#catAreaWrap .pb');
       if (viewAllBtn) {
-          if (activeCatFilter) {
+          const totalCatsCount = Object.keys(tot).length;
+          if (activeCatFilter || totalCatsCount <= 4) {
               viewAllBtn.style.display = 'none';
           } else {
               viewAllBtn.style.display = 'inline-block';
@@ -13045,6 +13046,8 @@
     window.loadMoreCatTx = loadMoreCatTx;
     window.switchTab = switchTab;
     window.renderLogs = renderLogs;
+    window.renderCats = renderCats;
+    window.forceRenderCats = () => { _catLastHtml = ''; renderCats(); };
     window.toggleLogSelectionMode = toggleLogSelectionMode;
     window.toggleLogSelection = toggleLogSelection;
     window.confirmDeleteSelectedLogs = confirmDeleteSelectedLogs;
