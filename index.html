@@ -5901,7 +5901,7 @@
     }
 
     @media (max-width: 520px) {
-      .app { padding-bottom: 80px; }
+      .app { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
       .app-tabs { display: none !important; }
       .mobile-bottom-nav { display: flex; }
       .fab { display: none !important; }
@@ -6152,7 +6152,7 @@
         <div class="sc card-in">
           <div class="sl">Total Expenses</div>
           <div class="sv med neg" id="sExp">₹0.00</div>
-          <div class="ss" id="sExpS">0 transactions</div>
+          <div class="ss"><span id="sExpS">0 transactions</span><span id="sExpBadge" class="mob-hero-badge" style="display:none;"></span></div>
         </div>
       </div>
       <div class="srow sr2">
@@ -6423,7 +6423,7 @@
       <span
         style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;">🔍</span>
       <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)"
-        style="padding:10px 14px 10px 36px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);"
+            style="padding:10px 14px 10px 36px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);"
         onfocus="this.style.borderColor='var(--on)';this.style.boxShadow='0 0 0 2px var(--ob)'"
         onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='var(--sh-card)'" aria-label="Search logs">
     </div>
@@ -6451,7 +6451,7 @@
       <span class="mob-nav-icon">↻</span>
       <span class="mob-nav-label">Subscriptions</span>
     </button>
-    <button class="mob-nav-center" id="mnAdd" onclick="scrollToForm()">＋</button>
+    <button class="mob-nav-center" id="mnAdd" aria-label="Add Transaction" onclick="scrollToForm()">＋</button>
     <button class="mob-nav-item" id="mnYearly" onclick="switchTab('yearly')">
       <span class="mob-nav-icon">📅</span>
       <span class="mob-nav-label">Yearly</span>
@@ -8081,7 +8081,10 @@
       if (badge) {
         if (statsMode === 'month') {
           const nowD = new Date();
-          const prevMonthStr = new Date(nowD.getFullYear(), nowD.getMonth() - 1, 1).toISOString().slice(0, 7);
+          let prevY = nowD.getFullYear();
+          let prevM = nowD.getMonth();
+          if (prevM === 0) { prevY--; prevM = 12; }
+          const prevMonthStr = `${prevY}-${String(prevM).padStart(2, '0')}`;
           const prevExp = txs.filter(t => t.type === 'expense' && t.date.startsWith(prevMonthStr)).reduce((s, t) => s + t.amount, 0);
           
           if (prevExp > 0) {
