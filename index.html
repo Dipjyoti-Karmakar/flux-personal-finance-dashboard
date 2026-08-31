@@ -2677,10 +2677,6 @@
       body.mob-yearly-active header {
         margin-bottom: 0 !important;
       }
-      body.mob-non-dash header .hr,
-      body.mob-yearly-active header .hr {
-        display: none !important;
-      }
       body.mob-non-dash header .header-top,
       body.mob-yearly-active header .header-top {
         margin-bottom: 0 !important;
@@ -2699,6 +2695,11 @@
         padding: 0;
         overflow: visible;
         align-items: stretch;
+      }
+      /* Hide action bar on non-dashboard tabs — must come AFTER .hr { display: grid } to win */
+      body.mob-non-dash header .hr,
+      body.mob-yearly-active header .hr {
+        display: none !important;
       }
 
       /* Sync + Auth on one row: sync gets 2 cols, sign-in/out gets 1 col */
