@@ -6240,22 +6240,7 @@
           </div>
         </div>
 
-        <div class="pn">
-          <div class="ph"><span class="pt">Expense / Income Trend</span>
-            <div class="trend-toggle"><button class="tt-btn act" id="ttExp"
-                onclick="setTrendMode('expense')">Expense</button><button class="tt-btn" id="ttInc"
-                onclick="setTrendMode('income')">Income</button><button class="tt-btn" id="ttBoth"
-                onclick="setTrendMode('both')">Both</button></div>
-          </div>
-          <div class="ca" id="trendArea" role="img" aria-label="Spending trend chart"
-            style="padding:16px 20px 24px; min-height:220px; position:relative;">
-            <div class="empty-state">
-              <div class="empty-icon">📈</div>
-              <div class="empty-title">No expense data</div>
-              <div class="empty-sub">Your spending trend chart will appear here</div>
-            </div>
-          </div>
-        </div>
+        
 
         <!-- Bottom Row -->
         <!-- Left Side: Transactions List -->
@@ -6335,9 +6320,38 @@
           </div>
         </div>
 
-        <!-- By Category (same height as Transactions) -->
+        
+      </div>
+
+      
+
+      <!-- Month-over-Month Insights -->
+      <div class="insight-card section-in" id="insightCard" style="animation-delay:.3s;">
+        <div class="ph"><span class="pt">Monthly Insights</span><span class="pb" id="insightPeriod"></span></div>
+        <div class="insight-list" id="insightList">
+          <div class="insight-empty">Add transactions to see insights</div>
+        </div>
+      </div>
+
+      <div class="ys">
+        <div class="pn">
+          <div class="ph"><span class="pt">Expense / Income Trend</span>
+            <div class="trend-toggle"><button class="tt-btn act" id="ttExp"
+                onclick="setTrendMode('expense')">Expense</button><button class="tt-btn" id="ttInc"
+                onclick="setTrendMode('income')">Income</button><button class="tt-btn" id="ttBoth"
+                onclick="setTrendMode('both')">Both</button></div>
+          </div>
+          <div class="ca" id="trendArea" role="img" aria-label="Spending trend chart"
+            style="padding:16px 20px 24px; min-height:220px; position:relative;">
+            <div class="empty-state">
+              <div class="empty-icon">📈</div>
+              <div class="empty-title">No expense data</div>
+              <div class="empty-sub">Your spending trend chart will appear here</div>
+            </div>
+          </div>
+        </div>
         <div class="pn pn-fixed" id="catAreaWrap">
-          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="document.body.classList.toggle('mob-cat-expanded'); this.innerText = document.body.classList.contains('mob-cat-expanded') ? 'Show Less' : 'View All'">View All</span></div>
+          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="document.body.classList.toggle('mob-cat-expanded'); this.innerText = document.body.classList.contains('mob-cat-expanded') ? 'Show Less' : 'View All'; renderCats();">View All</span></div>
           <div class="ca" style="padding: 12px 16px; flex:1; min-height:0; overflow-y:auto;" id="ctArea">
             <div class="empty-state" style="padding:24px 16px">
               <div class="empty-icon">📂</div>
@@ -6346,10 +6360,7 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Online vs Offline / Events — merged with toggle -->
-      <div class="pn section-in" style="margin-top: 24px; animation-delay:.1s;" id="splitEventCard">
+        <div class="pn section-in" style="margin-top: 24px; animation-delay:.1s;" id="splitEventCard">
         <div class="ph">
           <span class="pt" id="splitEventTitle">Online vs Offline</span>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -6380,15 +6391,6 @@
         </div>
       </div>
 
-      <!-- Month-over-Month Insights -->
-      <div class="insight-card section-in" id="insightCard" style="animation-delay:.3s;">
-        <div class="ph"><span class="pt">Monthly Insights</span><span class="pb" id="insightPeriod"></span></div>
-        <div class="insight-list" id="insightList">
-          <div class="insight-empty">Add transactions to see insights</div>
-        </div>
-      </div>
-
-      <div class="ys">
         <div class="yst">Yearly Overview</div>
         <div id="yrArea">
           <div class="empty-state">
@@ -6488,7 +6490,7 @@
     <button class="mob-nav-center" id="mnAdd" aria-label="Add Transaction" onclick="scrollToForm()">＋</button>
     <button class="mob-nav-item" id="mnYearly" onclick="switchTab('yearly')">
       <span class="mob-nav-icon">📅</span>
-      <span class="mob-nav-label">Yearly</span>
+      <span class="mob-nav-label">Analytics</span>
     </button>
     <button class="mob-nav-item" id="mnLog" onclick="switchTab('log')">
       <span class="mob-nav-icon">≡</span>
@@ -8963,31 +8965,52 @@
       const tot = {};
       let totalExp = 0;
       exp.forEach(t => { tot[t.cat || 'other'] = (tot[t.cat || 'other'] || 0) + t.amount; totalExp += t.amount; });
-      const cats = Object.entries(tot).sort((a, b) => b[1] - a[1]);
+      let cats = Object.entries(tot).sort((a, b) => b[1] - a[1]);
+      
       // If the active filter no longer exists in the data, close it
       if (activeCatFilter && !tot[activeCatFilter]) activeCatFilter = null;
+
       let barHtml = '<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:12px;">';
       cats.forEach(([cat, val], i) => { const pct = (val / totalExp) * 100; barHtml += `<div style="width:${pct}%;background:${getCatColor(cat)};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(0)}%"></div>`; });
       barHtml += '</div>';
+
+      const isExpanded = document.body.classList.contains('mob-cat-expanded');
+
+      // Filtering logic: if a category is clicked, hide others
+      if (activeCatFilter) {
+          cats = cats.filter(c => c[0] === activeCatFilter);
+      } else if (!isExpanded) {
+          // If not expanded and no active filter, show only top 4
+          cats = cats.slice(0, 4);
+      }
+
       let detHtml = `<div class="cat-tag-list${activeCatFilter ? ' is-extended' : ''}">`;
       cats.forEach(([cat, val], i) => {
         const pct = Math.round((val / totalExp) * 100);
         const isActive = activeCatFilter === cat;
-        detHtml += `<div class="cat-tag${isActive ? ' cat-tag-active' : ''}" onclick="toggleCatFilter(${esc(JSON.stringify(cat))})"><div class="cat-icon-wrap" style="color:${getCatColor(cat)}">${CICO[cat] || '✦'}</div><span class="cat-tag-name">${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
+        detHtml += `<div class="cat-tag${isActive ? ' cat-tag-active' : ''}" onclick="toggleCatFilter(${esc(JSON.stringify(cat))})"><div class="cat-icon-wrap" style="color:${getCatColor(cat)}">${CICO[cat] || '🏷️'}</div><span class="cat-tag-name">${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▶</span></div>`;
       });
-      if (cats.length > 4) {
-        detHtml += `<div class="cat-tag cat-more-btn mob-only" onclick="const btn = document.querySelector('#catAreaWrap .pb'); if(btn) btn.click(); else document.body.classList.toggle('mob-cat-expanded');"><div class="cat-icon-wrap" style="color:var(--tx)">•••</div><span class="cat-tag-name">More</span><span class="cat-tag-pct"> </span></div>`;
-      }
       detHtml += '</div>';
+
       if (activeCatFilter) {
         detHtml += '<div class="cat-tx-panel cat-tx-open" id="catTxPanel"></div>';
       }
       const newHtml = barHtml + detHtml;
-      // Skip DOM rebuild entirely when content is identical — prevents flicker on re-renders
       if (newHtml === _catLastHtml) return;
       _catLastHtml = newHtml;
       area.innerHTML = newHtml;
       if (activeCatFilter) renderCatTxList(aTxs);
+
+      // Handle the View All text
+      const viewAllBtn = document.querySelector('#catAreaWrap .pb');
+      if (viewAllBtn) {
+          if (activeCatFilter) {
+              viewAllBtn.style.display = 'none';
+          } else {
+              viewAllBtn.style.display = 'inline-block';
+              viewAllBtn.innerText = isExpanded ? 'Show Less' : 'View All';
+          }
+      }
     }
 
 
