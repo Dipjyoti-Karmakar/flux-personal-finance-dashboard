@@ -5927,11 +5927,25 @@
       .mg > .pn:nth-child(2) { order: 3; }
       #catAreaWrap { order: 4; }
       
-      /* Hide Yearly Overview from dashboard normally on mobile, show only when yearly tab is active */
+      /* Hide Analytics elements from Dashboard, and Dashboard elements from Analytics */
       @media (max-width: 768px) {
-        body:not(.mob-yearly-active) #dashboardView > .ys { display: none !important; }
-        body.mob-yearly-active #dashboardView > div:not(.ys) { display: none !important; }
-        body.mob-yearly-active #dashboardView > .ys { display: flex !important; flex-direction: column; gap: 24px; margin-top: 8px; padding-top: 0; }
+        body:not(.mob-yearly-active) #dashboardView .mg > .pn:nth-child(2),
+        body:not(.mob-yearly-active) #dashboardView .mg > #catAreaWrap,
+        body:not(.mob-yearly-active) #dashboardView > #splitEventCard,
+        body:not(.mob-yearly-active) #dashboardView > #insightCard,
+        body:not(.mob-yearly-active) #dashboardView > .ys { 
+          display: none !important; 
+        }
+
+        body.mob-yearly-active #dashboardView > .srow,
+        body.mob-yearly-active #dashboardView .mg > .pn:nth-child(1),
+        body.mob-yearly-active #dashboardView .mg > #txPanel { 
+          display: none !important; 
+        }
+
+        body.mob-yearly-active #dashboardView > .ys { 
+          display: flex !important; flex-direction: column; gap: 24px; margin-top: 8px; padding-top: 0; 
+        }
       }
       
       /* Category layout */
@@ -6359,30 +6373,8 @@
 
       
 
-      <!-- Month-over-Month Insights -->
-      <div class="insight-card section-in" id="insightCard" style="animation-delay:.3s;">
-        <div class="ph"><span class="pt">Monthly Insights</span><span class="pb" id="insightPeriod"></span></div>
-        <div class="insight-list" id="insightList">
-          <div class="insight-empty">Add transactions to see insights</div>
-        </div>
-      </div>
-
-      <div class="ys">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
-            <div class="fltr" style="padding:0; border:none; margin:0; width:100%; justify-content: space-between;">
-            <button class="ft act" id="stM_month_ys" onclick="setStatsMode('month')">This Month</button>
-            <button class="ft" id="stM_yr_ys" onclick="setStatsMode('year')">This Year</button>
-            <button class="ft" id="stM_all_ys" onclick="setStatsMode('all')">All</button>
-            <button class="ft" id="stM_custom_ys" onclick="setStatsMode('custom')">Custom</button>
-          </div>
-        </div>
-        <div class="stats-custom-dt" id="statsCustomDt_ys" style="margin-bottom: 0;">
-          <input type="date" id="statsFrom_ys" onchange="document.getElementById('statsFrom').value=this.value; updStatsDt()">
-          <span style="color:var(--mu);font-size:11px">to</span>
-          <input type="date" id="statsTo_ys" onchange="document.getElementById('statsTo').value=this.value; updStatsDt()">
-          <span class="dt-clear" onclick="clearStatsDt()">clear</span>
-        </div>
-        <div class="pn section-in" style="margin-top: 16px; animation-delay:.1s;" id="splitEventCard">
+      <!-- Online vs Offline / Events — merged with toggle -->
+      <div class="pn section-in" style="margin-top: 24px; animation-delay:.1s;" id="splitEventCard">
         <div class="ph">
           <span class="pt" id="splitEventTitle">Online vs Offline</span>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -6413,6 +6405,15 @@
         </div>
       </div>
 
+      <!-- Month-over-Month Insights -->
+      <div class="insight-card section-in" id="insightCard" style="animation-delay:.3s;">
+        <div class="ph"><span class="pt">Monthly Insights</span><span class="pb" id="insightPeriod"></span></div>
+        <div class="insight-list" id="insightList">
+          <div class="insight-empty">Add transactions to see insights</div>
+        </div>
+      </div>
+
+      <div class="ys">
         <div class="yst">Yearly Overview</div>
         <div id="yrArea">
           <div class="empty-state">
