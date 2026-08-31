@@ -1651,7 +1651,7 @@
 
     /* Yearly Overview */
     .ys {
-      margin-top: 32px;
+      margin-top: 8px;
       min-width: 0;
       display: flex;
       flex-direction: column;
@@ -5927,10 +5927,12 @@
       .mg > .pn:nth-child(2) { order: 3; }
       #catAreaWrap { order: 4; }
       
-      /* Hide Yearly Overview from dashboard normally, show only when yearly tab is active */
-      body:not(.mob-yearly-active) #dashboardView > .ys { display: none !important; }
-      body.mob-yearly-active #dashboardView > div:not(.ys) { display: none !important; }
-      body.mob-yearly-active #dashboardView > .ys { display: flex !important; flex-direction: column; gap: 24px; margin-top: 0; padding-top: 0; }
+      /* Hide Yearly Overview from dashboard normally on mobile, show only when yearly tab is active */
+      @media (max-width: 768px) {
+        body:not(.mob-yearly-active) #dashboardView > .ys { display: none !important; }
+        body.mob-yearly-active #dashboardView > div:not(.ys) { display: none !important; }
+        body.mob-yearly-active #dashboardView > .ys { display: flex !important; flex-direction: column; gap: 24px; margin-top: 8px; padding-top: 0; }
+      }
       
       /* Category layout */
       #catAreaWrap .ca {
@@ -6341,15 +6343,15 @@
       </div>
 
       <div class="ys">
-        <div class="mob-only" style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="fltr" style="padding:0; border:none; margin:0; width:100%; justify-content: space-between;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+            <div class="fltr" style="padding:0; border:none; margin:0; width:100%; justify-content: space-between;">
             <button class="ft act" id="stM_month_ys" onclick="setStatsMode('month')">This Month</button>
             <button class="ft" id="stM_yr_ys" onclick="setStatsMode('year')">This Year</button>
             <button class="ft" id="stM_all_ys" onclick="setStatsMode('all')">All</button>
             <button class="ft" id="stM_custom_ys" onclick="setStatsMode('custom')">Custom</button>
           </div>
         </div>
-        <div class="stats-custom-dt mob-only" id="statsCustomDt_ys" style="margin-bottom: 0;">
+        <div class="stats-custom-dt" id="statsCustomDt_ys" style="margin-bottom: 0;">
           <input type="date" id="statsFrom_ys" onchange="document.getElementById('statsFrom').value=this.value; updStatsDt()">
           <span style="color:var(--mu);font-size:11px">to</span>
           <input type="date" id="statsTo_ys" onchange="document.getElementById('statsTo').value=this.value; updStatsDt()">
