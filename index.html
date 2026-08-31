@@ -8979,8 +8979,8 @@
       // Filtering logic: if a category is clicked, hide others
       if (activeCatFilter) {
           cats = cats.filter(c => c[0] === activeCatFilter);
-      } else if (!isExpanded) {
-          // If not expanded and no active filter, show only top 4
+      } else if (!isExpanded && window.innerWidth <= 768) {
+          // If not expanded, no active filter, and on mobile, show only top 4
           cats = cats.slice(0, 4);
       }
 
