@@ -707,6 +707,13 @@
       width: 100%;
     }
 
+    .cat-icon-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
     .cat-tag-name {
       font-family: 'DM Mono', monospace;
       font-size: 12px;
@@ -5931,28 +5938,48 @@
         padding: 12px 16px;
         scrollbar-width: none;
       }
-      #catAreaWrap .ca::-webkit-scrollbar { display: none; }
-      #catAreaWrap .ctr {
+      #catAreaWrap .pb.mob-only { display: block !important; color: var(--tx) !important; font-size: 11px !important; }
+      #catAreaWrap .cat-tag-list {
         display: flex !important;
         flex-direction: row !important;
-        align-items: center;
-        gap: 6px;
-        padding: 8px 14px;
-        background: var(--s2);
-        border: 1px solid var(--bd);
-        border-radius: 20px;
-        min-width: max-content;
+        overflow-x: auto;
+        gap: 16px;
+        padding: 4px 16px 12px 16px;
+        scrollbar-width: none;
       }
-      #catAreaWrap .ctl { display: flex; gap: 6px; align-items: center; min-width: auto; }
-      #catAreaWrap .cti { width: 20px; height: 20px; font-size: 10px; }
-      #catAreaWrap .ctn { font-size: 11.5px; margin-bottom: 0 !important; }
-      #catAreaWrap .ct-bar-wrap { display: none; } 
-      #catAreaWrap .ct-pct { margin-left: 2px; font-size: 10px; opacity: 0.8; }
-      #catAreaWrap .cta { font-size: 11px; font-weight: 600; }
+      #catAreaWrap .cat-tag-list::-webkit-scrollbar { display: none; }
+      #catAreaWrap .cat-tag {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center;
+        gap: 4px;
+        padding: 0;
+        background: transparent !important;
+        border: none !important;
+        min-width: 54px;
+        box-shadow: none !important;
+      }
+      #catAreaWrap .cat-icon-wrap {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: #1e1e28;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 4px;
+      }
+      #catAreaWrap .cat-tag-name { font-size: 11px; color: var(--tx); font-weight: normal; white-space: nowrap; }
+      #catAreaWrap .cat-tag-pct { font-size: 11px; color: var(--mu); }
+      #catAreaWrap .cat-tag-amt { display: none !important; }
+      #catAreaWrap .cat-arrow { display: none !important; }
       
-      #catAreaWrap .pb.mob-only { display: block !important; color: var(--tx) !important; font-size: 11px !important; }
-      body.mob-cat-expanded #catAreaWrap .ca { flex-direction: column !important; align-items: stretch; }
-      body.mob-cat-expanded #catAreaWrap .ct-bar-wrap { display: flex !important; }
+      body.mob-cat-expanded #catAreaWrap .cat-tag-list { flex-direction: column !important; align-items: stretch; gap: 8px; }
+      body.mob-cat-expanded #catAreaWrap .cat-tag { flex-direction: row !important; padding: 12px; background: var(--s2) !important; border-radius: 12px; }
+      body.mob-cat-expanded #catAreaWrap .cat-icon-wrap { width: 32px; height: 32px; border-radius: 8px; margin-bottom: 0; }
+      body.mob-cat-expanded #catAreaWrap .cat-tag-amt { display: block !important; margin-left: auto; font-size: 14px; font-weight: 600; }
+      body.mob-cat-expanded #catAreaWrap .cat-more-btn { display: none !important; }
     }
   </style>
   <style>
@@ -8944,8 +8971,11 @@
       cats.forEach(([cat, val], i) => {
         const pct = Math.round((val / totalExp) * 100);
         const isActive = activeCatFilter === cat;
-        detHtml += `<div class="cat-tag${isActive ? ' cat-tag-active' : ''}" onclick="toggleCatFilter(${esc(JSON.stringify(cat))})"><div style="width:10px;height:10px;border-radius:3px;background:${getCatColor(cat)};"></div><span class="cat-tag-name">${CICO[cat] || '✦'} ${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
+        detHtml += `<div class="cat-tag${isActive ? ' cat-tag-active' : ''}" onclick="toggleCatFilter(${esc(JSON.stringify(cat))})"><div class="cat-icon-wrap" style="color:${getCatColor(cat)}">${CICO[cat] || '✦'}</div><span class="cat-tag-name">${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▼</span></div>`;
       });
+      if (cats.length > 0) {
+        detHtml += `<div class="cat-tag cat-more-btn mob-only" onclick="document.body.classList.toggle('mob-cat-expanded')"><div class="cat-icon-wrap" style="color:var(--tx)">•••</div><span class="cat-tag-name">More</span><span class="cat-tag-pct"> </span></div>`;
+      }
       detHtml += '</div>';
       if (activeCatFilter) {
         detHtml += '<div class="cat-tx-panel cat-tx-open" id="catTxPanel"></div>';
