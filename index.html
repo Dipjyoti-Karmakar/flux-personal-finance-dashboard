@@ -5965,9 +5965,6 @@
       .app-tabs { display: none !important; }
       .mobile-bottom-nav { display: flex; }
       .fab { display: none !important; }
-      
-      #sExpS { display: none !important; }
-      #sExpBadge { display: inline-flex !important; }
 
       /* Reorder grid for mobile */
       .mg { display: flex !important; flex-direction: column !important; }
@@ -6258,7 +6255,7 @@
         <div class="sc card-in">
           <div class="sl">Total Expenses</div>
           <div class="sv med neg" id="sExp">₹0.00</div>
-          <div class="ss"><span id="sExpS">0 transactions</span><span id="sExpBadge" class="mob-hero-badge" style="display:none;"></span></div>
+          <div class="ss"><span id="sExpS">0 transactions</span><span id="sExpBadge" class="mob-hero-badge mob-only" style="display:none;"></span></div>
         </div>
       </div>
       <div class="srow sr2">
@@ -8261,20 +8258,20 @@
             const diff = tE - prevExp;
             const pct = Math.round(Math.abs(diff) / prevExp * 100);
             if (diff > 0) {
-              badge.className = 'mob-hero-badge up';
+              badge.className = 'mob-hero-badge mob-only up';
               badge.innerHTML = '↑ ' + pct + '%';
             } else if (diff < 0) {
-              badge.className = 'mob-hero-badge down';
+              badge.className = 'mob-hero-badge mob-only down';
               badge.innerHTML = '↓ ' + pct + '%';
             } else {
-              badge.className = 'mob-hero-badge';
+              badge.className = 'mob-hero-badge mob-only';
               badge.innerHTML = '= 0%';
             }
           } else {
-            badge.className = 'mob-hero-badge';
+            badge.className = 'mob-hero-badge mob-only';
             badge.innerHTML = 'No prior data';
           }
-          badge.style.display = ''; // Let media query override
+          badge.style.display = 'inline-flex';
         } else {
           badge.style.display = 'none'; // Only show in month view
         }
