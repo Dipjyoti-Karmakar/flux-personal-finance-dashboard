@@ -5968,6 +5968,9 @@
 
       /* Reorder grid for mobile */
       .mg { display: flex !important; flex-direction: column !important; }
+      #subView, #logView {
+        padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+      }
       #txPanel, #catAreaWrap {
         max-height: none !important;
       }
