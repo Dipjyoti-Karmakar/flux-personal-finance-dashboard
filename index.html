@@ -2672,17 +2672,21 @@
         margin-bottom: 8px;
       }
 
-      /* Compact header on Subscriptions/Log tabs on mobile */
-      body.mob-non-dash header {
+      /* Compact header on all non-dashboard tabs (Subscriptions, Log, Analytics) on mobile */
+      body.mob-non-dash header,
+      body.mob-yearly-active header {
         margin-bottom: 0 !important;
       }
-      body.mob-non-dash header .hr {
+      body.mob-non-dash header .hr,
+      body.mob-yearly-active header .hr {
         display: none !important;
       }
-      body.mob-non-dash header .header-top {
+      body.mob-non-dash header .header-top,
+      body.mob-yearly-active header .header-top {
         margin-bottom: 0 !important;
       }
-      #subView, #logView {
+      #subView, #logView, 
+      body.mob-yearly-active #dashboardView {
         padding-top: 12px;
       }
 
