@@ -2672,6 +2672,20 @@
         margin-bottom: 8px;
       }
 
+      /* Compact header on Subscriptions/Log tabs on mobile */
+      body.mob-non-dash header {
+        margin-bottom: 0 !important;
+      }
+      body.mob-non-dash header .hr {
+        display: none !important;
+      }
+      body.mob-non-dash header .header-top {
+        margin-bottom: 0 !important;
+      }
+      #subView, #logView {
+        padding-top: 12px;
+      }
+
       /* Action Bar Fix for Mobile Headers */
       .hr {
         display: grid;
@@ -12775,8 +12789,13 @@
 
       if (tab === 'yearly') {
         document.body.classList.add('mob-yearly-active');
+        document.body.classList.remove('mob-non-dash');
+      } else if (tab === 'dashboard') {
+        document.body.classList.remove('mob-yearly-active');
+        document.body.classList.remove('mob-non-dash');
       } else {
         document.body.classList.remove('mob-yearly-active');
+        document.body.classList.add('mob-non-dash');
       }
 
       const fab = document.getElementById('fab');
