@@ -959,6 +959,7 @@
       align-items: center;
       min-width: 0;
       max-width: 100%;
+      flex-shrink: 0;
     }
 
     .ft {
@@ -5948,6 +5949,10 @@
       #catAreaWrap .ct-bar-wrap { display: none; } 
       #catAreaWrap .ct-pct { margin-left: 2px; font-size: 10px; opacity: 0.8; }
       #catAreaWrap .cta { font-size: 11px; font-weight: 600; }
+      
+      #catAreaWrap .pb.mob-only { display: block !important; color: var(--tx) !important; font-size: 11px !important; }
+      body.mob-cat-expanded #catAreaWrap .ca { flex-direction: column !important; align-items: stretch; }
+      body.mob-cat-expanded #catAreaWrap .ct-bar-wrap { display: flex !important; }
     }
   </style>
   <style>
@@ -6303,7 +6308,7 @@
 
         <!-- By Category (same height as Transactions) -->
         <div class="pn pn-fixed" id="catAreaWrap">
-          <div class="ph"><span class="pt">By Category</span></div>
+          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="document.body.classList.toggle('mob-cat-expanded'); this.innerText = document.body.classList.contains('mob-cat-expanded') ? 'Show Less' : 'View All'">View All</span></div>
           <div class="ca" style="padding: 12px 16px; flex:1; min-height:0; overflow-y:auto;" id="ctArea">
             <div class="empty-state" style="padding:24px 16px">
               <div class="empty-icon">📂</div>
