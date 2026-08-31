@@ -5819,6 +5819,168 @@
       flex-direction: column;
       gap: 8px;
     }
+    /* ── Mobile Redesign Additions ── */
+    .mobile-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 800;
+      display: none;
+      background: var(--sf);
+      border-top: 1px solid var(--bd);
+      padding: 8px 0 env(safe-area-inset-bottom, 8px);
+      flex-direction: row;
+      align-items: stretch;
+      justify-content: space-around;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.18);
+    }
+    .mob-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--mu);
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+      transition: color 0.2s;
+    }
+    .mob-nav-item.act {
+      color: var(--ac);
+    }
+    .mob-nav-icon {
+      font-size: 18px;
+    }
+    .mob-nav-center {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--ac), color-mix(in srgb, var(--ac) 80%, #fff));
+      color: #0d0f14;
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 300;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(200, 169, 110, 0.4);
+      transform: translateY(-10px);
+      flex-shrink: 0;
+    }
+
+    /* Expense Hero specific badge */
+    .mob-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .mob-hero-badge.up {
+      color: var(--ex);
+      background: color-mix(in srgb, var(--ex) 15%, transparent);
+    }
+    .mob-hero-badge.down {
+      color: var(--in);
+      background: color-mix(in srgb, var(--in) 15%, transparent);
+    }
+
+    @media (max-width: 520px) {
+      .app { padding-bottom: 80px; }
+      .app-tabs { display: none !important; }
+      .mobile-bottom-nav { display: flex; }
+      .fab { display: none !important; }
+      
+      /* Dashboard Overview Hero - Make Total Expenses the hero */
+      .sr1 {
+        display: flex !important;
+        flex-direction: column !important;
+      }
+      #sExpS { display: none !important; }
+      #sExpBadge { display: inline-flex !important; }
+      .sr1 > .sc:nth-child(3) {
+        order: -1; 
+        text-align: center;
+        padding: 24px;
+      }
+      .sr1 > .sc:nth-child(3) .sl {
+        justify-content: center;
+        font-size: 11px;
+      }
+      .sr1 > .sc:nth-child(3) .sv {
+        font-size: 36px !important;
+        margin-bottom: 6px;
+        color: var(--ex) !important;
+      }
+      .sr1 > .sc:nth-child(1) {
+        text-align: left;
+        padding: 16px;
+      }
+      .sr1 > .sc:nth-child(1) .sl {
+        justify-content: flex-start;
+        font-size: 10px;
+      }
+      .sr1 > .sc:nth-child(1) .sv {
+        font-size: 20px !important;
+        color: var(--tx) !important;
+        margin-bottom: 0;
+      }
+      
+      /* Reorder grid for mobile */
+      .mg { display: flex !important; flex-direction: column !important; }
+      .mg > .pn:nth-child(1) { order: 1; }
+      #txPanel { order: 2; }
+      .mg > .pn:nth-child(2) { order: 3; }
+      #catAreaWrap { order: 4; }
+      
+      /* Hide Yearly Overview from dashboard normally, show only when yearly tab is active */
+      body:not(.mob-yearly-active) #dashboardView > .ys { display: none !important; }
+      body.mob-yearly-active #dashboardView > div:not(.ys) { display: none !important; }
+      body.mob-yearly-active #dashboardView > .ys { display: block !important; margin-top: 0; padding-top: 16px; }
+      
+      /* Category horizontal layout */
+      #catAreaWrap .ca {
+        display: flex !important;
+        flex-direction: row !important;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 12px 16px;
+        scrollbar-width: none;
+      }
+      #catAreaWrap .ca::-webkit-scrollbar { display: none; }
+      #catAreaWrap .ctr {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: var(--s2);
+        border: 1px solid var(--bd);
+        border-radius: 20px;
+        min-width: max-content;
+      }
+      #catAreaWrap .ctl { display: flex; gap: 6px; align-items: center; min-width: auto; }
+      #catAreaWrap .cti { width: 20px; height: 20px; font-size: 10px; }
+      #catAreaWrap .ctn { font-size: 11.5px; margin-bottom: 0 !important; }
+      #catAreaWrap .ct-bar-wrap { display: none; } 
+      #catAreaWrap .ct-pct { margin-left: 2px; font-size: 10px; opacity: 0.8; }
+      #catAreaWrap .cta { font-size: 11px; font-weight: 600; }
+    }
   </style>
   <style>
     img.emoji {
@@ -6310,6 +6472,27 @@
     </div>
     <div id="logList"></div>
   </div>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" id="mobileNav" aria-label="Main navigation">
+    <button class="mob-nav-item act" id="mnDash" onclick="switchTab('dashboard')">
+      <span class="mob-nav-icon">⊞</span>
+      <span class="mob-nav-label">Dashboard</span>
+    </button>
+    <button class="mob-nav-item" id="mnSub" onclick="switchTab('subscriptions')">
+      <span class="mob-nav-icon">↻</span>
+      <span class="mob-nav-label">Subscriptions</span>
+    </button>
+    <button class="mob-nav-center" id="mnAdd" onclick="scrollToForm()">＋</button>
+    <button class="mob-nav-item" id="mnYearly" onclick="switchTab('yearly')">
+      <span class="mob-nav-icon">📅</span>
+      <span class="mob-nav-label">Yearly</span>
+    </button>
+    <button class="mob-nav-item" id="mnLog" onclick="switchTab('log')">
+      <span class="mob-nav-icon">≡</span>
+      <span class="mob-nav-label">Activity</span>
+    </button>
+  </nav>
 
   <!-- Import Modal -->
   <div class="bk" id="impMod">
@@ -7925,6 +8108,36 @@
 
       animateVal(document.getElementById('sExp'), tE, fmt);
       document.getElementById('sExpS').textContent = exp.length + ' transaction' + (exp.length !== 1 ? 's' : '');
+      
+      const badge = document.getElementById('sExpBadge');
+      if (badge) {
+        if (statsMode === 'month') {
+          const nowD = new Date();
+          const prevMonthStr = new Date(nowD.getFullYear(), nowD.getMonth() - 1, 1).toISOString().slice(0, 7);
+          const prevExp = txs.filter(t => t.type === 'expense' && t.date.startsWith(prevMonthStr)).reduce((s, t) => s + t.amount, 0);
+          
+          if (prevExp > 0) {
+            const diff = tE - prevExp;
+            const pct = Math.round(Math.abs(diff) / prevExp * 100);
+            if (diff > 0) {
+              badge.className = 'mob-hero-badge up';
+              badge.innerHTML = '↑ ' + pct + '%';
+            } else if (diff < 0) {
+              badge.className = 'mob-hero-badge down';
+              badge.innerHTML = '↓ ' + pct + '%';
+            } else {
+              badge.className = 'mob-hero-badge';
+              badge.innerHTML = '= 0%';
+            }
+          } else {
+            badge.className = 'mob-hero-badge';
+            badge.innerHTML = 'No prior data';
+          }
+          badge.style.display = ''; // Let media query override
+        } else {
+          badge.style.display = 'none'; // Only show in month view
+        }
+      }
 
       // Calculate true elapsed days based on the current date filter
       let elapsedDays = 1;
@@ -12485,14 +12698,31 @@
       document.getElementById('tabDash').classList.toggle('act', tab === 'dashboard');
       document.getElementById('tabSub').classList.toggle('act', tab === 'subscriptions');
       document.getElementById('tabLog').classList.toggle('act', tab === 'log');
-      document.getElementById('dashboardView').style.display = tab === 'dashboard' ? 'block' : 'none';
+
+      // Update Mobile Bottom Nav Active States
+      const mnDash = document.getElementById('mnDash');
+      if (mnDash) mnDash.classList.toggle('act', tab === 'dashboard');
+      const mnSub = document.getElementById('mnSub');
+      if (mnSub) mnSub.classList.toggle('act', tab === 'subscriptions');
+      const mnYearly = document.getElementById('mnYearly');
+      if (mnYearly) mnYearly.classList.toggle('act', tab === 'yearly');
+      const mnLog = document.getElementById('mnLog');
+      if (mnLog) mnLog.classList.toggle('act', tab === 'log');
+
+      document.getElementById('dashboardView').style.display = (tab === 'dashboard' || tab === 'yearly') ? 'block' : 'none';
       document.getElementById('subView').style.display = tab === 'subscriptions' ? 'block' : 'none';
       document.getElementById('logView').style.display = tab === 'log' ? 'block' : 'none';
 
-      const fab = document.getElementById('fab');
-      if (fab) fab.style.display = tab === 'dashboard' ? '' : 'none';
+      if (tab === 'yearly') {
+        document.body.classList.add('mob-yearly-active');
+      } else {
+        document.body.classList.remove('mob-yearly-active');
+      }
 
-      if (tab === 'dashboard') renderTrend();
+      const fab = document.getElementById('fab');
+      if (fab) fab.style.display = (tab === 'dashboard' || tab === 'yearly') ? '' : 'none';
+
+      if (tab === 'dashboard' || tab === 'yearly') renderTrend();
       if (tab === 'log') renderLogs();
       if (tab === 'subscriptions') renderRecurring();
     }
