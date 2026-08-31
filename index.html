@@ -5961,13 +5961,20 @@
 
     @media (max-width: 520px) {
       header { margin-bottom: 8px; }
-      .app { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+      .app { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important; }
       .app-tabs { display: none !important; }
       .mobile-bottom-nav { display: flex; }
       .fab { display: none !important; }
 
       /* Reorder grid for mobile */
       .mg { display: flex !important; flex-direction: column !important; }
+      #txPanel, #catAreaWrap {
+        max-height: none !important;
+      }
+      .mg > .pn-fixed .txl,
+      #catAreaWrap .ca {
+        overflow-y: visible !important;
+      }
       .mg > .pn:nth-child(1) { order: 1; }
       #txPanel { order: 2; }
       .mg > .pn:nth-child(2) { order: 3; }
