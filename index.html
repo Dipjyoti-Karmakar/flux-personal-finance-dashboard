@@ -5912,6 +5912,7 @@
     }
 
     @media (max-width: 520px) {
+      header { margin-bottom: 8px; }
       .app { padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
       .app-tabs { display: none !important; }
       .mobile-bottom-nav { display: flex; }
@@ -8977,7 +8978,8 @@
 
     let _catLastHtml = ''; // Cache to skip re-render when category data hasn't changed
     function renderCats(passedTxs) {
-      const aTxs = passedTxs || lastCatList || getActiveTxs();
+      const isMobileAnalytics = window.innerWidth <= 768 && document.body.classList.contains('mob-yearly-active');
+      const aTxs = isMobileAnalytics ? getActiveTxs() : (passedTxs || lastCatList || getActiveTxs());
       const exp = aTxs.filter(t => t.type === 'expense'), area = document.getElementById('ctArea');
       if (!exp.length) {
         activeCatFilter = null;
@@ -9051,7 +9053,8 @@
     function renderCatTxList(passedTxs) {
       const panel = document.getElementById('catTxPanel');
       if (!panel || !activeCatFilter) return;
-      const aTxs = passedTxs || lastCatList || getActiveTxs();
+      const isMobileAnalytics = window.innerWidth <= 768 && document.body.classList.contains('mob-yearly-active');
+      const aTxs = isMobileAnalytics ? getActiveTxs() : (passedTxs || lastCatList || getActiveTxs());
       const list = aTxs.filter(t => t.type === 'expense' && (t.cat || 'other') === activeCatFilter)
         .sort((a, b) => {
           const dDiff = new Date(b.date + 'T00:00:00').getTime() - new Date(a.date + 'T00:00:00').getTime();
@@ -12779,7 +12782,10 @@
       const fab = document.getElementById('fab');
       if (fab) fab.style.display = (tab === 'dashboard' || tab === 'yearly') ? '' : 'none';
 
-      if (tab === 'dashboard' || tab === 'yearly') renderTrend();
+      if (tab === 'dashboard' || tab === 'yearly') {
+        renderTrend();
+        renderCats();
+      }
       if (tab === 'log') renderLogs();
       if (tab === 'subscriptions') renderRecurring();
     }
