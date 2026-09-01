@@ -6417,7 +6417,7 @@
 
         <!-- By Category -->
         <div class="pn pn-fixed" id="catAreaWrap">
-          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="document.body.classList.toggle('mob-cat-expanded'); forceRenderCats();">View All</span></div>
+          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="toggleViewAllCats();">View All</span></div>
           <div class="ca" style="padding: 12px 16px; flex:1; min-height:0; overflow-y:auto;" id="ctArea">
             <div class="empty-state" style="padding:24px 16px">
               <div class="empty-icon">📂</div>
@@ -6799,7 +6799,7 @@
                 <option value="housing">🏠 Housing</option>
                 <option value="entertainment">🎮 Entertainment</option>
                 <option value="health">💊 Health</option>
-                <option value="shopping">🛍 Shopping</option>
+                <option value="shopping">🛍️ Shopping</option>
                 <option value="utilities">⚡ Utilities</option>
                 <option value="occasions">🎉 Occasions</option>
                 <option value="salary">💼 Salary</option>
@@ -6995,7 +6995,7 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const CICO = { food: '🍜', transport: '🚗', housing: '🏠', entertainment: '🎮', health: '💊', shopping: '🛍', utilities: '🔌', utility: '🔌', occasions: '🎉', salary: '💼', freelance: '💻', investment: '📈', stationery: '📝', other: '✦' };
+    const CICO = { food: '🍜', transport: '🚗', housing: '🏠', entertainment: '🎮', health: '💊', shopping: '🛍️', utilities: '🔌', utility: '🔌', occasions: '🎉', salary: '💼', freelance: '💻', investment: '📈', stationery: '📝', other: '✦' };
     const CAT_COLOR = {
       food: '#c8876e',  // warm terracotta
       transport: '#6e9dc8',  // steel blue
@@ -7474,7 +7474,7 @@
       renderSplit();
     }
 
-    function setType(t) { cType = t; document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); document.getElementById('txC').innerHTML = t === 'income' ? '<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✶ Other</option>' : '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✶ Other</option>'; }
+    function setType(t) { cType = t; document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); document.getElementById('txC').innerHTML = t === 'income' ? '<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✶ Other</option>' : '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍️ Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✶ Other</option>'; }
     function setMode(m) { cMode = m; document.getElementById('bOnl').className = 'tb' + (m === 'online' ? ' ao' : ''); document.getElementById('bOfl').className = 'tb' + (m === 'offline' ? ' af' : ''); }
 
     function setDt(filterVal, btn) {
@@ -8557,7 +8557,7 @@
       const el = document.getElementById('eCat');
       el.innerHTML = type === 'income' ?
         '<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>' :
-        '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍 Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✦ Other</option>';
+        '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍️ Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✦ Other</option>';
     }
 
     function editTx(id) {
@@ -9149,11 +9149,11 @@
       const viewAllBtn = document.querySelector('#catAreaWrap .pb');
       if (viewAllBtn) {
           const totalCatsCount = Object.keys(tot).length;
-          if (activeCatFilter || totalCatsCount <= 4) {
+          if (!activeCatFilter && totalCatsCount <= 4) {
               viewAllBtn.style.display = 'none';
           } else {
               viewAllBtn.style.display = 'inline-block';
-              viewAllBtn.innerText = isExpanded ? 'Show Less' : 'View All';
+              viewAllBtn.innerText = (isExpanded || activeCatFilter) ? 'View Less' : 'View All';
           }
       }
     }
@@ -13059,6 +13059,16 @@
     window.renderLogs = renderLogs;
     window.renderCats = renderCats;
     window.forceRenderCats = () => { _catLastHtml = ''; renderCats(); };
+    window.toggleViewAllCats = () => {
+      if (document.body.classList.contains('mob-cat-expanded') || activeCatFilter) {
+          document.body.classList.remove('mob-cat-expanded');
+          activeCatFilter = null;
+      } else {
+          document.body.classList.add('mob-cat-expanded');
+      }
+      _catLastHtml = ''; 
+      renderCats();
+    };
     window.toggleLogSelectionMode = toggleLogSelectionMode;
     window.toggleLogSelection = toggleLogSelection;
     window.confirmDeleteSelectedLogs = confirmDeleteSelectedLogs;
