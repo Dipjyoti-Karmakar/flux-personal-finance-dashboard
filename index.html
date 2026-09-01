@@ -6261,12 +6261,12 @@
         <div class="sc card-in">
           <div class="sl">Total Income</div>
           <div class="sv med pos" id="sInc">₹0.00</div>
-          <div class="ss" id="sIncS">0 transactions</div>
+          <div class="ss" id="sIncS">0 txns</div>
         </div>
         <div class="sc card-in">
           <div class="sl">Total Expenses</div>
           <div class="sv med neg" id="sExp">₹0.00</div>
-          <div class="ss"><span id="sExpS">0 transactions</span><span id="sExpBadge" class="mob-hero-badge mob-only" style="display:none;"></span></div>
+          <div class="ss"><span id="sExpS">0 txns</span><span id="sExpBadge" class="mob-hero-badge mob-only" style="display:none;"></span></div>
         </div>
       </div>
       <div class="srow sr2">
@@ -6278,7 +6278,7 @@
         <div class="sc card-in">
           <div class="sl">Active Days</div>
           <div class="sv med neu" id="sDays">0</div>
-          <div class="ss">days with ≥1 transaction</div>
+          <div class="ss">days with ≥1 txn</div>
         </div>
       </div>
 
@@ -8251,10 +8251,10 @@
       bc.classList.add(bal > 0 ? 'glow-pos' : bal < 0 ? 'glow-neg' : 'glow-neu');
 
       animateVal(document.getElementById('sInc'), tI, fmt);
-      document.getElementById('sIncS').textContent = inc.length + ' transaction' + (inc.length !== 1 ? 's' : '');
+      document.getElementById('sIncS').textContent = inc.length + ' txn' + (inc.length !== 1 ? 's' : '');
 
       animateVal(document.getElementById('sExp'), tE, fmt);
-      document.getElementById('sExpS').textContent = exp.length + ' transaction' + (exp.length !== 1 ? 's' : '');
+      document.getElementById('sExpS').textContent = exp.length + ' txn' + (exp.length !== 1 ? 's' : '');
       
       const badge = document.getElementById('sExpBadge');
       if (badge) {
