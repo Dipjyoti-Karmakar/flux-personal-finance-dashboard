@@ -372,6 +372,12 @@
       flex-wrap: wrap
     }
 
+    /* Globally hide action bar (sync, pdf etc) on non-dashboard tabs to remove unnecessary gap */
+    body.mob-non-dash header .hr,
+    body.mob-yearly-active header .hr {
+      display: none !important;
+    }
+
     .ib {
       display: flex;
       align-items: center;
