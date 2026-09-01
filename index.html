@@ -5984,24 +5984,22 @@
       #catAreaWrap { order: 4; }
       
       /* Hide Analytics elements from Dashboard, and Dashboard elements from Analytics */
-      @media (max-width: 768px) {
-        body:not(.mob-yearly-active) #dashboardView .mg > .pn:nth-child(2),
-        body:not(.mob-yearly-active) #dashboardView .mg > #catAreaWrap,
-        body:not(.mob-yearly-active) #dashboardView > #splitEventCard,
-        body:not(.mob-yearly-active) #dashboardView > .ys { 
-          display: none !important; 
-        }
+      body:not(.mob-yearly-active) #dashboardView .mg > .pn:nth-child(2),
+      body:not(.mob-yearly-active) #dashboardView .mg > #catAreaWrap,
+      body:not(.mob-yearly-active) #dashboardView > #splitEventCard,
+      body:not(.mob-yearly-active) #dashboardView > .ys { 
+        display: none !important; 
+      }
 
-        body.mob-yearly-active #dashboardView > .srow,
-        body.mob-yearly-active #dashboardView .mg > .pn:nth-child(1),
-        body.mob-yearly-active #dashboardView .mg > #txPanel,
-        body.mob-yearly-active #dashboardView > #insightCard { 
-          display: none !important; 
-        }
+      body.mob-yearly-active #dashboardView > .srow,
+      body.mob-yearly-active #dashboardView .mg > .pn:nth-child(1),
+      body.mob-yearly-active #dashboardView .mg > #txPanel,
+      body.mob-yearly-active #dashboardView > #insightCard { 
+        display: none !important; 
+      }
 
-        body.mob-yearly-active #dashboardView > .ys { 
-          display: flex !important; flex-direction: column; gap: 24px; margin-top: 8px; padding-top: 0; 
-        }
+      body.mob-yearly-active #dashboardView > .ys { 
+        display: flex !important; flex-direction: column; gap: 24px; margin-top: 8px; padding-top: 0; 
       }
       
       /* Category layout */
@@ -6059,7 +6057,7 @@
       body.mob-cat-expanded #catAreaWrap .cat-more-btn { display: none !important; }
     }
 
-    @media (min-width: 769px) {
+    @media (min-width: 521px) {
       .mob-only { display: none !important; }
     }
   </style>
@@ -9095,7 +9093,7 @@
 
     let _catLastHtml = ''; // Cache to skip re-render when category data hasn't changed
     function renderCats(passedTxs) {
-      const isMobileAnalytics = window.innerWidth <= 768 && document.body.classList.contains('mob-yearly-active');
+      const isMobileAnalytics = window.innerWidth <= 520 && document.body.classList.contains('mob-yearly-active');
       const aTxs = isMobileAnalytics ? getActiveTxs() : (passedTxs || lastCatList || getActiveTxs());
       const exp = aTxs.filter(t => t.type === 'expense'), area = document.getElementById('ctArea');
       if (!exp.length) {
@@ -9121,7 +9119,7 @@
       // Filtering logic: if a category is clicked, hide others
       if (activeCatFilter) {
           cats = cats.filter(c => c[0] === activeCatFilter);
-      } else if (!isExpanded && window.innerWidth <= 768) {
+      } else if (!isExpanded && window.innerWidth <= 520) {
           // If not expanded, no active filter, and on mobile, show only top 4
           cats = cats.slice(0, 4);
       }
@@ -9171,7 +9169,7 @@
     function renderCatTxList(passedTxs) {
       const panel = document.getElementById('catTxPanel');
       if (!panel || !activeCatFilter) return;
-      const isMobileAnalytics = window.innerWidth <= 768 && document.body.classList.contains('mob-yearly-active');
+      const isMobileAnalytics = window.innerWidth <= 520 && document.body.classList.contains('mob-yearly-active');
       const aTxs = isMobileAnalytics ? getActiveTxs() : (passedTxs || lastCatList || getActiveTxs());
       const list = aTxs.filter(t => t.type === 'expense' && (t.cat || 'other') === activeCatFilter)
         .sort((a, b) => {
@@ -12873,7 +12871,7 @@
     document.getElementById('reportMod').addEventListener('click', function (e) { if (e.target === this) closeReportMod(); });
 
     function switchTab(tab) {
-      document.getElementById('tabDash').classList.toggle('act', tab === 'dashboard');
+      document.getElementById('tabDash').classList.toggle('act', tab === 'dashboard' || tab === 'yearly');
       document.getElementById('tabSub').classList.toggle('act', tab === 'subscriptions');
       document.getElementById('tabLog').classList.toggle('act', tab === 'log');
 
