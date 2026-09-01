@@ -6012,7 +6012,7 @@
         overflow: visible !important;
         padding: 0;
       }
-      #catAreaWrap .pb.mob-only { display: block !important; color: var(--tx) !important; font-size: 11px !important; }
+      #catAreaWrap .pb.mob-only { color: var(--tx) !important; font-size: 11px !important; }
       #catAreaWrap .cat-tag-list {
         display: flex !important;
         flex-direction: row !important;
@@ -9149,13 +9149,15 @@
       const viewAllBtn = document.querySelector('#catAreaWrap .pb');
       if (viewAllBtn) {
           const totalCatsCount = Object.keys(tot).length;
+          viewAllBtn.innerText = (isExpanded || activeCatFilter) ? 'View Less' : 'View All';
           if (!activeCatFilter && totalCatsCount <= 4) {
               viewAllBtn.style.display = 'none';
           } else {
               viewAllBtn.style.display = 'inline-block';
-              viewAllBtn.innerText = (isExpanded || activeCatFilter) ? 'View Less' : 'View All';
           }
       }
+      
+      if (typeof twemoji !== 'undefined') twemoji.parse(area);
     }
 
 
