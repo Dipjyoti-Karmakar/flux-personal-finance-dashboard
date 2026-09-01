@@ -5974,10 +5974,15 @@
       /* Reorder grid for mobile */
       .mg { display: flex !important; flex-direction: column !important; }
 
-      #txPanel, #catAreaWrap {
+      #catAreaWrap {
         max-height: none !important;
       }
-      .mg > .pn-fixed .txl,
+      #txPanel {
+        max-height: 400px !important;
+      }
+      .mg > .pn-fixed .txl {
+        overflow-y: auto !important;
+      }
       #catAreaWrap .ca {
         overflow-y: visible !important;
       }
