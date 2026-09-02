@@ -6102,11 +6102,11 @@
     .emoji-icon {
       width: 1.2em;
       height: 1.2em;
-      vertical-align: middle;
       display: inline-block;
       object-fit: contain;
       object-position: center center;
-      margin-right: 4px;
+      margin: 0;
+      vertical-align: middle;
     }
     .custom-sel-wrapper {
       position: relative;
@@ -6167,8 +6167,10 @@
     img.emoji {
       height: 1em;
       width: 1em;
-      margin: 0 .05em 0 .1em;
-      vertical-align: -0.1em;
+      margin: 0;
+      vertical-align: middle;
+      object-fit: contain;
+      object-position: center center;
     }
   </style>
   <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
