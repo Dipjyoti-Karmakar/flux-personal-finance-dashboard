@@ -7103,7 +7103,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const CICO = { 
       food: '<img src="emojis/food.png" class="emoji-icon" alt="food" />', 
@@ -7294,7 +7294,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = initializeFirestore(app, {
-      localCache: persistentLocalCache()
+      localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
     });
     const provider = new GoogleAuthProvider();
 
@@ -7639,6 +7639,22 @@
       document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); 
       document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); 
       const opts = t === 'income' ? ['salary', 'freelance', 'investment', 'other'] : ['food', 'transport', 'housing', 'entertainment', 'health', 'shopping', 'utilities', 'occasions', 'stationery', 'other'];
+      
+      const optsContainer = document.getElementById('txCOptions');
+      optsContainer.innerHTML = '';
+      opts.forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'custom-sel-option';
+        div.setAttribute('role', 'option');
+        div.setAttribute('tabindex', '0');
+        div.setAttribute('data-value', opt);
+        div.onclick = () => selectCustomOption(opt);
+        div.onkeydown = (e) => handleOptionKey(e, opt);
+        const label = opt.charAt(0).toUpperCase() + opt.slice(1);
+        div.innerHTML = `${CICO[opt] || ''} <span style="margin-left:8px;">${label}</span>`;
+        optsContainer.appendChild(div);
+      });
+
       selectCustomOption(opts[0]);
     }
     function toggleCustomSelect() {
@@ -13362,7 +13378,8 @@
     }
 
     window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
+      // Not calling e.preventDefault() here to allow the native browser banner
+      // and suppress the dev console error regarding the banner not being shown.
       _deferredPrompt = e;
       // Show install snackbar unless user previously dismissed it
       if (!sessionStorage.getItem('flux_pwa_dismissed')) {
