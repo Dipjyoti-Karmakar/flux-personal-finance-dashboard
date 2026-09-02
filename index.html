@@ -6000,11 +6000,24 @@
         display: none !important; 
       }
 
+      body.mob-yearly-active #dashHeader,
+      body.mob-yearly-active #dashboardView > #statsCustomDt {
+        display: none !important;
+      }
       body.mob-yearly-active #dashboardView > .srow,
       body.mob-yearly-active #dashboardView .mg > .pn:nth-child(1),
-      body.mob-yearly-active #dashboardView .mg > #txPanel,
+      body.mob-yearly-active #dashboardView .mg > #txPanel .ph,
+      body.mob-yearly-active #dashboardView .mg > #txPanel .txl,
       body.mob-yearly-active #dashboardView > #insightCard { 
         display: none !important; 
+      }
+      body.mob-yearly-active #dashboardView .mg > #txPanel {
+        display: block !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        border: none !important;
+        margin-bottom: 0 !important;
       }
 
       body.mob-yearly-active #dashboardView > .ys { 
@@ -6301,7 +6314,7 @@
     <!-- Dashboard View -->
     <div id="dashboardView">
 
-      <div
+      <div id="dashHeader"
         style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding-top:8px; padding-bottom:12px;">
         <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Summary
         </div>
@@ -7643,10 +7656,16 @@
       }
 
       renderTxList();
+      renderCats();
+      renderSplit();
     }
 
     function updCustomDt() {
-      if (cDtFilt === 'custom') renderTxList();
+      if (cDtFilt === 'custom') {
+        renderTxList();
+        renderCats();
+        renderSplit();
+      }
     }
 
     function clearCustomDt() {
@@ -9249,8 +9268,7 @@
 
     let _catLastHtml = ''; // Cache to skip re-render when category data hasn't changed
     function renderCats(passedTxs) {
-      const isMobileAnalytics = window.innerWidth <= 520 && document.body.classList.contains('mob-yearly-active');
-      const aTxs = isMobileAnalytics ? getActiveTxs() : (passedTxs || lastCatList || getActiveTxs());
+      const aTxs = passedTxs || lastCatList || getActiveTxs();
       const exp = aTxs.filter(t => t.type === 'expense'), area = document.getElementById('ctArea');
       if (!exp.length) {
         activeCatFilter = null;
@@ -9326,8 +9344,7 @@
     function renderCatTxList(passedTxs) {
       const panel = document.getElementById('catTxPanel');
       if (!panel || !activeCatFilter) return;
-      const isMobileAnalytics = window.innerWidth <= 520 && document.body.classList.contains('mob-yearly-active');
-      const aTxs = isMobileAnalytics ? getActiveTxs() : (passedTxs || lastCatList || getActiveTxs());
+      const aTxs = passedTxs || lastCatList || getActiveTxs();
       const list = aTxs.filter(t => t.type === 'expense' && (t.cat || 'other') === activeCatFilter)
         .sort((a, b) => {
           const dDiff = new Date(b.date + 'T00:00:00').getTime() - new Date(a.date + 'T00:00:00').getTime();
@@ -9412,7 +9429,7 @@
 
     let _splitLastHtml = ''; // Cache to skip re-render when split data hasn't changed
     function renderSplit(passedTxs) {
-      const exp = (passedTxs || getActiveTxs()).filter(t => t.type === 'expense'), area = document.getElementById('spArea');
+      const exp = (passedTxs || lastCatList || getActiveTxs()).filter(t => t.type === 'expense'), area = document.getElementById('spArea');
       if (!exp.length) {
         const emptyHtml = '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div>';
         if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _splitLastHtml = ''; }
