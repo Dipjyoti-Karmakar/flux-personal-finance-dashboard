@@ -6607,7 +6607,7 @@
   <!-- Activity Log View -->
   <!-- Subscriptions View -->
   <div id="subView" style="display:none">
-    <div class="sub-header" style="animation: fdI 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;">
+    <div class="sub-header section-in">
       <div class="sub-title">Subscriptions</div>
       <button class="sub-add-btn" onclick="openAddRecurring()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -6617,8 +6617,7 @@
         Add Subscription
       </button>
     </div>
-    <div class="sub-summary-bar" id="subSummaryBar"
-      style="animation: fdI 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: 0.05s;">
+    <div class="sub-summary-bar section-in" id="subSummaryBar" style="animation-delay: 0.1s;">
       <div class="sub-summary-item">
         <div class="sub-summary-val" id="subTotalMonthly" style="color:var(--ex)">₹0</div>
         <div class="sub-summary-lbl">Monthly Cost</div>
@@ -11816,8 +11815,8 @@
         const pauseLabel = rec.active ? '⏸ Pause' : '▶ Resume';
 
         const recIdJson = esc(JSON.stringify(rec.id));
-        const animStyle = _initialAnimsDone ? 'animation:none;' : `animation: fdI 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: ${index * 0.05}s;`;
-        return `<div class="sub-card ${rec.active ? '' : 'sub-paused'}" style="${animStyle}">
+        const animStyle = `animation-delay: ${0.2 + index * 0.05}s;`;
+        return `<div class="sub-card card-in ${rec.active ? '' : 'sub-paused'}" style="${animStyle}">
       <div class="sub-card-top">
         <div class="sub-card-icon">${catIcon}</div>
         <div class="sub-card-info">
