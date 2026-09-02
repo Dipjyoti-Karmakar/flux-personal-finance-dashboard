@@ -6551,7 +6551,7 @@
       
 
       <!-- Online vs Offline / Events — merged with toggle -->
-      <div class="pn" style="margin-top: 24px;" id="splitEventCard">
+      <div class="pn section-in-down" style="margin-top: 24px; animation-delay:.3s;" id="splitEventCard">
         <div class="ph">
           <span class="pt" id="splitEventTitle">Online vs Offline</span>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -6590,7 +6590,7 @@
         </div>
       </div>
 
-      <div class="ys">
+      <div class="ys section-in-down" style="animation-delay:.4s;">
         <div class="yst">Yearly Overview</div>
         <div id="yrArea">
           <div class="empty-state">
@@ -9349,8 +9349,8 @@
 
     let _catLastHtml = ''; // Cache to skip re-render when category data hasn't changed
     function getAnalysisTxs() {
-      const isMobile = window.innerWidth <= 520;
-      const mode = isMobile ? analysisMode : statsMode;
+      const isAnalysisTab = document.body.classList.contains('mob-yearly-active');
+      const mode = isAnalysisTab ? analysisMode : statsMode;
       const now = new Date();
       const localISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
 
@@ -9364,8 +9364,8 @@
         return txs.filter(t => new Date(t.date + 'T00:00:00').getFullYear() === cY);
       }
       if (mode === 'custom') {
-        const from = isMobile ? document.getElementById('analysisFrom').value : document.getElementById('statsFrom').value;
-        const to = isMobile ? document.getElementById('analysisTo').value : document.getElementById('statsTo').value;
+        const from = isAnalysisTab ? document.getElementById('analysisFrom').value : document.getElementById('statsFrom').value;
+        const to = isAnalysisTab ? document.getElementById('analysisTo').value : document.getElementById('statsTo').value;
         let list = txs;
         if (from) list = list.filter(t => t.date >= from);
         if (to) list = list.filter(t => t.date <= to);
