@@ -8115,7 +8115,7 @@
         // Wait for the longest entrance animation to finish (0.6s + 0.3s delay)
         // before disabling replay.
         setTimeout(() => {
-          document.querySelectorAll('#splitEventCard.section-in, #insightCard.section-in, .section-in-down').forEach(el => {
+          document.querySelectorAll('#splitEventCard.section-in, #insightCard.section-in').forEach(el => {
             el.classList.add('anim-done');
           });
         }, 1000);
