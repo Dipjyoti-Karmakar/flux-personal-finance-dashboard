@@ -6354,8 +6354,7 @@
       <div id="analysisHeader"
         style="display:none; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding-top:8px; padding-bottom:12px;">
         <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Analysis</div>
-        <div class="fltr" style="padding:0; border:none; margin:0; flex-wrap:nowrap; overflow-x:auto;">
-          <button class="ft dt-flt-analysis" id="aM_today" onclick="setAnalysisMode('today')">Today</button>
+        <div class="fltr" style="padding:0; border:none; margin:0;">
           <button class="ft dt-flt-analysis act" id="aM_month" onclick="setAnalysisMode('month')">This Month</button>
           <button class="ft dt-flt-analysis" id="aM_year" onclick="setAnalysisMode('year')">This Year</button>
           <button class="ft dt-flt-analysis" id="aM_all" onclick="setAnalysisMode('all')">All</button>
@@ -9355,10 +9354,7 @@
       const now = new Date();
       const localISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
 
-      if (mode === 'today') {
-        const prefix = localISO.slice(0, 10);
-        return txs.filter(t => t.date === prefix);
-      }
+
       if (mode === 'month') {
         const prefix = localISO.slice(0, 7);
         return txs.filter(t => t.date.startsWith(prefix));
