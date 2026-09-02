@@ -117,7 +117,7 @@ Flux uses two independent offline layers:
 | **Mobile FAB** | Floating "+" button on screens 520px and narrower, auto-hides when the add form is already in the viewport |
 | **Scroll-to-Top** | Fixed button appears after 400px scroll, positioned bottom-left to avoid the FAB |
 | **Illustrated Empty States** | Every no-data view shows a floating animated icon, title, and descriptive subtitle |
-| **Custom 3D Emojis** | Categories and UI elements use custom, high-quality 3D emoji assets instead of standard text emojis, ensuring a unified premium look across all devices and platforms |
+| **Custom 3D Emojis** | Category icons use custom, high-quality 3D emoji assets instead of standard text emojis, ensuring a unified premium look across all devices and platforms |
 
 ### PWA
 

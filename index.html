@@ -6075,6 +6075,7 @@
       vertical-align: middle;
       display: inline-block;
       object-fit: contain;
+      object-position: center center;
       margin-right: 4px;
     }
   </style>
@@ -7503,7 +7504,7 @@
       renderSplit();
     }
 
-    function setType(t) { cType = t; document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); document.getElementById('txC').innerHTML = t === 'income' ? '<option value="salary">Salary</option><option value="freelance">Freelance</option><option value="investment">Investment</option><option value="other">✶ Other</option>' : '<option value="food">Food</option><option value="transport">Transport</option><option value="housing">Housing</option><option value="entertainment">Entertainment</option><option value="health">Health</option><option value="shopping">Shopping</option><option value="utilities">Utilities</option><option value="occasions">Occasions</option><option value="stationery">Stationery</option><option value="other">✶ Other</option>'; }
+    function setType(t) { cType = t; document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); document.getElementById('txC').innerHTML = t === 'income' ? '<option value="salary">Salary</option><option value="freelance">Freelance</option><option value="investment">Investment</option><option value="other">Other</option>' : '<option value="food">Food</option><option value="transport">Transport</option><option value="housing">Housing</option><option value="entertainment">Entertainment</option><option value="health">Health</option><option value="shopping">Shopping</option><option value="utilities">Utilities</option><option value="occasions">Occasions</option><option value="stationery">Stationery</option><option value="other">Other</option>'; }
     function setMode(m) { cMode = m; document.getElementById('bOnl').className = 'tb' + (m === 'online' ? ' ao' : ''); document.getElementById('bOfl').className = 'tb' + (m === 'offline' ? ' af' : ''); }
 
     function setDt(filterVal, btn) {
