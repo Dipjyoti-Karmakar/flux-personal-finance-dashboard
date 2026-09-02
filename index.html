@@ -5487,6 +5487,25 @@
       animation: none;
     }
 
+    @keyframes sectionInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section-in-down {
+      animation: sectionInDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    }
+
+    .section-in-down.anim-done {
+      animation: none;
+    }
+
     /* ── Insight Card Panel (full-width panel below the grid) ── */
     .insight-card {
       background: var(--sf);
@@ -6332,6 +6351,24 @@
         <span class="dt-clear" onclick="clearStatsDt()">clear</span>
       </div>
 
+      <div id="analysisHeader"
+        style="display:none; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding-top:8px; padding-bottom:12px;">
+        <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Analysis</div>
+        <div class="fltr" style="padding:0; border:none; margin:0; flex-wrap:nowrap; overflow-x:auto;">
+          <button class="ft dt-flt-analysis" id="aM_today" onclick="setAnalysisMode('today')">Today</button>
+          <button class="ft dt-flt-analysis act" id="aM_month" onclick="setAnalysisMode('month')">This Month</button>
+          <button class="ft dt-flt-analysis" id="aM_year" onclick="setAnalysisMode('year')">This Year</button>
+          <button class="ft dt-flt-analysis" id="aM_all" onclick="setAnalysisMode('all')">All</button>
+          <button class="ft dt-flt-analysis" id="aM_custom" onclick="setAnalysisMode('custom')">Custom</button>
+        </div>
+      </div>
+      <div class="stats-custom-dt" id="analysisCustomDt" style="display:none; margin-bottom:12px;">
+        <input type="date" id="analysisFrom" onchange="updAnalysisDt()">
+        <span style="color:var(--mu);font-size:11px">to</span>
+        <input type="date" id="analysisTo" onchange="updAnalysisDt()">
+        <span class="dt-clear" onclick="clearAnalysisDt()">clear</span>
+      </div>
+
       <div class="srow sr1">
         <div class="sc gl card-in" id="balCard">
           <div class="sl">Net Balance</div>
@@ -6404,7 +6441,7 @@
           </div>
         </div>
 
-        <div class="pn">
+        <div class="pn section-in-down" style="animation-delay:.1s;">
           <div class="ph"><span class="pt">Expense / Income Trend</span>
             <div class="trend-toggle"><button class="tt-btn act" id="ttExp"
                 onclick="setTrendMode('expense')">Expense</button><button class="tt-btn" id="ttInc"
@@ -6500,7 +6537,7 @@
         </div>
 
         <!-- By Category -->
-        <div class="pn pn-fixed" id="catAreaWrap">
+        <div class="pn pn-fixed section-in-down" id="catAreaWrap" style="animation-delay:.2s;">
           <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="toggleViewAllCats();">View All</span></div>
           <div class="ca" style="padding: 12px 16px; flex:1; min-height:0; overflow-y:auto;" id="ctArea">
             <div class="empty-state" style="padding:24px 16px">
@@ -6515,7 +6552,7 @@
       
 
       <!-- Online vs Offline / Events — merged with toggle -->
-      <div class="pn section-in" style="margin-top: 24px; animation-delay:.1s;" id="splitEventCard">
+      <div class="pn" style="margin-top: 24px;" id="splitEventCard">
         <div class="ph">
           <span class="pt" id="splitEventTitle">Online vs Offline</span>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -6555,23 +6592,6 @@
       </div>
 
       <div class="ys">
-        <div id="analysisHeader"
-          style="display:none; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding-top:8px; padding-bottom:12px;">
-          <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Analysis</div>
-          <div class="fltr" style="padding:0; border:none; margin:0; flex-wrap:nowrap; overflow-x:auto;">
-            <button class="ft dt-flt-analysis" id="aM_today" onclick="setAnalysisMode('today')">Today</button>
-            <button class="ft dt-flt-analysis act" id="aM_month" onclick="setAnalysisMode('month')">This Month</button>
-            <button class="ft dt-flt-analysis" id="aM_year" onclick="setAnalysisMode('year')">This Year</button>
-            <button class="ft dt-flt-analysis" id="aM_all" onclick="setAnalysisMode('all')">All</button>
-            <button class="ft dt-flt-analysis" id="aM_custom" onclick="setAnalysisMode('custom')">Custom</button>
-          </div>
-        </div>
-        <div class="stats-custom-dt" id="analysisCustomDt" style="display:none; margin-bottom:12px;">
-          <input type="date" id="analysisFrom" onchange="updAnalysisDt()">
-          <span style="color:var(--mu);font-size:11px">to</span>
-          <input type="date" id="analysisTo" onchange="updAnalysisDt()">
-          <span class="dt-clear" onclick="clearAnalysisDt()">clear</span>
-        </div>
         <div class="yst">Yearly Overview</div>
         <div id="yrArea">
           <div class="empty-state">
@@ -7573,7 +7593,7 @@
       if (el) el.addEventListener('click', (e) => apTheme(theme === 'dark' ? 'light' : 'dark', e));
     });
 
-    function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); renderTrend(); renderCats(); renderSplit(); } }
+    function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); if (window.innerWidth > 520) { renderTrend(); renderCats(); renderSplit(); } } }
     function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; if(document.getElementById('statsFrom_ys')) { document.getElementById('statsFrom_ys').value = ''; document.getElementById('statsTo_ys').value = ''; } updStatsDt(); }
 
     function setStatsMode(m) {
@@ -7587,7 +7607,7 @@
       const cdw = document.getElementById('statsCustomDt');
       cdw.classList.toggle('vis', m === 'custom');
       renderStats();
-      if (window.innerWidth > 520 || !document.body.classList.contains('mob-yearly-active')) {
+      if (window.innerWidth > 520) {
         renderTrend();
         renderCats();
         renderSplit();
@@ -8096,7 +8116,7 @@
         // Wait for the longest entrance animation to finish (0.6s + 0.3s delay)
         // before disabling replay.
         setTimeout(() => {
-          document.querySelectorAll('#splitEventCard.section-in, #insightCard.section-in').forEach(el => {
+          document.querySelectorAll('#splitEventCard.section-in, #insightCard.section-in, .section-in-down').forEach(el => {
             el.classList.add('anim-done');
           });
         }, 1000);
@@ -9330,7 +9350,7 @@
 
     let _catLastHtml = ''; // Cache to skip re-render when category data hasn't changed
     function getAnalysisTxs() {
-      const isMobile = window.innerWidth <= 520 && document.body.classList.contains('mob-yearly-active');
+      const isMobile = window.innerWidth <= 520;
       const mode = isMobile ? analysisMode : statsMode;
       const now = new Date();
       const localISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
@@ -13171,6 +13191,7 @@
       if (tab === 'dashboard' || tab === 'yearly') {
         renderTrend();
         renderCats();
+        renderSplit();
       }
       if (tab === 'log') renderLogs();
       if (tab === 'subscriptions') renderRecurring();
