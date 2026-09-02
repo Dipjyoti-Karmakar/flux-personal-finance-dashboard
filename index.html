@@ -6069,6 +6069,14 @@
     @media (min-width: 521px) {
       .mob-only { display: none !important; }
     }
+    .emoji-icon {
+      width: 1.2em;
+      height: 1.2em;
+      vertical-align: middle;
+      display: inline-block;
+      object-fit: contain;
+      margin-right: 4px;
+    }
   </style>
   <style>
     img.emoji {
@@ -6308,10 +6316,10 @@
               <div class="fd full-mob"><label>Description</label><input type="text" id="txD"
                   placeholder="e.g. Groceries" maxlength="50"></div>
               <div class="fd full-mob"><label>Category</label><select id="txC">
-                  <option value="salary">💼 Salary</option>
-                  <option value="freelance">💻 Freelance</option>
-                  <option value="investment">📈 Investment</option>
-                  <option value="other">✦ Other</option>
+                  <option value="salary">Salary</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="investment">Investment</option>
+                  <option value="other">Other</option>
                 </select></div>
             </div>
             <div class="fr">
@@ -6800,19 +6808,19 @@
               <label
                 style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Category</label>
               <select id="recCat" style="width:100%;box-sizing:border-box;">
-                <option value="food">🍜 Food</option>
-                <option value="transport">🚗 Transport</option>
-                <option value="housing">🏠 Housing</option>
-                <option value="entertainment">🎮 Entertainment</option>
-                <option value="health">💊 Health</option>
-                <option value="shopping">🛍️ Shopping</option>
-                <option value="utilities">⚡ Utilities</option>
-                <option value="occasions">🎉 Occasions</option>
-                <option value="salary">💼 Salary</option>
-                <option value="freelance">💻 Freelance</option>
-                <option value="investment">📈 Investment</option>
-                <option value="stationery">📝 Stationery</option>
-                <option value="other">✦ Other</option>
+                <option value="food">Food</option>
+                <option value="transport">Transport</option>
+                <option value="housing">Housing</option>
+                <option value="entertainment">Entertainment</option>
+                <option value="health">Health</option>
+                <option value="shopping">Shopping</option>
+                <option value="utilities">Utilities</option>
+                <option value="occasions">Occasions</option>
+                <option value="salary">Salary</option>
+                <option value="freelance">Freelance</option>
+                <option value="investment">Investment</option>
+                <option value="stationery">Stationery</option>
+                <option value="other">Other</option>
               </select>
             </div>
           </div>
@@ -7001,7 +7009,22 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, initializeFirestore, persistentLocalCache, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const CICO = { food: '🍜', transport: '🚗', housing: '🏠', entertainment: '🎮', health: '💊', shopping: '🛍️', utilities: '🔌', utility: '🔌', occasions: '🎉', salary: '💼', freelance: '💻', investment: '📈', stationery: '📝', other: '✦' };
+    const CICO = { 
+      food: '<img src="emojis/food.png" class="emoji-icon" alt="food" />', 
+      transport: '<img src="emojis/transport.png" class="emoji-icon" alt="transport" />', 
+      housing: '<img src="emojis/housing.png" class="emoji-icon" alt="housing" />', 
+      entertainment: '<img src="emojis/entertainment.png" class="emoji-icon" alt="entertainment" />', 
+      health: '<img src="emojis/health.png" class="emoji-icon" alt="health" />', 
+      shopping: '<img src="emojis/shopping.png" class="emoji-icon" alt="shopping" />', 
+      utilities: '<img src="emojis/utilities.png" class="emoji-icon" alt="utilities" />', 
+      utility: '<img src="emojis/utilities.png" class="emoji-icon" alt="utility" />', 
+      occasions: '<img src="emojis/occasions.jpg" class="emoji-icon" alt="occasions" />', 
+      salary: '<img src="emojis/salary.png" class="emoji-icon" alt="salary" />', 
+      freelance: '<img src="emojis/freelance.jpg" class="emoji-icon" alt="freelance" />', 
+      investment: '<img src="emojis/investment.jpg" class="emoji-icon" alt="investment" />', 
+      stationery: '<img src="emojis/stationery.png" class="emoji-icon" alt="stationery" />', 
+      other: '<img src="emojis/other.png" class="emoji-icon" alt="other" />' 
+    };
     const CAT_COLOR = {
       food: '#c8876e',  // warm terracotta
       transport: '#6e9dc8',  // steel blue
@@ -7480,7 +7503,7 @@
       renderSplit();
     }
 
-    function setType(t) { cType = t; document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); document.getElementById('txC').innerHTML = t === 'income' ? '<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✶ Other</option>' : '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍️ Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✶ Other</option>'; }
+    function setType(t) { cType = t; document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); document.getElementById('txC').innerHTML = t === 'income' ? '<option value="salary">Salary</option><option value="freelance">Freelance</option><option value="investment">Investment</option><option value="other">✶ Other</option>' : '<option value="food">Food</option><option value="transport">Transport</option><option value="housing">Housing</option><option value="entertainment">Entertainment</option><option value="health">Health</option><option value="shopping">Shopping</option><option value="utilities">Utilities</option><option value="occasions">Occasions</option><option value="stationery">Stationery</option><option value="other">✶ Other</option>'; }
     function setMode(m) { cMode = m; document.getElementById('bOnl').className = 'tb' + (m === 'online' ? ' ao' : ''); document.getElementById('bOfl').className = 'tb' + (m === 'offline' ? ' af' : ''); }
 
     function setDt(filterVal, btn) {
@@ -8562,8 +8585,8 @@
     function updECat(type) {
       const el = document.getElementById('eCat');
       el.innerHTML = type === 'income' ?
-        '<option value="salary">💼 Salary</option><option value="freelance">💻 Freelance</option><option value="investment">📈 Investment</option><option value="other">✦ Other</option>' :
-        '<option value="food">🍜 Food</option><option value="transport">🚗 Transport</option><option value="housing">🏠 Housing</option><option value="entertainment">🎮 Entertainment</option><option value="health">💊 Health</option><option value="shopping">🛍️ Shopping</option><option value="utilities">⚡ Utilities</option><option value="occasions">🎉 Occasions</option><option value="stationery">📝 Stationery</option><option value="other">✦ Other</option>';
+        '<option value="salary">Salary</option><option value="freelance">Freelance</option><option value="investment">Investment</option><option value="other">Other</option>' :
+        '<option value="food">Food</option><option value="transport">Transport</option><option value="housing">Housing</option><option value="entertainment">Entertainment</option><option value="health">Health</option><option value="shopping">Shopping</option><option value="utilities">Utilities</option><option value="occasions">Occasions</option><option value="stationery">Stationery</option><option value="other">Other</option>';
     }
 
     function editTx(id) {

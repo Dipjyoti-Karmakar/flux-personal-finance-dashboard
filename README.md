@@ -117,7 +117,7 @@ Flux uses two independent offline layers:
 | **Mobile FAB** | Floating "+" button on screens 520px and narrower, auto-hides when the add form is already in the viewport |
 | **Scroll-to-Top** | Fixed button appears after 400px scroll, positioned bottom-left to avoid the FAB |
 | **Illustrated Empty States** | Every no-data view shows a floating animated icon, title, and descriptive subtitle |
-| **Twemoji** | Emoji in category labels and activity log entries are rendered via Twemoji for consistent cross-platform display |
+| **Custom 3D Emojis** | Categories and UI elements use custom, high-quality 3D emoji assets instead of standard text emojis, ensuring a unified premium look across all devices and platforms |
 
 ### PWA
 
@@ -147,7 +147,7 @@ Flux uses two independent offline layers:
 | **Charting** | Canvas 2D API, custom-built trend chart, confetti engine |
 | **PDF Generation** | jsPDF 2.5.1 + jspdf-autotable 3.8.2 + pdfmake 0.2.7 (Roboto font for Unicode ₹) |
 | **Spreadsheet Import** | SheetJS xlsx 0.18.5 via CDN with SRI |
-| **Emoji Rendering** | Twemoji (unpkg CDN) |
+| **Emoji Assets** | Custom 3D PNG/JPG icons |
 | **Fonts** | Google Fonts: Playfair Display, DM Mono, DM Sans |
 | **PWA** | Service Worker (`flux-v24`) + Web App Manifest |
 
