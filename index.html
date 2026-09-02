@@ -6370,11 +6370,11 @@
                   placeholder="e.g. Groceries" maxlength="50"></div>
               <div class="fd full-mob"><label>Category</label>
                 <div class="custom-sel-wrapper" id="txC-wrapper">
-                  <div class="custom-sel-trigger" id="txCTrigger" onclick="toggleCustomSelect()">
+                  <div class="custom-sel-trigger" id="txCTrigger" onclick="toggleCustomSelect()" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="txCOptions" onkeydown="handleCustomSelectKey(event)">
                     <span class="custom-sel-label" id="txCLabel">Select Category</span>
                     <span class="custom-sel-arrow">▼</span>
                   </div>
-                  <div class="custom-sel-options" id="txCOptions"></div>
+                  <div class="custom-sel-options" id="txCOptions" role="listbox" tabindex="-1"></div>
                   <input type="hidden" id="txC" value="">
                 </div>
               </div>
@@ -7075,7 +7075,7 @@
       shopping: '<img src="emojis/shopping.png" class="emoji-icon" alt="shopping" />', 
       utilities: '<img src="emojis/utilities.png" class="emoji-icon" alt="utilities" />', 
       utility: '<img src="emojis/utilities.png" class="emoji-icon" alt="utility" />', 
-      occasions: '<img src="emojis/occasions.jpg" class="emoji-icon" alt="occasions" />', 
+      occasions: '<img src="emojis/occasions.png" class="emoji-icon" alt="occasions" />', 
       salary: '<img src="emojis/salary.png" class="emoji-icon" alt="salary" />', 
       freelance: '<img src="emojis/freelance.jpg" class="emoji-icon" alt="freelance" />', 
       investment: '<img src="emojis/investment.jpg" class="emoji-icon" alt="investment" />', 
@@ -7261,6 +7261,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       apTheme(theme);
       document.getElementById('txDt').value = getTodayStr();
+      setType('income');
 
       // Auto-rollover date at midnight if left on "today"
       let _lastToday = getTodayStr();
@@ -7565,22 +7566,65 @@
       document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); 
       document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); 
       const opts = t === 'income' ? ['salary', 'freelance', 'investment', 'other'] : ['food', 'transport', 'housing', 'entertainment', 'health', 'shopping', 'utilities', 'occasions', 'stationery', 'other'];
-      document.getElementById('txCOptions').innerHTML = opts.map(c => `<div class="custom-sel-option" onclick="selectCustomOption('${c}')">${CICO[c] || ''} <span style="margin-left:8px;">${c.charAt(0).toUpperCase() + c.slice(1)}</span></div>`).join('');
+      document.getElementById('txCOptions').innerHTML = opts.map(c => `<div class="custom-sel-option" onclick="selectCustomOption('${c}')" role="option" tabindex="-1" aria-selected="false" data-value="${c}" onkeydown="handleOptionKey(event, '${c}')">${CICO[c] || ''} <span style="margin-left:8px;">${c.charAt(0).toUpperCase() + c.slice(1)}</span></div>`).join('');
       selectCustomOption(opts[0]);
     }
     function toggleCustomSelect() {
-      document.getElementById('txCOptions').classList.toggle('open');
+      const opts = document.getElementById('txCOptions');
+      const isOpen = opts.classList.toggle('open');
+      document.getElementById('txCTrigger').setAttribute('aria-expanded', isOpen);
     }
     function selectCustomOption(val) {
       document.getElementById('txC').value = val;
       const label = val.charAt(0).toUpperCase() + val.slice(1);
       document.getElementById('txCLabel').innerHTML = `${CICO[val] || ''} <span style="margin-left:8px;">${label}</span>`;
       document.getElementById('txCOptions').classList.remove('open');
+      document.getElementById('txCTrigger').setAttribute('aria-expanded', 'false');
+      
+      document.querySelectorAll('#txCOptions .custom-sel-option').forEach(el => {
+        el.setAttribute('aria-selected', el.getAttribute('data-value') === val);
+      });
+    }
+    function handleCustomSelectKey(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleCustomSelect();
+        if (document.getElementById('txCOptions').classList.contains('open')) {
+          const firstOpt = document.querySelector('#txCOptions .custom-sel-option');
+          if (firstOpt) firstOpt.focus();
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!document.getElementById('txCOptions').classList.contains('open')) toggleCustomSelect();
+        const firstOpt = document.querySelector('#txCOptions .custom-sel-option');
+        if (firstOpt) firstOpt.focus();
+      }
+    }
+    function handleOptionKey(e, val) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectCustomOption(val);
+        document.getElementById('txCTrigger').focus();
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const opts = Array.from(document.querySelectorAll('#txCOptions .custom-sel-option'));
+        const idx = opts.indexOf(e.currentTarget);
+        let nextIdx = e.key === 'ArrowDown' ? idx + 1 : idx - 1;
+        if (nextIdx < 0) nextIdx = opts.length - 1;
+        if (nextIdx >= opts.length) nextIdx = 0;
+        opts[nextIdx].focus();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        document.getElementById('txCOptions').classList.remove('open');
+        document.getElementById('txCTrigger').setAttribute('aria-expanded', 'false');
+        document.getElementById('txCTrigger').focus();
+      }
     }
     document.addEventListener('click', function(e) {
       const wrapper = document.getElementById('txC-wrapper');
       if (wrapper && !wrapper.contains(e.target)) {
         document.getElementById('txCOptions').classList.remove('open');
+        document.getElementById('txCTrigger').setAttribute('aria-expanded', 'false');
       }
     });
     function setMode(m) { cMode = m; document.getElementById('bOnl').className = 'tb' + (m === 'online' ? ' ao' : ''); document.getElementById('bOfl').className = 'tb' + (m === 'offline' ? ' af' : ''); }
@@ -9222,9 +9266,8 @@
       // If the active filter no longer exists in the data, close it
       if (activeCatFilter && !tot[activeCatFilter]) activeCatFilter = null;
 
-      let barHtml = '<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin-bottom:12px;">';
-      cats.forEach(([cat, val], i) => { const pct = (val / totalExp) * 100; barHtml += `<div style="width:${pct}%;background:${getCatColor(cat)};transition:width .5s cubic-bezier(0.16,1,0.3,1);" title="${cat}: ${pct.toFixed(0)}%"></div>`; });
-      barHtml += '</div>';
+      // Stacked bar chart removed by user request
+      let barHtml = '';
 
       const isExpanded = document.body.classList.contains('mob-cat-expanded');
 
