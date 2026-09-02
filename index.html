@@ -9014,10 +9014,11 @@
       const area = document.getElementById('trendArea');
       if (!exp.length && !inc.length) { area.setAttribute('aria-label', 'No trend data available'); area.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No data for this view</div><div class="empty-sub">Add transactions to see your trend visualized here</div></div>'; return; }
 
+      const currentMode = passedTxs ? statsMode : (document.body.classList.contains('mob-yearly-active') ? analysisMode : statsMode);
       let isDaily = true;
-      if (statsMode === 'year') {
+      if (currentMode === 'year') {
         isDaily = false;
-      } else if (statsMode === 'all' || statsMode === 'custom') {
+      } else if (currentMode === 'all' || currentMode === 'custom') {
         // Use reduce instead of spread to avoid stack overflow on large datasets
         const dates = aTxs.map(t => new Date(t.date + 'T00:00:00').getTime());
         if (dates.length > 0) {
@@ -9040,7 +9041,7 @@
       const now = new Date();
 
       if (isDaily) {
-        if (statsMode === 'month') {
+        if (currentMode === 'month') {
           // Use the month from actual transaction data, not always `now`
           const existingKeys = Object.keys(allGroups).sort();
           const refKey = existingKeys[0] || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
@@ -9065,7 +9066,7 @@
           }
         }
       } else {
-        if (statsMode === 'year') {
+        if (currentMode === 'year') {
           // Use year from actual data, not always current year
           const dataKeys = Object.keys(allGroups).sort();
           const dataY = dataKeys.length > 0 ? parseInt(dataKeys[0].split('-')[0]) : now.getFullYear();
@@ -9094,7 +9095,7 @@
         if (isDaily) {
           let day = parseInt(parts[2]);
           let yr = parts[0].slice(2, 4);
-          return statsMode === 'month' ? day + ' ' + mon : day + ' ' + mon + " '" + yr;
+          return currentMode === 'month' ? day + ' ' + mon : day + ' ' + mon + " '" + yr;
         } else {
           let yr = parts[0].slice(2, 4);
           return mon + " '" + yr;
