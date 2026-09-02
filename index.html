@@ -6004,6 +6004,13 @@
       body.mob-yearly-active #dashboardView > #statsCustomDt {
         display: none !important;
       }
+      body.mob-yearly-active #analysisHeader {
+        display: flex !important;
+      }
+      body:not(.mob-yearly-active) #analysisHeader,
+      body:not(.mob-yearly-active) #analysisCustomDt {
+        display: none !important;
+      }
       body.mob-yearly-active #dashboardView > .srow,
       body.mob-yearly-active #dashboardView .mg > .pn:nth-child(1),
       body.mob-yearly-active #dashboardView .mg > #txPanel .ph,
@@ -6557,6 +6564,23 @@
       </div>
 
       <div class="ys">
+        <div id="analysisHeader"
+          style="display:none; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding-top:8px; padding-bottom:12px;">
+          <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Analysis</div>
+          <div class="fltr" style="padding:0; border:none; margin:0; flex-wrap:nowrap; overflow-x:auto;">
+            <button class="ft dt-flt-analysis" id="aM_today" onclick="setAnalysisMode('today')">Today</button>
+            <button class="ft dt-flt-analysis act" id="aM_month" onclick="setAnalysisMode('month')">This Month</button>
+            <button class="ft dt-flt-analysis" id="aM_year" onclick="setAnalysisMode('year')">This Year</button>
+            <button class="ft dt-flt-analysis" id="aM_all" onclick="setAnalysisMode('all')">All</button>
+            <button class="ft dt-flt-analysis" id="aM_custom" onclick="setAnalysisMode('custom')">Custom</button>
+          </div>
+        </div>
+        <div class="stats-custom-dt" id="analysisCustomDt" style="display:none; margin-bottom:12px;">
+          <input type="date" id="analysisFrom" onchange="updAnalysisDt()">
+          <span style="color:var(--mu);font-size:11px">to</span>
+          <input type="date" id="analysisTo" onchange="updAnalysisDt()">
+          <span class="dt-clear" onclick="clearAnalysisDt()">clear</span>
+        </div>
         <div class="yst">Yearly Overview</div>
         <div id="yrArea">
           <div class="empty-state">
@@ -7125,6 +7149,7 @@
     let cType = 'income', cMode = 'online';
     let theme = localStorage.getItem('flux_theme') || 'dark';
     let statsMode = 'month';
+    let analysisMode = 'month';
 
     let cDtFilt = 'today';
     let cTyFilt = 'all';
@@ -7571,6 +7596,39 @@
       const cdw = document.getElementById('statsCustomDt');
       cdw.classList.toggle('vis', m === 'custom');
       renderStats();
+      if (window.innerWidth > 520 || !document.body.classList.contains('mob-yearly-active')) {
+        renderTrend();
+        renderCats();
+        renderSplit();
+      }
+    }
+
+    function updAnalysisDt() {
+      if (analysisMode === 'custom') {
+        activeCatFilter = null;
+        catTxVisibleCount = CAT_TX_PAGE_SIZE;
+        renderTrend();
+        renderCats();
+        renderSplit();
+      }
+    }
+    function clearAnalysisDt() {
+      document.getElementById('analysisFrom').value = '';
+      document.getElementById('analysisTo').value = '';
+      updAnalysisDt();
+    }
+    function setAnalysisMode(m) {
+      analysisMode = m;
+      activeCatFilter = null;
+      catTxVisibleCount = CAT_TX_PAGE_SIZE;
+      document.querySelectorAll('.dt-flt-analysis').forEach(b => b.classList.remove('act'));
+      const btn = document.getElementById('aM_' + m);
+      if (btn) btn.classList.add('act');
+      const cdw = document.getElementById('analysisCustomDt');
+      if (cdw) {
+        if (m === 'custom') cdw.style.display = 'flex';
+        else cdw.style.display = 'none';
+      }
       renderTrend();
       renderCats();
       renderSplit();
@@ -7657,15 +7715,11 @@
       }
 
       renderTxList();
-      renderCats();
-      renderSplit();
     }
 
     function updCustomDt() {
       if (cDtFilt === 'custom') {
         renderTxList();
-        renderCats();
-        renderSplit();
       }
     }
 
@@ -8926,7 +8980,7 @@
       trendAbort = new AbortController();
       const signal = trendAbort.signal;
       document.getElementById('trendTip').classList.remove('sh');
-      const aTxs = passedTxs || getActiveTxs();
+      const aTxs = passedTxs || getAnalysisTxs();
       const showExp = trendMode === 'expense' || trendMode === 'both';
       const showInc = trendMode === 'income' || trendMode === 'both';
       const exp = showExp ? aTxs.filter(t => t.type === 'expense') : [];
@@ -9268,8 +9322,37 @@
     });
 
     let _catLastHtml = ''; // Cache to skip re-render when category data hasn't changed
+    function getAnalysisTxs() {
+      const isMobile = window.innerWidth <= 520 && document.body.classList.contains('mob-yearly-active');
+      const mode = isMobile ? analysisMode : statsMode;
+      const now = new Date();
+      const localISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
+
+      if (mode === 'today') {
+        const prefix = localISO.slice(0, 10);
+        return txs.filter(t => t.date === prefix);
+      }
+      if (mode === 'month') {
+        const prefix = localISO.slice(0, 7);
+        return txs.filter(t => t.date.startsWith(prefix));
+      }
+      if (mode === 'year') {
+        const cY = now.getFullYear();
+        return txs.filter(t => new Date(t.date + 'T00:00:00').getFullYear() === cY);
+      }
+      if (mode === 'custom') {
+        const from = isMobile ? document.getElementById('analysisFrom').value : document.getElementById('statsFrom').value;
+        const to = isMobile ? document.getElementById('analysisTo').value : document.getElementById('statsTo').value;
+        let list = txs;
+        if (from) list = list.filter(t => t.date >= from);
+        if (to) list = list.filter(t => t.date <= to);
+        return list;
+      }
+      return txs; // 'all'
+    }
+
     function renderCats(passedTxs) {
-      const aTxs = passedTxs || lastCatList || getActiveTxs();
+      const aTxs = passedTxs || getAnalysisTxs();
       const exp = aTxs.filter(t => t.type === 'expense'), area = document.getElementById('ctArea');
       if (!exp.length) {
         activeCatFilter = null;
@@ -9345,7 +9428,7 @@
     function renderCatTxList(passedTxs) {
       const panel = document.getElementById('catTxPanel');
       if (!panel || !activeCatFilter) return;
-      const aTxs = passedTxs || lastCatList || getActiveTxs();
+      const aTxs = passedTxs || getAnalysisTxs();
       const list = aTxs.filter(t => t.type === 'expense' && (t.cat || 'other') === activeCatFilter)
         .sort((a, b) => {
           const dDiff = new Date(b.date + 'T00:00:00').getTime() - new Date(a.date + 'T00:00:00').getTime();
@@ -9430,7 +9513,7 @@
 
     let _splitLastHtml = ''; // Cache to skip re-render when split data hasn't changed
     function renderSplit(passedTxs) {
-      const exp = (passedTxs || lastCatList || getActiveTxs()).filter(t => t.type === 'expense'), area = document.getElementById('spArea');
+      const exp = (passedTxs || getAnalysisTxs()).filter(t => t.type === 'expense'), area = document.getElementById('spArea');
       if (!exp.length) {
         const emptyHtml = '<div class="empty-state"><div class="empty-icon">⚡</div><div class="empty-title">No expense data</div><div class="empty-sub">Online vs offline breakdown will show once you have expenses</div></div>';
         if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _splitLastHtml = ''; }
