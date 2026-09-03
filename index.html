@@ -6268,7 +6268,9 @@
   </script>
 
   <div class="app">
-
+    <style>
+      .c-ico { width: 15px; height: 15px; vertical-align: middle; margin-right: 4px; margin-top: -2px; }
+    </style>
 
 
     <header>
@@ -6414,8 +6416,8 @@
                     class="tb" id="bExp" onclick="setType('expense')">↓ Expense</button></div>
               </div>
               <div class="fd full-mob"><label>Mode</label>
-                <div class="tg"><button class="tb ao" id="bOnl" onclick="setMode('online')">⚡ Online</button><button
-                    class="tb" id="bOfl" onclick="setMode('offline')">🏪 Offline</button></div>
+                <div class="tg"><button class="tb ao" id="bOnl" onclick="setMode('online')"><img src="emojis/online.png" class="c-ico" alt=""> Online</button><button
+                    class="tb" id="bOfl" onclick="setMode('offline')"><img src="emojis/offline.png" class="c-ico" alt=""> Offline</button></div>
               </div>
             </div>
             <div class="fr">
@@ -6953,9 +6955,9 @@
             <label
               style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Mode</label>
             <div class="tg" style="grid-template-columns:1fr 1fr;">
-              <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true">📱
+              <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true"><img src="emojis/online.png" class="c-ico" alt="">
                 Online</button>
-              <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false">💵
+              <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false"><img src="emojis/offline.png" class="c-ico" alt="">
                 Offline</button>
             </div>
           </div>
@@ -7119,20 +7121,20 @@
     import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const CICO = { 
-      food: '<img src="emojis/food.png" class="emoji-icon" alt="food" />', 
-      transport: '<img src="emojis/transport.png" class="emoji-icon" alt="transport" />', 
-      housing: '<img src="emojis/housing.png" class="emoji-icon" alt="housing" />', 
-      entertainment: '<img src="emojis/entertainment.png" class="emoji-icon" alt="entertainment" />', 
-      health: '<img src="emojis/health.png" class="emoji-icon" alt="health" />', 
-      shopping: '<img src="emojis/shopping.png" class="emoji-icon" alt="shopping" />', 
-      utilities: '<img src="emojis/utilities.png" class="emoji-icon" alt="utilities" />', 
-      utility: '<img src="emojis/utilities.png" class="emoji-icon" alt="utility" />', 
-      occasions: '<img src="emojis/occasions.png" class="emoji-icon" alt="occasions" />', 
-      salary: '<img src="emojis/salary.png" class="emoji-icon" alt="salary" />', 
-      freelance: '<img src="emojis/freelance.png" class="emoji-icon" alt="freelance" />', 
-      investment: '<img src="emojis/investment.png" class="emoji-icon" alt="investment" />', 
-      stationery: '<img src="emojis/stationery.png" class="emoji-icon" alt="stationery" />', 
-      other: '<img src="emojis/other.png" class="emoji-icon" alt="other" />' 
+      food: '<img src="emojis/food.png" class="c-ico" alt="food" />', 
+      transport: '<img src="emojis/transport.png" class="c-ico" alt="transport" />', 
+      housing: '<img src="emojis/housing.png" class="c-ico" alt="housing" />', 
+      entertainment: '<img src="emojis/entertainment.png" class="c-ico" alt="entertainment" />', 
+      health: '<img src="emojis/health.png" class="c-ico" alt="health" />', 
+      shopping: '<img src="emojis/shopping.png" class="c-ico" alt="shopping" />', 
+      utilities: '<img src="emojis/utilities.png" class="c-ico" alt="utilities" />', 
+      utility: '<img src="emojis/utilities.png" class="c-ico" alt="utility" />', 
+      occasions: '<img src="emojis/occasions.png" class="c-ico" alt="occasions" />', 
+      salary: '<img src="emojis/salary.png" class="c-ico" alt="salary" />', 
+      freelance: '<img src="emojis/freelance.png" class="c-ico" alt="freelance" />', 
+      investment: '<img src="emojis/investment.png" class="c-ico" alt="investment" />', 
+      stationery: '<img src="emojis/stationery.png" class="c-ico" alt="stationery" />', 
+      other: '<img src="emojis/other.png" class="c-ico" alt="other" />' 
     };
     const CAT_COLOR = {
       food: '#c8876e',  // warm terracotta
@@ -8692,15 +8694,15 @@
         const safeMode = (tx.mode === 'online' || tx.mode === 'offline') ? tx.mode : 'offline';
         return `
     <div class="txi-wrap" data-txid="${esc(tx.id)}">
-      <div class="txi-actions act-left"><button class="txi-act" onclick="editTx(${esc(JSON.stringify(tx.id))})">\u270F\uFE0F Edit</button></div>
-      <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx(${esc(JSON.stringify(tx.id))})">\uD83D\uDDD1 Delete</button></div>
+      <div class="txi-actions act-left"><button class="txi-act" onclick="editTx(${esc(JSON.stringify(tx.id))})"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button></div>
+      <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx(${esc(JSON.stringify(tx.id))})"><img src="emojis/remove.png" class="c-ico" alt=""> Delete</button></div>
       <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="tx-${esc(tx.id)}" style="${evtBorder}">
       <div class="dot ${safeType}"></div>
       <div class="ti">
         <div class="tn">${esc(tx.desc)}</div>
         <div class="tm">
           <span class="bg ct" data-cat="${tx.cat || 'other'}">${CICO[tx.cat] || '✦'} ${tx.cat || 'other'}</span>
-          <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '⚡ online' : '🏪 offline'}</span>
+          <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '<img src="emojis/online.png" class="c-ico" alt=""> online' : '<img src="emojis/offline.png" class="c-ico" alt=""> offline'}</span>
           ${tx._recurring ? '<span class="bg tx-badge-sub">subscription</span>' : ''}
           ${evtBadge}
           ${tx._imp ? '<span class="bg ip">xlsx</span>' : ''}
@@ -9483,14 +9485,14 @@
           const safeMode = (tx.mode === 'online' || tx.mode === 'offline') ? tx.mode : 'offline';
           return `
       <div class="txi-wrap" data-txid="${esc(tx.id)}">
-        <div class="txi-actions act-left"><button class="txi-act" onclick="editTx(${esc(JSON.stringify(tx.id))})">✏️ Edit</button></div>
-        <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx(${esc(JSON.stringify(tx.id))})">🗑 Delete</button></div>
+        <div class="txi-actions act-left"><button class="txi-act" onclick="editTx(${esc(JSON.stringify(tx.id))})"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button></div>
+        <div class="txi-actions act-right"><button class="txi-act" onclick="askDelTx(${esc(JSON.stringify(tx.id))})"><img src="emojis/remove.png" class="c-ico" alt=""> Delete</button></div>
         <div class="txi${tx.eventId && events[tx.eventId] ? ' tx-event' : ''}" id="cat-tx-${esc(tx.id)}" style="${evtBorder}">
         <div class="dot ${safeType}"></div>
         <div class="ti">
           <div class="tn">${esc(tx.desc)}</div>
           <div class="tm">
-            <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '⚡ online' : '🏪 offline'}</span>
+            <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '<img src="emojis/online.png" class="c-ico" alt=""> online' : '<img src="emojis/offline.png" class="c-ico" alt=""> offline'}</span>
             ${evtBadge}
             ${tx._imp ? '<span class="bg ip">xlsx</span>' : ''}
             <span>${fmtDt(tx.date)}</span>
@@ -9919,8 +9921,8 @@
       ${incRow}${netRow}${savRateRow}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:${isCur ? '6px' : '0'}">
-      <div class="ms"><span class="msl">⚡ Online</span><span class="msv" style="color:var(--on)">${onl > 0 ? fmtW(onl) : '—'}</span></div>
-      <div class="ms"><span class="msl">🏪 Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
+      <div class="ms"><span class="msl"><img src="emojis/online.png" class="c-ico" alt=""> Online</span><span class="msv" style="color:var(--on)">${onl > 0 ? fmtW(onl) : '—'}</span></div>
+      <div class="ms"><span class="msl"><img src="emojis/offline.png" class="c-ico" alt=""> Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
     </div>
     ${tdHTML}
     <!-- progress bar redesign -->
@@ -11149,7 +11151,7 @@
       }
 
       // Action icon colours and labels
-      const actIcons = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
+      const actIcons = { 'ADD': '➕', 'EDIT': '<img src="emojis/edit.png" class="c-ico" alt="">', 'DELETE': '<img src="emojis/remove.png" class="c-ico" alt="">', 'IMPORT': '📥' };
       const actLabels = { 'ADD': 'Added', 'EDIT': 'Edited', 'DELETE': 'Deleted', 'IMPORT': 'Imported' };
 
       // Helper: try to infer tx type from legacy log messages that don't have 'tp' field
@@ -11188,7 +11190,7 @@
         const pSty = "padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px;letter-spacing:0.3px;";
 
         let actionPill = '';
-        if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);">✏️ Edited</span>`;
+        if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);"><img src="emojis/edit.png" class="c-ico" alt=""> Edited</span>`;
         else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">📥 Imported</span>`;
         else if (l.a === 'DELETE') actionPill = '';
         else if (l.a === 'ADD') {
@@ -11818,7 +11820,7 @@
         const renewalDate = rec.nextDue
           ? new Date(rec.nextDue + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
           : '—';
-        const pauseLabel = rec.active ? '⏸ Pause' : '▶ Resume';
+        const pauseLabel = rec.active ? '<img src="emojis/pause.png" class="c-ico" alt=""> Pause' : '<img src="emojis/resume.png" class="c-ico" alt=""> Resume';
 
         const recIdJson = esc(JSON.stringify(rec.id));
         const animStyle = `animation-delay: ${0.2 + index * 0.05}s;`;
@@ -11837,9 +11839,9 @@
       </div>
       <div class="sub-card-actions">
         <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(${recIdJson},${!rec.active})">${pauseLabel}</button>
-        <button class="sub-action-btn edit-btn" onclick="openEditRecurring(${recIdJson})">✏ Edit</button>
-        <button class="sub-action-btn del-btn" onclick="askDeleteRecurring(${recIdJson})">🗑 Remove</button>
-        <button class="sub-action-btn hist-btn" id="hist-btn-${rec.id}" onclick="toggleSubHistory(this,'${rec.id}')">📋 History</button>
+        <button class="sub-action-btn edit-btn" onclick="openEditRecurring(${recIdJson})"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>
+        <button class="sub-action-btn del-btn" onclick="askDeleteRecurring(${recIdJson})"><img src="emojis/remove.png" class="c-ico" alt=""> Remove</button>
+        <button class="sub-action-btn hist-btn" id="hist-btn-${rec.id}" onclick="toggleSubHistory(this,'${rec.id}')"><img src="emojis/history.png" class="c-ico" alt=""> History</button>
       </div>
       <div class="sub-hist-panel" id="hist-panel-${rec.id}">
         <div class="sub-hist-inner" id="hist-inner-${rec.id}"></div>
