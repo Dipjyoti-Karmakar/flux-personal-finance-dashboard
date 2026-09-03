@@ -7121,20 +7121,20 @@
     import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const CICO = { 
-      food: '<img src="emojis/food.png" class="c-ico" alt="food" />', 
-      transport: '<img src="emojis/transport.png" class="c-ico" alt="transport" />', 
-      housing: '<img src="emojis/housing.png" class="c-ico" alt="housing" />', 
-      entertainment: '<img src="emojis/entertainment.png" class="c-ico" alt="entertainment" />', 
-      health: '<img src="emojis/health.png" class="c-ico" alt="health" />', 
-      shopping: '<img src="emojis/shopping.png" class="c-ico" alt="shopping" />', 
-      utilities: '<img src="emojis/utilities.png" class="c-ico" alt="utilities" />', 
-      utility: '<img src="emojis/utilities.png" class="c-ico" alt="utility" />', 
-      occasions: '<img src="emojis/occasions.png" class="c-ico" alt="occasions" />', 
-      salary: '<img src="emojis/salary.png" class="c-ico" alt="salary" />', 
-      freelance: '<img src="emojis/freelance.png" class="c-ico" alt="freelance" />', 
-      investment: '<img src="emojis/investment.png" class="c-ico" alt="investment" />', 
-      stationery: '<img src="emojis/stationery.png" class="c-ico" alt="stationery" />', 
-      other: '<img src="emojis/other.png" class="c-ico" alt="other" />' 
+      food: '<img src="emojis/food.png" class="c-ico" alt="" />', 
+      transport: '<img src="emojis/transport.png" class="c-ico" alt="" />', 
+      housing: '<img src="emojis/housing.png" class="c-ico" alt="" />', 
+      entertainment: '<img src="emojis/entertainment.png" class="c-ico" alt="" />', 
+      health: '<img src="emojis/health.png" class="c-ico" alt="" />', 
+      shopping: '<img src="emojis/shopping.png" class="c-ico" alt="" />', 
+      utilities: '<img src="emojis/utilities.png" class="c-ico" alt="" />', 
+      utility: '<img src="emojis/utilities.png" class="c-ico" alt="" />', 
+      occasions: '<img src="emojis/occasions.png" class="c-ico" alt="" />', 
+      salary: '<img src="emojis/salary.png" class="c-ico" alt="" />', 
+      freelance: '<img src="emojis/freelance.png" class="c-ico" alt="" />', 
+      investment: '<img src="emojis/investment.png" class="c-ico" alt="" />', 
+      stationery: '<img src="emojis/stationery.png" class="c-ico" alt="" />', 
+      other: '<img src="emojis/other.png" class="c-ico" alt="" />' 
     };
     const CAT_COLOR = {
       food: '#c8876e',  // warm terracotta
@@ -11890,7 +11890,7 @@
       const isOpen = panel.classList.contains('open');
       panel.classList.toggle('open', !isOpen);
       btn.classList.toggle('act', !isOpen);
-      btn.innerHTML = isOpen ? '📋 History' : '▲ Close';
+      btn.innerHTML = isOpen ? '<img src="emojis/history.png" class="c-ico" alt=""> History' : '<img src="emojis/history.png" class="c-ico" alt=""> Close';
 
       // Track in persistent Set so renderRecurring can restore across DOM rebuilds
       if (isOpen) {
