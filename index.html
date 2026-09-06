@@ -10151,7 +10151,7 @@
 
       const rows = exportTxs.map(t => {
         const row = [
-          t.date,
+          t.date.split('-').reverse().join('-'),
           `"${csvSafe(t.desc).replace(/"/g, '""')}"`,
           t.amount,
           `"${csvSafe(t.type).replace(/"/g, '""')}"`,
