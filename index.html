@@ -9035,7 +9035,7 @@
       const area = document.getElementById('trendArea');
       if (!exp.length && !inc.length) { area.setAttribute('aria-label', 'No trend data available'); area.innerHTML = '<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-title">No data for this view</div><div class="empty-sub">Add transactions to see your trend visualized here</div></div>'; return; }
 
-      const currentMode = passedTxs ? statsMode : (document.body.classList.contains('mob-yearly-active') ? analysisMode : statsMode);
+      const currentMode = !passedTxs ? (document.body.classList.contains('mob-yearly-active') ? analysisMode : statsMode) : statsMode;
       let isDaily = true;
       if (currentMode === 'year') {
         isDaily = false;
@@ -9739,8 +9739,8 @@
       });
       const yrs = [...yearSet].sort((a, b) => b - a);
       
-      const allTxDates = txs.map(t => new Date(t.date + 'T00:00:00'));
-      const firstTxDate = allTxDates.length ? new Date(Math.min(...allTxDates)) : now;
+      const allTxDates = txs.map(t => new Date(t.date + 'T00:00:00').getTime());
+      const firstTxDate = allTxDates.length ? new Date(allTxDates.reduce((a, b) => a < b ? a : b)) : now;
       const daysSinceFirstTransaction = Math.max(0, Math.floor((now - firstTxDate) / 86400000));
       
       let trailing12MonthMaxSpend = 0;
@@ -10100,8 +10100,7 @@
           fromDate = evTxs[0].date;
           toDate = evTxs[evTxs.length - 1].date;
         } else {
-          fromDate = getTodayStr();
-          toDate = fromDate;
+          return { error: 'No transactions found for this event' };
         }
       } else {
         fromDate = document.getElementById('rptFrom').value;
@@ -11099,7 +11098,7 @@
       if (!userId) return;
       if (unsubscribeActivityLog) unsubscribeActivityLog();
       const actRef = collection(db, 'users', userId, 'activities');
-      const actQuery = query(actRef);
+      const actQuery = query(actRef, orderBy('ts', 'desc'), limit(ACTIVITY_LOG_LIMIT + 50));
       unsubscribeActivityLog = onSnapshot(actQuery, (snap) => {
         let allDocs = [];
         snap.forEach(d => allDocs.push({ id: d.id, ref: d.ref, data: d.data() }));
@@ -11125,7 +11124,8 @@
           }
           Promise.all(prunePromises).catch(e => console.error('Auto-prune error:', e));
         }
-        if (document.getElementById('logView').style.display !== 'none') {
+        const logViewEl = document.getElementById('logView');
+        if (logViewEl && logViewEl.offsetParent !== null) {
           renderLogs();
         }
       }, (err) => {
@@ -12719,8 +12719,8 @@
               if (t.type === 'expense') mData[my].exp += t.amount;
             });
 
-            let currD = new Date(fromDate.slice(0, 7) + '-01');
-            const endD = new Date(toDate.slice(0, 7) + '-01');
+            let currD = new Date(fromDate.slice(0, 7) + '-01T00:00:00');
+            const endD = new Date(toDate.slice(0, 7) + '-01T00:00:00');
             while (currD <= endD) {
               const my = `${currD.getFullYear()}-${String(currD.getMonth() + 1).padStart(2, '0')}`;
               const v = mData[my] || { inc: 0, exp: 0 };
@@ -13834,8 +13834,8 @@
         if (!matches.length) { list.classList.remove('vis'); return; }
         selIdx = -1;
         list.innerHTML = matches.map((m, i) => {
-          // Store the raw value in a data attribute for retrieval; display the escaped version
-          return '<div class="ac-item" data-idx="' + i + '">' + esc(m) + '</div>';
+          // Store the raw value in data-raw for retrieval; display the escaped version
+          return '<div class="ac-item" data-idx="' + i + '" data-raw="' + esc(m) + '">' + esc(m) + '</div>';
         }).join('');
         list.classList.add('vis');
       }
@@ -13843,7 +13843,7 @@
       input.addEventListener('focus', show);
       list.addEventListener('mousedown', (e) => {
         const item = e.target.closest('.ac-item');
-        if (item) { input.value = item.textContent; list.classList.remove('vis'); }
+        if (item) { input.value = item.dataset.raw || item.textContent; list.classList.remove('vis'); }
       });
       input.addEventListener('blur', () => setTimeout(() => list.classList.remove('vis'), 150));
       input.addEventListener('keydown', (e) => {
@@ -13856,12 +13856,14 @@
           items[selIdx].scrollIntoView({ block: 'nearest' });
         } else if (e.key === 'ArrowUp') {
           e.preventDefault();
-          selIdx = Math.max(selIdx - 1, 0);
-          items.forEach((it, i) => it.classList.toggle('sel', i === selIdx));
-          items[selIdx].scrollIntoView({ block: 'nearest' });
+          if (selIdx > 0) {
+            selIdx = selIdx - 1;
+            items.forEach((it, i) => it.classList.toggle('sel', i === selIdx));
+            items[selIdx].scrollIntoView({ block: 'nearest' });
+          }
         } else if (e.key === 'Enter' && selIdx >= 0) {
           e.preventDefault();
-          input.value = items[selIdx].textContent;
+          input.value = items[selIdx].dataset.raw || items[selIdx].textContent;
           list.classList.remove('vis');
         } else if (e.key === 'Escape') {
           list.classList.remove('vis');
