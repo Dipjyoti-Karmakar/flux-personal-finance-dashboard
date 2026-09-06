@@ -10153,7 +10153,7 @@
       const rows = exportTxs.map(t => {
         const [y, mo, d] = t.date.split('-');
         const row = [
-          `${d}-${monthNames[parseInt(mo, 10) - 1]}-${y}`,
+          `${d}-${monthNames[parseInt(mo, 10) - 1]}-${y.slice(-2)}`,
           `"${csvSafe(t.desc).replace(/"/g, '""')}"`,
           t.amount,
           `"${csvSafe(t.type).replace(/"/g, '""')}"`,
@@ -13069,7 +13069,7 @@
             const day = String(d.getDate()).padStart(2, '0');
             const mon = d.toLocaleString('default', { month: 'short' });
             const yr = d.getFullYear();
-            const dateStr = `${day} ${mon} ${yr}`;
+            const dateStr = `${day}-${mon}-${yr}`;
             const amtStr = fmtPDF(t.type === 'income' ? t.amount : -t.amount, true);
             // Use real spaces after common delimiters (+,/) because jsPDF ignores zero-width spaces for wrapping
             const desc = (t.desc || '(no description)').replace(/([+,/])/g, '$1 ');
