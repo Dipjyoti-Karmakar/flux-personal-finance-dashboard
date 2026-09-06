@@ -10149,9 +10149,11 @@
       const headers = ['Date', 'Description', 'Amount', 'Type', 'Mode', 'Category'];
       if (hasEvents) headers.push('Event');
 
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       const rows = exportTxs.map(t => {
+        const [y, mo, d] = t.date.split('-');
         const row = [
-          t.date.split('-').reverse().join('-'),
+          `${d}-${monthNames[parseInt(mo, 10) - 1]}-${y}`,
           `"${csvSafe(t.desc).replace(/"/g, '""')}"`,
           t.amount,
           `"${csvSafe(t.type).replace(/"/g, '""')}"`,
