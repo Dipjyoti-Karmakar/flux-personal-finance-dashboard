@@ -7219,8 +7219,6 @@
     const CAT_TX_PAGE_SIZE = 20;      // Page size for category transaction list
     let _undoTimer = null;
     let _undoTxData = null;
-    let _undoClearLogsTimer = null;
-    let _undoClearLogsData = null;
 
     let syncQueue = (function () {
       try {
@@ -8037,7 +8035,6 @@
     function showToast(msg, type) { if (_undoTimer && type !== 'er') return; const el = document.getElementById('toast'); el.textContent = msg; el.className = 'tst ' + (type || '') + ' sh'; clearTimeout(el._t); el._t = setTimeout(() => { el.className = 'tst'; }, 2800); }
     function fmt(n) { const a = Math.abs(n); let w = Math.floor(a); let p = Math.round((a - w) * 100); if (p >= 100) { w += 1; p = 0; } return (n < 0 ? '-' : '') + '₹' + w.toLocaleString('en-IN') + '.' + String(p).padStart(2, '0'); }
     function fmtS(n) { const a = Math.abs(n); let w = Math.floor(a); let p = Math.round((a - w) * 100); if (p >= 100) { w += 1; p = 0; } return '₹' + w.toLocaleString('en-IN') + '.' + String(p).padStart(2, '0'); }
-    function fmtW(n) { return (n < 0 ? '-' : '') + '₹' + Math.round(Math.abs(n)).toLocaleString('en-IN'); }
     function fmtRound(n) { return '₹' + Math.round(Math.abs(n)).toLocaleString('en-IN'); }
     function fmtDt(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }); }
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
@@ -8309,6 +8306,7 @@
       if (!userId || !recurringList || !recurringList.length || !txs || !txs.length) return 0;
       _tagPastRunning = true;
       let toTag = [];
+      const successfullyCommitted = new Set();
       try {
         // Orphan cleanup: clear stale _recurring/subId on txs whose subId points
         // to a non-existent subscription, OR txs that have _recurring but no subId
@@ -8398,7 +8396,6 @@
           });
         }, 15000);
 
-        const successfullyCommitted = new Set();
         for (let i = 0; i < toTag.length; i += 450) {
           const chunk = toTag.slice(i, i + 450);
           // Re-check locks immediately before writing — a concurrent operation may have
@@ -8674,14 +8671,11 @@
       document.getElementById('txCnt').textContent = list.length;
 
       // Compute totals for all date filters (today, month, all, custom) and event/type/mode filters
-      const showTotals = true;
       let filtIncome = 0, filtExpense = 0;
-      if (showTotals) {
-        list.forEach(t => {
-          if (t.type === 'income') filtIncome += t.amount;
-          else filtExpense += t.amount;
-        });
-      }
+      list.forEach(t => {
+        if (t.type === 'income') filtIncome += t.amount;
+        else filtExpense += t.amount;
+      });
 
       if (!list.length) {
         el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No matching transactions</div><div class="empty-sub">Try adjusting your filters or search query</div></div>';
@@ -8741,7 +8735,7 @@
       }
 
       // Prepend totals bar for event / custom range / all dates
-      if (showTotals && list.length) {
+      if (list.length) {
         const net = filtIncome - filtExpense;
         let evtHeader = '';
         if (isEventFilter && activeEvent) {
@@ -9228,9 +9222,7 @@
 
           // Main line
           pathLines(false);
-          const lineGrad = ctx.createLinearGradient(pts[0].x, 0, pts[pts.length - 1].x, 0);
-          lineGrad.addColorStop(0, color); lineGrad.addColorStop(0.3, color); lineGrad.addColorStop(1, color);
-          ctx.strokeStyle = lineGrad; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
+          ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
           ctx.globalAlpha = 1; // always reset after stroke
         } else if (pts.length === 1) {
           ctx.beginPath(); ctx.moveTo(px, pts[0].y); ctx.lineTo(w - px, pts[0].y);
@@ -9414,8 +9406,6 @@
       if (activeCatFilter && !tot[activeCatFilter]) activeCatFilter = null;
 
       // Stacked bar chart removed by user request
-      let barHtml = '';
-
       const isExpanded = document.body.classList.contains('mob-cat-expanded');
 
       // Filtering logic: if a category is clicked, hide others
@@ -9437,7 +9427,7 @@
       if (activeCatFilter) {
         detHtml += '<div class="cat-tx-panel cat-tx-open" id="catTxPanel"></div>';
       }
-      const newHtml = barHtml + detHtml;
+      const newHtml = detHtml;
       if (newHtml === _catLastHtml) return;
       _catLastHtml = newHtml;
       area.innerHTML = newHtml;
@@ -12901,8 +12891,7 @@
           const sideColW = (W - pL - 15) / 2 - 3;
           const fullW = W - pL - 15;
 
-          const catFullWidth = true; // User preference: always stack donut charts top and bottom
-          const catW = catFullWidth ? fullW : sideColW;
+          const catW = fullW;
 
           // ── LEFT: CATEGORY DISTRIBUTION ──────────────────────────────────────
           const leftX = pL;
@@ -12914,7 +12903,7 @@
           doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...gold);
           doc.text(catChartTitle, leftX + catW / 2, chartPanelTop + 8, { align: 'center' });
 
-          const catCX = leftX + (catFullWidth ? 45 : 32), catCY = chartPanelTop + 55;
+          const catCX = leftX + 45, catCY = chartPanelTop + 55;
           const catR = 26, catInnerR = 15;
 
           if (catEntries.length > 0) {
@@ -12932,15 +12921,15 @@
             doc.text(fmtPDFS(totalExp), catCX, catCY + 4, { align: 'center' });
 
             // Legend
-            const maxLegendItems = catFullWidth ? Math.min(catEntries.length, 12) : Math.min(catEntries.length, 6);
-            const cols = catFullWidth ? 2 : 1;
+            const maxLegendItems = Math.min(catEntries.length, 12);
+            const cols = 2;
             const itemsPerCol = Math.ceil(maxLegendItems / cols);
             const startY = catCY - ((itemsPerCol - 1) * 11) / 2;
 
             catEntries.slice(0, maxLegendItems).forEach(([cat, amt], idx) => {
               const c = Math.floor(idx / itemsPerCol);
               const r = idx % itemsPerCol;
-              const legendX = leftX + (catFullWidth ? 76 + c * 52 : catR * 2 + 8);
+              const legendX = leftX + 76 + c * 52;
 
               const ly = startY + r * 11 + 3; // +3 for text baseline alignment
               const pct = totalExp > 0 ? ((amt / totalExp) * 100).toFixed(0) : '0';
@@ -12949,11 +12938,11 @@
               doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 3.5, 4.5, 4.5, 0.5, 0.5, 'F');
 
               doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...white);
-              let maxLen = catFullWidth ? 10 : 6;
+              let maxLen = 10;
               let displayLabel = label.length > maxLen ? label.slice(0, maxLen - 1) + '..' : label;
               doc.text(displayLabel, legendX + 6.5, ly);
 
-              const rightEdgeX = catFullWidth ? legendX + 48 : leftX + catW - 6;
+              const rightEdgeX = legendX + 48;
               doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...muted);
               doc.text(fmtPDFS(amt), rightEdgeX, ly, { align: 'right' });
 
@@ -12962,7 +12951,7 @@
             });
             if (catEntries.length > maxLegendItems) {
               const ly = startY + itemsPerCol * 11 + 3;
-              const legendX = leftX + (catFullWidth ? 76 : catR * 2 + 8);
+              const legendX = leftX + 76;
               doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...muted);
               doc.text(`+${catEntries.length - maxLegendItems} more`, legendX, ly);
             }
@@ -12972,20 +12961,18 @@
           }
 
           // ── RIGHT: ONLINE vs OFFLINE ──────────────────────────────────────────
-          if (catFullWidth) {
-            curY = chartPanelTop + 110 + 10;
-          }
-          const splitPanelTop = catFullWidth ? curY : chartPanelTop;
-          const rightX = catFullWidth ? leftX : leftX + sideColW + 6;
-          const splitW = catFullWidth ? fullW : sideColW;
+          curY = chartPanelTop + 110 + 10;
+          const splitPanelTop = curY;
+          const rightX = leftX;
+          const splitW = fullW;
 
           doc.setFillColor(...panel2); doc.roundedRect(rightX, splitPanelTop, splitW, 110, 3, 3, 'F');
           doc.setDrawColor(...borderDark); doc.setLineWidth(0.15); doc.roundedRect(rightX, splitPanelTop, splitW, 110, 3, 3, 'S');
           doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...gold);
           doc.text('PAYMENT CHANNEL SPLIT', rightX + splitW / 2, splitPanelTop + 8, { align: 'center' });
 
-          const oCX = rightX + (catFullWidth ? 45 : 26), oCY = splitPanelTop + 55;
-          const oR = catFullWidth ? 26 : 18, oInnerR = catFullWidth ? 15 : 10;
+          const oCX = rightX + 45, oCY = splitPanelTop + 55;
+          const oR = 26, oInnerR = 15;
           const onlinePctVal = totalExp > 0 ? onlineExp / totalExp : 0;
           const offlinePctVal = 1 - onlinePctVal;
 
@@ -13002,7 +12989,7 @@
             doc.text(fmtPDFS(totalExp), oCX, oCY + 4, { align: 'center' });
 
             // Legend items
-            const oLegendX = rightX + (catFullWidth ? 100 : oR * 2 + 8);
+            const oLegendX = rightX + 100;
             const oItems = [
               { label: 'Online', pct: (onlinePctVal * 100).toFixed(0), amt: onlineExp, color: [110, 157, 200] },
               { label: 'Offline', pct: (offlinePctVal * 100).toFixed(0), amt: offlineExp, color: [157, 122, 200] },
@@ -13018,7 +13005,7 @@
               doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...muted);
               doc.text(item.label, oLegendX + 24, ly);
 
-              const rightEdgeX = catFullWidth ? oLegendX + 60 : rightX + splitW - 6;
+              const rightEdgeX = oLegendX + 60;
               doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...white);
               doc.text(fmtPDFS(item.amt), rightEdgeX, ly, { align: 'right' });
             });
