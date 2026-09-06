@@ -9493,7 +9493,7 @@
         <div class="ti">
           <div class="tn">${esc(tx.desc)}</div>
           <div class="tm">
-            <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '<img src="emojis/online.png" class="c-ico" alt=""> online' : '<img src="emojis/offline.png" class="c-ico" alt=""> offline'}</span>
+            <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '<img src="emojis/online.png" class="c-ico" style="width:12px;height:12px;" alt=""> online' : '<img src="emojis/offline.png" class="c-ico" style="width:12px;height:12px;" alt=""> offline'}</span>
             ${evtBadge}
             ${tx._imp ? '<span class="bg ip">xlsx</span>' : ''}
             <span>${fmtDt(tx.date)}</span>
@@ -9922,8 +9922,8 @@
       ${incRow}${netRow}${savRateRow}
     </div>
     <div style="display:flex;gap:10px;margin-bottom:${isCur ? '6px' : '0'}">
-      <div class="ms"><span class="msl"><img src="emojis/online.png" class="c-ico" alt=""> Online</span><span class="msv" style="color:var(--on)">${onl > 0 ? fmtW(onl) : '—'}</span></div>
-      <div class="ms"><span class="msl"><img src="emojis/offline.png" class="c-ico" alt=""> Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
+      <div class="ms"><span class="msl"><img src="emojis/online.png" class="c-ico" style="width:12px;height:12px;" alt=""> Online</span><span class="msv" style="color:var(--on)">${onl > 0 ? fmtW(onl) : '—'}</span></div>
+      <div class="ms"><span class="msl"><img src="emojis/offline.png" class="c-ico" style="width:12px;height:12px;" alt=""> Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
     </div>
     ${tdHTML}
     <!-- progress bar redesign -->
