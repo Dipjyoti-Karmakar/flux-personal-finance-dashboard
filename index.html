@@ -1135,6 +1135,7 @@
       align-items: center;
       gap: 4px;
     }
+
     .bg .c-ico {
       width: 12px;
       height: 12px;
@@ -2021,9 +2022,17 @@
       font-weight: 600;
     }
 
-    .mc-hint-hide { display: none; }
-    .mc.op-tx .mc-hint-show { display: none; }
-    .mc.op-tx .mc-hint-hide { display: inline; }
+    .mc-hint-hide {
+      display: none;
+    }
+
+    .mc.op-tx .mc-hint-show {
+      display: none;
+    }
+
+    .mc.op-tx .mc-hint-hide {
+      display: inline;
+    }
 
     .now-badge {
       display: inline-block;
@@ -2133,7 +2142,8 @@
       margin-top: 8px
     }
 
-    .mbb, .mbb-overfill {
+    .mbb,
+    .mbb-overfill {
       height: 100%;
       border-radius: 2px;
       position: absolute;
@@ -2141,27 +2151,32 @@
       left: 0;
       transition: width 1.5s var(--ease-out-expo), background-color 1s ease;
     }
-    
+
     .mbb-overfill {
       filter: brightness(1.3);
-      box-shadow: 0 0 4px rgba(255,255,255,0.2);
+      box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
     }
-    
+
     .mbb.extreme {
       background: var(--ex) !important;
       animation: pulseExtreme 1s infinite alternate;
     }
-    
+
     .r-stripe {
-      background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px) !important;
+      background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255, 255, 255, 0.2) 4px, rgba(255, 255, 255, 0.2) 8px) !important;
       background-size: 11px 11px;
     }
-    
+
     @keyframes pulseExtreme {
-      from { box-shadow: 0 0 0px var(--ex); }
-      to { box-shadow: 0 0 6px var(--ex); }
+      from {
+        box-shadow: 0 0 0px var(--ex);
+      }
+
+      to {
+        box-shadow: 0 0 6px var(--ex);
+      }
     }
-    
+
     .extreme-warn {
       color: var(--ex);
       font-weight: 700;
@@ -2173,16 +2188,32 @@
     }
 
     @keyframes pulseBar {
-      0% { opacity: 0.8; filter: brightness(1); }
-      50% { opacity: 1; filter: brightness(1.3); }
-      100% { opacity: 0.8; filter: brightness(1); }
+      0% {
+        opacity: 0.8;
+        filter: brightness(1);
+      }
+
+      50% {
+        opacity: 1;
+        filter: brightness(1.3);
+      }
+
+      100% {
+        opacity: 0.8;
+        filter: brightness(1);
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .mbb, .mbb-overfill {
+
+      .mbb,
+      .mbb-overfill {
         transition: none;
       }
-      .mbb.tp, .mbb-overfill.tp, .mbb.extreme {
+
+      .mbb.tp,
+      .mbb-overfill.tp,
+      .mbb.extreme {
         animation: none;
       }
     }
@@ -2195,6 +2226,7 @@
       text-align: right;
       font-weight: 500;
     }
+
     /* Modal and Mapper */
     .bk {
       position: fixed;
@@ -2691,10 +2723,12 @@
       body.mob-yearly-active header {
         margin-bottom: 0 !important;
       }
+
       body.mob-non-dash header .header-top,
       body.mob-yearly-active header .header-top {
         margin-bottom: 0 !important;
       }
+
       body.mob-yearly-active #dashboardView {
         padding-top: 12px;
       }
@@ -2709,6 +2743,7 @@
         overflow: visible;
         align-items: stretch;
       }
+
       /* Hide action bar on non-dashboard tabs — must come AFTER .hr { display: grid } to win */
       body.mob-non-dash header .hr,
       body.mob-yearly-active header .hr {
@@ -3253,12 +3288,12 @@
       border-left-color: var(--in);
       background: linear-gradient(90deg, color-mix(in srgb, var(--in) 6%, var(--s2)), var(--s2) 60%);
     }
-    
+
     .insight-item.neg {
       border-left-color: var(--ex);
       background: linear-gradient(90deg, color-mix(in srgb, var(--ex) 6%, var(--s2)), var(--s2) 60%);
     }
-    
+
     .insight-item.neu {
       border-left-color: var(--ac);
     }
@@ -3282,8 +3317,9 @@
       justify-content: center;
       border-radius: 50%;
       background: var(--sf);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
+
     .insight-icon .c-ico {
       width: 26px;
       height: 26px;
@@ -3293,11 +3329,11 @@
     .insight-item.pos .insight-icon {
       background: color-mix(in srgb, var(--in) 15%, var(--sf));
     }
-    
+
     .insight-item.neg .insight-icon {
       background: color-mix(in srgb, var(--ex) 15%, var(--sf));
     }
-    
+
     .insight-item.neu .insight-icon {
       background: color-mix(in srgb, var(--ac) 15%, var(--sf));
     }
@@ -5506,6 +5542,7 @@
         opacity: 0;
         transform: translateY(-16px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -5887,6 +5924,7 @@
       flex-direction: column;
       gap: 8px;
     }
+
     /* ── Mobile Redesign Additions ── */
     .mobile-bottom-nav {
       position: fixed;
@@ -5903,6 +5941,7 @@
       justify-content: space-around;
       box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.18);
     }
+
     .mob-nav-item {
       display: flex;
       flex-direction: column;
@@ -5920,9 +5959,11 @@
       transition: all 0.3s ease;
       position: relative;
     }
+
     .mob-nav-item.act {
       color: var(--nav-col);
     }
+
     .mob-nav-item::after {
       content: '';
       position: absolute;
@@ -5936,10 +5977,12 @@
       opacity: 0;
       transition: width 0.3s ease, opacity 0.3s ease;
     }
+
     .mob-nav-item.act::after {
       width: 18px;
       opacity: 1;
     }
+
     .mob-nav-icon {
       width: 48px;
       height: 48px;
@@ -5951,11 +5994,13 @@
       border: 1px solid rgba(255, 255, 255, 0.05);
       transition: all 0.3s ease;
     }
+
     .mob-nav-item.act .mob-nav-icon {
       background: color-mix(in srgb, var(--nav-col) 8%, transparent);
       border-color: color-mix(in srgb, var(--nav-col) 15%, transparent);
       box-shadow: 0 4px 12px color-mix(in srgb, var(--nav-col) 10%, transparent);
     }
+
     .mob-nav-center {
       display: flex;
       align-items: center;
@@ -5988,73 +6033,114 @@
       margin-left: 8px;
       vertical-align: middle;
     }
+
     .mob-hero-badge.up {
       color: var(--ex);
       background: color-mix(in srgb, var(--ex) 15%, transparent);
     }
+
     .mob-hero-badge.down {
       color: var(--in);
       background: color-mix(in srgb, var(--in) 15%, transparent);
     }
 
     @media (max-width: 520px) {
-      header { margin-bottom: 8px; }
-      .app { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important; }
-      .app-tabs { display: none !important; }
-      .mobile-bottom-nav { display: flex; }
-      .fab { display: none !important; }
+      header {
+        margin-bottom: 8px;
+      }
+
+      .app {
+        padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
+      }
+
+      .app-tabs {
+        display: none !important;
+      }
+
+      .mobile-bottom-nav {
+        display: flex;
+      }
+
+      .fab {
+        display: none !important;
+      }
 
       /* Reorder grid for mobile */
-      .mg { display: flex !important; flex-direction: column !important; }
+      .mg {
+        display: flex !important;
+        flex-direction: column !important;
+      }
 
-      #txPanel, #catAreaWrap {
+      #txPanel,
+      #catAreaWrap {
         display: block !important;
         max-height: none !important;
         height: auto !important;
       }
-      .mg > .pn-fixed .txl {
+
+      .mg>.pn-fixed .txl {
         flex: none !important;
         max-height: 450px !important;
         overflow-y: auto !important;
       }
+
       #catAreaWrap .ca {
         overflow-y: visible !important;
       }
-      .mg > .pn:nth-child(1) { order: 1; }
-      #txPanel { order: 2; }
-      .mg > .pn:nth-child(2) { order: 3; }
-      #catAreaWrap { order: 4; }
-      
+
+      .mg>.pn:nth-child(1) {
+        order: 1;
+      }
+
+      #txPanel {
+        order: 2;
+      }
+
+      .mg>.pn:nth-child(2) {
+        order: 3;
+      }
+
+      #catAreaWrap {
+        order: 4;
+      }
+
       /* Hide Analytics elements from Dashboard, and Dashboard elements from Analytics */
-      body:not(.mob-yearly-active) #dashboardView .mg > .pn:nth-child(2),
-      body:not(.mob-yearly-active) #dashboardView .mg > #catAreaWrap,
-      body:not(.mob-yearly-active) #dashboardView > #splitEventCard,
-      body:not(.mob-yearly-active) #dashboardView > .ys { 
-        display: none !important; 
+      body:not(.mob-yearly-active) #dashboardView .mg>.pn:nth-child(2),
+      body:not(.mob-yearly-active) #dashboardView .mg>#catAreaWrap,
+      body:not(.mob-yearly-active) #dashboardView>#splitEventCard,
+      body:not(.mob-yearly-active) #dashboardView>.ys {
+        display: none !important;
       }
 
       body.mob-yearly-active #dashHeader,
-      body.mob-yearly-active #dashboardView > #statsCustomDt {
+      body.mob-yearly-active #dashboardView>#statsCustomDt {
         display: none !important;
       }
+
       body.mob-yearly-active #analysisHeader {
         display: flex !important;
       }
+
       body:not(.mob-yearly-active) #analysisHeader,
       body:not(.mob-yearly-active) #analysisCustomDt {
         display: none !important;
       }
-      body.mob-yearly-active #dashboardView > .srow,
-      body.mob-yearly-active #dashboardView .mg > .pn:nth-child(1),
-      body.mob-yearly-active #dashboardView .mg > #txPanel,
-      body.mob-yearly-active #dashboardView > #insightCard { 
-        display: none !important; 
+
+      body.mob-yearly-active #dashboardView>.srow,
+      body.mob-yearly-active #dashboardView .mg>.pn:nth-child(1),
+      body.mob-yearly-active #dashboardView .mg>#txPanel,
+      body.mob-yearly-active #dashboardView>#insightCard {
+        display: none !important;
       }
 
-      body.mob-yearly-active #dashboardView > .ys { 
-        display: flex !important; flex-direction: column; gap: 24px; margin-top: 8px; padding-top: 0; 
+      body.mob-yearly-active #dashboardView>.ys {
+        display: flex !important;
+        flex-direction: column;
+        gap: 24px;
+        margin-top: 8px;
+        padding-top: 0;
       }
-      
+
       /* Category layout */
       #catAreaWrap .ca {
         display: flex !important;
@@ -6062,7 +6148,12 @@
         overflow: visible !important;
         padding: 0;
       }
-      #catAreaWrap .pb.mob-only { color: var(--tx) !important; font-size: 11px !important; }
+
+      #catAreaWrap .pb.mob-only {
+        color: var(--tx) !important;
+        font-size: 11px !important;
+      }
+
       #catAreaWrap .cat-tag-list {
         display: flex !important;
         flex-direction: row !important;
@@ -6071,11 +6162,15 @@
         padding: 4px 16px 12px 16px;
         scrollbar-width: none;
       }
-      #catAreaWrap .cat-tag-list::-webkit-scrollbar { display: none; }
-      
+
+      #catAreaWrap .cat-tag-list::-webkit-scrollbar {
+        display: none;
+      }
+
       body:not(.mob-cat-expanded) #catAreaWrap .cat-tag:nth-child(n+5):not(.cat-more-btn) {
         display: none !important;
       }
+
       #catAreaWrap .cat-tag {
         display: flex !important;
         flex-direction: column !important;
@@ -6087,6 +6182,7 @@
         min-width: 54px;
         box-shadow: none !important;
       }
+
       #catAreaWrap .cat-icon-wrap {
         width: 48px;
         height: 48px;
@@ -6098,21 +6194,65 @@
         font-size: 20px;
         margin-bottom: 4px;
       }
-      #catAreaWrap .cat-tag-name { font-size: 11px; color: var(--tx); font-weight: normal; white-space: nowrap; }
-      #catAreaWrap .cat-tag-pct { font-size: 11px; color: var(--mu); }
-      #catAreaWrap .cat-tag-amt { display: none !important; }
-      #catAreaWrap .cat-arrow { display: none !important; }
-      
-      body.mob-cat-expanded #catAreaWrap .cat-tag-list { flex-direction: column !important; align-items: stretch; gap: 8px; }
-      body.mob-cat-expanded #catAreaWrap .cat-tag { flex-direction: row !important; padding: 12px; background: var(--s2) !important; border-radius: 12px; }
-      body.mob-cat-expanded #catAreaWrap .cat-icon-wrap { width: 32px; height: 32px; border-radius: 8px; margin-bottom: 0; }
-      body.mob-cat-expanded #catAreaWrap .cat-tag-amt { display: block !important; margin-left: auto; font-size: 14px; font-weight: 600; }
-      body.mob-cat-expanded #catAreaWrap .cat-more-btn { display: none !important; }
+
+      #catAreaWrap .cat-tag-name {
+        font-size: 11px;
+        color: var(--tx);
+        font-weight: normal;
+        white-space: nowrap;
+      }
+
+      #catAreaWrap .cat-tag-pct {
+        font-size: 11px;
+        color: var(--mu);
+      }
+
+      #catAreaWrap .cat-tag-amt {
+        display: none !important;
+      }
+
+      #catAreaWrap .cat-arrow {
+        display: none !important;
+      }
+
+      body.mob-cat-expanded #catAreaWrap .cat-tag-list {
+        flex-direction: column !important;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      body.mob-cat-expanded #catAreaWrap .cat-tag {
+        flex-direction: row !important;
+        padding: 12px;
+        background: var(--s2) !important;
+        border-radius: 12px;
+      }
+
+      body.mob-cat-expanded #catAreaWrap .cat-icon-wrap {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        margin-bottom: 0;
+      }
+
+      body.mob-cat-expanded #catAreaWrap .cat-tag-amt {
+        display: block !important;
+        margin-left: auto;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      body.mob-cat-expanded #catAreaWrap .cat-more-btn {
+        display: none !important;
+      }
     }
 
     @media (min-width: 521px) {
-      .mob-only { display: none !important; }
+      .mob-only {
+        display: none !important;
+      }
     }
+
     .emoji-icon {
       width: 1.2em;
       height: 1.2em;
@@ -6123,11 +6263,13 @@
       vertical-align: middle;
       transform: scale(1.65);
     }
+
     .custom-sel-wrapper {
       position: relative;
       width: 100%;
       user-select: none;
     }
+
     .custom-sel-trigger {
       display: flex;
       justify-content: space-between;
@@ -6141,9 +6283,11 @@
       font-size: 14px;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
+
     .custom-sel-trigger:hover {
       border-color: var(--tx);
     }
+
     .custom-sel-options {
       position: absolute;
       top: calc(100% + 4px);
@@ -6152,15 +6296,17 @@
       background: var(--sf);
       border: 1px solid var(--bd);
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       z-index: 9999;
       max-height: 200px;
       overflow-y: auto;
       display: none;
     }
+
     .custom-sel-options.open {
       display: block;
     }
+
     .custom-sel-option {
       padding: 10px 14px;
       cursor: pointer;
@@ -6168,11 +6314,13 @@
       align-items: center;
       transition: background 0.2s;
     }
+
     .custom-sel-option:hover,
     .custom-sel-option:focus {
       background: var(--bg);
       outline: none;
     }
+
     .custom-sel-arrow {
       font-size: 10px;
       color: var(--mu);
@@ -6283,8 +6431,19 @@
 
   <div class="app">
     <style>
-      .c-ico { width: 15px; height: 15px; object-fit: contain; vertical-align: middle; margin-right: 4px; margin-top: -2px; transform: scale(1.65); }
-      .sub-card-actions .c-ico { transform: scale(1.25); }
+      .c-ico {
+        width: 15px;
+        height: 15px;
+        object-fit: contain;
+        vertical-align: middle;
+        margin-right: 4px;
+        margin-top: -2px;
+        transform: scale(1.65);
+      }
+
+      .sub-card-actions .c-ico {
+        transform: scale(1.25);
+      }
     </style>
 
 
@@ -6374,7 +6533,8 @@
 
       <div id="analysisHeader"
         style="display:none; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding-top:8px; padding-bottom:12px;">
-        <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Analysis</div>
+        <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Analysis
+        </div>
         <div class="fltr" style="padding:0; border:none; margin:0;">
           <button class="ft dt-flt-analysis act" id="aM_month" onclick="setAnalysisMode('month')">This Month</button>
           <button class="ft dt-flt-analysis" id="aM_year" onclick="setAnalysisMode('year')">This Year</button>
@@ -6403,7 +6563,8 @@
         <div class="sc card-in">
           <div class="sl">Total Expenses</div>
           <div class="sv med neg" id="sExp">₹0.00</div>
-          <div class="ss"><span id="sExpS">0 txns</span><span id="sExpBadge" class="mob-hero-badge mob-only" style="display:none;"></span></div>
+          <div class="ss"><span id="sExpS">0 txns</span><span id="sExpBadge" class="mob-hero-badge mob-only"
+              style="display:none;"></span></div>
         </div>
       </div>
       <div class="srow sr2">
@@ -6431,8 +6592,10 @@
                     class="tb" id="bExp" onclick="setType('expense')">↓ Expense</button></div>
               </div>
               <div class="fd full-mob"><label>Mode</label>
-                <div class="tg"><button class="tb ao" id="bOnl" onclick="setMode('online')"><img src="emojis/online.png" class="c-ico" alt=""> Online</button><button
-                    class="tb" id="bOfl" onclick="setMode('offline')"><img src="emojis/offline.png" class="c-ico" alt=""> Offline</button></div>
+                <div class="tg"><button class="tb ao" id="bOnl" onclick="setMode('online')"><img src="emojis/online.png"
+                      class="c-ico" alt=""> Online</button><button class="tb" id="bOfl"
+                    onclick="setMode('offline')"><img src="emojis/offline.png" class="c-ico" alt=""> Offline</button>
+                </div>
               </div>
             </div>
             <div class="fr">
@@ -6440,7 +6603,9 @@
                   placeholder="e.g. Groceries" maxlength="50"></div>
               <div class="fd full-mob"><label>Category</label>
                 <div class="custom-sel-wrapper" id="txC-wrapper">
-                  <div class="custom-sel-trigger" id="txCTrigger" onclick="toggleCustomSelect()" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="txCOptions" onkeydown="handleCustomSelectKey(event)">
+                  <div class="custom-sel-trigger" id="txCTrigger" onclick="toggleCustomSelect()" tabindex="0"
+                    role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-controls="txCOptions"
+                    onkeydown="handleCustomSelectKey(event)">
                     <span class="custom-sel-label" id="txCLabel">Select Category</span>
                     <span class="custom-sel-arrow">▼</span>
                   </div>
@@ -6558,7 +6723,8 @@
 
         <!-- By Category -->
         <div class="pn pn-fixed section-in-down" id="catAreaWrap" style="animation-delay:.2s;">
-          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only" style="cursor:pointer; display:none;" onclick="toggleViewAllCats();">View All</span></div>
+          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only"
+              style="cursor:pointer; display:none;" onclick="toggleViewAllCats();">View All</span></div>
           <div class="ca" style="padding: 12px 16px; flex:1; min-height:0; overflow-y:auto;" id="ctArea">
             <div class="empty-state" style="padding:24px 16px">
               <div class="empty-icon">📂</div>
@@ -6569,7 +6735,7 @@
         </div>
       </div>
 
-      
+
 
       <!-- Online vs Offline / Events — merged with toggle -->
       <div class="pn section-in-down" style="margin-top: 24px; animation-delay:.3s;" id="splitEventCard">
@@ -6623,79 +6789,79 @@
       </div>
 
     </div>
-  <!-- /dashboardView -->
+    <!-- /dashboardView -->
 
-  <!-- Activity Log View -->
-  <!-- Subscriptions View -->
-  <div id="subView" style="display:none">
-    <div class="sub-header section-in">
-      <div class="sub-title">Subscriptions</div>
-      <button class="sub-add-btn" onclick="openAddRecurring()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
-        Add Subscription
-      </button>
+    <!-- Activity Log View -->
+    <!-- Subscriptions View -->
+    <div id="subView" style="display:none">
+      <div class="sub-header section-in">
+        <div class="sub-title">Subscriptions</div>
+        <button class="sub-add-btn" onclick="openAddRecurring()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Add Subscription
+        </button>
+      </div>
+      <div class="sub-summary-bar section-in" id="subSummaryBar" style="animation-delay: 0.1s;">
+        <div class="sub-summary-item">
+          <div class="sub-summary-val" id="subTotalMonthly" style="color:var(--ex)">₹0</div>
+          <div class="sub-summary-lbl">Monthly Cost</div>
+        </div>
+        <div class="sub-summary-item">
+          <div class="sub-summary-val" id="subTotalYearly" style="color:var(--mu)">₹0</div>
+          <div class="sub-summary-lbl">Yearly Cost</div>
+        </div>
+        <div class="sub-summary-item">
+          <div class="sub-summary-val" id="subDueCount" style="color:var(--ac)">0</div>
+          <div class="sub-summary-lbl">Due Soon</div>
+        </div>
+        <div class="sub-summary-item">
+          <div class="sub-summary-val" id="subActiveCount" style="color:var(--in)">0</div>
+          <div class="sub-summary-lbl">Active</div>
+        </div>
+      </div>
+      <div id="subList" class="sub-grid"></div>
     </div>
-    <div class="sub-summary-bar section-in" id="subSummaryBar" style="animation-delay: 0.1s;">
-      <div class="sub-summary-item">
-        <div class="sub-summary-val" id="subTotalMonthly" style="color:var(--ex)">₹0</div>
-        <div class="sub-summary-lbl">Monthly Cost</div>
-      </div>
-      <div class="sub-summary-item">
-        <div class="sub-summary-val" id="subTotalYearly" style="color:var(--mu)">₹0</div>
-        <div class="sub-summary-lbl">Yearly Cost</div>
-      </div>
-      <div class="sub-summary-item">
-        <div class="sub-summary-val" id="subDueCount" style="color:var(--ac)">0</div>
-        <div class="sub-summary-lbl">Due Soon</div>
-      </div>
-      <div class="sub-summary-item">
-        <div class="sub-summary-val" id="subActiveCount" style="color:var(--in)">0</div>
-        <div class="sub-summary-lbl">Active</div>
-      </div>
-    </div>
-    <div id="subList" class="sub-grid"></div>
-  </div>
 
-  <div id="logView" style="display:none">
-    <div class="log-header" style="margin-bottom:12px;">
-      <div class="log-title">Activity Log</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-        <select id="logFilter" onchange="renderLogs()"
-          style="width:auto;padding:6px 10px;font-size:11px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;">
-          <option value="all">All</option>
-          <option value="ADD">➕ Added</option>
-          <option value="EDIT">✏️ Edited</option>
-          <option value="DELETE">🗑️ Deleted</option>
-          <option value="IMPORT">📥 Imported</option>
-        </select>
-        <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()"
-          style="color:var(--ex);border-color:var(--ex);">Delete Logs</button>
+    <div id="logView" style="display:none">
+      <div class="log-header" style="margin-bottom:12px;">
+        <div class="log-title">Activity Log</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <select id="logFilter" onchange="renderLogs()"
+            style="width:auto;padding:6px 10px;font-size:11px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;">
+            <option value="all">All</option>
+            <option value="ADD">➕ Added</option>
+            <option value="EDIT">✏️ Edited</option>
+            <option value="DELETE">🗑️ Deleted</option>
+            <option value="IMPORT">📥 Imported</option>
+          </select>
+          <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()"
+            style="color:var(--ex);border-color:var(--ex);">Delete Logs</button>
+        </div>
       </div>
-    </div>
-    <div style="margin-bottom:16px; position:relative;">
-      <span
-        style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;">🔍</span>
-      <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)"
-            style="padding:10px 14px 10px 36px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);"
-        onfocus="this.style.borderColor='var(--on)';this.style.boxShadow='0 0 0 2px var(--ob)'"
-        onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='var(--sh-card)'" aria-label="Search logs">
-    </div>
-    <div id="logDeleteAction"
-      style="display:none; justify-content:space-between; align-items:center; background:color-mix(in srgb,var(--ex) 10%,transparent); padding:10px 14px; border-radius:12px; margin-bottom:16px;">
-      <span id="logSelectCount" style="color:var(--ex);font-size:13px;font-weight:600;">0 selected</span>
-      <div style="display:flex;gap:8px;">
-        <button class="btn" style="padding:6px 12px;font-size:12px;min-width:auto;"
-          onclick="toggleLogSelectionMode()">Cancel</button>
-        <button class="btn pr"
-          style="padding:6px 12px;font-size:12px;min-width:auto;background:var(--ex);border-color:var(--ex);color:#fff;"
-          onclick="confirmDeleteSelectedLogs()">Confirm Delete</button>
+      <div style="margin-bottom:16px; position:relative;">
+        <span
+          style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;">🔍</span>
+        <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)"
+          style="padding:10px 14px 10px 36px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);"
+          onfocus="this.style.borderColor='var(--on)';this.style.boxShadow='0 0 0 2px var(--ob)'"
+          onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='var(--sh-card)'" aria-label="Search logs">
       </div>
+      <div id="logDeleteAction"
+        style="display:none; justify-content:space-between; align-items:center; background:color-mix(in srgb,var(--ex) 10%,transparent); padding:10px 14px; border-radius:12px; margin-bottom:16px;">
+        <span id="logSelectCount" style="color:var(--ex);font-size:13px;font-weight:600;">0 selected</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" style="padding:6px 12px;font-size:12px;min-width:auto;"
+            onclick="toggleLogSelectionMode()">Cancel</button>
+          <button class="btn pr"
+            style="padding:6px 12px;font-size:12px;min-width:auto;background:var(--ex);border-color:var(--ex);color:#fff;"
+            onclick="confirmDeleteSelectedLogs()">Confirm Delete</button>
+        </div>
+      </div>
+      <div id="logList"></div>
     </div>
-    <div id="logList"></div>
-  </div>
   </div> <!-- /.app -->
 
   <!-- Mobile Bottom Navigation -->
@@ -6705,14 +6871,14 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="dashGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#FFD572"/>
-              <stop offset="100%" stop-color="#FFB020"/>
+              <stop offset="0%" stop-color="#FFD572" />
+              <stop offset="100%" stop-color="#FFB020" />
             </linearGradient>
           </defs>
-          <rect x="4" y="4" width="8" height="9" rx="2" fill="url(#dashGrad)"/>
-          <rect x="4" y="15" width="8" height="5" rx="1.5" fill="url(#dashGrad)"/>
-          <rect x="14" y="4" width="8" height="5" rx="1.5" fill="url(#dashGrad)"/>
-          <rect x="14" y="11" width="8" height="9" rx="2" fill="url(#dashGrad)"/>
+          <rect x="4" y="4" width="8" height="9" rx="2" fill="url(#dashGrad)" />
+          <rect x="4" y="15" width="8" height="5" rx="1.5" fill="url(#dashGrad)" />
+          <rect x="14" y="4" width="8" height="5" rx="1.5" fill="url(#dashGrad)" />
+          <rect x="14" y="11" width="8" height="9" rx="2" fill="url(#dashGrad)" />
         </svg>
       </span>
       <span class="mob-nav-label">Dashboard</span>
@@ -6722,14 +6888,16 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="subGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#A2D2FF"/>
-              <stop offset="100%" stop-color="#5B8DEF"/>
+              <stop offset="0%" stop-color="#A2D2FF" />
+              <stop offset="100%" stop-color="#5B8DEF" />
             </linearGradient>
           </defs>
-          <rect x="4" y="2" width="16" height="20" rx="3" stroke="url(#subGrad)" stroke-width="2"/>
-          <path d="M12 6V12M9.5 7.5C9.5 6.5 11 6 12 6C13 6 14.5 6.5 14.5 7.5C14.5 8.5 9.5 9.5 9.5 10.5C9.5 11.5 11 12 12 12C13 12 14.5 11.5 14.5 10.5" stroke="url(#subGrad)" stroke-width="1.5" stroke-linecap="round"/>
-          <line x1="8" y1="15" x2="16" y2="15" stroke="url(#subGrad)" stroke-width="2" stroke-linecap="round"/>
-          <line x1="8" y1="18" x2="13" y2="18" stroke="url(#subGrad)" stroke-width="2" stroke-linecap="round"/>
+          <rect x="4" y="2" width="16" height="20" rx="3" stroke="url(#subGrad)" stroke-width="2" />
+          <path
+            d="M12 6V12M9.5 7.5C9.5 6.5 11 6 12 6C13 6 14.5 6.5 14.5 7.5C14.5 8.5 9.5 9.5 9.5 10.5C9.5 11.5 11 12 12 12C13 12 14.5 11.5 14.5 10.5"
+            stroke="url(#subGrad)" stroke-width="1.5" stroke-linecap="round" />
+          <line x1="8" y1="15" x2="16" y2="15" stroke="url(#subGrad)" stroke-width="2" stroke-linecap="round" />
+          <line x1="8" y1="18" x2="13" y2="18" stroke="url(#subGrad)" stroke-width="2" stroke-linecap="round" />
         </svg>
       </span>
       <span class="mob-nav-label">Subscription</span>
@@ -6740,21 +6908,22 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="anaGrad" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#00c6ff"/>
-              <stop offset="40%" stop-color="#0072ff"/>
-              <stop offset="70%" stop-color="#8a2be2"/>
-              <stop offset="100%" stop-color="#ff69b4"/>
+              <stop offset="0%" stop-color="#00c6ff" />
+              <stop offset="40%" stop-color="#0072ff" />
+              <stop offset="70%" stop-color="#8a2be2" />
+              <stop offset="100%" stop-color="#ff69b4" />
             </linearGradient>
           </defs>
-          <rect x="2" y="14" width="4" height="8" rx="1" fill="url(#anaGrad)"/>
-          <rect x="8" y="9" width="4" height="13" rx="1" fill="url(#anaGrad)"/>
-          <rect x="14" y="12" width="4" height="10" rx="1" fill="url(#anaGrad)"/>
-          <rect x="20" y="5" width="4" height="17" rx="1" fill="url(#anaGrad)"/>
-          <path d="M4 11 L10 5 L16 8 L22 2" stroke="url(#anaGrad)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="4" cy="11" r="1.5" fill="url(#anaGrad)"/>
-          <circle cx="10" cy="5" r="1.5" fill="url(#anaGrad)"/>
-          <circle cx="16" cy="8" r="1.5" fill="url(#anaGrad)"/>
-          <circle cx="22" cy="2" r="1.5" fill="url(#anaGrad)"/>
+          <rect x="2" y="14" width="4" height="8" rx="1" fill="url(#anaGrad)" />
+          <rect x="8" y="9" width="4" height="13" rx="1" fill="url(#anaGrad)" />
+          <rect x="14" y="12" width="4" height="10" rx="1" fill="url(#anaGrad)" />
+          <rect x="20" y="5" width="4" height="17" rx="1" fill="url(#anaGrad)" />
+          <path d="M4 11 L10 5 L16 8 L22 2" stroke="url(#anaGrad)" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <circle cx="4" cy="11" r="1.5" fill="url(#anaGrad)" />
+          <circle cx="10" cy="5" r="1.5" fill="url(#anaGrad)" />
+          <circle cx="16" cy="8" r="1.5" fill="url(#anaGrad)" />
+          <circle cx="22" cy="2" r="1.5" fill="url(#anaGrad)" />
         </svg>
       </span>
       <span class="mob-nav-label">Analytics</span>
@@ -6764,17 +6933,18 @@
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="actGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#00F2FE"/>
-              <stop offset="100%" stop-color="#4FACFE"/>
+              <stop offset="0%" stop-color="#00F2FE" />
+              <stop offset="100%" stop-color="#4FACFE" />
             </linearGradient>
           </defs>
-          <rect x="5" y="4" width="14" height="18" rx="3" stroke="url(#actGrad)" stroke-width="2"/>
-          <path d="M9 4V3C9 2.44772 9.44772 2 10 2H14C14.5523 2 15 2.44772 15 3V4H9Z" fill="url(#actGrad)"/>
-          <circle cx="12" cy="4" r="1" fill="#111"/>
-          <line x1="8" y1="9" x2="16" y2="9" stroke="url(#actGrad)" stroke-width="2" stroke-linecap="round"/>
-          <line x1="8" y1="13" x2="16" y2="13" stroke="url(#actGrad)" stroke-width="2" stroke-linecap="round"/>
-          <line x1="8" y1="17" x2="11" y2="17" stroke="url(#actGrad)" stroke-width="2" stroke-linecap="round"/>
-          <path d="M13 17L15 19L19 14" stroke="url(#actGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="5" y="4" width="14" height="18" rx="3" stroke="url(#actGrad)" stroke-width="2" />
+          <path d="M9 4V3C9 2.44772 9.44772 2 10 2H14C14.5523 2 15 2.44772 15 3V4H9Z" fill="url(#actGrad)" />
+          <circle cx="12" cy="4" r="1" fill="#111" />
+          <line x1="8" y1="9" x2="16" y2="9" stroke="url(#actGrad)" stroke-width="2" stroke-linecap="round" />
+          <line x1="8" y1="13" x2="16" y2="13" stroke="url(#actGrad)" stroke-width="2" stroke-linecap="round" />
+          <line x1="8" y1="17" x2="11" y2="17" stroke="url(#actGrad)" stroke-width="2" stroke-linecap="round" />
+          <path d="M13 17L15 19L19 14" stroke="url(#actGrad)" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
       </span>
       <span class="mob-nav-label">Activity</span>
@@ -6954,7 +7124,8 @@
             <label class="alt-amounts-label">Past Amounts (₹) — for matching price changes</label>
             <div class="alt-amounts-chips" id="altAmountsChips"></div>
             <div class="alt-amt-add-row">
-              <input type="number" id="altAmountInput" placeholder="e.g. 499" min="0.01" step="0.01" style="width:100%;box-sizing:border-box;">
+              <input type="number" id="altAmountInput" placeholder="e.g. 499" min="0.01" step="0.01"
+                style="width:100%;box-sizing:border-box;">
               <button class="alt-amt-add-btn" type="button" onclick="addAltAmount()">＋ Add</button>
             </div>
           </div>
@@ -6970,9 +7141,11 @@
             <label
               style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Mode</label>
             <div class="tg" style="grid-template-columns:1fr 1fr;">
-              <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true"><img src="emojis/online.png" class="c-ico" alt="">
+              <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true"><img
+                  src="emojis/online.png" class="c-ico" alt="">
                 Online</button>
-              <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false"><img src="emojis/offline.png" class="c-ico" alt="">
+              <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false"><img
+                  src="emojis/offline.png" class="c-ico" alt="">
                 Offline</button>
             </div>
           </div>
@@ -7135,21 +7308,21 @@
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const CICO = { 
-      food: '<img src="emojis/food.png" class="c-ico" alt="" />', 
-      transport: '<img src="emojis/transport.png" class="c-ico" alt="" />', 
-      housing: '<img src="emojis/housing.png" class="c-ico" alt="" />', 
-      entertainment: '<img src="emojis/entertainment.png" class="c-ico" alt="" />', 
-      health: '<img src="emojis/health.png" class="c-ico" alt="" />', 
-      shopping: '<img src="emojis/shopping.png" class="c-ico" alt="" />', 
-      utilities: '<img src="emojis/utilities.png" class="c-ico" alt="" />', 
-      utility: '<img src="emojis/utilities.png" class="c-ico" alt="" />', 
-      occasions: '<img src="emojis/occasions.png" class="c-ico" alt="" />', 
-      salary: '<img src="emojis/salary.png" class="c-ico" alt="" />', 
-      freelance: '<img src="emojis/freelance.png" class="c-ico" alt="" />', 
-      investment: '<img src="emojis/investment.png" class="c-ico" alt="" />', 
-      stationery: '<img src="emojis/stationery.png" class="c-ico" alt="" />', 
-      other: '<img src="emojis/other.png" class="c-ico" alt="" />' 
+    const CICO = {
+      food: '<img src="emojis/food.png" class="c-ico" alt="" />',
+      transport: '<img src="emojis/transport.png" class="c-ico" alt="" />',
+      housing: '<img src="emojis/housing.png" class="c-ico" alt="" />',
+      entertainment: '<img src="emojis/entertainment.png" class="c-ico" alt="" />',
+      health: '<img src="emojis/health.png" class="c-ico" alt="" />',
+      shopping: '<img src="emojis/shopping.png" class="c-ico" alt="" />',
+      utilities: '<img src="emojis/utilities.png" class="c-ico" alt="" />',
+      utility: '<img src="emojis/utilities.png" class="c-ico" alt="" />',
+      occasions: '<img src="emojis/occasions.png" class="c-ico" alt="" />',
+      salary: '<img src="emojis/salary.png" class="c-ico" alt="" />',
+      freelance: '<img src="emojis/freelance.png" class="c-ico" alt="" />',
+      investment: '<img src="emojis/investment.png" class="c-ico" alt="" />',
+      stationery: '<img src="emojis/stationery.png" class="c-ico" alt="" />',
+      other: '<img src="emojis/other.png" class="c-ico" alt="" />'
     };
     const CAT_COLOR = {
       food: '#c8876e',  // warm terracotta
@@ -7322,7 +7495,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = initializeFirestore(app, {
-      localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
       experimentalAutoDetectLongPolling: true
     });
     const provider = new GoogleAuthProvider();
@@ -7612,7 +7785,7 @@
     });
 
     function updStatsDt() { if (statsMode === 'custom') { activeCatFilter = null; catTxVisibleCount = CAT_TX_PAGE_SIZE; renderStats(); if (window.innerWidth > 520) { renderTrend(); renderCats(); renderSplit(); } } }
-    function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; if(document.getElementById('statsFrom_ys')) { document.getElementById('statsFrom_ys').value = ''; document.getElementById('statsTo_ys').value = ''; } updStatsDt(); }
+    function clearStatsDt() { document.getElementById('statsFrom').value = ''; document.getElementById('statsTo').value = ''; if (document.getElementById('statsFrom_ys')) { document.getElementById('statsFrom_ys').value = ''; document.getElementById('statsTo_ys').value = ''; } updStatsDt(); }
 
     function setStatsMode(m) {
       statsMode = m;
@@ -7663,12 +7836,12 @@
       renderSplit();
     }
 
-    function setType(t) { 
-      cType = t; 
-      document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : ''); 
-      document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : ''); 
+    function setType(t) {
+      cType = t;
+      document.getElementById('bInc').className = 'tb' + (t === 'income' ? ' ai' : '');
+      document.getElementById('bExp').className = 'tb' + (t === 'expense' ? ' ae' : '');
       const opts = t === 'income' ? ['salary', 'freelance', 'investment', 'other'] : ['food', 'transport', 'housing', 'entertainment', 'health', 'shopping', 'utilities', 'occasions', 'stationery', 'other'];
-      
+
       const optsContainer = document.getElementById('txCOptions');
       optsContainer.innerHTML = '';
       opts.forEach(opt => {
@@ -7697,7 +7870,7 @@
       document.getElementById('txCLabel').innerHTML = `${CICO[val] || ''} <span style="margin-left:8px;">${label}</span>`;
       document.getElementById('txCOptions').classList.remove('open');
       document.getElementById('txCTrigger').setAttribute('aria-expanded', 'false');
-      
+
       document.querySelectorAll('#txCOptions .custom-sel-option').forEach(el => {
         el.setAttribute('aria-selected', el.getAttribute('data-value') === val);
       });
@@ -7737,7 +7910,7 @@
         document.getElementById('txCTrigger').focus();
       }
     }
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
       const wrapper = document.getElementById('txC-wrapper');
       if (wrapper && !wrapper.contains(e.target)) {
         document.getElementById('txCOptions').classList.remove('open');
@@ -8204,21 +8377,21 @@
         }
       }, 120);
     }
-    
+
     async function syncUntaggedMatches() {
       if (_syncUntaggedRunning) return;    // Re-entrancy guard
       if (!userId || !recurringList.length || !txs.length) return;
       _syncUntaggedRunning = true;
       try {
         const toTag = [];
-        
+
         for (const t of txs) {
           if (t._recurring || t.subId) continue;
           if (_txWriteLocks.has(t.id) || _pendingTxUpdates.has(t.id)) continue;
-          
+
           const tDescLow = (t.desc || '').trim().toLowerCase();
           if (!tDescLow) continue;
-          
+
           for (const rec of recurringList) {
             const nameLow = (rec.name || '').trim().toLowerCase();
             if (!nameLow) continue;
@@ -8233,14 +8406,14 @@
             const _allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
             if (!_allAmts.includes(Math.abs(t.amount || 0))) continue;
             if (rec.cat && t.cat && rec.cat !== t.cat) continue;
-            
+
             toTag.push({ txId: t.id, recId: rec.id });
             break;
           }
         }
-        
+
         if (!toTag.length) return;
-        
+
         const successfullyCommitted = new Set();
         const opToken = ++_txOpSeq;
         // Pre-register pending updates + session markers BEFORE commit so onSnapshot
@@ -8265,10 +8438,10 @@
             const chunk = toTag.slice(i, i + 450);
             const eligible = chunk.filter(({ txId }) => !_txWriteLocks.has(txId));
             if (!eligible.length) continue;
-            
+
             // BUGFIX: Use individual updateDoc calls to prevent atomic batch failures
             // from ruining the whole chunk if one document is missing or invalid.
-            const promises = eligible.map(({txId, recId}) => {
+            const promises = eligible.map(({ txId, recId }) => {
               return updateDoc(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId })
                 .then(() => ({ txId, recId }))
                 .catch(e => {
@@ -8327,11 +8500,11 @@
             const chunk = toUntag.slice(i, i + 450);
             const eligible = chunk.filter(tx => !_txWriteLocks.has(tx.id) && !_pendingTxUpdates.has(tx.id));
             if (!eligible.length) continue;
-            
+
             const batch = writeBatch(db);
             eligible.forEach(tx => batch.update(doc(db, 'users', userId, 'transactions', tx.id), { _recurring: deleteField(), subId: deleteField() }));
             await batch.commit();
-            
+
             eligible.forEach(tx => {
               if (_txWriteLocks.has(tx.id) || _pendingTxUpdates.has(tx.id)) return;
               delete tx._recurring;
@@ -8406,7 +8579,7 @@
             !_txWriteLocks.has(txId)
           );
           if (!eligible.length) continue;
-          
+
           const promises = eligible.map(({ txId, recId }) => {
             return updateDoc(doc(db, 'users', userId, 'transactions', txId), { _recurring: true, subId: recId })
               .then(() => ({ txId, recId }))
@@ -8415,7 +8588,7 @@
                 throw e;
               });
           });
-          
+
           const results = await Promise.allSettled(promises);
           results.forEach(res => {
             if (res.status === 'fulfilled') {
@@ -8430,20 +8603,20 @@
             }
           });
         }
-        
+
         showToast(`Auto-tagged ${successfullyCommitted.size} past subscriptions!`, 'ok');
         console.log(`Auto-tagged ${successfullyCommitted.size} past transactions as subscriptions.`);
         return toTag.length; // Signal: re-render needed
-      } catch (e) { 
-        console.error('Failed to auto-tag past subscriptions:', e); 
-        return 0; 
-      } finally { 
+      } catch (e) {
+        console.error('Failed to auto-tag past subscriptions:', e);
+        return 0;
+      } finally {
         toTag.forEach(({ txId }) => {
           if (!successfullyCommitted.has(txId)) {
             _sessionTaggedTxIds.delete(txId);
           }
         });
-        _tagPastRunning = false; 
+        _tagPastRunning = false;
       }
     }
 
@@ -8527,7 +8700,7 @@
 
       animateVal(document.getElementById('sExp'), tE, fmt);
       document.getElementById('sExpS').textContent = exp.length + ' txn' + (exp.length !== 1 ? 's' : '');
-      
+
       const badge = document.getElementById('sExpBadge');
       if (badge) {
         if (statsMode === 'month') {
@@ -8537,7 +8710,7 @@
           if (prevM === 0) { prevY--; prevM = 12; }
           const prevMonthStr = `${prevY}-${String(prevM).padStart(2, '0')}`;
           const prevExp = txs.filter(t => t.type === 'expense' && t.date.startsWith(prevMonthStr)).reduce((s, t) => s + t.amount, 0);
-          
+
           if (prevExp > 0) {
             const diff = tE - prevExp;
             const pct = Math.round(Math.abs(diff) / prevExp * 100);
@@ -9403,7 +9576,7 @@
       let totalExp = 0;
       exp.forEach(t => { tot[t.cat || 'other'] = (tot[t.cat || 'other'] || 0) + t.amount; totalExp += t.amount; });
       let cats = Object.entries(tot).sort((a, b) => b[1] - a[1]);
-      
+
       // If the active filter no longer exists in the data, close it
       if (activeCatFilter && !tot[activeCatFilter]) activeCatFilter = null;
 
@@ -9412,10 +9585,10 @@
 
       // Filtering logic: if a category is clicked, hide others
       if (activeCatFilter) {
-          cats = cats.filter(c => c[0] === activeCatFilter);
+        cats = cats.filter(c => c[0] === activeCatFilter);
       } else if (!isExpanded && window.innerWidth <= 520) {
-          // If not expanded, no active filter, and on mobile, show only top 4
-          cats = cats.slice(0, 4);
+        // If not expanded, no active filter, and on mobile, show only top 4
+        cats = cats.slice(0, 4);
       }
 
       let detHtml = `<div class="cat-tag-list${activeCatFilter ? ' is-extended' : ''}">`;
@@ -9438,15 +9611,15 @@
       // Handle the View All text
       const viewAllBtn = document.querySelector('#catAreaWrap .pb');
       if (viewAllBtn) {
-          const totalCatsCount = Object.keys(tot).length;
-          viewAllBtn.innerText = (isExpanded || activeCatFilter) ? 'View Less' : 'View All';
-          if (!activeCatFilter && totalCatsCount <= 4) {
-              viewAllBtn.style.display = 'none';
-          } else {
-              viewAllBtn.style.display = 'inline-block';
-          }
+        const totalCatsCount = Object.keys(tot).length;
+        viewAllBtn.innerText = (isExpanded || activeCatFilter) ? 'View Less' : 'View All';
+        if (!activeCatFilter && totalCatsCount <= 4) {
+          viewAllBtn.style.display = 'none';
+        } else {
+          viewAllBtn.style.display = 'inline-block';
+        }
       }
-      
+
       if (typeof twemoji !== 'undefined') twemoji.parse(area);
     }
 
@@ -9633,9 +9806,9 @@
         const prevA = prevCats[topCat] || 0;
         let vsLast = '';
         let type = 'neu';
-        if (prevA > 0) { 
-          const cc = Math.round(((topAmt - prevA) / prevA) * 100); 
-          if (Math.abs(cc) >= 10) vsLast = ` — <span class="${cc > 0 ? 'up' : 'down'}">${cc > 0 ? 'up' : 'down'} ${Math.abs(cc)}%</span> vs last month`; 
+        if (prevA > 0) {
+          const cc = Math.round(((topAmt - prevA) / prevA) * 100);
+          if (Math.abs(cc) >= 10) vsLast = ` — <span class="${cc > 0 ? 'up' : 'down'}">${cc > 0 ? 'up' : 'down'} ${Math.abs(cc)}%</span> vs last month`;
           if (cc > 15) type = 'neg'; else if (cc < -15) type = 'pos';
         }
         const cn = topCat.charAt(0).toUpperCase() + topCat.slice(1);
@@ -9646,19 +9819,19 @@
       if (prevTxs.length > 0) {
         const allC = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
         let bCat = null, bPct = 0, bDir = '', bCur = 0, bPrev = 0;
-        allC.forEach(cat => { 
-          const cur = curCats[cat] || 0, prev = prevCats[cat] || 0; 
-          if (prev > 0) { 
-            const p = ((cur - prev) / prev) * 100; 
-            if (cat !== (catEntries[0]?.[0]) && Math.abs(p) > Math.abs(bPct) && Math.abs(p) >= 20) { 
-              bPct = p; bCat = cat; bDir = p > 0 ? 'up' : 'down'; bCur = cur; bPrev = prev; 
-            } 
-          } 
+        allC.forEach(cat => {
+          const cur = curCats[cat] || 0, prev = prevCats[cat] || 0;
+          if (prev > 0) {
+            const p = ((cur - prev) / prev) * 100;
+            if (cat !== (catEntries[0]?.[0]) && Math.abs(p) > Math.abs(bPct) && Math.abs(p) >= 20) {
+              bPct = p; bCat = cat; bDir = p > 0 ? 'up' : 'down'; bCur = cur; bPrev = prev;
+            }
+          }
         });
-        if (bCat) { 
-          const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1); 
+        if (bCat) {
+          const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1);
           const type = bDir === 'up' ? 'neg' : 'pos';
-          insights.push({ type, icon: bDir === 'up' ? '🔺' : '🔻', text: `<strong>Notable Change:</strong> <strong>${cn}</strong> is <span class="${bDir === 'up' ? 'up' : 'down'}">${bDir} ${Math.round(Math.abs(bPct))}%</span> from last month (${fmtS(bPrev)} → ${fmtS(bCur)}).` }); 
+          insights.push({ type, icon: bDir === 'up' ? '🔺' : '🔻', text: `<strong>Notable Change:</strong> <strong>${cn}</strong> is <span class="${bDir === 'up' ? 'up' : 'down'}">${bDir} ${Math.round(Math.abs(bPct))}%</span> from last month (${fmtS(bPrev)} → ${fmtS(bCur)}).` });
         }
       }
 
@@ -9677,10 +9850,10 @@
       // 6. Spending Habits (Peak Day & Streaks)
       const sortedExpDays = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
       if (sortedExpDays.length > 0) {
-        const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000); 
+        const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000);
         const dayEntries = Object.entries(curDayExp).sort((a, b) => b[1] - a[1]);
         const [topDay, topDayAmt] = dayEntries[0] || [];
-        
+
         if (gap >= 3) {
           insights.push({ type: 'pos', icon: '🔥', text: `<strong>Hot Streak:</strong> You haven't spent any money in <strong>${gap} days</strong>! Keep it going.` });
         } else if (topDay && topDayAmt > 0) {
@@ -9730,14 +9903,14 @@
         txByYM[y][m].push(t);
       });
       const yrs = [...yearSet].sort((a, b) => b - a);
-      
+
       const allTxDates = txs.map(t => new Date(t.date + 'T00:00:00').getTime());
       const firstTxDate = allTxDates.length ? new Date(allTxDates.reduce((a, b) => a < b ? a : b)) : now;
       const daysSinceFirstTransaction = Math.max(0, Math.floor((now - firstTxDate) / 86400000));
-      
+
       let trailing12MonthMaxSpend = 0;
       let trailing12MonthTotal = 0;
-      
+
       for (let i = 0; i < 12; i++) {
         let d = new Date(cY, cM - i, 1);
         let y = d.getFullYear();
@@ -9748,7 +9921,7 @@
           if (mExp > trailing12MonthMaxSpend) trailing12MonthMaxSpend = mExp;
         }
       }
-      
+
       let totalMonthsOfHistory = 0;
       yrs.forEach(y => {
         if (txByYM[y]) {
@@ -9757,15 +9930,15 @@
           }
         }
       });
-      
+
       let lastCompletedYearActualTotal = 0;
       if (txByYM[cY - 1]) {
         lastCompletedYearActualTotal = Object.values(txByYM[cY - 1]).reduce((acc, val) => acc.concat(val), []).filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
       }
-      
+
       let boundarySpend = trailing12MonthMaxSpend * 1.2;
       let stableYearTotal = lastCompletedYearActualTotal || ((trailing12MonthTotal / Math.max(1, totalMonthsOfHistory)) * 12);
-      
+
       let adaptiveMultiplier = 5;
       if (daysSinceFirstTransaction < 14) {
         adaptiveMultiplier = 1;
@@ -9774,7 +9947,7 @@
       } else {
         adaptiveMultiplier = boundarySpend === 0 ? 10 : Math.max(3, Math.min(10, stableYearTotal / boundarySpend));
       }
-      
+
       const newHtml = yrs.map(yr => mkYrBlock(yr, txByYM[yr] || {}, todayISO, cY, cM, cD, adaptiveMultiplier, lastCompletedYearActualTotal)).join('');
 
       // Skip DOM rebuild entirely when content is identical — prevents flicker on re-renders
@@ -9872,12 +10045,12 @@
       const ys2 = yrTot > 0 ? Math.round(tot / yrTot * 100) : 0;
 
       // Volatility Guard for Current Year
-      let projectedYearTotal = yrTot; 
+      let projectedYearTotal = yrTot;
       if (isCurYr) {
         const startDt = new Date(cY, 0, 1);
         const curDt = new Date(todayISO + 'T00:00:00');
         const daysElapsedYr = Math.max(1, Math.floor((curDt - startDt) / 86400000) + 1);
-        
+
         let rawProjection = yrAvg * 365;
         if (lastCompletedYearActualTotal > 0 && daysElapsedYr <= 14) {
           projectedYearTotal = (daysElapsedYr / 14) * rawProjection + (1 - daysElapsedYr / 14) * lastCompletedYearActualTotal;
@@ -9892,7 +10065,7 @@
       let baseWidth = Math.min(100, (truePercent / boundary) * 100);
       let overfillWidth = 0;
       let isExtreme = false;
-      
+
       if (truePercent > boundary) {
         if (truePercent > boundary * 2) {
           isExtreme = true;
@@ -9908,7 +10081,7 @@
       let intensity = Math.min(100, Math.abs(dev) * 3.33); // Max intensity at 30% dev
       let barColor = dev > 0 ? `color-mix(in srgb, var(--ex) ${intensity}%, var(--ac))` : `color-mix(in srgb, var(--in) ${intensity}%, var(--ac))`;
       if (yrTot === 0) barColor = 'var(--ac)'; // Zero expense year fallback
-      
+
       // Determine if pacing is in Red state for striped pattern
       let isRedPacing = dev > 0;
 
@@ -9977,8 +10150,8 @@
         el.insertAdjacentHTML('beforeend', html);
       }
     }
-    
-    window.showAllMonthTxs = function(btn, yr, m, e) {
+
+    window.showAllMonthTxs = function (btn, yr, m, e) {
       e.stopPropagation();
       const txCnt = btn.closest('.tx-cnt');
       if (!txCnt) return;
@@ -11617,132 +11790,132 @@
       let anyMatched = false;
       try {
 
-      for (const rec of recurringList) {
-        // Only consider active subs whose nextDue is still in the future
-        if (!rec.active || !rec.nextDue || rec.nextDue <= today) continue;
-        if (_earlyPayProcessing.has(rec.id)) continue;
-        // Skip if already processed this rec in the current session (prevents echo loop)
-        if (_sessionEarlyPayRecs.has(rec.id + ':' + rec.nextDue)) continue;
-        // Validate nextDue format — malformed strings create Invalid Date objects
-        // that crash getLocalIsoDateStr() with RangeError: Invalid time value
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(rec.nextDue)) continue;
+        for (const rec of recurringList) {
+          // Only consider active subs whose nextDue is still in the future
+          if (!rec.active || !rec.nextDue || rec.nextDue <= today) continue;
+          if (_earlyPayProcessing.has(rec.id)) continue;
+          // Skip if already processed this rec in the current session (prevents echo loop)
+          if (_sessionEarlyPayRecs.has(rec.id + ':' + rec.nextDue)) continue;
+          // Validate nextDue format — malformed strings create Invalid Date objects
+          // that crash getLocalIsoDateStr() with RangeError: Invalid time value
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(rec.nextDue)) continue;
 
-        // Compute the prepayment window (same window sizes used in checkAndTriggerRecurring)
-        let wDays = 15;
-        if (rec.freq === 'yearly') wDays = 60;
-        if (rec.freq === 'weekly') wDays = 3;
-        if (rec.freq === 'daily') wDays = 1;
-        if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
+          // Compute the prepayment window (same window sizes used in checkAndTriggerRecurring)
+          let wDays = 15;
+          if (rec.freq === 'yearly') wDays = 60;
+          if (rec.freq === 'weekly') wDays = 3;
+          if (rec.freq === 'daily') wDays = 1;
+          if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
 
-        const dueD = new Date(rec.nextDue + 'T00:00:00');
-        const minDateObj = new Date(dueD);
-        minDateObj.setDate(minDateObj.getDate() - wDays);
-        const minD = getLocalIsoDateStr(minDateObj);
+          const dueD = new Date(rec.nextDue + 'T00:00:00');
+          const minDateObj = new Date(dueD);
+          minDateObj.setDate(minDateObj.getDate() - wDays);
+          const minD = getLocalIsoDateStr(minDateObj);
 
-        // Only look at transactions up to today (can't match future-dated ones)
-        const maxD = today;
+          // Only look at transactions up to today (can't match future-dated ones)
+          const maxD = today;
 
-        // Don't bother if today is before the window even opens
-        if (today < minD) continue;
+          // Don't bother if today is before the window even opens
+          if (today < minD) continue;
 
-        const _recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
-        const _allRecAmtsEP = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
-        const _epCandidates = txs.filter(t => {
-          if (t.type !== rec.type) return false;
-          if (!t.desc || !_recNameLc) return false;
-          // Exact match first, then fuzzy (contains) for names >= 4 chars
-          const _txDescLc = t.desc.trim().toLowerCase();
-          if (!_txDescLc) return false;
-          if (_recNameLc !== _txDescLc) {
-            if (_recNameLc.length < 4 || _txDescLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
-            // Length ratio guard: prevent short names from matching long descriptions
-            const shorter = Math.min(_recNameLc.length, _txDescLc.length);
-            const longer = Math.max(_recNameLc.length, _txDescLc.length);
-            if (shorter / longer < 0.5) return false;
-          }
-          if (!_allRecAmtsEP.includes(Math.abs(t.amount))) return false;
-          if (rec.cat && t.cat && rec.cat !== t.cat) return false;
-          if (t.date < minD || t.date > maxD) return false;
-          if (globallyMatchedTxIds.has(t.id)) return false;
-          if (_txWriteLocks.has(t.id)) return false;
-          if (_pendingTxUpdates.has(t.id)) return false;
-          // Don't steal txs already linked to a different sub
-          if (t._auto && t.subId !== rec.id) return false;
-          if (t.subId && t.subId !== rec.id) return false;
-          // Skip txs already matched to THIS sub (by tagPast or checkAndTrigger)
-          if (t._recurring && t.subId === rec.id) return false;
-          return true;
-        });
-
-        if (!_epCandidates.length) continue;
-
-        // Pick the candidate whose date is closest to the due date for best accuracy.
-        // txs.find() picked whichever came first in array order (most-recent-first),
-        // which could select a spurious same-name tx over the actual early payment.
-        const _dueDateMs = dueD.getTime();
-        const matchedTx = _epCandidates.length === 1 ? _epCandidates[0] : _epCandidates.reduce((best, t) => {
-          const tDist = Math.abs(new Date(t.date + 'T00:00:00').getTime() - _dueDateMs);
-          const bDist = Math.abs(new Date(best.date + 'T00:00:00').getTime() - _dueDateMs);
-          return tDist < bDist ? t : best;
-        });
-
-        _earlyPayProcessing.add(rec.id);
-        // Mark as processed for this session (rec.id + nextDue combo is unique per cycle)
-        _sessionEarlyPayRecs.add(rec.id + ':' + rec.nextDue);
-        anyMatched = true;
-        try {
-          const newNextDue = computeNextDue(rec.nextDue, rec.freq, rec.customDays, rec.billingDay);
-          const recRef = doc(db, 'users', userId, 'recurring', rec.id);
-          const txRef = doc(db, 'users', userId, 'transactions', matchedTx.id);
-          // Register recurring echo marker BEFORE commit so the recurring onSnapshot
-          // recognizes this as our own write and doesn't reset session flags
-          _pendingRecUpdates.add(rec.id);
-          // Register in _pendingTxUpdates before commit to prevent echo snapshot re-processing
-          const opToken = ++_txOpSeq;
-          _pendingTxUpdates.set(matchedTx.id, { _recurring: true, subId: rec.id });
-          _pendingTxTokens.set(matchedTx.id, opToken);
-          _sessionTaggedTxIds.add(matchedTx.id);
-          setTimeout(() => {
-            if (_pendingTxTokens.get(matchedTx.id) === opToken) {
-              _pendingTxUpdates.delete(matchedTx.id);
-              _pendingTxTokens.delete(matchedTx.id);
+          const _recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
+          const _allRecAmtsEP = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+          const _epCandidates = txs.filter(t => {
+            if (t.type !== rec.type) return false;
+            if (!t.desc || !_recNameLc) return false;
+            // Exact match first, then fuzzy (contains) for names >= 4 chars
+            const _txDescLc = t.desc.trim().toLowerCase();
+            if (!_txDescLc) return false;
+            if (_recNameLc !== _txDescLc) {
+              if (_recNameLc.length < 4 || _txDescLc.length < 4 || !(_txDescLc.includes(_recNameLc) || _recNameLc.includes(_txDescLc))) return false;
+              // Length ratio guard: prevent short names from matching long descriptions
+              const shorter = Math.min(_recNameLc.length, _txDescLc.length);
+              const longer = Math.max(_recNameLc.length, _txDescLc.length);
+              if (shorter / longer < 0.5) return false;
             }
-            _pendingRecUpdates.delete(rec.id); // Safety clear
-          }, 10000);
+            if (!_allRecAmtsEP.includes(Math.abs(t.amount))) return false;
+            if (rec.cat && t.cat && rec.cat !== t.cat) return false;
+            if (t.date < minD || t.date > maxD) return false;
+            if (globallyMatchedTxIds.has(t.id)) return false;
+            if (_txWriteLocks.has(t.id)) return false;
+            if (_pendingTxUpdates.has(t.id)) return false;
+            // Don't steal txs already linked to a different sub
+            if (t._auto && t.subId !== rec.id) return false;
+            if (t.subId && t.subId !== rec.id) return false;
+            // Skip txs already matched to THIS sub (by tagPast or checkAndTrigger)
+            if (t._recurring && t.subId === rec.id) return false;
+            return true;
+          });
 
-          const batch = writeBatch(db);
-          const recUpdate = { nextDue: newNextDue };
-          const newPaymentsMade = (rec.paymentsMade || 0) + 1;
-          if (rec.paymentsLimit) {
-            recUpdate.paymentsMade = newPaymentsMade;
-            if (newPaymentsMade >= rec.paymentsLimit) recUpdate.active = false;
+          if (!_epCandidates.length) continue;
+
+          // Pick the candidate whose date is closest to the due date for best accuracy.
+          // txs.find() picked whichever came first in array order (most-recent-first),
+          // which could select a spurious same-name tx over the actual early payment.
+          const _dueDateMs = dueD.getTime();
+          const matchedTx = _epCandidates.length === 1 ? _epCandidates[0] : _epCandidates.reduce((best, t) => {
+            const tDist = Math.abs(new Date(t.date + 'T00:00:00').getTime() - _dueDateMs);
+            const bDist = Math.abs(new Date(best.date + 'T00:00:00').getTime() - _dueDateMs);
+            return tDist < bDist ? t : best;
+          });
+
+          _earlyPayProcessing.add(rec.id);
+          // Mark as processed for this session (rec.id + nextDue combo is unique per cycle)
+          _sessionEarlyPayRecs.add(rec.id + ':' + rec.nextDue);
+          anyMatched = true;
+          try {
+            const newNextDue = computeNextDue(rec.nextDue, rec.freq, rec.customDays, rec.billingDay);
+            const recRef = doc(db, 'users', userId, 'recurring', rec.id);
+            const txRef = doc(db, 'users', userId, 'transactions', matchedTx.id);
+            // Register recurring echo marker BEFORE commit so the recurring onSnapshot
+            // recognizes this as our own write and doesn't reset session flags
+            _pendingRecUpdates.add(rec.id);
+            // Register in _pendingTxUpdates before commit to prevent echo snapshot re-processing
+            const opToken = ++_txOpSeq;
+            _pendingTxUpdates.set(matchedTx.id, { _recurring: true, subId: rec.id });
+            _pendingTxTokens.set(matchedTx.id, opToken);
+            _sessionTaggedTxIds.add(matchedTx.id);
+            setTimeout(() => {
+              if (_pendingTxTokens.get(matchedTx.id) === opToken) {
+                _pendingTxUpdates.delete(matchedTx.id);
+                _pendingTxTokens.delete(matchedTx.id);
+              }
+              _pendingRecUpdates.delete(rec.id); // Safety clear
+            }, 10000);
+
+            const batch = writeBatch(db);
+            const recUpdate = { nextDue: newNextDue };
+            const newPaymentsMade = (rec.paymentsMade || 0) + 1;
+            if (rec.paymentsLimit) {
+              recUpdate.paymentsMade = newPaymentsMade;
+              if (newPaymentsMade >= rec.paymentsLimit) recUpdate.active = false;
+            }
+            batch.update(recRef, recUpdate);
+            batch.update(txRef, { _recurring: true, subId: rec.id });
+            await batch.commit();
+
+            // Optimistic local update — only mutate after commit succeeds
+            rec.nextDue = newNextDue;
+            if (rec.paymentsLimit) {
+              rec.paymentsMade = newPaymentsMade;
+              if (newPaymentsMade >= rec.paymentsLimit) rec.active = false;
+            }
+            matchedTx._recurring = true;
+            matchedTx.subId = rec.id;
+            globallyMatchedTxIds.add(matchedTx.id);
+
+            writeLog('UPDATE', { desc: rec.name, isEarlyPay: true, newNextDue }, rec.type);
+            console.log(`Early payment detected for "${rec.name}" — due date advanced to ${newNextDue}`);
+            showToast(`⚡ Early payment: "${rec.name}" — next due ${fmtDt(newNextDue)}`, 'ok');
+          } catch (e) {
+            console.error('Early payment detection failed for:', rec.name, e);
+          } finally {
+            _earlyPayProcessing.delete(rec.id);
           }
-          batch.update(recRef, recUpdate);
-          batch.update(txRef, { _recurring: true, subId: rec.id });
-          await batch.commit();
-
-          // Optimistic local update — only mutate after commit succeeds
-          rec.nextDue = newNextDue;
-          if (rec.paymentsLimit) {
-            rec.paymentsMade = newPaymentsMade;
-            if (newPaymentsMade >= rec.paymentsLimit) rec.active = false;
-          }
-          matchedTx._recurring = true;
-          matchedTx.subId = rec.id;
-          globallyMatchedTxIds.add(matchedTx.id);
-
-          writeLog('UPDATE', { desc: rec.name, isEarlyPay: true, newNextDue }, rec.type);
-          console.log(`Early payment detected for "${rec.name}" — due date advanced to ${newNextDue}`);
-          showToast(`⚡ Early payment: "${rec.name}" — next due ${fmtDt(newNextDue)}`, 'ok');
-        } catch (e) {
-          console.error('Early payment detection failed for:', rec.name, e);
-        } finally {
-          _earlyPayProcessing.delete(rec.id);
         }
-      }
-      // Re-render subscription cards so badges update (only if we actually found an early payment)
-      if (anyMatched && document.getElementById('subView').style.display !== 'none') renderRecurring();
-      return anyMatched;
+        // Re-render subscription cards so badges update (only if we actually found an early payment)
+        if (anyMatched && document.getElementById('subView').style.display !== 'none') renderRecurring();
+        return anyMatched;
       } catch (e) {
         console.error('detectEarlyPayments failed:', e);
         return false;
@@ -12010,7 +12183,7 @@
             for (let i = 0; i < untagged.length; i += 450) {
               const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id));
               if (!chunk.length) continue;
-              
+
               const promises = chunk.map(t => {
                 return updateDoc(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId })
                   .catch(e => {
@@ -13359,12 +13532,12 @@
     window.forceRenderCats = () => { _catLastHtml = ''; renderCats(); };
     window.toggleViewAllCats = () => {
       if (document.body.classList.contains('mob-cat-expanded') || activeCatFilter) {
-          document.body.classList.remove('mob-cat-expanded');
-          activeCatFilter = null;
+        document.body.classList.remove('mob-cat-expanded');
+        activeCatFilter = null;
       } else {
-          document.body.classList.add('mob-cat-expanded');
+        document.body.classList.add('mob-cat-expanded');
       }
-      _catLastHtml = ''; 
+      _catLastHtml = '';
       renderCats();
     };
     window.toggleLogSelectionMode = toggleLogSelectionMode;
