@@ -11205,7 +11205,7 @@
         const pSty = "padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px;letter-spacing:0.3px;";
 
         let actionPill = '';
-        if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);">✏️ Edited</span>`;
+        if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);"><span style="font-size:8px;">✏️</span> Edited</span>`;
         else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">📥 Imported</span>`;
         else if (l.a === 'DELETE') actionPill = '';
         else if (l.a === 'ADD') {
