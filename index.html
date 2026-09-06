@@ -9389,7 +9389,7 @@
     }
 
     function renderCats(passedTxs) {
-      const aTxs = passedTxs || getAnalysisTxs();
+      const aTxs = passedTxs || (window.innerWidth > 520 && lastCatList ? lastCatList : getAnalysisTxs());
       const exp = aTxs.filter(t => t.type === 'expense'), area = document.getElementById('ctArea');
       if (!exp.length) {
         activeCatFilter = null;
@@ -9580,8 +9580,8 @@
       const prevPrefix = `${pY}-${String(pM + 1).padStart(2, '0')}`;
       const daysInMonth = new Date(cY, cM + 1, 0).getDate();
       if (periodEl) periodEl.textContent = `${MF[cM]} ${cY}`;
-      const curTxs = txs.filter(t => t.date.startsWith(curPrefix));
-      const prevTxs = txs.filter(t => t.date.startsWith(prevPrefix));
+      const curTxs = txs.filter(t => (t.date || '').startsWith(curPrefix));
+      const prevTxs = txs.filter(t => (t.date || '').startsWith(prevPrefix));
       if (!curTxs.length && !prevTxs.length) { area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>'; return; }
       const insights = [];
       let curInc = 0, curExp = 0, prevInc = 0, prevExp = 0;
@@ -9758,7 +9758,7 @@
       
       let lastCompletedYearActualTotal = 0;
       if (txByYM[cY - 1]) {
-        lastCompletedYearActualTotal = Object.values(txByYM[cY - 1]).flat().filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        lastCompletedYearActualTotal = Object.values(txByYM[cY - 1]).reduce((acc, val) => acc.concat(val), []).filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
       }
       
       let boundarySpend = trailing12MonthMaxSpend * 1.2;
@@ -9823,7 +9823,7 @@
 
     function mkYrBlock(yr, yrMonths, todayISO, cY, cM, cD, adaptiveMultiplier, lastCompletedYearActualTotal) {
       const isCur = yr === cY;
-      const yrTxs = Object.values(yrMonths).flat();
+      const yrTxs = Object.values(yrMonths).reduce((acc, val) => acc.concat(val), []);
       const yrExp = yrTxs.filter(t => t.type === 'expense');
       const yrInc = yrTxs.filter(t => t.type === 'income');
       const yrTot = yrExp.reduce((s, t) => s + t.amount, 0);
