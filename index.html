@@ -10372,8 +10372,8 @@
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
 
-      // Write and trigger download
-      XLSX.writeFile(wb, `flux-export-${fromDate}-to-${toDate}.xlsx`);
+      // Write and trigger download — cellStyles:true required for .s style objects to persist
+      XLSX.writeFile(wb, `flux-export-${fromDate}-to-${toDate}.xlsx`, { bookType: 'xlsx', cellStyles: true });
 
       showToast('Excel export successful', 'ok');
       closeReportMod();
