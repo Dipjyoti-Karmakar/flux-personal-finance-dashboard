@@ -6474,12 +6474,13 @@
           Sign In
         </button>
 
-        <button class="ib" onclick="openReportMod('csv')">
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
-            <path d="M2 10.5v1.5h10v-1.5M7 9V1M4 4l3-3 3 3" stroke="currentColor" stroke-width="1.4"
-              stroke-linecap="round" stroke-linejoin="round" />
+        <button class="ib" onclick="openReportMod('excel')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M3 9h18M9 21V9" />
           </svg>
-          CSV
+          Excel
         </button>
         <button class="ib" onclick="openReportMod()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -10296,7 +10297,7 @@
       return { fromDate, toDate, reportTitle, allInPeriod, filtered };
     }
 
-    function exportCSV() {
+    function exportExcel() {
       const reportData = getReportData();
       if (reportData.error) {
         showToast(reportData.error, 'er');
@@ -10311,51 +10312,70 @@
         return;
       }
 
-      // V3: CSV formula injection defense
-      const csvSafe = (str) => {
-        const s = String(str);
-        if (/^[=+\-@\t\r\n]/.test(s)) return "'" + s;
-        return s;
-      };
+      if (typeof XLSX === 'undefined') {
+        showToast('Excel library not loaded — please refresh and try again', 'er');
+        return;
+      }
 
       const hasEvents = exportTxs.some(t => t.eventId && events[t.eventId]);
       const headers = ['Date', 'Description', 'Amount', 'Type', 'Mode', 'Category'];
       if (hasEvents) headers.push('Event');
 
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const rows = exportTxs.map(t => {
+
+      // Build array-of-arrays for SheetJS (header row first)
+      const wsData = [headers];
+      exportTxs.forEach(t => {
         const [y, mo, d] = t.date.split('-');
         const row = [
-          `${d}-${monthNames[parseInt(mo, 10) - 1]}-${y.slice(-2)}`,
-          `"${csvSafe(t.desc).replace(/"/g, '""')}"`,
-          t.amount,
-          `"${csvSafe(t.type).replace(/"/g, '""')}"`,
-          `"${csvSafe(t.mode).replace(/"/g, '""')}"`,
-          `"${csvSafe(t.cat).replace(/"/g, '""')}"`
+          `${d}-${monthNames[parseInt(mo, 10) - 1]}-${y}`,  // readable date string
+          String(t.desc || ''),
+          Number(t.amount),          // numeric so Excel can SUM/sort
+          String(t.type || ''),
+          String(t.mode || ''),
+          String(t.cat  || '')
         ];
         if (hasEvents) {
-          if (t.eventId && events[t.eventId]) {
-            // CSV files don't support cell background colors, so we add a distinct emoji to stand out
-            row.push(`"🎨 ${csvSafe(events[t.eventId].name).replace(/"/g, '""')}"`);
-          } else {
-            row.push('""');
-          }
+          row.push(t.eventId && events[t.eventId] ? `🎨 ${events[t.eventId].name}` : '');
         }
-        return row.join(',');
+        wsData.push(row);
       });
 
-      const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `flux-export-${fromDate}-to-${toDate}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      // Defer revocation to ensure the browser has started the download
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      showToast('Export successful', 'ok');
+      // Create worksheet from the data array
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // --- Style the header row (bold + background) using cell styles ---
+      headers.forEach((_, colIdx) => {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: colIdx });
+        if (!ws[cellRef]) return;
+        ws[cellRef].s = {
+          font:      { bold: true, color: { rgb: 'FFFFFF' } },
+          fill:      { fgColor: { rgb: '1A3A5C' } },
+          alignment: { horizontal: 'center', vertical: 'center' }
+        };
+      });
+
+      // --- Auto-fit column widths based on content ---
+      const colWidths = headers.map((h, ci) => {
+        const maxLen = wsData.reduce((max, row) => {
+          const val = row[ci] !== undefined ? String(row[ci]) : '';
+          return Math.max(max, val.length);
+        }, h.length);
+        return { wch: Math.min(maxLen + 4, 60) };
+      });
+      ws['!cols'] = colWidths;
+
+      // --- Freeze the header row (SheetJS uses !sheetviews) ---
+      ws['!sheetviews'] = [{ state: 'frozen', ySplit: 1, topLeftCell: 'A2' }];
+
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+
+      // Write and trigger download
+      XLSX.writeFile(wb, `flux-export-${fromDate}-to-${toDate}.xlsx`);
+
+      showToast('Excel export successful', 'ok');
       closeReportMod();
     }
 
@@ -12540,15 +12560,15 @@
 
     function openReportMod(type = 'pdf') {
       reportModType = type;
-      document.getElementById('reportModTitle').textContent = type === 'csv' ? 'Export CSV' : 'Generate PDF Report';
+      document.getElementById('reportModTitle').textContent = type === 'excel' ? 'Export Excel' : 'Generate PDF Report';
 
       const eventTab = document.getElementById('rptPeriodEvent');
       const btn = document.getElementById('pdfGenBtn');
-      if (type === 'csv') {
+      if (type === 'excel') {
         eventTab.style.display = 'none';
         if (reportPeriodMode === 'event') reportPeriodMode = 'month';
-        btn.innerHTML = '📄 Download CSV';
-        btn.onclick = exportCSV;
+        btn.innerHTML = '📊 Download Excel';
+        btn.onclick = exportExcel;
       } else {
         eventTab.style.display = 'block';
         btn.innerHTML = '📄 Generate &amp; Download PDF';
@@ -13480,7 +13500,7 @@
     window.editTx = editTx;
     window.closeEditMod = closeEditMod;
     window.saveEditTx = saveEditTx;
-    window.exportCSV = exportCSV;
+    window.exportExcel = exportExcel;
     window.doImport = doImport;
     window.closeMod = closeMod;
     window.attemptImport = attemptImport;
