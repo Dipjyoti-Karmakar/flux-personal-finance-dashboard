@@ -9793,11 +9793,11 @@
         const dailyBurn = pastExp > 0 ? Math.round(pastExp / cD) : 0;
         const projected = Math.round(dailyBurn * daysInMonth);
         if (curInc > 0 && projected > curInc) {
-          insights.push({ type: 'neg', icon: '⚠️', text: `<strong>Pacing High:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong>. Projected to exceed your income by <strong>${fmtS(projected - curInc)}</strong>.` });
+          insights.push({ type: 'neg', icon: '⚠️', text: `<strong>Pacing High:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong>. Projected to exceed your income by <strong style="color:var(--ex)">${fmtS(projected - curInc)}</strong>.` });
         } else if (prevExp > 0) {
           const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
-          if (overPct > 5) insights.push({ type: 'neg', icon: '📈', text: `<strong>Pacing High:</strong> Projected to spend <strong>${fmtS(projected)}</strong> by month-end (<span class="up">${overPct}% over</span> last month).` });
-          else if (overPct < -5) insights.push({ type: 'pos', icon: '🎯', text: `<strong>Great Pace:</strong> On track to spend <strong>${fmtS(projected)}</strong> (<span class="down">${Math.abs(overPct)}% under</span> last month).` });
+          if (overPct > 5) insights.push({ type: 'neg', icon: '📈', text: `<strong>Pacing High:</strong> Projected to spend <strong style="color:var(--ex)">${fmtS(projected)}</strong> by month-end (<span class="up">${overPct}% over</span> last month).` });
+          else if (overPct < -5) insights.push({ type: 'pos', icon: '🎯', text: `<strong>Great Pace:</strong> On track to spend <strong style="color:var(--in)">${fmtS(projected)}</strong> (<span class="down">${Math.abs(overPct)}% under</span> last month).` });
           else insights.push({ type: 'neu', icon: '⏱️', text: `<strong>On Track:</strong> Spending <strong>${fmtS(dailyBurn)}/day</strong>, on pace to match last month.` });
         } else {
           insights.push({ type: 'neu', icon: '⏱️', text: `<strong>Pacing:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong> (Projected month-end: <strong>${fmtS(projected)}</strong>).` });
@@ -9809,9 +9809,9 @@
       if (curInc === 0 && curExp === 0) {
         insights.push({ type: 'neu', icon: '💵', text: `<strong>Savings Health:</strong> No income or expenses logged yet.` });
       } else if (curInc > 0 && curExp === 0) {
-        insights.push({ type: 'pos', icon: '🛡️', text: `<strong>Safe Buffer:</strong> You have your full <strong>${fmtS(curInc)}</strong> income available to spend or save.` });
+        insights.push({ type: 'pos', icon: '🛡️', text: `<strong>Safe Buffer:</strong> You have your full <strong style="color:var(--in)">${fmtS(curInc)}</strong> income available to spend or save.` });
       } else if (curInc > 0 && cD <= 10 && (curExp < curInc * 0.2)) {
-        insights.push({ type: 'neu', icon: '🌱', text: `<strong>Early Month:</strong> You have a <strong>${fmtS(buffer)}</strong> buffer. Let expenses settle for an accurate savings rate.` });
+        insights.push({ type: 'neu', icon: '🌱', text: `<strong>Early Month:</strong> You have a <strong style="color:var(--in)">${fmtS(buffer)}</strong> buffer. Let expenses settle for an accurate savings rate.` });
       } else if (curInc > 0) {
         const savRate = Math.round((buffer / curInc) * 100);
         let vsPrev = '';
@@ -9821,11 +9821,11 @@
           if (diff > 0) vsPrev = ` (<span class="down">+${diff}%</span>)`;
           else if (diff < 0) vsPrev = ` (<span class="up">${diff}%</span>)`;
         }
-        if (savRate >= 20) insights.push({ type: 'pos', icon: '🏆', text: `<strong>Strong Savings:</strong> Saved <strong>${savRate}%</strong> of income (<strong>${fmtS(buffer)}</strong> left)${vsPrev}. Excellent!` });
-        else if (savRate > 0) insights.push({ type: 'neu', icon: '🛡️', text: `<strong>Savings Buffer:</strong> Saved <strong>${savRate}%</strong> of income. You have <strong>${fmtS(buffer)}</strong> left over.` });
-        else insights.push({ type: 'neg', icon: '🚨', text: `<strong>Deficit:</strong> You've overspent your income by <strong><span class="up">${fmtS(Math.abs(buffer))}</span></strong>.` });
+        if (savRate >= 20) insights.push({ type: 'pos', icon: '🏆', text: `<strong>Strong Savings:</strong> Saved <strong style="color:var(--in)">${savRate}%</strong> of income (<strong style="color:var(--in)">${fmtS(buffer)}</strong> left)${vsPrev}. Excellent!` });
+        else if (savRate > 0) insights.push({ type: 'neu', icon: '🛡️', text: `<strong>Savings Buffer:</strong> Saved <strong style="color:var(--in)">${savRate}%</strong> of income. You have <strong style="color:var(--in)">${fmtS(buffer)}</strong> left over.` });
+        else insights.push({ type: 'neg', icon: '🚨', text: `<strong>Deficit:</strong> You've overspent your income by <strong style="color:var(--ex)">${fmtS(Math.abs(buffer))}</strong>.` });
       } else {
-        insights.push({ type: 'neg', icon: '🚨', text: `<strong>No Income Logged:</strong> You are burning through past savings. <strong>${fmtS(curExp)}</strong> spent so far.` });
+        insights.push({ type: 'neg', icon: '🚨', text: `<strong>No Income Logged:</strong> You are burning through past savings. <strong style="color:var(--ex)">${fmtS(curExp)}</strong> spent so far.` });
       }
 
       // 3. Main Drain
@@ -9835,9 +9835,9 @@
         const secAmt = catEntries.length > 1 ? catEntries[1][1] : 0;
         const cn = topCat.charAt(0).toUpperCase() + topCat.slice(1);
         if (secAmt > 0 && (topAmt - secAmt) > (secAmt * 0.5)) {
-            insights.push({ type: 'neg', icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> is dominating your spending at <strong>${fmtS(topAmt)}</strong>. That's <strong>${fmtS(topAmt - secAmt)}</strong> more than your next highest expense.` });
+            insights.push({ type: 'neg', icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> is dominating your spending at <strong style="color:var(--ex)">${fmtS(topAmt)}</strong>. That's <strong style="color:var(--ex)">${fmtS(topAmt - secAmt)}</strong> more than your next highest expense.` });
         } else {
-            insights.push({ type: 'neu', icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> is your top expense (<strong>${fmtS(topAmt)}</strong>). You're spending <strong>${fmtS(Math.round(topAmt/Math.max(1, cD)))}/day</strong> on this alone.` });
+            insights.push({ type: 'neu', icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> is your top expense (<strong style="color:var(--ex)">${fmtS(topAmt)}</strong>). You're spending <strong style="color:var(--ex)">${fmtS(Math.round(topAmt/Math.max(1, cD)))}/day</strong> on this alone.` });
         }
       } else {
         insights.push({ type: 'neu', icon: '🛍️', text: `<strong>Main Drain:</strong> Start tracking expenses to see your top spending categories.` });
@@ -9857,9 +9857,9 @@
         if (bCat && Math.abs(bDiff) > 50) {
           const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1);
           if (bDir === 'up') {
-              insights.push({ type: 'neg', icon: '🔺', text: `<strong>Creep Alert:</strong> <strong>${cn}</strong> spending spiked by <strong>${fmtS(bDiff)}</strong> vs last month. Worth reviewing?` });
+              insights.push({ type: 'neg', icon: '🔺', text: `<strong>Creep Alert:</strong> <strong>${cn}</strong> spending spiked by <strong style="color:var(--ex)">${fmtS(bDiff)}</strong> vs last month. Worth reviewing?` });
           } else {
-              insights.push({ type: 'pos', icon: '🔻', text: `<strong>Cost Cutting:</strong> You saved <strong>${fmtS(Math.abs(bDiff))}</strong> on <strong>${cn}</strong> vs last month. Great discipline!` });
+              insights.push({ type: 'pos', icon: '🔻', text: `<strong>Cost Cutting:</strong> You saved <strong style="color:var(--in)">${fmtS(Math.abs(bDiff))}</strong> on <strong>${cn}</strong> vs last month. Great discipline!` });
           }
         } else {
           insights.push({ type: 'neu', icon: '⚖️', text: `<strong>Stability:</strong> Your spending categories are very stable compared to last month.` });
@@ -9876,9 +9876,9 @@
         const pctCat = Math.round((topTx.amount / catTotal) * 100);
         const desc = topTx.desc ? ` ("${esc(topTx.desc)}")` : '';
         if (pctCat >= 50 && expTxs.length > 3) {
-            insights.push({ type: 'neg', icon: '💳', text: `<strong>Heavy Hitter:</strong> <strong>${fmtS(topTx.amount)}</strong> on <strong>${topTx.cat}</strong>. This single purchase ate up <strong>${pctCat}%</strong> of your entire ${topTx.cat} budget!` });
+            insights.push({ type: 'neg', icon: '💳', text: `<strong>Heavy Hitter:</strong> <strong style="color:var(--ex)">${fmtS(topTx.amount)}</strong> on <strong>${topTx.cat}</strong>. This single purchase ate up <strong style="color:var(--ex)">${pctCat}%</strong> of your entire ${topTx.cat} budget!` });
         } else {
-            insights.push({ type: 'neu', icon: '🏷️', text: `<strong>Largest Purchase:</strong> <strong>${fmtS(topTx.amount)}</strong> on <strong>${topTx.cat}</strong>${desc}.` });
+            insights.push({ type: 'neu', icon: '🏷️', text: `<strong>Largest Purchase:</strong> <strong style="color:var(--ex)">${fmtS(topTx.amount)}</strong> on <strong>${topTx.cat}</strong>${desc}.` });
         }
       } else {
         insights.push({ type: 'neu', icon: '🏷️', text: `<strong>Largest Purchase:</strong> No major purchases logged yet.` });
@@ -9895,11 +9895,11 @@
         const ratio = (topDayAmt / avgDay).toFixed(1);
 
         if (gap >= 3) {
-          insights.push({ type: 'pos', icon: '🔥', text: `<strong>Momentum:</strong> You haven't spent any money in <strong>${gap} days</strong>! Keep the streak alive.` });
+          insights.push({ type: 'pos', icon: '🔥', text: `<strong>Momentum:</strong> You haven't spent any money in <strong style="color:var(--in)">${gap} days</strong>! Keep the streak alive.` });
         } else if (zeroDays >= 5) {
-          insights.push({ type: 'pos', icon: '🛡️', text: `<strong>Discipline:</strong> You've had <strong>${zeroDays} zero-spend days</strong> out of ${cD} so far. Awesome self-control!` });
+          insights.push({ type: 'pos', icon: '🛡️', text: `<strong>Discipline:</strong> You've had <strong style="color:var(--in)">${zeroDays} zero-spend days</strong> out of ${cD} so far. Awesome self-control!` });
         } else {
-          insights.push({ type: 'neu', icon: '📅', text: `<strong>Spike Day:</strong> <strong>${fmtDt(topDay)}</strong> cost <strong>${fmtS(topDayAmt)}</strong>—that's <strong>${ratio}x</strong> your normal daily average.` });
+          insights.push({ type: 'neu', icon: '📅', text: `<strong>Spike Day:</strong> <strong>${fmtDt(topDay)}</strong> cost <strong style="color:var(--ex)">${fmtS(topDayAmt)}</strong>—that's <strong style="color:var(--ex)">${ratio}x</strong> your normal daily average.` });
         }
       } else {
         if (cD > 3) {
