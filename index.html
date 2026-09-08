@@ -6593,9 +6593,7 @@
                     class="tb" id="bExp" onclick="setType('expense')">↓ Expense</button></div>
               </div>
               <div class="fd full-mob"><label>Mode</label>
-                <div class="tg"><button class="tb ao" id="bOnl" onclick="setMode('online')"><img src="emojis/online.png"
-                      class="c-ico" alt=""> Online</button><button class="tb" id="bOfl"
-                    onclick="setMode('offline')"><img src="emojis/offline.png" class="c-ico" alt=""> Offline</button>
+                <div class="tg"><button class="tb ao" id="bOnl" onclick="setMode('online')">Online</button><button class="tb" id="bOfl" onclick="setMode('offline')">Offline</button>
                 </div>
               </div>
             </div>
@@ -6689,8 +6687,8 @@
                 <span class="fltr-label">Mode</span>
                 <div class="fltr-btns">
                   <button class="ft mode-flt act" onclick="setModeFilt('all', this)">All</button>
-                  <button class="ft mode-flt" onclick="setModeFilt('online', this)"><img src="emojis/online.png" class="c-ico" alt=""> Online</button>
-                  <button class="ft mode-flt" onclick="setModeFilt('offline', this)"><img src="emojis/offline.png" class="c-ico" alt=""> Offline</button>
+                  <button class="ft mode-flt" onclick="setModeFilt('online', this)">Online</button>
+                  <button class="ft mode-flt" onclick="setModeFilt('offline', this)">Offline</button>
                   <button class="ft mode-flt" onclick="setModeFilt('event', this)">Event</button>
                   <button class="ft mode-flt" onclick="setModeFilt('subscription', this)">Subscription</button>
                 </div>
@@ -10041,7 +10039,7 @@
       const mnHTML = Array.from({ length: 12 }, (_, m) => mkMnCard(m, yr, yrMonths, isCur, cM, cD, todayISO, mMax, yrTot, cY, yrAvg, adaptiveMultiplier, lastCompletedYearActualTotal)).join('');
       const netClr = yrNet >= 0 ? 'var(--in)' : 'var(--ex)';
       const savRateHtml = yrSavRate !== null ? `<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${yrSavRate > 0 ? '+' : ''}${yrSavRate}%</span></div>` : '';
-      return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl"><img src="emojis/online.png" class="c-ico" style="width:12px;height:12px;" alt=""> Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl"><img src="emojis/offline.png" class="c-ico" style="width:12px;height:12px;" alt=""> Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
+      return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl"><img src="emojis/online.png" class="c-ico" style="width:10px;height:10px;" alt=""> Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl"><img src="emojis/offline.png" class="c-ico" style="width:10px;height:10px;" alt=""> Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
     }
 
     function mkMnCard(m, yr, yrMonths, isCurYr, cM, cD, todayISO, mMax, yrTot, cY, yrAvg, adaptiveMultiplier, lastCompletedYearActualTotal) {
