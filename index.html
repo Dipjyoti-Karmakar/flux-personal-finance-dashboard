@@ -7407,10 +7407,13 @@
       // M7 FIX: Track retryCount so permanently-failing items (e.g. activity log entries
       // blocked by Firestore rules) don't accumulate in localStorage indefinitely.
       // Items that have already failed 10 times are silently dropped.
-      const existing = syncQueue.find(q => q.op === op && q.col === col && q.id === id);
-      const retryCount = existing ? (existing.retryCount || 0) + 1 : 0;
+      // The existing matching entry is always removed first to prevent duplication.
+      const existingIdx = syncQueue.findIndex(q => q.op === op && q.col === col && q.id === id);
+      const retryCount = existingIdx !== -1 ? (syncQueue[existingIdx].retryCount || 0) + 1 : 0;
+      if (existingIdx !== -1) syncQueue.splice(existingIdx, 1); // remove stale entry (drop or replace)
       if (retryCount >= 10) {
         console.warn(`[SyncQueue] Dropping ${op}/${col}/${id} after ${retryCount} retries.`);
+        localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
         return;
       }
       syncQueue.push({ op, col, id, data, isMerge, ts: Date.now(), uid: userId || null, retryCount });
