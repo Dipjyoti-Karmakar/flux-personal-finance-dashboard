@@ -7404,7 +7404,16 @@
     })();
     let _syncRetryTimer = null;
     function queueFailedSync(op, col, id, data, isMerge = false, silent = false) {
-      syncQueue.push({ op, col, id, data, isMerge, ts: Date.now(), uid: userId || null });
+      // M7 FIX: Track retryCount so permanently-failing items (e.g. activity log entries
+      // blocked by Firestore rules) don't accumulate in localStorage indefinitely.
+      // Items that have already failed 10 times are silently dropped.
+      const existing = syncQueue.find(q => q.op === op && q.col === col && q.id === id);
+      const retryCount = existing ? (existing.retryCount || 0) + 1 : 0;
+      if (retryCount >= 10) {
+        console.warn(`[SyncQueue] Dropping ${op}/${col}/${id} after ${retryCount} retries.`);
+        return;
+      }
+      syncQueue.push({ op, col, id, data, isMerge, ts: Date.now(), uid: userId || null, retryCount });
       localStorage.setItem('flux_sync_queue', JSON.stringify(syncQueue));
 
       // Instantly apply the failed sync to local state so it doesn't disappear from UI
@@ -8125,8 +8134,13 @@
       // FIXED: Clear timer FIRST to prevent the old timer callback from double-committing
       if (_undoTxData) {
         if (_undoTimer) { clearTimeout(_undoTimer); _undoTimer = null; }
-        commitDelete(_undoTxData.id);
+        // M1 FIX: Capture both id and log data BEFORE nulling _undoTxData so
+        // commitDelete commits the correct (previous) transaction's delete and
+        // logs it properly when a second delete fires before the first's undo window expires.
+        const _prevId = _undoTxData.id;
+        const _prevLogData = _undoTxData.data;
         _undoTxData = null;
+        commitDelete(_prevId, _prevLogData);
       }
 
       // Find the transaction data for undo
@@ -8170,9 +8184,10 @@
       }, 5000);
     }
 
-    async function commitDelete(id) {
-      // Capture the undo data before it potentially gets cleared by the timeout synchronously
-      const logData = (_undoTxData && _undoTxData.id === id) ? _undoTxData.data : null;
+    async function commitDelete(id, _passedLogData) {
+      // M1 FIX: Accept pre-captured log data when called from executeSoftDelete (rapid double-delete),
+      // or fall back to reading _undoTxData when called from the 5-second timer callback.
+      const logData = _passedLogData || ((_undoTxData && _undoTxData.id === id) ? _undoTxData.data : null);
 
       // Log deletion synchronously to ensure it's captured immediately when the undo window expires
       if (logData) {
@@ -11115,23 +11130,46 @@
         });
       }
       // Step 2: delete the event document (or queue if offline)
+      let docDeleted = false;
       try {
         await deleteDoc(getEventDocRef(evtId, eventSrc));
+        docDeleted = true;
       } catch (e) {
         console.error('Error deleting event doc (queuing)', e);
-        queueFailedSync('deleteDoc', eventSrc === 'transactions' || eventsUseFallback ? 'transactions' : 'events', evtId, null);
+        // C3 FIX: Only queue the delete if we're offline. Online failures mean the
+        // document still exists in Firestore, so we must NOT mutate local state.
+        if (!navigator.onLine) {
+          queueFailedSync('deleteDoc', eventSrc === 'transactions' || eventsUseFallback ? 'transactions' : 'events', evtId, null);
+          docDeleted = true; // Treat queued offline-delete as a success for local state
+        } else {
+          showToast('Failed to delete event. Please try again.', 'er');
+          return; // Abort — do not remove from local state; Firestore still has the doc
+        }
       }
-      delete events[evtId];
-      renderEvents();
-      showToast(navigator.onLine ? 'Event deleted' : 'Saved offline. Will sync when connected.', 'ok');
-      writeLog('DELETE', { desc: eventName, isDelEvent: true });
+      if (docDeleted) {
+        delete events[evtId];
+        renderEvents();
+        showToast(navigator.onLine ? 'Event deleted' : 'Saved offline. Will sync when connected.', 'ok');
+        writeLog('DELETE', { desc: eventName, isDelEvent: true });
+      }
     }
 
     async function assignTransactionsToEvent(evtId, start, end) {
       if (!userId || !evtId) return;
-      const matching = txs.filter(t => t.date >= start && t.date <= end);
-      if (!matching.length) { showToast('No transactions in date range', 'er'); return; }
-      showToast(`Applying to ${matching.length} transactions...`, 'ok');
+      const allInRange = txs.filter(t => t.date >= start && t.date <= end);
+      if (!allInRange.length) { showToast('No transactions in date range', 'er'); return; }
+      // M9 FIX: Skip txs already tagged with a DIFFERENT event to avoid silent overwrites.
+      const alreadyTaggedElsewhere = allInRange.filter(t => t.eventId && t.eventId !== evtId);
+      const matching = allInRange.filter(t => !t.eventId || t.eventId === evtId);
+      if (!matching.length) {
+        showToast(`All ${alreadyTaggedElsewhere.length} transactions in range are already tagged with another event`, 'er');
+        return;
+      }
+      if (alreadyTaggedElsewhere.length > 0) {
+        showToast(`Skipped ${alreadyTaggedElsewhere.length} already tagged with other events; applying to ${matching.length}`, 'ok');
+      } else {
+        showToast(`Applying to ${matching.length} transactions...`, 'ok');
+      }
       for (let i = 0; i < matching.length; i += 450) {
         const chunk = matching.slice(i, i + 450);
         const batch = writeBatch(db);
@@ -12651,7 +12689,7 @@
         allInPeriod.filter(t => t.type === 'expense').forEach(t => { catMap[t.cat || 'other'] = (catMap[t.cat || 'other'] || 0) + t.amount; });
         const catEntries = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
         const topCat = catEntries[0];
-        const avgDailyExp = totalExp > 0 ? totalExp / Math.max(1, Math.round((new Date(toDate) - new Date(fromDate)) / 86400000) + 1) : 0;
+        const avgDailyExp = totalExp > 0 ? totalExp / Math.max(1, Math.round((new Date(toDate + 'T00:00:00') - new Date(fromDate + 'T00:00:00')) / 86400000) + 1) : 0;
         const expTxs = allInPeriod.filter(t => t.type === 'expense');
         const largestTx = expTxs.length ? expTxs.reduce((m, t) => t.amount > m.amount ? t : m, expTxs[0]) : null;
         const onlineExp = allInPeriod.filter(t => t.type === 'expense' && t.mode === 'online').reduce((s, t) => s + t.amount, 0);
@@ -12892,8 +12930,11 @@
             if (t.type === 'expense') trendData[t.date].exp += t.amount;
           });
 
-          const startTs = new Date(fromDate).getTime();
-          const endTs = new Date(toDate).getTime();
+          // M3 FIX: Append T00:00:00 so JS parses as local midnight, not UTC midnight.
+          // Without this, IST (+5:30) users get an off-by-one day shift (e.g. "Jan 1"
+          // becomes "Dec 31" in the trend chart because UTC midnight is 5:30 AM IST).
+          const startTs = new Date(fromDate + 'T00:00:00').getTime();
+          const endTs = new Date(toDate + 'T00:00:00').getTime();
           const daysCount = Math.max(1, Math.round((endTs - startTs) / 86400000) + 1);
 
           const pts = [];
