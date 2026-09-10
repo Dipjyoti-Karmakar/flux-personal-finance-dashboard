@@ -9758,8 +9758,9 @@
       area.innerHTML = newHtml;
     }
 
-    // ── Month-over-Month Insights (Priority-Scored Dynamic Engine) ──
+    // ── Month-over-Month Insights (Priority-Scored Dynamic Engine v2) ──
     // Each insight candidate gets a numeric priority score (higher = more urgent).
+    // Priorities are SCALED by magnitude — a 5% overshoot ≠ 50% overshoot.
     // The card renders the top 6 by score, so critical alerts always displace neutral fillers.
     let _insightsLastHtml = ''; // Cache to skip re-render when insights data hasn't changed
     function renderInsights() {
@@ -9773,6 +9774,8 @@
       const pY = pDate.getFullYear(), pM = pDate.getMonth();
       const prevPrefix = `${pY}-${String(pM + 1).padStart(2, '0')}`;
       const daysInMonth = new Date(cY, cM + 1, 0).getDate();
+      const daysLeft = daysInMonth - cD;
+      const monthProgress = Math.round((cD / daysInMonth) * 100);
       if (periodEl) periodEl.textContent = `${MF[cM]} ${cY}`;
       const curTxs = txs.filter(t => (t.date || '').startsWith(curPrefix));
       const prevTxs = txs.filter(t => (t.date || '').startsWith(prevPrefix));
@@ -9790,44 +9793,73 @@
       // ─── 1. Pacing & Projection ───
       const pastExp = curTxs.filter(t => t.type === 'expense' && t.date <= todayISO).reduce((s, t) => s + t.amount, 0);
       if (cD <= 3 && pastExp === 0) {
-        candidates.push({ priority: 5, type: 'neu', icon: '⏱️', text: `<strong>Pacing:</strong> Month just started. Spending projections will appear once you log expenses.` });
+        candidates.push({ priority: 5, type: 'neu', icon: '⏱️', text: `<strong>Pacing:</strong> Month just started — <strong>${daysLeft} days</strong> to go. Spending projections will appear once you log expenses.` });
       } else {
         const dailyBurn = pastExp > 0 ? Math.round(pastExp / cD) : 0;
         const projected = Math.round(dailyBurn * daysInMonth);
         if (curInc > 0 && projected > curInc) {
-          candidates.push({ priority: 95, type: 'neg', icon: '⚠️', text: `<strong>Pacing High:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong>. Projected to exceed your income by <strong style="color:var(--ex)">${fmtS(projected - curInc)}</strong>.` });
+          const overAmt = projected - curInc;
+          const overPct = Math.round((overAmt / curInc) * 100);
+          // Scale: 5% over → 70, 50%+ over → 98
+          const prio = Math.min(98, 70 + Math.round(overPct * 0.56));
+          const safeBudget = daysLeft > 0 ? Math.round((curInc - pastExp) / daysLeft) : 0;
+          const budgetTip = safeBudget > 0 ? ` To stay within income, limit spending to <strong style="color:var(--in)">${fmtS(safeBudget)}/day</strong> for the remaining ${daysLeft} days.` : ` You've already exceeded your income with ${daysLeft} days left.`;
+          candidates.push({ priority: prio, type: 'neg', icon: '⚠️', text: `<strong>Pacing Critical:</strong> At <strong>${fmtS(dailyBurn)}/day</strong>, you're projected to overshoot income by <strong style="color:var(--ex)">${fmtS(overAmt)} (${overPct}%)</strong>.${budgetTip}` });
         } else if (prevExp > 0) {
           const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
-          if (overPct > 5) candidates.push({ priority: 65, type: 'neg', icon: '📈', text: `<strong>Pacing High:</strong> Projected to spend <strong style="color:var(--ex)">${fmtS(projected)}</strong> by month-end (<span class="up">${overPct}% over</span> last month).` });
-          else if (overPct < -5) candidates.push({ priority: 40, type: 'pos', icon: '🎯', text: `<strong>Great Pace:</strong> On track to spend <strong style="color:var(--in)">${fmtS(projected)}</strong> (<span class="down">${Math.abs(overPct)}% under</span> last month).` });
-          else candidates.push({ priority: 20, type: 'neu', icon: '⏱️', text: `<strong>On Track:</strong> Spending <strong>${fmtS(dailyBurn)}/day</strong>, on pace to match last month.` });
+          if (overPct > 20) {
+            // Scale: 20% over → 72, 100%+ over → 88
+            const prio = Math.min(88, 72 + Math.round((overPct - 20) * 0.2));
+            candidates.push({ priority: prio, type: 'neg', icon: '📈', text: `<strong>Pacing Surge:</strong> Projected <strong style="color:var(--ex)">${fmtS(projected)}</strong> by month-end — <span class="up">${overPct}% over</span> last month's <strong>${fmtS(prevExp)}</strong>. You've used <strong>${monthProgress}%</strong> of the month and spent <strong style="color:var(--ex)">${fmtS(pastExp)}</strong> so far.` });
+          } else if (overPct > 5) {
+            candidates.push({ priority: 55 + Math.min(15, overPct), type: 'neg', icon: '📈', text: `<strong>Pacing Elevated:</strong> On track to spend <strong style="color:var(--ex)">${fmtS(projected)}</strong> — <span class="up">${overPct}% above</span> last month. At <strong>${fmtS(dailyBurn)}/day</strong> with <strong>${daysLeft} days</strong> remaining, consider slowing down.` });
+          } else if (overPct < -15) {
+            candidates.push({ priority: 42, type: 'pos', icon: '🎯', text: `<strong>Excellent Pace:</strong> Projected to spend <strong style="color:var(--in)">${fmtS(projected)}</strong> — <span class="down">${Math.abs(overPct)}% under</span> last month. You're saving an extra <strong style="color:var(--in)">${fmtS(prevExp - projected)}</strong> at this rate. Keep it up!` });
+          } else if (overPct < -5) {
+            candidates.push({ priority: 38, type: 'pos', icon: '🎯', text: `<strong>Great Pace:</strong> On track for <strong style="color:var(--in)">${fmtS(projected)}</strong> — <span class="down">${Math.abs(overPct)}% under</span> last month. That's <strong style="color:var(--in)">${fmtS(dailyBurn)}/day</strong> with ${daysLeft} days to go.` });
+          } else {
+            candidates.push({ priority: 20, type: 'neu', icon: '⏱️', text: `<strong>Steady Pace:</strong> Spending <strong>${fmtS(dailyBurn)}/day</strong>, tracking close to last month's <strong>${fmtS(prevExp)}</strong>. You're <strong>${monthProgress}%</strong> through the month with <strong>${daysLeft} days</strong> left.` });
+          }
         } else {
-          candidates.push({ priority: 15, type: 'neu', icon: '⏱️', text: `<strong>Pacing:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong> (Projected month-end: <strong>${fmtS(projected)}</strong>).` });
+          const safeBudget = curInc > 0 && daysLeft > 0 ? ` Your safe daily budget is <strong style="color:var(--in)">${fmtS(Math.round((curInc - pastExp) / daysLeft))}/day</strong>.` : '';
+          candidates.push({ priority: 15, type: 'neu', icon: '⏱️', text: `<strong>Pacing:</strong> Burning <strong>${fmtS(dailyBurn)}/day</strong> — projected <strong>${fmtS(projected)}</strong> by month-end.${safeBudget} ${daysLeft} days remaining.` });
         }
       }
 
       // ─── 2. Savings Health & Buffer ───
       const buffer = curInc - curExp;
       if (curInc === 0 && curExp === 0) {
-        candidates.push({ priority: 3, type: 'neu', icon: '💵', text: `<strong>Savings Health:</strong> No income or expenses logged yet.` });
+        candidates.push({ priority: 3, type: 'neu', icon: '💵', text: `<strong>Savings Health:</strong> No income or expenses logged yet for ${MF[cM]}. Start tracking to unlock spending insights.` });
       } else if (curInc > 0 && curExp === 0) {
-        candidates.push({ priority: 15, type: 'pos', icon: '🛡️', text: `<strong>Safe Buffer:</strong> You have your full <strong style="color:var(--in)">${fmtS(curInc)}</strong> income available to spend or save.` });
+        candidates.push({ priority: 15, type: 'pos', icon: '🛡️', text: `<strong>Full Buffer:</strong> Your entire <strong style="color:var(--in)">${fmtS(curInc)}</strong> income is untouched. That's <strong style="color:var(--in)">${fmtS(Math.round(curInc / daysInMonth))}/day</strong> of runway for ${daysLeft} remaining days.` });
       } else if (curInc > 0 && cD <= 10 && (curExp < curInc * 0.2)) {
-        candidates.push({ priority: 12, type: 'neu', icon: '🌱', text: `<strong>Early Month:</strong> You have a <strong style="color:var(--in)">${fmtS(buffer)}</strong> buffer. Let expenses settle for an accurate savings rate.` });
+        const usedPct = Math.round((curExp / curInc) * 100);
+        candidates.push({ priority: 12, type: 'neu', icon: '🌱', text: `<strong>Early Month:</strong> Only <strong>${usedPct}%</strong> of income spent so far (<strong style="color:var(--in)">${fmtS(buffer)}</strong> buffer). Savings rate will stabilize as expenses come in over the next ${daysLeft} days.` });
       } else if (curInc > 0) {
         const savRate = Math.round((buffer / curInc) * 100);
         let vsPrev = '';
         if (prevInc > 0) {
           const prevSavRate = Math.round((prevSav / prevInc) * 100);
           const diff = savRate - prevSavRate;
-          if (diff > 0) vsPrev = ` (<span class="down">+${diff}%</span>)`;
-          else if (diff < 0) vsPrev = ` (<span class="up">${diff}%</span>)`;
+          if (diff > 0) vsPrev = ` — <span class="down">+${diff}pp</span> vs last month`;
+          else if (diff < 0) vsPrev = ` — <span class="up">${diff}pp</span> vs last month`;
         }
-        if (savRate >= 20) candidates.push({ priority: 45, type: 'pos', icon: '🏆', text: `<strong>Strong Savings:</strong> Saved <strong style="color:var(--in)">${savRate}%</strong> of income (<strong style="color:var(--in)">${fmtS(buffer)}</strong> left)${vsPrev}. Excellent!` });
-        else if (savRate > 0) candidates.push({ priority: 25, type: 'neu', icon: '🛡️', text: `<strong>Savings Buffer:</strong> Saved <strong style="color:var(--in)">${savRate}%</strong> of income. You have <strong style="color:var(--in)">${fmtS(buffer)}</strong> left over.` });
-        else candidates.push({ priority: 100, type: 'neg', icon: '🚨', text: `<strong>Deficit:</strong> You've overspent your income by <strong style="color:var(--ex)">${fmtS(Math.abs(buffer))}</strong>.` });
+        if (savRate >= 50) {
+          candidates.push({ priority: 48, type: 'pos', icon: '🏆', text: `<strong>Exceptional Savings:</strong> Saved <strong style="color:var(--in)">${savRate}%</strong> of income (<strong style="color:var(--in)">${fmtS(buffer)}</strong> retained)${vsPrev}. That's well above the recommended 20% benchmark.` });
+        } else if (savRate >= 20) {
+          candidates.push({ priority: 42, type: 'pos', icon: '🏆', text: `<strong>Healthy Savings:</strong> Saving <strong style="color:var(--in)">${savRate}%</strong> of income — <strong style="color:var(--in)">${fmtS(buffer)}</strong> retained${vsPrev}. You're meeting the 50-30-20 rule target.` });
+        } else if (savRate >= 10) {
+          candidates.push({ priority: 28, type: 'neu', icon: '🛡️', text: `<strong>Moderate Savings:</strong> Saving <strong style="color:var(--in)">${savRate}%</strong> of income (<strong style="color:var(--in)">${fmtS(buffer)}</strong> left)${vsPrev}. The 50-30-20 rule recommends saving at least 20%.` });
+        } else if (savRate > 0) {
+          candidates.push({ priority: 55, type: 'neg', icon: '⚡', text: `<strong>Thin Buffer:</strong> Only <strong style="color:var(--ex)">${savRate}%</strong> saved (<strong>${fmtS(buffer)}</strong> left). With ${daysLeft} days remaining, you have about <strong>${fmtS(Math.round(buffer / Math.max(1, daysLeft)))}/day</strong> of breathing room. Aim for 20%+.` });
+        } else {
+          // Deficit — scale: -1% → 85, -50%+ → 100
+          const defPct = Math.min(50, Math.abs(savRate));
+          const prio = Math.min(100, 85 + Math.round(defPct * 0.3));
+          candidates.push({ priority: prio, type: 'neg', icon: '🚨', text: `<strong>Deficit Alert:</strong> Overspent income by <strong style="color:var(--ex)">${fmtS(Math.abs(buffer))} (${Math.abs(savRate)}%)</strong>. Expenses hit <strong style="color:var(--ex)">${fmtS(curExp)}</strong> against <strong>${fmtS(curInc)}</strong> income — and there are still ${daysLeft} days left in ${MF[cM]}.` });
+        }
       } else {
-        candidates.push({ priority: 90, type: 'neg', icon: '🚨', text: `<strong>No Income Logged:</strong> You are burning through past savings. <strong style="color:var(--ex)">${fmtS(curExp)}</strong> spent so far.` });
+        candidates.push({ priority: 90, type: 'neg', icon: '🚨', text: `<strong>No Income Logged:</strong> <strong style="color:var(--ex)">${fmtS(curExp)}</strong> spent across <strong>${curExpDays.size} days</strong> with zero recorded income. Either log income or expect this to deplete your reserves.` });
       }
 
       // ─── 3. Main Drain ───
@@ -9835,39 +9867,61 @@
       if (catEntries.length > 0) {
         const [topCat, topAmt] = catEntries[0];
         const secAmt = catEntries.length > 1 ? catEntries[1][1] : 0;
+        const secCat = catEntries.length > 1 ? catEntries[1][0] : null;
         const cn = topCat.charAt(0).toUpperCase() + topCat.slice(1);
-        if (secAmt > 0 && (topAmt - secAmt) > (secAmt * 0.5)) {
-            candidates.push({ priority: 60, type: 'neg', icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> is dominating your spending at <strong style="color:var(--ex)">${fmtS(topAmt)}</strong>. That's <strong style="color:var(--ex)">${fmtS(topAmt - secAmt)}</strong> more than your next highest expense.` });
+        const topPct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 100;
+        const prevTopAmt = prevCats[topCat] || 0;
+        let vsLast = '';
+        if (prevTopAmt > 0) {
+          const catChgPct = Math.round(((topAmt - prevTopAmt) / prevTopAmt) * 100);
+          if (catChgPct > 0) vsLast = ` — <span class="up">${catChgPct}% higher</span> than last month`;
+          else if (catChgPct < -5) vsLast = ` — <span class="down">${Math.abs(catChgPct)}% lower</span> than last month`;
+        }
+        if (topPct >= 60) {
+          // Single category eating 60%+ of all spending — very concentrated risk
+          const prio = Math.min(78, 62 + Math.round((topPct - 60) * 0.4));
+          candidates.push({ priority: prio, type: 'neg', icon: CICO[topCat] || '✦', text: `<strong>Concentration Risk:</strong> <strong>${cn}</strong> devours <strong style="color:var(--ex)">${topPct}%</strong> of all spending (<strong style="color:var(--ex)">${fmtS(topAmt)}</strong>)${vsLast}. Diversifying expenses could reveal savings.` });
+        } else if (secAmt > 0 && (topAmt - secAmt) > (secAmt * 0.5)) {
+          candidates.push({ priority: 58, type: 'neg', icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> leads at <strong style="color:var(--ex)">${fmtS(topAmt)} (${topPct}%)</strong> — that's <strong style="color:var(--ex)">${fmtS(topAmt - secAmt)}</strong> more than ${secCat ? secCat.charAt(0).toUpperCase() + secCat.slice(1) : 'your next category'}${vsLast}.` });
         } else {
-            candidates.push({ priority: 20, type: 'neu', icon: CICO[topCat] || '✦', text: `<strong>Main Drain:</strong> <strong>${cn}</strong> is your top expense (<strong style="color:var(--ex)">${fmtS(topAmt)}</strong>). You're spending <strong style="color:var(--ex)">${fmtS(Math.round(topAmt/Math.max(1, cD)))}/day</strong> on this alone.` });
+          candidates.push({ priority: 20, type: 'neu', icon: CICO[topCat] || '✦', text: `<strong>Top Category:</strong> <strong>${cn}</strong> leads at <strong style="color:var(--ex)">${fmtS(topAmt)} (${topPct}%)</strong> of total spending — averaging <strong style="color:var(--ex)">${fmtS(Math.round(topAmt / Math.max(1, cD)))}/day</strong>${vsLast}.` });
         }
       } else {
-        candidates.push({ priority: 2, type: 'neu', icon: '🛍️', text: `<strong>Main Drain:</strong> Start tracking expenses to see your top spending categories.` });
+        candidates.push({ priority: 2, type: 'neu', icon: '🛍️', text: `<strong>Spending Mix:</strong> No categorized expenses yet. Add expenses with categories to see where your money flows.` });
       }
 
       // ─── 4. Notable Shift ───
       if (prevTxs.length > 0) {
-        let bCat = null, bDiff = 0, bDir = '', bCur = 0, bPrev = 0;
+        let bCat = null, bDiff = 0, bDir = '', bCur = 0, bPrev = 0, bPctChg = 0;
         const allC = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
         allC.forEach(cat => {
             const cur = curCats[cat] || 0, prev = prevCats[cat] || 0;
             const diff = cur - prev;
             if (Math.abs(diff) > Math.abs(bDiff) && prev > 0) {
                 bDiff = diff; bCat = cat; bDir = diff > 0 ? 'up' : 'down'; bCur = cur; bPrev = prev;
+                bPctChg = Math.round((diff / prev) * 100);
             }
         });
         if (bCat && Math.abs(bDiff) > 50) {
           const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1);
+          const absPctChg = Math.abs(bPctChg);
           if (bDir === 'up') {
-              candidates.push({ priority: 70, type: 'neg', icon: '🔺', text: `<strong>Creep Alert:</strong> <strong>${cn}</strong> spending spiked by <strong style="color:var(--ex)">${fmtS(bDiff)}</strong> vs last month. Worth reviewing?` });
+            // Scale: 10% spike → 62, 100%+ → 88
+            const prio = Math.min(88, 62 + Math.round(Math.min(100, absPctChg) * 0.26));
+            if (absPctChg >= 100) {
+              candidates.push({ priority: prio, type: 'neg', icon: '🔺', text: `<strong>Spending Explosion:</strong> <strong>${cn}</strong> more than doubled — <strong style="color:var(--ex)">${fmtS(bCur)}</strong> vs last month's <strong>${fmtS(bPrev)}</strong> (<span class="up">+${absPctChg}%</span>). That's <strong style="color:var(--ex)">${fmtS(bDiff)}</strong> extra. Worth investigating.` });
+            } else {
+              candidates.push({ priority: prio, type: 'neg', icon: '🔺', text: `<strong>Creep Alert:</strong> <strong>${cn}</strong> surged <span class="up">${absPctChg}%</span> to <strong style="color:var(--ex)">${fmtS(bCur)}</strong> (was <strong>${fmtS(bPrev)}</strong>). That's <strong style="color:var(--ex)">${fmtS(bDiff)}</strong> extra this month.` });
+            }
           } else {
-              candidates.push({ priority: 35, type: 'pos', icon: '🔻', text: `<strong>Cost Cutting:</strong> You saved <strong style="color:var(--in)">${fmtS(Math.abs(bDiff))}</strong> on <strong>${cn}</strong> vs last month. Great discipline!` });
+            const prio = Math.min(50, 32 + Math.round(Math.min(80, absPctChg) * 0.22));
+            candidates.push({ priority: prio, type: 'pos', icon: '🔻', text: `<strong>Cost Cutting:</strong> <strong>${cn}</strong> dropped <span class="down">${absPctChg}%</span> to <strong style="color:var(--in)">${fmtS(bCur)}</strong> (was <strong>${fmtS(bPrev)}</strong>). That's <strong style="color:var(--in)">${fmtS(Math.abs(bDiff))}</strong> saved. Great discipline!` });
           }
         } else {
-          candidates.push({ priority: 10, type: 'neu', icon: '⚖️', text: `<strong>Stability:</strong> Your spending categories are very stable compared to last month.` });
+          candidates.push({ priority: 10, type: 'neu', icon: '⚖️', text: `<strong>Stable Spending:</strong> All categories are within their normal range vs ${MF[pM]}. No significant shifts detected.` });
         }
       } else {
-        candidates.push({ priority: 5, type: 'neu', icon: '📈', text: `<strong>Trends:</strong> Tracking category shifts. Insights will appear as you log more history.` });
+        candidates.push({ priority: 5, type: 'neu', icon: '📈', text: `<strong>Building History:</strong> Month-over-month comparisons need ${MF[pM]} data. Keep logging to unlock trend analysis.` });
       }
 
       // ─── 5. Largest Purchase ───
@@ -9876,19 +9930,28 @@
         const topTx = expTxs[0];
         const catTotal = curCats[topTx.cat] || topTx.amount;
         const pctCat = Math.round((topTx.amount / catTotal) * 100);
-        const desc = topTx.desc ? ` ("${esc(topTx.desc)}")` : '';
-        if (pctCat >= 50 && expTxs.length > 3) {
-            candidates.push({ priority: 75, type: 'neg', icon: '💳', text: `<strong>Heavy Hitter:</strong> <strong style="color:var(--ex)">${fmtS(topTx.amount)}</strong> on <strong>${topTx.cat}</strong>. This single purchase ate up <strong style="color:var(--ex)">${pctCat}%</strong> of your entire ${topTx.cat} budget!` });
+        const pctTotal = curExp > 0 ? Math.round((topTx.amount / curExp) * 100) : 100;
+        const desc = topTx.desc ? ` — "${esc(topTx.desc)}"` : '';
+        const avgExpense = curExp / Math.max(1, expTxs.length);
+        const xAvg = avgExpense > 0 ? (topTx.amount / avgExpense).toFixed(1) : '—';
+        const catName = topTx.cat ? topTx.cat.charAt(0).toUpperCase() + topTx.cat.slice(1) : 'Other';
+        if (pctTotal >= 40) {
+          // Single purchase is 40%+ of ALL spending — extreme
+          const prio = Math.min(85, 75 + Math.round((pctTotal - 40) * 0.17));
+          candidates.push({ priority: prio, type: 'neg', icon: '💳', text: `<strong>Outsized Purchase:</strong> <strong style="color:var(--ex)">${fmtS(topTx.amount)}</strong> on <strong>${catName}</strong>${desc} — that's <strong style="color:var(--ex)">${pctTotal}%</strong> of your entire monthly spending and <strong style="color:var(--ex)">${xAvg}x</strong> your average transaction.` });
+        } else if (pctCat >= 50 && expTxs.length > 3) {
+          candidates.push({ priority: 68, type: 'neg', icon: '💳', text: `<strong>Heavy Hitter:</strong> <strong style="color:var(--ex)">${fmtS(topTx.amount)}</strong> on <strong>${catName}</strong>${desc} ate <strong style="color:var(--ex)">${pctCat}%</strong> of your ${catName} budget and <strong>${pctTotal}%</strong> of total spending. It's <strong style="color:var(--ex)">${xAvg}x</strong> your average purchase.` });
         } else {
-            candidates.push({ priority: 18, type: 'neu', icon: '🏷️', text: `<strong>Largest Purchase:</strong> <strong style="color:var(--ex)">${fmtS(topTx.amount)}</strong> on <strong>${topTx.cat}</strong>${desc}.` });
+          candidates.push({ priority: 18, type: 'neu', icon: '🏷️', text: `<strong>Top Purchase:</strong> <strong style="color:var(--ex)">${fmtS(topTx.amount)}</strong> on <strong>${catName}</strong>${desc} — <strong>${pctTotal}%</strong> of total spending, <strong>${xAvg}x</strong> your average transaction.` });
         }
       } else {
-        candidates.push({ priority: 1, type: 'neu', icon: '🏷️', text: `<strong>Largest Purchase:</strong> No major purchases logged yet.` });
+        candidates.push({ priority: 1, type: 'neu', icon: '🏷️', text: `<strong>Purchases:</strong> No expenses logged yet for ${MF[cM]}. Your largest purchase will appear here.` });
       }
 
       // ─── 6. Spending Habits (Peak Day & Streaks) ───
       const sortedExpDays = [...curExpDays].filter(d => d <= todayISO).sort().reverse();
       const zeroDays = cD - curExpDays.size;
+      const zeroPct = cD > 0 ? Math.round((zeroDays / cD) * 100) : 0;
       if (sortedExpDays.length > 0) {
         const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000);
         const dayEntries = Object.entries(curDayExp).sort((a, b) => b[1] - a[1]);
@@ -9896,18 +9959,25 @@
         const avgDay = curExp / Math.max(1, curExpDays.size);
         const ratio = (topDayAmt / avgDay).toFixed(1);
 
-        if (gap >= 3) {
-          candidates.push({ priority: 38, type: 'pos', icon: '🔥', text: `<strong>Momentum:</strong> You haven't spent any money in <strong style="color:var(--in)">${gap} days</strong>! Keep the streak alive.` });
+        if (gap >= 7) {
+          // Week+ streak — exceptional
+          candidates.push({ priority: 52, type: 'pos', icon: '🔥', text: `<strong>Incredible Streak:</strong> <strong style="color:var(--in)">${gap} consecutive no-spend days</strong>! That's saved roughly <strong style="color:var(--in)">${fmtS(Math.round(avgDay * gap))}</strong> based on your average daily spend. Legendary discipline.` });
+        } else if (gap >= 3) {
+          const savedEst = Math.round(avgDay * gap);
+          candidates.push({ priority: 40, type: 'pos', icon: '🔥', text: `<strong>Momentum:</strong> <strong style="color:var(--in)">${gap}-day no-spend streak</strong> active! Based on your <strong>${fmtS(Math.round(avgDay))}/day</strong> average, that's ~<strong style="color:var(--in)">${fmtS(savedEst)}</strong> preserved. Keep going!` });
         } else if (zeroDays >= 5) {
-          candidates.push({ priority: 33, type: 'pos', icon: '🛡️', text: `<strong>Discipline:</strong> You've had <strong style="color:var(--in)">${zeroDays} zero-spend days</strong> out of ${cD} so far. Awesome self-control!` });
+          candidates.push({ priority: 35, type: 'pos', icon: '🛡️', text: `<strong>Discipline:</strong> <strong style="color:var(--in)">${zeroDays} zero-spend days</strong> out of ${cD} (<strong style="color:var(--in)">${zeroPct}%</strong> of the month). Spending only on <strong>${curExpDays.size} active days</strong> shows great control.` });
+        } else if (parseFloat(ratio) >= 3.0) {
+          // Extreme spike day — flag it harder
+          candidates.push({ priority: 55, type: 'neg', icon: '📅', text: `<strong>Spending Spike:</strong> <strong>${fmtDt(topDay)}</strong> cost <strong style="color:var(--ex)">${fmtS(topDayAmt)}</strong> — a staggering <strong style="color:var(--ex)">${ratio}x</strong> your daily average of <strong>${fmtS(Math.round(avgDay))}</strong>. This single day skewed your monthly pattern.` });
         } else {
-          candidates.push({ priority: 22, type: 'neu', icon: '📅', text: `<strong>Spike Day:</strong> <strong>${fmtDt(topDay)}</strong> cost <strong style="color:var(--ex)">${fmtS(topDayAmt)}</strong>—that's <strong style="color:var(--ex)">${ratio}x</strong> your normal daily average.` });
+          candidates.push({ priority: 22, type: 'neu', icon: '📅', text: `<strong>Peak Day:</strong> <strong>${fmtDt(topDay)}</strong> was your highest at <strong style="color:var(--ex)">${fmtS(topDayAmt)}</strong> (<strong style="color:var(--ex)">${ratio}x</strong> average). You've spent on <strong>${curExpDays.size}</strong> of ${cD} days so far (${zeroDays > 0 ? `${zeroDays} no-spend days` : 'spending every day'}).` });
         }
       } else {
         if (cD > 3) {
-            candidates.push({ priority: 30, type: 'pos', icon: '🔥', text: `<strong>Momentum:</strong> You haven't spent any money yet this month! Great start.` });
+            candidates.push({ priority: 32, type: 'pos', icon: '🔥', text: `<strong>Clean Slate:</strong> Zero spending in the first <strong style="color:var(--in)">${cD} days</strong> of ${MF[cM]}! That's a perfect start to the month.` });
         } else {
-            candidates.push({ priority: 4, type: 'neu', icon: '📅', text: `<strong>Habits:</strong> Log daily expenses to identify your peak spending days and no-spend streaks.` });
+            candidates.push({ priority: 4, type: 'neu', icon: '📅', text: `<strong>Habits:</strong> Track daily expenses to unlock streak analysis, spike detection, and spending pattern insights.` });
         }
       }
 
@@ -9926,6 +9996,7 @@
       _insightsLastHtml = stableInsights;
       area.innerHTML = newInsightsHtml;
     }
+
 
     let _yrLastHtml = ''; // Cache to skip re-render when yearly data hasn't changed
     function renderYearly() {
