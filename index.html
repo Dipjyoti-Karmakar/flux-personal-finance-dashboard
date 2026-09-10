@@ -9831,18 +9831,30 @@
       if (curInc === 0 && curExp === 0) {
         candidates.push({ priority: 3, type: 'neu', icon: '💵', text: `<strong>Savings Health:</strong> No income or expenses logged yet for ${MF[cM]}. Start tracking to unlock spending insights.` });
       } else if (curInc > 0 && curExp === 0) {
-        candidates.push({ priority: 15, type: 'pos', icon: '🛡️', text: `<strong>Full Buffer:</strong> Your entire <strong style="color:var(--in)">${fmtS(curInc)}</strong> income is untouched. That's <strong style="color:var(--in)">${fmtS(Math.round(curInc / daysInMonth))}/day</strong> of runway for ${daysLeft} remaining days.` });
+        if (daysLeft > 0) {
+          candidates.push({ priority: 15, type: 'pos', icon: '🛡️', text: `<strong>Full Buffer:</strong> Your entire <strong style="color:var(--in)">${fmtS(curInc)}</strong> income is untouched. That's <strong style="color:var(--in)">${fmtS(Math.round(curInc / daysLeft))}/day</strong> of runway for ${daysLeft} remaining days.` });
+        } else {
+          candidates.push({ priority: 15, type: 'pos', icon: '🛡️', text: `<strong>Full Buffer:</strong> Your entire <strong style="color:var(--in)">${fmtS(curInc)}</strong> income is untouched on the final day of the month!` });
+        }
       } else if (curInc > 0 && cD <= 10 && (curExp < curInc * 0.2)) {
         const usedPct = Math.round((curExp / curInc) * 100);
         candidates.push({ priority: 12, type: 'neu', icon: '🌱', text: `<strong>Early Month:</strong> Only <strong>${usedPct}%</strong> of income spent so far (<strong style="color:var(--in)">${fmtS(buffer)}</strong> buffer). Savings rate will stabilize as expenses come in over the next ${daysLeft} days.` });
       } else if (curInc > 0) {
         const savRate = Math.round((buffer / curInc) * 100);
         let vsPrev = '';
-        if (prevInc > 0) {
-          const prevSavRate = Math.round((prevSav / prevInc) * 100);
+        const prevPrefixToDate = `${pY}-${String(pM + 1).padStart(2, '0')}-${String(cD).padStart(2, '0')}`;
+        let prevIncToDate = 0, prevExpToDate = 0;
+        prevTxs.forEach(t => {
+          if (t.date <= prevPrefixToDate) {
+            if (t.type === 'income') prevIncToDate += t.amount;
+            else prevExpToDate += t.amount;
+          }
+        });
+        if (prevIncToDate > 0) {
+          const prevSavRate = Math.round(((prevIncToDate - prevExpToDate) / prevIncToDate) * 100);
           const diff = savRate - prevSavRate;
           if (diff > 0) vsPrev = ` — <span class="down">+${diff}pp</span> vs last month`;
-          else if (diff < 0) vsPrev = ` — <span class="up">${diff}pp</span> vs last month`;
+          else if (diff < 0 && curInc >= prevIncToDate) vsPrev = ` — <span class="up">${diff}pp</span> vs last month`;
         }
         if (savRate >= 50) {
           candidates.push({ priority: 48, type: 'pos', icon: '🏆', text: `<strong>Exceptional Savings:</strong> Saved <strong style="color:var(--in)">${savRate}%</strong> of income (<strong style="color:var(--in)">${fmtS(buffer)}</strong> retained)${vsPrev}. That's well above the recommended 20% benchmark.` });
