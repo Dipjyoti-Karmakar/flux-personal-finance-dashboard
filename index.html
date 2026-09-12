@@ -12493,12 +12493,16 @@
       }
       _recurringLastHtml = stableHtml;
       area.innerHTML = newHtml;
+      // All hist-inner divs are now empty after a full DOM rebuild.
+      // Clear the per-panel content cache so renderSubHistInner doesn't
+      // skip the innerHTML write due to a stale-match against old content.
+      _subHistLastHtml.clear();
 
       openPanels.forEach(id => {
         const panel = document.getElementById('hist-panel-' + id);
         const btn = document.getElementById('hist-btn-' + id);
         if (panel) { panel.classList.add('open'); _openSubHistPanels.add(id); }
-        if (btn) { btn.classList.add('act'); btn.innerHTML = '\u25b2 Close'; }
+        if (btn) { btn.classList.add('act'); btn.innerHTML = '<img src="emojis/history.png" class="c-ico" alt=""> Close'; }
         renderSubHistInner(id);
       }); if (typeof twemoji !== 'undefined') twemoji.parse(area);
     }
