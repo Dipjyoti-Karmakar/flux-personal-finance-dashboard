@@ -9101,6 +9101,17 @@
         if (!date) { shake('eDt'); return; }
 
         const eventId = document.getElementById('eEvent').value || '';
+
+        // If nothing actually changed, just close the modal and do not save or log.
+        if (window._editSnapshot) {
+          const b = window._editSnapshot;
+          const oldEvtId = b.eventId || '';
+          if (b.desc === desc && b.amount === amt && (b.cat || 'other') === (cat || 'other') &&
+              b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId) {
+            closeEditMod();
+            return;
+          }
+        }
         // FIXED: When the user clears the event selection, we must remove the eventId field
         // from Firestore entirely (using deleteField) rather than writing eventId:''. 
         // BUGFIX: Only use deleteField() if the transaction previously had an eventId.
