@@ -8108,7 +8108,7 @@
           const _txDescLc = desc.trim().toLowerCase();
           if (_txDescLc) {
             const matchedRec = recurringList.find(rec => {
-              if (!rec.name || !rec.active) return false;
+              if (!rec.name || !rec.active || rec.archived) return false;
               const recNameLc = rec.name.trim().toLowerCase();
               if (!recNameLc) return false;
               if (recNameLc !== _txDescLc) {
@@ -8487,6 +8487,7 @@
           if (!tDescLow) continue;
 
           for (const rec of recurringList) {
+            if (rec.archived) continue; // Don't auto-link to ended subscriptions
             const nameLow = (rec.name || '').trim().toLowerCase();
             if (!nameLow) continue;
             if (tDescLow !== nameLow) {
@@ -8578,15 +8579,15 @@
       const successfullyCommitted = new Set();
       try {
         // Orphan cleanup: clear stale _recurring/subId on txs whose subId points
-        // to a non-existent subscription, OR txs that have _recurring but no subId
-        // (standalone tagged txs not connected to any subscription card).
+        // to a non-existent subscription (truly deleted, not in recurringList at all).
+        // NOTE: Transactions with _recurring but no subId are intentionally left alone —
+        // they result from "Delete Permanently" which detaches txs from a card while
+        // preserving the subscription tag.
         const recIds = new Set(recurringList.map(r => r.id));
         const toUntag = txs.filter(tx => {
           if (_txWriteLocks.has(tx.id) || _pendingTxUpdates.has(tx.id)) return false;
-          // Case 1: has subId but it points to a deleted/non-existent subscription
+          // Only untag if subId points to a truly deleted/non-existent subscription
           if (tx.subId && !recIds.has(tx.subId)) return true;
-          // Case 2: has _recurring tag but no subId — standalone, not connected to any card
-          if (tx._recurring && !tx.subId) return true;
           return false;
         });
         if (toUntag.length) {
@@ -11474,6 +11475,7 @@
         const descCls = action === 'DELETE' ? 'tx-deleted-text' : '';
         if (p.isNewRec) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">New recurring subscription</div>`;
         if (p.isDelRec) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Deleted recurring subscription</div>`;
+        if (p.isDelRecPermanent) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Subscription permanently deleted — transactions remain tagged</div>`;
         if (p.isNewEvent) return `<div>${esc(p.desc)}</div><div class="log-meta">New event created</div>`;
         if (p.isDelEvent) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Deleted event</div>`;
         if (p.isRestore) return `<div>${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600">${fmt(p.amt)}</span><span> </span><span>Restored transaction</span></div>`;
@@ -11523,7 +11525,6 @@
         if (p.isRecPauseToggle) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription ${p.active ? 'resumed' : 'paused'}</div>`;
         if (p.isRecArchive) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription archived</div>`;
         if (p.isRecRestore) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription restored</div>`;
-        if (p.isDelRecPermanent) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription permanently deleted — transactions remain tagged</div>`;
         if (p.isEventBulk) return `<div>${esc(p.desc)}</div><div class="log-meta">Bulk updated event tags</div>`;
         if (p.isEarlyPay) return `<div>${esc(p.desc)}</div><div class="log-meta">Early payment detected — due date advanced${p.newNextDue ? ' to ' + fmtDt(p.newNextDue) : ''}.</div>`;
         if (p.isSkip) return `<div>${esc(p.desc)}</div><div class="log-meta">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`;
