@@ -6217,6 +6217,7 @@
 
       body.mob-cat-expanded #catAreaWrap .cat-tag-list {
         flex-direction: column !important;
+        flex-wrap: nowrap !important;
         align-items: stretch;
         gap: 8px;
         /* Default: no scroll (≤5 categories — card fully extends) */
@@ -6228,8 +6229,8 @@
       body.mob-cat-expanded #catAreaWrap.mob-cat-many .cat-tag-list {
         /* 5 rows × 56px + 4 gaps × 8px + top-pad 4px + bottom-pad 12px = 328px */
         max-height: 328px;
-        overflow-y: auto;
-        overflow-x: hidden;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
         scrollbar-width: thin;
         scrollbar-color: var(--bd) transparent;
         /* Subtle scroll indicator shadow at bottom */
