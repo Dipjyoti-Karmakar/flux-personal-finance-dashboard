@@ -4442,6 +4442,49 @@
       border-color: color-mix(in srgb, var(--mu) 22%, transparent);
     }
 
+    .sub-badge.badge-archived {
+      background: color-mix(in srgb, var(--di) 12%, transparent);
+      color: var(--di);
+      border-color: color-mix(in srgb, var(--di) 22%, transparent);
+    }
+
+    /* Archived card — dimmed, dashed border */
+    .sub-card.sub-archived {
+      opacity: 0.6;
+      border-style: dashed;
+      filter: grayscale(35%);
+    }
+
+    /* Restore button hover */
+    .sub-action-btn.restore-btn:hover {
+      background: color-mix(in srgb, var(--in) 12%, transparent);
+      color: var(--in);
+      border-color: color-mix(in srgb, var(--in) 35%, transparent);
+    }
+
+    /* Delete-permanently button hover */
+    .sub-action-btn.perm-del-btn:hover {
+      background: color-mix(in srgb, var(--ex) 15%, transparent);
+      color: var(--ex);
+      border-color: color-mix(in srgb, var(--ex) 40%, transparent);
+    }
+
+    /* Archived view toggle link in sub-header */
+    .sub-archived-toggle {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+      color: var(--mu);
+      background: none;
+      border: 1px solid var(--bd);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 5px 10px;
+      transition: color .2s, background .2s, border-color .2s;
+    }
+    .sub-archived-toggle:hover { color: var(--tx); background: var(--s2); border-color: var(--bs); }
+    .sub-archived-toggle.act  { color: var(--ac); border-color: color-mix(in srgb, var(--ac) 40%, transparent); background: var(--ag); }
+
     @keyframes subPulse {
 
       0%,
@@ -6827,6 +6870,7 @@
     <div id="subView" style="display:none">
       <div class="sub-header section-in">
         <div class="sub-title">Subscriptions</div>
+        <button id="subArchivedToggle" class="sub-archived-toggle" onclick="toggleArchivedView()" style="display:none">Archived (0)</button>
         <button class="sub-add-btn" onclick="openAddRecurring()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -7415,6 +7459,7 @@
     let currentRecType = 'expense';
     let currentRecFreq = 'monthly';
     let currentRecMode = 'online';
+    let _showingArchivedSubs = false; // true = Archived view, false = Active view
     let reportPeriodMode = 'month';
     let trendAbort = null;
     let trendMode = 'expense'; // 'expense' | 'income' | 'both'
@@ -8574,6 +8619,7 @@
           // Don't steal transactions that the subscription matcher may need
           if (globallyMatchedTxIds && globallyMatchedTxIds.has(tx.id)) return;
           const matchingRec = recurringList.find(rec => {
+            if (rec.archived) return false; // Don't link fresh transactions to an ended subscription
             if (!rec.name || !tx.desc) return false;
             // Exact match first, then fuzzy (contains) for names >= 4 chars
             const recName = rec.name.trim().toLowerCase();
@@ -11475,6 +11521,9 @@
       }
       if (action === 'UPDATE') {
         if (p.isRecPauseToggle) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription ${p.active ? 'resumed' : 'paused'}</div>`;
+        if (p.isRecArchive) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription archived</div>`;
+        if (p.isRecRestore) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription restored</div>`;
+        if (p.isDelRecPermanent) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription permanently deleted — transactions remain tagged</div>`;
         if (p.isEventBulk) return `<div>${esc(p.desc)}</div><div class="log-meta">Bulk updated event tags</div>`;
         if (p.isEarlyPay) return `<div>${esc(p.desc)}</div><div class="log-meta">Early payment detected — due date advanced${p.newNextDue ? ' to ' + fmtDt(p.newNextDue) : ''}.</div>`;
         if (p.isSkip) return `<div>${esc(p.desc)}</div><div class="log-meta">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`;
@@ -11774,6 +11823,7 @@
       let matchedCount = 0;
 
       for (const rec of recurringList) {
+        if (rec.archived) continue; // Archived subs never auto-trigger new transactions
         if (!rec.active || !rec.nextDue || today < rec.nextDue) continue;
         if (triggeringRecs.has(rec.id)) continue;
         triggeringRecs.add(rec.id);
@@ -12013,6 +12063,7 @@
 
         for (const rec of recurringList) {
           // Only consider active subs whose nextDue is still in the future
+          if (rec.archived) continue; // Archived subs never get early-payment detection
           if (!rec.active || !rec.nextDue || rec.nextDue <= today) continue;
           if (_earlyPayProcessing.has(rec.id)) continue;
           // Skip if already processed this rec in the current session (prevents echo loop)
@@ -12151,10 +12202,8 @@
       const area = document.getElementById('subList');
       if (!area) return;
 
-      // Preserve open panels — use the persistent Set rather than querying DOM
-      // (DOM-based detection fails when renderRecurring is called during a transition)
+      // Preserve open panels
       const openPanels = new Set(_openSubHistPanels);
-      // Also check DOM in case a panel was opened by user click that didn't go through our Set
       area.querySelectorAll('.sub-hist-panel.open').forEach(p => {
         const id = p.id.replace('hist-panel-', '');
         openPanels.add(id);
@@ -12162,16 +12211,18 @@
 
       const today = getTodayStr();
       const FREQ = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' };
-      // Update summary bar
+
+      // Summary bar — active non-archived subs only
       let monthlyTotal = 0, yearlyTotal = 0, dueCount = 0, activeCount = 0;
       recurringList.forEach(r => {
+        if (r.archived) return; // Archived excluded from all summary totals
         if (!r.active) return;
         activeCount++;
         const amt = r.type === 'expense' ? r.amount : 0;
         if (r.freq === 'monthly') monthlyTotal += amt;
         else if (r.freq === 'yearly') yearlyTotal += amt / 12;
-        else if (r.freq === 'weekly') monthlyTotal += amt * (365.25 / 84);  // 365.25/(12*7) ≈ 4.348 weeks/month
-        else if (r.freq === 'daily') monthlyTotal += amt * (365.25 / 12);  // ≈ 30.44 days/month
+        else if (r.freq === 'weekly') monthlyTotal += amt * (365.25 / 84);
+        else if (r.freq === 'daily') monthlyTotal += amt * (365.25 / 12);
         else if (r.freq === 'custom' && r.customDays > 0) monthlyTotal += (amt * 365.25 / r.customDays) / 12;
         if (r.nextDue && r.nextDue <= today) dueCount++;
         else if (r.nextDue) {
@@ -12180,110 +12231,127 @@
         }
       });
       const el = (id) => document.getElementById(id);
-      if (el('subTotalMonthly')) el('subTotalMonthly').textContent = '₹' + (monthlyTotal).toLocaleString('en-IN', { maximumFractionDigits: 0 });
-      // yearlyTotal holds per-month equivalents of yearly subs (amt/12), so annualize just that.
-      // monthlyTotal already includes monthly-equivalent of ALL non-yearly subs.
-      if (el('subTotalYearly')) el('subTotalYearly').textContent = '₹' + (monthlyTotal * 12 + yearlyTotal * 12).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+      if (el('subTotalMonthly')) el('subTotalMonthly').textContent = '\u20b9' + (monthlyTotal).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+      if (el('subTotalYearly')) el('subTotalYearly').textContent = '\u20b9' + (monthlyTotal * 12 + yearlyTotal * 12).toLocaleString('en-IN', { maximumFractionDigits: 0 });
       if (el('subDueCount')) el('subDueCount').textContent = dueCount;
       if (el('subActiveCount')) el('subActiveCount').textContent = activeCount;
 
-      if (!recurringList.length) {
-        const emptyHtml = `<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)">
-      <div class="empty-icon" style="font-size:36px;margin-bottom:12px">🔁</div>
-      <div class="empty-title">No subscriptions yet</div>
-      <div class="empty-sub">Add recurring transactions like rent, Netflix, or salary to auto-track them every month.</div>
-    </div>`;
+      // Update the archived toggle link in header
+      const archivedCount = recurringList.filter(r => r.archived).length;
+      const toggleBtn = document.getElementById('subArchivedToggle');
+      if (toggleBtn) {
+        toggleBtn.textContent = _showingArchivedSubs ? '\u2190 Active' : 'Archived (' + archivedCount + ')';
+        toggleBtn.classList.toggle('act', _showingArchivedSubs);
+        toggleBtn.style.display = (archivedCount > 0 || _showingArchivedSubs) ? 'inline-block' : 'none';
+      }
+
+      // Pick list based on view mode
+      const displayList = _showingArchivedSubs
+        ? recurringList.filter(r => r.archived)
+        : recurringList.filter(r => !r.archived);
+
+      if (!displayList.length) {
+        const emptyHtml = _showingArchivedSubs
+          ? '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)"><div class="empty-icon" style="font-size:36px;margin-bottom:12px">\ud83d\udce6</div><div class="empty-title">No archived subscriptions</div><div class="empty-sub">Subscriptions you archive will appear here.</div></div>'
+          : '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)"><div class="empty-icon" style="font-size:36px;margin-bottom:12px">\ud83d\udd01</div><div class="empty-title">No subscriptions yet</div><div class="empty-sub">Add recurring transactions like rent, Netflix, or salary to auto-track them every month.</div></div>';
         if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _recurringLastHtml = ''; }
         return;
       }
 
-      // openPanels previously populated at the top of the function
-
-      const newHtml = recurringList.map((rec, index) => {
+      const newHtml = displayList.map((rec, index) => {
         const isDue = rec.nextDue && rec.nextDue <= today;
         const daysUntil = rec.nextDue ? Math.ceil((new Date(rec.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000) : null;
 
-        // Status badge — always show active/paused, plus urgency if due soon
         let badgeHtml;
-        if (!rec.active) {
-          badgeHtml = `<span class="sub-badge badge-paused">⏸ Paused</span>`;
+        if (rec.archived) {
+          badgeHtml = '<span class="sub-badge badge-archived">\u26d4 Archived</span>';
+        } else if (!rec.active) {
+          badgeHtml = '<span class="sub-badge badge-paused">\u23f8 Paused</span>';
         } else if (isDue) {
-          badgeHtml = `<span class="sub-badge badge-due">⚡ Due Now</span>`;
+          badgeHtml = '<span class="sub-badge badge-due">\u26a1 Due Now</span>';
         } else if (daysUntil !== null && daysUntil <= 7) {
-          badgeHtml = `<span class="sub-badge badge-soon">⏰ In ${daysUntil}d</span>`;
+          badgeHtml = '<span class="sub-badge badge-soon">\u23f0 In ' + daysUntil + 'd</span>';
         } else {
-          badgeHtml = `<span class="sub-badge badge-active">✓ Active</span>`;
+          badgeHtml = '<span class="sub-badge badge-active">\u2713 Active</span>';
         }
 
         const amtColor = rec.type === 'income' ? 'var(--in)' : 'var(--ex)';
         const amtSign = rec.type === 'income' ? '+' : '-';
-        const catIcon = CICO[rec.cat] || '✦';
-        const freqLabel = rec.freq === 'custom' ? `Every ${rec.customDays}d` : (FREQ[rec.freq] || rec.freq);
+        const catIcon = CICO[rec.cat] || '\u2726';
+        const freqLabel = rec.freq === 'custom' ? 'Every ' + rec.customDays + 'd' : (FREQ[rec.freq] || rec.freq);
         const planLabel = rec.cat ? rec.cat.charAt(0).toUpperCase() + rec.cat.slice(1) : 'Other';
         const renewalDate = rec.nextDue
           ? new Date(rec.nextDue + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
-          : '—';
-        const pauseLabel = rec.active ? '<img src="emojis/pause.png" class="c-ico" alt=""> Pause' : '<img src="emojis/resume.png" class="c-ico" alt=""> Resume';
+          : '\u2014';
 
         const recIdJson = esc(JSON.stringify(rec.id));
-        const animStyle = `animation-delay: ${0.2 + index * 0.05}s;`;
-        return `<div class="sub-card card-in ${rec.active ? '' : 'sub-paused'}" style="${animStyle}">
-      <div class="sub-card-top">
-        <div class="sub-card-icon">${catIcon}</div>
-        <div class="sub-card-info">
-          <div class="sub-card-name">${esc(rec.name)}</div>
-          <div class="sub-card-plan">${planLabel} Plan &nbsp;·&nbsp; ${freqLabel}</div>
-          <div class="sub-card-renewal">Next Renewal: <span>${renewalDate}</span>${rec.paymentsLimit ? ` &nbsp;·&nbsp; ${rec.paymentsMade || 0}/${rec.paymentsLimit} paid` : ''}</div>
-        </div>
-        <div class="sub-card-right">
-          ${badgeHtml}
-          <div class="sub-card-amt" style="color:${amtColor}">${amtSign}₹${Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
-        </div>
-      </div>
-      <div class="sub-card-actions">
-        <button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(${recIdJson},${!rec.active})">${pauseLabel}</button>
-        <button class="sub-action-btn edit-btn" onclick="openEditRecurring(${recIdJson})"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>
-        <button class="sub-action-btn del-btn" onclick="askDeleteRecurring(${recIdJson})"><img src="emojis/remove.png" class="c-ico" alt=""> Remove</button>
-        <button class="sub-action-btn hist-btn" id="hist-btn-${rec.id}" onclick="toggleSubHistory(this,'${rec.id}')"><img src="emojis/history.png" class="c-ico" alt=""> History</button>
-      </div>
-      <div class="sub-hist-panel" id="hist-panel-${rec.id}">
-        <div class="sub-hist-inner" id="hist-inner-${rec.id}"></div>
-      </div>
-    </div>`;
+        const animStyle = 'animation-delay: ' + (0.2 + index * 0.05) + 's;';
+
+        // Archived card template — no Edit/Pause, has Restore + Delete Permanently
+        if (rec.archived) {
+          return '<div class="sub-card card-in sub-archived" style="' + animStyle + '">'
+            + '<div class="sub-card-top">'
+            + '<div class="sub-card-icon">' + catIcon + '</div>'
+            + '<div class="sub-card-info">'
+            + '<div class="sub-card-name">' + esc(rec.name) + '</div>'
+            + '<div class="sub-card-plan">' + planLabel + ' Plan &nbsp;\u00b7&nbsp; ' + freqLabel + '</div>'
+            + '<div class="sub-card-renewal">Last Due: <span>' + renewalDate + '</span>' + (rec.paymentsLimit ? ' &nbsp;\u00b7&nbsp; ' + (rec.paymentsMade || 0) + '/' + rec.paymentsLimit + ' paid' : '') + '</div>'
+            + '</div>'
+            + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
+            + '</div>'
+            + '<div class="sub-card-actions">'
+            + '<button class="sub-action-btn restore-btn" onclick="restoreRecurring(' + recIdJson + ')"><img src="emojis/resume.png" class="c-ico" alt=""> Restore</button>'
+            + '<button class="sub-action-btn perm-del-btn" onclick="askDeletePermanently(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Delete</button>'
+            + '<button class="sub-action-btn hist-btn" id="hist-btn-' + rec.id + '" onclick="toggleSubHistory(this,\'' + rec.id + '\')"><img src="emojis/history.png" class="c-ico" alt=""> History</button>'
+            + '</div>'
+            + '<div class="sub-hist-panel" id="hist-panel-' + rec.id + '"><div class="sub-hist-inner" id="hist-inner-' + rec.id + '"></div></div>'
+            + '</div>';
+        }
+
+        // Active card template — Archive replaces Remove
+        const pauseLabel = rec.active
+          ? '<img src="emojis/pause.png" class="c-ico" alt=""> Pause'
+          : '<img src="emojis/resume.png" class="c-ico" alt=""> Resume';
+        return '<div class="sub-card card-in ' + (rec.active ? '' : 'sub-paused') + '" style="' + animStyle + '">'
+          + '<div class="sub-card-top">'
+          + '<div class="sub-card-icon">' + catIcon + '</div>'
+          + '<div class="sub-card-info">'
+          + '<div class="sub-card-name">' + esc(rec.name) + '</div>'
+          + '<div class="sub-card-plan">' + planLabel + ' Plan &nbsp;\u00b7&nbsp; ' + freqLabel + '</div>'
+          + '<div class="sub-card-renewal">Next Renewal: <span>' + renewalDate + '</span>' + (rec.paymentsLimit ? ' &nbsp;\u00b7&nbsp; ' + (rec.paymentsMade || 0) + '/' + rec.paymentsLimit + ' paid' : '') + '</div>'
+          + '</div>'
+          + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
+          + '</div>'
+          + '<div class="sub-card-actions">'
+          + '<button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(' + recIdJson + ',' + (!rec.active) + ')">' + pauseLabel + '</button>'
+          + '<button class="sub-action-btn edit-btn" onclick="openEditRecurring(' + recIdJson + ')"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>'
+          + '<button class="sub-action-btn del-btn" onclick="askArchiveRecurring(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Archive</button>'
+          + '<button class="sub-action-btn hist-btn" id="hist-btn-' + rec.id + '" onclick="toggleSubHistory(this,\'' + rec.id + '\')"><img src="emojis/history.png" class="c-ico" alt=""> History</button>'
+          + '</div>'
+          + '<div class="sub-hist-panel" id="hist-panel-' + rec.id + '"><div class="sub-hist-inner" id="hist-inner-' + rec.id + '"></div></div>'
+          + '</div>';
       }).join('');
 
       const stableHtml = newHtml.replace(/style="animation:[^"]*"/g, 'style=""');
 
-      // Skip DOM rebuild entirely when stable content is identical — prevents flicker and closing of panels
       if (stableHtml === _recurringLastHtml) {
-        // Still update the open panels' content internally in case their tx data changed
         openPanels.forEach(id => {
           if (typeof renderSubHistInner === 'function') renderSubHistInner(id);
         });
         return;
       }
       _recurringLastHtml = stableHtml;
-
       area.innerHTML = newHtml;
 
-      // Restore open panels — directly set state instead of calling toggleSubHistory
-      // which triggers renderSubHistInner → auto-tag writes → onSnapshot → re-render loop
-      // that causes the panel to get stuck in a perpetual rebuild cycle.
       openPanels.forEach(id => {
         const panel = document.getElementById('hist-panel-' + id);
         const btn = document.getElementById('hist-btn-' + id);
-        if (panel) {
-          panel.classList.add('open');
-          _openSubHistPanels.add(id);
-        }
-        if (btn) {
-          btn.classList.add('act');
-          btn.innerHTML = '▲ Close';
-        }
-        // Render content without triggering auto-tag (which causes re-render loop)
+        if (panel) { panel.classList.add('open'); _openSubHistPanels.add(id); }
+        if (btn) { btn.classList.add('act'); btn.innerHTML = '\u25b2 Close'; }
         renderSubHistInner(id);
       }); if (typeof twemoji !== 'undefined') twemoji.parse(area);
     }
+
 
     function toggleSubHistory(btn, recId) {
       const panel = document.getElementById('hist-panel-' + recId);
@@ -12752,6 +12820,119 @@
         if (rec) writeLog('DELETE', { desc: rec.name, isDelRec: true }, rec.type);
       }
     }
+
+    // ── Archive (soft-delete) ──
+    function askArchiveRecurring(id) {
+      const rec = recurringList.find(r => r.id === id);
+      if (!rec) return;
+      showConfirm(
+        'Archive Subscription',
+        `Archive "${rec.name}"? It will be removed from active management. Past transactions stay tagged. You can restore it later or delete it permanently from the Archived view.`,
+        () => archiveRecurring(id),
+        false
+      );
+    }
+
+    async function archiveRecurring(id) {
+      if (!userId) return;
+      const rec = recurringList.find(r => r.id === id);
+      if (!rec) return;
+      const updateData = { archived: true };
+      try {
+        await setDoc(doc(db, 'users', userId, 'recurring', id), updateData, { merge: true });
+      } catch (e) {
+        queueFailedSync('setDoc', 'recurring', id, updateData, true);
+        if (rec) Object.assign(rec, updateData);
+        renderRecurring();
+      }
+      showToast('Subscription archived. Past transactions remain tagged.', 'ok');
+      if (rec) writeLog('UPDATE', { desc: rec.name, isRecArchive: true }, rec.type);
+      debouncedRender();
+    }
+
+    // ── Restore archived subscription ──
+    async function restoreRecurring(id) {
+      if (!userId) return;
+      const rec = recurringList.find(r => r.id === id);
+      if (!rec) return;
+      // Forward-step nextDue to future (same logic as pause→resume) to avoid catch-up flood
+      const today = getTodayStr();
+      let newNextDue = rec.nextDue && rec.nextDue.match(/^\d{4}-\d{2}-\d{2}$/) ? rec.nextDue : today;
+      if (newNextDue <= today) {
+        let guard = 0;
+        while (newNextDue <= today && guard++ < 1000) {
+          const next = computeNextDue(newNextDue, rec.freq, rec.customDays, rec.billingDay);
+          if (!next || next === newNextDue) break;
+          newNextDue = next;
+        }
+      }
+      const updateData = { archived: deleteField(), nextDue: newNextDue };
+      try {
+        await setDoc(doc(db, 'users', userId, 'recurring', id), updateData, { merge: true });
+      } catch (e) {
+        queueFailedSync('setDoc', 'recurring', id, { archived: false, nextDue: newNextDue }, true);
+        if (rec) { delete rec.archived; rec.nextDue = newNextDue; }
+        renderRecurring();
+      }
+      showToast('Subscription restored.', 'ok');
+      if (rec) writeLog('UPDATE', { desc: rec.name, isRecRestore: true }, rec.type);
+      _showingArchivedSubs = false;
+      _recCatchUpDone = false;
+      _earlyPayDone = false;
+      _tagPastDone = false;
+      _sessionEarlyPayRecs.clear();
+      debouncedRender();
+    }
+
+    // ── Delete Permanently (two-step: detach txs first, then delete doc) ──
+    function askDeletePermanently(id) {
+      const rec = recurringList.find(r => r.id === id);
+      if (!rec) return;
+      showConfirm(
+        'Delete Permanently',
+        `Permanently delete "${rec.name}"? This cannot be undone. The subscription card is gone for good, but all past transactions remain tagged as subscription payments — they just won't be linked to any specific card.`,
+        () => deletePermanently(id),
+        true
+      );
+    }
+
+    async function deletePermanently(id) {
+      if (!userId) return;
+      const rec = recurringList.find(r => r.id === id);
+
+      // Step 1: detach linked transactions — keep _recurring flag, remove subId only
+      const linked = txs.filter(t => t.subId === id);
+      for (let i = 0; i < linked.length; i += 450) {
+        const batch = writeBatch(db);
+        linked.slice(i, i + 450).forEach(t => {
+          batch.update(doc(db, 'users', userId, 'transactions', t.id), { subId: deleteField() });
+          // _recurring is intentionally NOT touched — keeps the subscription tag visible
+        });
+        await batch.commit();
+      }
+      // Reflect detachment locally immediately
+      linked.forEach(t => { delete t.subId; });
+
+      // Step 2: only now delete the recurring doc (ordering is critical)
+      try {
+        await deleteDoc(doc(db, 'users', userId, 'recurring', id));
+      } catch (e) {
+        queueFailedSync('deleteDoc', 'recurring', id, null);
+        recurringList = recurringList.filter(r => r.id !== id);
+        renderRecurring();
+      }
+      showToast('Subscription permanently deleted. Past transactions remain tagged.', 'ok');
+      if (rec) writeLog('DELETE', { desc: rec.name, isDelRecPermanent: true }, rec.type);
+      debouncedRender();
+    }
+
+    // ── Toggle between Active and Archived view ──
+    function toggleArchivedView() {
+      _showingArchivedSubs = !_showingArchivedSubs;
+      _recurringLastHtml = ''; // Force full re-render
+      renderRecurring();
+    }
+
 
     document.getElementById('recurringMod').addEventListener('click', function (e) { if (e.target === this) closeRecurringMod(); });
 
@@ -13778,6 +13959,12 @@
     window.setRecMode = setRecMode;
     window.toggleRecurringActive = toggleRecurringActive;
     window.askDeleteRecurring = askDeleteRecurring;
+    window.askArchiveRecurring = askArchiveRecurring;
+    window.archiveRecurring = archiveRecurring;
+    window.restoreRecurring = restoreRecurring;
+    window.askDeletePermanently = askDeletePermanently;
+    window.deletePermanently = deletePermanently;
+    window.toggleArchivedView = toggleArchivedView;
     window.toggleSubHistory = toggleSubHistory;
     window.addAltAmount = addAltAmount;
     window.removeAltAmount = removeAltAmount;
