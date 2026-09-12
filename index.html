@@ -12903,16 +12903,24 @@
 
       // Step 1: detach linked transactions — keep _recurring flag, remove subId only
       const linked = txs.filter(t => t.subId === id);
-      for (let i = 0; i < linked.length; i += 450) {
-        const batch = writeBatch(db);
-        linked.slice(i, i + 450).forEach(t => {
-          batch.update(doc(db, 'users', userId, 'transactions', t.id), { subId: deleteField() });
-          // _recurring is intentionally NOT touched — keeps the subscription tag visible
-        });
-        await batch.commit();
+      if (linked.length) {
+        try {
+          for (let i = 0; i < linked.length; i += 450) {
+            const batch = writeBatch(db);
+            linked.slice(i, i + 450).forEach(t => {
+              batch.update(doc(db, 'users', userId, 'transactions', t.id), { subId: deleteField() });
+              // _recurring is intentionally NOT touched — keeps the subscription tag visible
+            });
+            await batch.commit();
+          }
+          // Reflect detachment locally only after all batches succeed
+          linked.forEach(t => { delete t.subId; });
+        } catch (e) {
+          console.error('Failed to detach transactions before permanent delete:', e);
+          showToast('Failed to detach transactions. Sub stays archived — try again later.', 'err');
+          return; // Abort — do NOT delete the recurring doc with dangling subId refs
+        }
       }
-      // Reflect detachment locally immediately
-      linked.forEach(t => { delete t.subId; });
 
       // Step 2: only now delete the recurring doc (ordering is critical)
       try {
