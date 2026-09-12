@@ -4443,47 +4443,170 @@
     }
 
     .sub-badge.badge-archived {
-      background: color-mix(in srgb, var(--di) 12%, transparent);
+      background: color-mix(in srgb, var(--di) 10%, transparent);
       color: var(--di);
-      border-color: color-mix(in srgb, var(--di) 22%, transparent);
+      border-color: color-mix(in srgb, var(--di) 20%, transparent);
+      font-style: italic;
     }
 
-    /* Archived card — dimmed, dashed border */
+    /* ── Archived card visual treatment ── */
     .sub-card.sub-archived {
-      opacity: 0.6;
+      opacity: 0.75;
       border-style: dashed;
-      filter: grayscale(35%);
+      border-color: color-mix(in srgb, var(--di) 30%, var(--bd));
+      filter: grayscale(25%) saturate(0.8);
+      position: relative;
+      overflow: hidden;
+      transition: opacity .25s, border-color .25s, filter .25s, transform .25s, box-shadow .25s;
     }
 
-    /* Restore button hover */
-    .sub-action-btn.restore-btn:hover {
-      background: color-mix(in srgb, var(--in) 12%, transparent);
+    /* Left accent stripe */
+    .sub-card.sub-archived::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: color-mix(in srgb, var(--di) 40%, transparent);
+      border-radius: 16px 0 0 16px;
+    }
+
+    /* Lift opacity & sharpen on hover but keep dashed */
+    .sub-card.sub-archived:hover {
+      opacity: 0.92;
+      filter: grayscale(10%) saturate(0.95);
+      border-color: color-mix(in srgb, var(--di) 50%, var(--bd));
+      transform: translateY(-1px);
+      box-shadow: var(--sh-hov);
+    }
+
+    /* Restore button — green-tinted */
+    .sub-action-btn.restore-btn {
       color: var(--in);
-      border-color: color-mix(in srgb, var(--in) 35%, transparent);
+      border-color: color-mix(in srgb, var(--in) 25%, var(--bd));
+      background: color-mix(in srgb, var(--in) 7%, var(--s2));
+    }
+    .sub-action-btn.restore-btn:hover {
+      background: color-mix(in srgb, var(--in) 18%, transparent);
+      color: var(--in);
+      border-color: color-mix(in srgb, var(--in) 50%, transparent);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--in) 20%, transparent);
     }
 
-    /* Delete-permanently button hover */
-    .sub-action-btn.perm-del-btn:hover {
-      background: color-mix(in srgb, var(--ex) 15%, transparent);
+    /* Delete-permanently button — red-tinted */
+    .sub-action-btn.perm-del-btn {
       color: var(--ex);
-      border-color: color-mix(in srgb, var(--ex) 40%, transparent);
+      border-color: color-mix(in srgb, var(--ex) 20%, var(--bd));
+      background: color-mix(in srgb, var(--ex) 5%, var(--s2));
+    }
+    .sub-action-btn.perm-del-btn:hover {
+      background: color-mix(in srgb, var(--ex) 18%, transparent);
+      color: var(--ex);
+      border-color: color-mix(in srgb, var(--ex) 50%, transparent);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--ex) 20%, transparent);
     }
 
-    /* Archived view toggle link in sub-header */
+    /* ── Archived-view header toggle chip ── */
     .sub-archived-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      color: var(--mu);
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: 50px;
+      cursor: pointer;
+      padding: 6px 14px 6px 10px;
+      transition: color .2s, background .2s, border-color .2s, box-shadow .2s;
+      white-space: nowrap;
+    }
+    .sub-archived-toggle::before {
+      content: '\2B55'; /* ⭕ circle, replaced at runtime with count */
+      font-size: 7px;
+      opacity: 0.6;
+    }
+    .sub-archived-toggle:hover {
+      color: var(--tx);
+      background: var(--sf);
+      border-color: var(--bs);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--di) 15%, transparent);
+    }
+    .sub-archived-toggle.act {
+      color: var(--ac);
+      border-color: color-mix(in srgb, var(--ac) 45%, transparent);
+      background: var(--ag);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--ac) 20%, transparent);
+    }
+    .sub-archived-toggle.act::before { content: '\2190'; opacity: 1; /* ← */ }
+
+    /* ── Archived view banner (above the grid) ── */
+    .sub-archived-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      background: color-mix(in srgb, var(--di) 8%, var(--s2));
+      border: 1px dashed color-mix(in srgb, var(--di) 30%, var(--bd));
+      margin-bottom: 16px;
       font-family: 'DM Mono', monospace;
       font-size: 10px;
-      letter-spacing: 0.5px;
-      color: var(--mu);
-      background: none;
-      border: 1px solid var(--bd);
-      border-radius: 8px;
-      cursor: pointer;
-      padding: 5px 10px;
-      transition: color .2s, background .2s, border-color .2s;
+      color: var(--di);
+      letter-spacing: 0.4px;
+      animation: slideDown .3s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .sub-archived-toggle:hover { color: var(--tx); background: var(--s2); border-color: var(--bs); }
-    .sub-archived-toggle.act  { color: var(--ac); border-color: color-mix(in srgb, var(--ac) 40%, transparent); background: var(--ag); }
+    .sub-archived-banner-icon { font-size: 15px; flex-shrink: 0; }
+    .sub-archived-banner-text { flex: 1; line-height: 1.5; }
+    .sub-archived-banner strong { color: var(--tx); }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Mobile-specific archived improvements ── */
+    @media (max-width: 480px) {
+      /* Bigger tap targets on archived action buttons */
+      .sub-card.sub-archived .sub-action-btn {
+        padding: 10px 6px;
+        font-size: 9px;
+        min-height: 40px;
+      }
+
+      /* On very narrow screens, stack archive actions into 2x2 */
+      .sub-card.sub-archived .sub-card-actions {
+        flex-wrap: wrap;
+      }
+      .sub-card.sub-archived .sub-card-actions .restore-btn,
+      .sub-card.sub-archived .sub-card-actions .perm-del-btn {
+        flex: 1 1 calc(50% - 4px);
+        min-width: calc(50% - 4px);
+      }
+      .sub-card.sub-archived .sub-card-actions .hist-btn {
+        flex: 1 1 100%;
+      }
+
+      /* Archived toggle chip — slightly larger touch area */
+      .sub-archived-toggle {
+        padding: 8px 14px 8px 10px;
+        font-size: 9px;
+      }
+
+      /* Banner compact on mobile */
+      .sub-archived-banner {
+        padding: 9px 12px;
+        font-size: 9.5px;
+      }
+    }
+
 
     @keyframes subPulse {
 
@@ -12237,13 +12360,14 @@
       if (el('subDueCount')) el('subDueCount').textContent = dueCount;
       if (el('subActiveCount')) el('subActiveCount').textContent = activeCount;
 
-      // Update the archived toggle link in header
+      // Update the archived toggle chip in header
       const archivedCount = recurringList.filter(r => r.archived).length;
       const toggleBtn = document.getElementById('subArchivedToggle');
       if (toggleBtn) {
-        toggleBtn.textContent = _showingArchivedSubs ? '\u2190 Active' : 'Archived (' + archivedCount + ')';
+        // ::before pseudo-element provides the icon (← when active, ⭕ when inactive)
+        toggleBtn.textContent = _showingArchivedSubs ? 'Back to Active' : 'Archived\u00a0(' + archivedCount + ')';
         toggleBtn.classList.toggle('act', _showingArchivedSubs);
-        toggleBtn.style.display = (archivedCount > 0 || _showingArchivedSubs) ? 'inline-block' : 'none';
+        toggleBtn.style.display = (archivedCount > 0 || _showingArchivedSubs) ? 'inline-flex' : 'none';
       }
 
       // Pick list based on view mode
@@ -12251,10 +12375,36 @@
         ? recurringList.filter(r => r.archived)
         : recurringList.filter(r => !r.archived);
 
+      // Manage archived-view banner above the grid
+      const existingBanner = document.getElementById('subArchivedBanner');
+      if (_showingArchivedSubs) {
+        if (!existingBanner) {
+          const banner = document.createElement('div');
+          banner.id = 'subArchivedBanner';
+          banner.className = 'sub-archived-banner';
+          banner.innerHTML = '<span class="sub-archived-banner-icon">\ud83d\udce6</span>'
+            + '<span class="sub-archived-banner-text">'
+            + '<strong>Archived Subscriptions</strong> \u2014 these have ended. '
+            + 'Past transactions remain tagged. Restore to reactivate or delete permanently.'
+            + '</span>';
+          area.parentNode.insertBefore(banner, area);
+        }
+      } else {
+        if (existingBanner) existingBanner.remove();
+      }
+
       if (!displayList.length) {
         const emptyHtml = _showingArchivedSubs
-          ? '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)"><div class="empty-icon" style="font-size:36px;margin-bottom:12px">\ud83d\udce6</div><div class="empty-title">No archived subscriptions</div><div class="empty-sub">Subscriptions you archive will appear here.</div></div>'
-          : '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)"><div class="empty-icon" style="font-size:36px;margin-bottom:12px">\ud83d\udd01</div><div class="empty-title">No subscriptions yet</div><div class="empty-sub">Add recurring transactions like rent, Netflix, or salary to auto-track them every month.</div></div>';
+          ? '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px dashed color-mix(in srgb, var(--di) 25%, var(--bd));border-radius:var(--r)">'
+            + '<div class="empty-icon" style="font-size:36px;margin-bottom:12px">\ud83d\udce6</div>'
+            + '<div class="empty-title" style="color:var(--di)">No archived subscriptions</div>'
+            + '<div class="empty-sub">When you archive a subscription, it appears here. Past transactions stay tagged.</div>'
+            + '</div>'
+          : '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)">'
+            + '<div class="empty-icon" style="font-size:36px;margin-bottom:12px">\ud83d\udd01</div>'
+            + '<div class="empty-title">No subscriptions yet</div>'
+            + '<div class="empty-sub">Add recurring transactions like rent, Netflix, or salary to auto-track them every month.</div>'
+            + '</div>';
         if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _recurringLastHtml = ''; }
         return;
       }
@@ -12265,7 +12415,7 @@
 
         let badgeHtml;
         if (rec.archived) {
-          badgeHtml = '<span class="sub-badge badge-archived">\u26d4 Archived</span>';
+          badgeHtml = '<span class="sub-badge badge-archived">\u23f9 Ended</span>';
         } else if (!rec.active) {
           badgeHtml = '<span class="sub-badge badge-paused">\u23f8 Paused</span>';
         } else if (isDue) {
