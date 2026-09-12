@@ -12854,11 +12854,22 @@
         closeRecurringMod();
         if (editingRecurringId) {
           let saved = false;
-          let changed = false;
+          let changed = true; // Default to true in case oldRec isn't found
           const oldRec = recurringList.find(r => r.id === editingRecurringId);
           if (oldRec) {
-            changed = (oldRec.name !== data.name || oldRec.amount !== data.amount || oldRec.cat !== data.cat || oldRec.nextDue !== data.nextDue || oldRec.type !== data.type || oldRec.freq !== data.freq || oldRec.customDays !== data.customDays || oldRec.paymentsLimit !== data.paymentsLimit);
+            const oldAltStr = JSON.stringify(oldRec.altAmounts || []);
+            const newAltStr = JSON.stringify(data.altAmounts || []);
+            changed = (oldRec.name !== data.name || 
+                       oldRec.amount !== data.amount || 
+                       oldRec.cat !== data.cat || 
+                       oldRec.nextDue !== data.nextDue || 
+                       oldRec.type !== data.type || 
+                       oldRec.freq !== data.freq || 
+                       oldRec.customDays !== data.customDays || 
+                       oldRec.paymentsLimit !== data.paymentsLimit ||
+                       oldAltStr !== newAltStr);
           }
+          if (!changed) return; // No actual changes made, skip the network call and toast
           try {
             await setDoc(doc(db, 'users', userId, 'recurring', editingRecurringId), data, { merge: true });
             saved = true;
