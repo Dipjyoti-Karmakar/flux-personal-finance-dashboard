@@ -6219,6 +6219,35 @@
         flex-direction: column !important;
         align-items: stretch;
         gap: 8px;
+        /* Default: no scroll (≤5 categories — card fully extends) */
+        overflow: visible;
+        max-height: none;
+      }
+
+      /* >5 categories: cap to exactly 5 visible rows, rest scrollable */
+      body.mob-cat-expanded #catAreaWrap.mob-cat-many .cat-tag-list {
+        /* 5 rows × 56px + 4 gaps × 8px + top-pad 4px + bottom-pad 12px = 328px */
+        max-height: 328px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: var(--bd) transparent;
+        /* Subtle scroll indicator shadow at bottom */
+        -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 16px), transparent 100%);
+        mask-image: linear-gradient(to bottom, black calc(100% - 16px), transparent 100%);
+      }
+
+      body.mob-cat-expanded #catAreaWrap.mob-cat-many .cat-tag-list::-webkit-scrollbar {
+        width: 3px;
+      }
+
+      body.mob-cat-expanded #catAreaWrap.mob-cat-many .cat-tag-list::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      body.mob-cat-expanded #catAreaWrap.mob-cat-many .cat-tag-list::-webkit-scrollbar-thumb {
+        background: var(--bd);
+        border-radius: 2px;
       }
 
       body.mob-cat-expanded #catAreaWrap .cat-tag {
@@ -9625,8 +9654,9 @@
       area.innerHTML = newHtml;
       if (activeCatFilter) renderCatTxList(aTxs);
 
-      // Handle the View All text
+      // Handle the View All text & mob-cat-many class
       const viewAllBtn = document.querySelector('#catAreaWrap .pb');
+      const catWrapEl = document.getElementById('catAreaWrap');
       if (viewAllBtn) {
         const totalCatsCount = Object.keys(tot).length;
         viewAllBtn.innerText = (isExpanded || activeCatFilter) ? 'View Less' : 'View All';
@@ -9634,6 +9664,11 @@
           viewAllBtn.style.display = 'none';
         } else {
           viewAllBtn.style.display = 'inline-block';
+        }
+        // Apply scroll-cap class only when there are >5 categories
+        // (≤5 categories: card fully extends; >5: shows 5 items, rest scrollable)
+        if (catWrapEl) {
+          catWrapEl.classList.toggle('mob-cat-many', totalCatsCount > 5);
         }
       }
 
