@@ -1176,6 +1176,14 @@
       color: var(--ex)
     }
 
+    .ta-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
     .td {
       opacity: 0;
       background: none;
@@ -4460,6 +4468,172 @@
       font-style: italic;
     }
 
+    .sub-badge.badge-overdue {
+      background: color-mix(in srgb, var(--ex) 18%, transparent);
+      color: var(--ex);
+      border-color: color-mix(in srgb, var(--ex) 40%, transparent);
+      animation: overdueFlash 1.6s ease-in-out infinite;
+    }
+
+    @keyframes overdueFlash {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--ex) 30%, transparent); }
+      50% { opacity: 0.8; box-shadow: 0 0 0 4px color-mix(in srgb, var(--ex) 0%, transparent); }
+    }
+
+    /* ── Overdue manual-payment card ── */
+    .sub-card.sub-overdue {
+      border-color: color-mix(in srgb, var(--ex) 45%, var(--bd));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--ex) 20%, transparent), 0 4px 16px color-mix(in srgb, var(--ex) 10%, transparent);
+    }
+    .sub-card.sub-overdue .sub-card-name {
+      color: var(--ex);
+    }
+
+    /* ── Mark as Paid button ── */
+    .mark-paid-btn {
+      background: color-mix(in srgb, var(--in) 14%, transparent) !important;
+      color: var(--in) !important;
+      border: 1px solid color-mix(in srgb, var(--in) 30%, transparent) !important;
+      font-weight: 700 !important;
+    }
+    .mark-paid-btn:hover {
+      background: color-mix(in srgb, var(--in) 24%, transparent) !important;
+    }
+
+    /* ── Due-Soon Dashboard Banner ── */
+    #dueSoonBanner {
+      display: none;
+      background: color-mix(in srgb, var(--ex) 10%, var(--sf));
+      border: 1px solid color-mix(in srgb, var(--ex) 30%, transparent);
+      border-radius: var(--r);
+      padding: 10px 16px;
+      margin-bottom: 14px;
+      gap: 10px;
+      align-items: flex-start;
+      flex-direction: column;
+      animation: slideDown .3s cubic-bezier(.16,1,.3,1);
+    }
+    #dueSoonBanner.vis { display: flex; }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .dsb-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ex);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .dsb-dismiss {
+      background: none;
+      border: none;
+      color: var(--mu);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+      line-height: 1;
+    }
+    .dsb-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      width: 100%;
+    }
+    .dsb-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1px solid var(--bd);
+      border-radius: 20px;
+      padding: 4px 10px;
+      font-size: 11px;
+      color: var(--tx);
+    }
+    .dsb-item .dsb-name { font-weight: 600; }
+    .dsb-item .dsb-when { color: var(--mu); }
+    .dsb-pay-btn {
+      background: color-mix(in srgb, var(--in) 14%, transparent);
+      color: var(--in);
+      border: 1px solid color-mix(in srgb, var(--in) 30%, transparent);
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .dsb-pay-btn:hover { background: color-mix(in srgb, var(--in) 25%, transparent); }
+
+    /* ── Foreign Currency Pill on TX card ── */
+    .tx-fx-pill {
+      display: inline-block;
+      font-size: 9px;
+      font-family: 'DM Mono', monospace;
+      font-weight: 600;
+      letter-spacing: .3px;
+      color: var(--mu);
+      background: color-mix(in srgb, var(--mu) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--mu) 20%, transparent);
+      border-radius: 4px;
+      padding: 1px 5px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    /* ── Currency selector in Add TX form ── */
+    .tx-currency-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .tx-currency-row .fd:first-child { flex: 1; }
+    #txCurrency {
+      width: 82px;
+      flex-shrink: 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+    }
+    #txFxHint {
+      font-size: 10px;
+      color: var(--mu);
+      margin-top: 4px;
+      min-height: 14px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Auto-log toggle row in recurring modal ── */
+    .rec-autolog-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: color-mix(in srgb, var(--ac) 6%, var(--sf));
+      border: 1px solid color-mix(in srgb, var(--ac) 18%, var(--bd));
+      border-radius: var(--r);
+      margin-top: 14px;
+    }
+    .rec-autolog-label-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .rec-autolog-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--tx);
+    }
+    .rec-autolog-sub {
+      font-size: 10px;
+      color: var(--mu);
+    }
+
     /* ── Archived card visual treatment ── */
     .sub-card.sub-archived {
       opacity: 0.75;
@@ -6759,6 +6933,16 @@
         <span class="dt-clear" onclick="clearAnalysisDt()">clear</span>
       </div>
 
+
+      <!-- ⚡ Due-Soon Bill Reminder Banner -->
+      <div id="dueSoonBanner" role="alert" aria-live="polite">
+        <div class="dsb-header">
+          <span>⚡ Bills Due Soon</span>
+          <button class="dsb-dismiss" onclick="dismissDueSoonBanner()" aria-label="Dismiss">×</button>
+        </div>
+        <div class="dsb-items" id="dueSoonItems"></div>
+      </div>
+
       <div class="srow sr1">
         <div class="sc gl card-in" id="balCard">
           <div class="sl">Net Balance</div>
@@ -6823,8 +7007,23 @@
               </div>
             </div>
             <div class="fr">
-              <div class="fd"><label>Amount (₹)</label><input type="number" id="txA" placeholder="0.00" min="0"
-                  step="0.01"></div>
+              <div class="tx-currency-row">
+                <div class="fd"><label>Amount</label><input type="number" id="txA" placeholder="0.00" min="0"
+                    step="0.01" oninput="onTxAmountChange()"></div>
+                <select id="txCurrency" onchange="onTxCurrencyChange()" title="Currency">
+                  <option value="INR">₹ INR</option>
+                  <option value="USD">$ USD</option>
+                  <option value="EUR">€ EUR</option>
+                  <option value="GBP">£ GBP</option>
+                  <option value="JPY">¥ JPY</option>
+                  <option value="AED">د.إ AED</option>
+                  <option value="SGD">S$ SGD</option>
+                  <option value="AUD">A$ AUD</option>
+                  <option value="CAD">C$ CAD</option>
+                  <option value="CHF">Fr CHF</option>
+                </select>
+              </div>
+              <div id="txFxHint"></div>
               <div class="fd"><label>Date</label><input type="date" id="txDt"></div>
             </div>
             <div class="fd full-mob"><label>Event (Optional)</label><select id="txEvent">
@@ -7391,6 +7590,14 @@
               Due Date</label>
             <input type="date" id="recNextDue" style="width:100%;box-sizing:border-box;">
           </div>
+          <!-- ⚙️ Auto-Log Toggle -->
+          <div class="rec-autolog-row" id="recAutoLogRow">
+            <div class="rec-autolog-label-wrap">
+              <span class="rec-autolog-title">Auto-log transaction when due</span>
+              <span class="rec-autolog-sub" id="recAutoLogSub">Transaction is created automatically</span>
+            </div>
+            <button class="thtog" id="recAutoLogToggle" onclick="toggleRecAutoLog()" aria-label="Toggle auto-log"></button>
+          </div>
         </div>
       </div>
       <div class="mf">
@@ -7595,6 +7802,10 @@
     let currentRecType = 'expense';
     let currentRecFreq = 'monthly';
     let currentRecMode = 'online';
+    let currentRecAutoLog = true; // Auto-log toggle state for recurring modal
+    let _fxRates = null;          // Cached exchange rates { USD: 0.012, ... } (INR-based)
+    let _fxRateTs = 0;            // Timestamp of last FX fetch
+    let _notifSessionFired = new Set(); // Sub IDs already notified this session
     let _showingArchivedSubs = false; // true = Archived view, false = Active view
     let reportPeriodMode = 'month';
     let trendAbort = null;
@@ -7803,6 +8014,9 @@
         loadEvents();
         loadActivityLog();
         loadRecurring();
+        // Kick off non-blocking feature initialisation
+        fetchExchangeRates().catch(() => {}); // FX rates for multi-currency
+        requestBillNotifications();           // Soft notification permission nudge
         // Clear stale localStorage activity log (migrated to Firestore)
         try { localStorage.removeItem('flux_activity_log'); } catch (_) { }
         showSkeletons();
@@ -8234,7 +8448,16 @@
         }
 
         const eventId = document.getElementById('txEvent').value || '';
-        const newTx = { type: cType, mode: cMode, desc, amount: amt, cat, date, createdAt: Date.now() };
+        const txCurrency = (document.getElementById('txCurrency') || {}).value || 'INR';
+        let finalAmt = amt;
+        let fxFields = {};
+        if (txCurrency !== 'INR' && _fxRates && _fxRates[txCurrency]) {
+          // _fxRates[currency] = units of that currency per 1 INR, so 1 unit = 1/_fxRates[currency] INR
+          const rate = _fxRates[txCurrency];
+          finalAmt = amt / rate;
+          fxFields = { originalAmount: amt, currency: txCurrency, fxRate: rate };
+        }
+        const newTx = { type: cType, mode: cMode, desc, amount: finalAmt, cat, date, createdAt: Date.now(), ...fxFields };
         if (eventId) newTx.eventId = eventId;
         const txId = uid();
 
@@ -9125,7 +9348,10 @@
           <span>${fmtDt(tx.date)}</span>
         </div>
       </div>
-      <span class="ta ${safeType}">${fmt(tx.amount)}</span>
+      <div class="ta-wrap">
+        <span class="ta ${safeType}">${fmt(tx.amount)}</span>
+        ${tx.currency && tx.currency !== 'INR' ? `<span class="tx-fx-pill">${tx.originalAmount ? (tx.currency === 'USD' ? '$' : tx.currency === 'EUR' ? '\u20ac' : tx.currency === 'GBP' ? '\u00a3' : tx.currency === 'JPY' ? '\u00a5' : '') + Number(tx.originalAmount).toLocaleString('en-IN', {maximumFractionDigits:2}) + ' ' + tx.currency : tx.currency}</span>` : ''}
+      </div>
       <div style="display:flex;gap:4px;margin-left:8px">
         <button class="td" onclick="editTx(${esc(JSON.stringify(tx.id))})" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -11944,6 +12170,7 @@
         // Ensure tagPastSubscriptions/syncUntaggedMatches run with the freshly loaded
         // recurringList, even when checkAndTriggerRecurring made no Firestore writes.
         debouncedRender();
+        if (typeof checkUpcomingBills === 'function') checkUpcomingBills(); // Update due-soon banner
       }, err => console.error('Recurring sync error:', err));
     }
 
@@ -11961,6 +12188,7 @@
 
       for (const rec of recurringList) {
         if (rec.archived) continue; // Archived subs never auto-trigger new transactions
+        if (rec.autoLog === false) continue; // Manual subs: handled exclusively by markAsPaid()
         if (!rec.active || !rec.nextDue || today < rec.nextDue) continue;
         if (triggeringRecs.has(rec.id)) continue;
         triggeringRecs.add(rec.id);
@@ -12431,6 +12659,8 @@
           badgeHtml = '<span class="sub-badge badge-archived">\u23f9 Ended</span>';
         } else if (!rec.active) {
           badgeHtml = '<span class="sub-badge badge-paused">\u23f8 Paused</span>';
+        } else if (isDue && rec.autoLog === false) {
+          badgeHtml = '<span class="sub-badge badge-overdue">\u26a0 Overdue</span>';
         } else if (isDue) {
           badgeHtml = '<span class="sub-badge badge-due">\u26a1 Due Now</span>';
         } else if (daysUntil !== null && daysUntil <= 7) {
@@ -12473,20 +12703,25 @@
         }
 
         // Active card template — Archive replaces Remove
+        const isManualOverdue = rec.autoLog === false && rec.active && isDue;
         const pauseLabel = rec.active
           ? '<img src="emojis/pause.png" class="c-ico" alt=""> Pause'
           : '<img src="emojis/resume.png" class="c-ico" alt=""> Resume';
-        return '<div class="sub-card card-in ' + (rec.active ? '' : 'sub-paused') + '" style="' + animStyle + '">'
+        const manualTag = rec.autoLog === false
+          ? '<span style="font-size:9px;color:var(--mu);font-family:\'DM Mono\',monospace;background:color-mix(in srgb,var(--mu) 10%,transparent);border:1px solid color-mix(in srgb,var(--mu) 20%,transparent);border-radius:4px;padding:1px 5px;margin-left:4px;">manual</span>'
+          : '';
+        return '<div class="sub-card card-in ' + (rec.active ? '' : 'sub-paused') + (isManualOverdue ? ' sub-overdue' : '') + '" style="' + animStyle + '">'
           + '<div class="sub-card-top">'
           + '<div class="sub-card-icon">' + catIcon + '</div>'
           + '<div class="sub-card-info">'
-          + '<div class="sub-card-name">' + esc(rec.name) + '</div>'
+          + '<div class="sub-card-name">' + esc(rec.name) + manualTag + '</div>'
           + '<div class="sub-card-plan">' + planLabel + ' Plan &nbsp;\u00b7&nbsp; ' + freqLabel + '</div>'
           + '<div class="sub-card-renewal">Next Renewal: <span>' + renewalDate + '</span>' + (rec.paymentsLimit ? ' &nbsp;\u00b7&nbsp; ' + (rec.paymentsMade || 0) + '/' + rec.paymentsLimit + ' paid' : '') + '</div>'
           + '</div>'
           + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
           + '</div>'
           + '<div class="sub-card-actions">'
+          + (isManualOverdue ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">\u2705 Mark as Paid</button>' : '')
           + '<button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(' + recIdJson + ',' + (!rec.active) + ')">' + pauseLabel + '</button>'
           + '<button class="sub-action-btn edit-btn" onclick="openEditRecurring(' + recIdJson + ')"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>'
           + '<button class="sub-action-btn del-btn" onclick="askArchiveRecurring(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Archive</button>'
@@ -12755,6 +12990,7 @@
       setRecType('expense');
       setRecFreq('monthly');
       setRecMode('online');
+      setRecAutoLog(true); // New subs default to auto-log ON
       // Alt amounts: clear and hide for new subscription
       _editingAltAmounts = [];
       document.getElementById('altAmountsSection').style.display = 'none';
@@ -12782,6 +13018,7 @@
       setRecType(currentRecType);
       setRecFreq(currentRecFreq);
       setRecMode(currentRecMode);
+      setRecAutoLog(rec.autoLog !== false); // Default to true if field absent (existing data)
       // Alt amounts: load from record and show section
       _editingAltAmounts = Array.isArray(rec.altAmounts) ? [...rec.altAmounts] : [];
       document.getElementById('altAmountsSection').style.display = '';
@@ -12819,6 +13056,20 @@
       oflBtn.className = 'tb' + (m === 'offline' ? ' af' : '');
       onlBtn.setAttribute('aria-pressed', m === 'online' ? 'true' : 'false');
       oflBtn.setAttribute('aria-pressed', m === 'offline' ? 'true' : 'false');
+    }
+
+    function setRecAutoLog(val) {
+      currentRecAutoLog = !!val;
+      const toggle = document.getElementById('recAutoLogToggle');
+      const sub = document.getElementById('recAutoLogSub');
+      if (toggle) toggle.classList.toggle('on', currentRecAutoLog);
+      if (sub) sub.textContent = currentRecAutoLog
+        ? 'Transaction is created automatically'
+        : 'Waits for your manual ‘Mark as Paid’ confirmation';
+    }
+
+    function toggleRecAutoLog() {
+      setRecAutoLog(!currentRecAutoLog);
     }
 
     let _saveRecBusy = false;
@@ -12860,6 +13111,8 @@
         }
         // Alt amounts: save the secondary prices array
         data.altAmounts = _editingAltAmounts.length ? [..._editingAltAmounts] : null;
+        // Auto-log preference
+        data.autoLog = currentRecAutoLog;
         closeRecurringMod();
         if (editingRecurringId) {
           let saved = false;
@@ -14233,7 +14486,221 @@
       _deferredPrompt = null;
     });
 
+    // ══════════════════════════════════════════════════════
+    // Feature 8: Multi-Currency — FX Rate Fetching + Hints
+    // ══════════════════════════════════════════════════════
+
+    // Static fallback rates (1 INR = X foreign currency units)
+    const FX_FALLBACK = { USD: 0.012, EUR: 0.011, GBP: 0.0095, JPY: 1.78, AED: 0.044, SGD: 0.016, AUD: 0.018, CAD: 0.016, CHF: 0.010 };
+    const FX_SYMBOLS = { USD: '$', EUR: '\u20ac', GBP: '\u00a3', JPY: '\u00a5', AED: '\u062f.\u0625', SGD: 'S$', AUD: 'A$', CAD: 'C$', CHF: 'Fr' };
+    const FX_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
+
+    async function fetchExchangeRates() {
+      try {
+        const stored = localStorage.getItem('flux_fx_rates');
+        const ts = parseInt(localStorage.getItem('flux_fx_ts') || '0', 10);
+        if (stored && Date.now() - ts < FX_CACHE_TTL) {
+          _fxRates = JSON.parse(stored);
+          _fxRateTs = ts;
+          return;
+        }
+        // open.er-api.com: free, no key, returns rates relative to base
+        const res = await fetch('https://open.er-api.com/v6/latest/INR');
+        if (!res.ok) throw new Error('FX fetch failed');
+        const json = await res.json();
+        if (json.result === 'success' && json.rates) {
+          _fxRates = json.rates; // rates[USD] = how many USD = 1 INR
+          _fxRateTs = Date.now();
+          localStorage.setItem('flux_fx_rates', JSON.stringify(_fxRates));
+          localStorage.setItem('flux_fx_ts', String(_fxRateTs));
+        }
+      } catch (e) {
+        // Offline fallback
+        if (!_fxRates) _fxRates = { ...FX_FALLBACK };
+        console.warn('[FX] Using fallback rates:', e.message);
+      }
+    }
+
+    function onTxCurrencyChange() {
+      onTxAmountChange();
+    }
+
+    function onTxAmountChange() {
+      const hintEl = document.getElementById('txFxHint');
+      if (!hintEl) return;
+      const sel = document.getElementById('txCurrency');
+      const currency = sel ? sel.value : 'INR';
+      if (currency === 'INR') { hintEl.textContent = ''; return; }
+      const amt = parseFloat(document.getElementById('txA').value);
+      if (!amt || isNaN(amt)) { hintEl.textContent = ''; return; }
+      if (_fxRates && _fxRates[currency]) {
+        const inrAmt = amt / _fxRates[currency];
+        hintEl.textContent = `\u2248 \u20b9${inrAmt.toLocaleString('en-IN', { maximumFractionDigits: 2 })} at current rate`;
+      } else {
+        const fb = FX_FALLBACK[currency];
+        if (fb) hintEl.textContent = `\u2248 \u20b9${(amt / fb).toLocaleString('en-IN', { maximumFractionDigits: 2 })} (est.)`;
+        else hintEl.textContent = '';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Feature 7: markAsPaid — Manual subscription confirmation
+    // ══════════════════════════════════════════════════════
+
+    let _markingPaid = new Set();
+    async function markAsPaid(recId) {
+      if (!userId || !recId) return;
+      if (_markingPaid.has(recId)) return; // re-entrancy guard
+      _markingPaid.add(recId);
+      try {
+        const rec = recurringList.find(r => r.id === recId);
+        if (!rec) { showToast('Subscription not found', 'er'); return; }
+        if (!rec.nextDue) { showToast('No due date set', 'er'); return; }
+
+        const nextDue = computeNextDue(rec.nextDue, rec.freq, rec.customDays, rec.billingDay);
+        const paymentsMade = (rec.paymentsMade || 0) + 1;
+        const today = getTodayStr();
+
+        const txRef = doc(db, 'users', userId, 'transactions', uid());
+        const recRef = doc(db, 'users', userId, 'recurring', recId);
+
+        await runTransaction(db, async (transaction) => {
+          const recDoc = await transaction.get(recRef);
+          if (!recDoc.exists()) throw 'not_found';
+          const data = recDoc.data();
+          // Only proceed if still overdue and manual
+          if (data.autoLog !== false) throw 'not_manual';
+
+          // Create the transaction
+          const newTx = {
+            type: data.type || 'expense',
+            mode: data.mode || 'online',
+            desc: data.name,
+            amount: data.amount,
+            cat: data.cat || 'other',
+            date: today,
+            createdAt: Date.now(),
+            _recurring: true,
+            subId: recId,
+            _auto: false,
+          };
+          transaction.set(txRef, newTx);
+
+          // Advance the due date
+          _pendingRecUpdates.add(recId);
+          transaction.update(recRef, { nextDue, paymentsMade });
+        });
+
+        showToast('\u2705 Payment logged for ' + rec.name, 'ok');
+        renderRecurring(); // Refresh card immediately
+      } catch (e) {
+        if (e !== 'not_found' && e !== 'not_manual') {
+          console.error('markAsPaid failed:', e);
+          showToast('Failed to log payment', 'er');
+        }
+      } finally {
+        _markingPaid.delete(recId);
+      }
+    }
+
+    window.markAsPaid = markAsPaid;
+
+    // ══════════════════════════════════════════════════════
+    // Feature 3: Smart Bill Reminders — Notifications + Banner
+    // ══════════════════════════════════════════════════════
+
+    let _billReminderEnabled = false;
+    let _notifNudgeShown = false;
+
+    function requestBillNotifications() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') { _billReminderEnabled = true; return; }
+      if (Notification.permission === 'denied') return;
+      if (_notifNudgeShown) return;
+      _notifNudgeShown = true;
+      // Inject a one-time inline nudge below the due-soon banner area
+      // that the user must explicitly click — avoids auto-prompting
+      const el = document.createElement('div');
+      el.id = 'notifNudge';
+      el.style.cssText = 'display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--ac) 8%,var(--sf));border:1px solid color-mix(in srgb,var(--ac) 20%,transparent);border-radius:var(--r);padding:8px 14px;margin-bottom:12px;font-size:11px;color:var(--mu);cursor:pointer;';
+      el.innerHTML = '\ud83d\udd14 <span>Enable bill reminders for upcoming subscriptions</span> <button style="margin-left:auto;background:var(--ac);color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:10px;cursor:pointer;font-weight:700;">Enable</button> <button style="background:none;border:none;color:var(--mu);cursor:pointer;font-size:14px;line-height:1;" title="Dismiss">\u00d7</button>';
+      el.querySelector('button').addEventListener('click', () => {
+        Notification.requestPermission().then(p => {
+          _billReminderEnabled = p === 'granted';
+          if (_billReminderEnabled) { showToast('Bill reminders enabled!', 'ok'); checkUpcomingBills(); }
+          el.remove();
+        });
+      });
+      el.querySelectorAll('button')[1].addEventListener('click', e => { e.stopPropagation(); el.remove(); });
+      const banner = document.getElementById('dueSoonBanner');
+      if (banner && banner.parentNode) banner.parentNode.insertBefore(el, banner);
+    }
+
+    function checkUpcomingBills() {
+      if (!recurringList || !recurringList.length) return;
+      const today = getTodayStr();
+      const in3Days = new Date();
+      in3Days.setDate(in3Days.getDate() + 3);
+      const in3Str = getLocalIsoDateStr(in3Days);
+
+      const dueSoon = recurringList.filter(rec =>
+        rec.active && !rec.archived && rec.nextDue && rec.nextDue <= in3Str
+      ).sort((a, b) => (a.nextDue || '').localeCompare(b.nextDue || ''));
+
+      // Push notifications (session-gated — fire once per session per sub)
+      if (_billReminderEnabled && Notification.permission === 'granted') {
+        dueSoon.forEach(rec => {
+          if (_notifSessionFired.has(rec.id)) return;
+          _notifSessionFired.add(rec.id);
+          const isOverdue = rec.nextDue <= today;
+          const when = isOverdue
+            ? 'is overdue!'
+            : rec.nextDue === today ? 'is due today'
+            : `is due on ${new Date(rec.nextDue + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+          try {
+            new Notification('Flux \u2014 ' + rec.name, {
+              body: `${rec.name} (${rec.type === 'income' ? '+' : '-'}\u20b9${Math.abs(rec.amount).toLocaleString('en-IN')}) ${when}`,
+              icon: './icon-192.png',
+              tag: 'flux-bill-' + rec.id,
+            });
+          } catch (e) { /* Notifications blocked or unavailable */ }
+        });
+      }
+
+      // Dashboard banner
+      const banner = document.getElementById('dueSoonBanner');
+      const itemsEl = document.getElementById('dueSoonItems');
+      if (!banner || !itemsEl) return;
+
+      if (!dueSoon.length) { banner.classList.remove('vis'); return; }
+
+      itemsEl.innerHTML = dueSoon.map(rec => {
+        const isOverdue = rec.nextDue <= today;
+        const daysUntil = Math.ceil((new Date(rec.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+        const whenLabel = isOverdue
+          ? `<span style="color:var(--ex);font-weight:700;">overdue</span>`
+          : daysUntil === 0 ? `<span style="color:var(--ex);">today</span>`
+          : `<span class="dsb-when">in ${daysUntil}d</span>`;
+        const payBtn = (rec.autoLog === false && isOverdue)
+          ? `<button class="dsb-pay-btn" onclick="markAsPaid(${esc(JSON.stringify(rec.id))})">\u2705 Paid</button>`
+          : '';
+        const amtStr = (rec.type === 'income' ? '+' : '-') + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN');
+        return `<div class="dsb-item"><span class="dsb-name">${esc(rec.name)}</span><span class="dsb-when">${amtStr}</span>${whenLabel}${payBtn}</div>`;
+      }).join('');
+
+      banner.classList.add('vis');
+    }
+
+    function dismissDueSoonBanner() {
+      const banner = document.getElementById('dueSoonBanner');
+      if (banner) banner.classList.remove('vis');
+    }
+
+    window.dismissDueSoonBanner = dismissDueSoonBanner;
+    window.markAsPaid = markAsPaid;
+
     // -- Skeleton Loading Placeholders --
+
     function showSkeletons() {
       const txList = document.getElementById('txList');
       if (txList) {
