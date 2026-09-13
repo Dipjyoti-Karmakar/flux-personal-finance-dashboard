@@ -14517,7 +14517,8 @@
             if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
               let valid = true;
               for (const key in parsed) {
-                if (!isFinite(parsed[key]) || parsed[key] <= 0) {
+                const val = parsed[key];
+                if (typeof val !== 'number' || !Number.isFinite(val) || val <= 0) {
                   valid = false;
                   break;
                 }
