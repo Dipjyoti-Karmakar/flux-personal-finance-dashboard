@@ -8452,11 +8452,18 @@
         let finalAmt = amt;
         let fxFields = {};
         if (txCurrency !== 'INR' && _fxRates && _fxRates[txCurrency]) {
-          // _fxRates[currency] = units of that currency per 1 INR, so 1 unit = 1/_fxRates[currency] INR
+          // _fxRates[currency] = units of that currency per 1 INR, so finalAmt = amt / rate = INR value
           const rate = _fxRates[txCurrency];
           finalAmt = amt / rate;
           fxFields = { originalAmount: amt, currency: txCurrency, fxRate: rate };
+        } else if (txCurrency !== 'INR' && FX_FALLBACK[txCurrency]) {
+          // FX rates not loaded yet — use fallback so we don't silently save wrong amount
+          const rate = FX_FALLBACK[txCurrency];
+          finalAmt = amt / rate;
+          fxFields = { originalAmount: amt, currency: txCurrency, fxRate: rate };
         }
+        // Guard converted amount too — e.g. 999 trillion JPY would still be astronomical in INR
+        if (!isFinite(finalAmt) || finalAmt <= 0 || finalAmt > MAX_AMOUNT) { shake('txA'); return; }
         const newTx = { type: cType, mode: cMode, desc, amount: finalAmt, cat, date, createdAt: Date.now(), ...fxFields };
         if (eventId) newTx.eventId = eventId;
         const txId = uid();
@@ -8516,6 +8523,11 @@
           document.getElementById('txD').value = '';
           document.getElementById('txA').value = '';
           document.getElementById('txDt').value = getTodayStr();
+          // Reset currency selector and hint so next entry starts clean
+          const txCurrEl = document.getElementById('txCurrency');
+          if (txCurrEl) txCurrEl.value = 'INR';
+          const txFxHintEl = document.getElementById('txFxHint');
+          if (txFxHintEl) txFxHintEl.textContent = '';
 
           // Log the addition
           writeLog('ADD', { desc, amt, cat, date, mode: cMode, type: cType, eventId: eventId }, cType);
@@ -9350,7 +9362,7 @@
       </div>
       <div class="ta-wrap">
         <span class="ta ${safeType}">${fmt(tx.amount)}</span>
-        ${tx.currency && tx.currency !== 'INR' ? `<span class="tx-fx-pill">${tx.originalAmount ? (tx.currency === 'USD' ? '$' : tx.currency === 'EUR' ? '\u20ac' : tx.currency === 'GBP' ? '\u00a3' : tx.currency === 'JPY' ? '\u00a5' : '') + Number(tx.originalAmount).toLocaleString('en-IN', {maximumFractionDigits:2}) + ' ' + tx.currency : tx.currency}</span>` : ''}
+        ${tx.currency && tx.currency !== 'INR' ? `<span class="tx-fx-pill">${tx.originalAmount ? (typeof FX_SYMBOLS !== 'undefined' && FX_SYMBOLS[tx.currency] ? FX_SYMBOLS[tx.currency] : '') + Number(tx.originalAmount).toLocaleString('en-IN', {maximumFractionDigits:2}) + ' ' + tx.currency : tx.currency}</span>` : ''}
       </div>
       <div style="display:flex;gap:4px;margin-left:8px">
         <button class="td" onclick="editTx(${esc(JSON.stringify(tx.id))})" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
@@ -14500,9 +14512,13 @@
         const stored = localStorage.getItem('flux_fx_rates');
         const ts = parseInt(localStorage.getItem('flux_fx_ts') || '0', 10);
         if (stored && Date.now() - ts < FX_CACHE_TTL) {
-          _fxRates = JSON.parse(stored);
-          _fxRateTs = ts;
-          return;
+          try {
+            _fxRates = JSON.parse(stored);
+            _fxRateTs = ts;
+            return;
+          } catch (e) {
+            console.warn('[FX] Cache parse failed, re-fetching', e);
+          }
         }
         // open.er-api.com: free, no key, returns rates relative to base
         const res = await fetch('https://open.er-api.com/v6/latest/INR');
@@ -14532,15 +14548,13 @@
       const currency = sel ? sel.value : 'INR';
       if (currency === 'INR') { hintEl.textContent = ''; return; }
       const amt = parseFloat(document.getElementById('txA').value);
-      if (!amt || isNaN(amt)) { hintEl.textContent = ''; return; }
-      if (_fxRates && _fxRates[currency]) {
-        const inrAmt = amt / _fxRates[currency];
-        hintEl.textContent = `\u2248 \u20b9${inrAmt.toLocaleString('en-IN', { maximumFractionDigits: 2 })} at current rate`;
-      } else {
-        const fb = FX_FALLBACK[currency];
-        if (fb) hintEl.textContent = `\u2248 \u20b9${(amt / fb).toLocaleString('en-IN', { maximumFractionDigits: 2 })} (est.)`;
-        else hintEl.textContent = '';
-      }
+      if (!amt || isNaN(amt) || amt <= 0) { hintEl.textContent = ''; return; }
+      const rates = (_fxRates && _fxRates[currency]) ? _fxRates : null;
+      const rate = rates ? rates[currency] : FX_FALLBACK[currency];
+      if (!rate) { hintEl.textContent = ''; return; }
+      const inrAmt = amt / rate;
+      const isLive = !!(rates && rates[currency]);
+      hintEl.textContent = `\u2248 \u20b9${inrAmt.toLocaleString('en-IN', { maximumFractionDigits: 2 })}${isLive ? ' at live rate' : ' (est. rate)'}`;
     }
 
     // ══════════════════════════════════════════════════════
@@ -14557,26 +14571,34 @@
         if (!rec) { showToast('Subscription not found', 'er'); return; }
         if (!rec.nextDue) { showToast('No due date set', 'er'); return; }
 
-        const nextDue = computeNextDue(rec.nextDue, rec.freq, rec.customDays, rec.billingDay);
-        const paymentsMade = (rec.paymentsMade || 0) + 1;
         const today = getTodayStr();
-
         const txRef = doc(db, 'users', userId, 'transactions', uid());
         const recRef = doc(db, 'users', userId, 'recurring', recId);
+
+        // Capture these outside the transaction so they're not re-evaluated on retries
+        let committedNextDue = null;
+        let committedPaymentsMade = null;
+        let committedDeactivate = false;
+        let committedName = rec.name;
 
         await runTransaction(db, async (transaction) => {
           const recDoc = await transaction.get(recRef);
           if (!recDoc.exists()) throw 'not_found';
           const data = recDoc.data();
-          // Only proceed if still overdue and manual
           if (data.autoLog !== false) throw 'not_manual';
 
-          // Create the transaction
+          // Use authoritative server-side values, not stale local cache
+          const serverNextDue = data.nextDue || rec.nextDue;
+          committedNextDue = computeNextDue(serverNextDue, data.freq, data.customDays, data.billingDay);
+          committedPaymentsMade = (data.paymentsMade || 0) + 1;
+          committedDeactivate = !!(data.paymentsLimit && committedPaymentsMade >= data.paymentsLimit);
+          committedName = data.name || rec.name;
+
           const newTx = {
             type: data.type || 'expense',
             mode: data.mode || 'online',
-            desc: data.name,
-            amount: data.amount,
+            desc: committedName,
+            amount: Math.abs(data.amount || 0),
             cat: data.cat || 'other',
             date: today,
             createdAt: Date.now(),
@@ -14586,13 +14608,19 @@
           };
           transaction.set(txRef, newTx);
 
-          // Advance the due date
-          _pendingRecUpdates.add(recId);
-          transaction.update(recRef, { nextDue, paymentsMade });
+          const recUpdate = { nextDue: committedNextDue, paymentsMade: committedPaymentsMade };
+          if (committedDeactivate) recUpdate.active = false; // Hit payment limit — deactivate
+          transaction.update(recRef, recUpdate);
         });
 
-        showToast('\u2705 Payment logged for ' + rec.name, 'ok');
-        renderRecurring(); // Refresh card immediately
+        // IMPORTANT: mutate side-effect Set AFTER the transaction commits, not inside callback
+        _pendingRecUpdates.add(recId);
+
+        const msg = committedDeactivate
+          ? `\u2705 Final payment logged — ${committedName} complete`
+          : `\u2705 Payment logged for ${committedName}`;
+        showToast(msg, 'ok');
+        renderRecurring();
       } catch (e) {
         if (e !== 'not_found' && e !== 'not_manual') {
           console.error('markAsPaid failed:', e);
@@ -14611,6 +14639,7 @@
 
     let _billReminderEnabled = false;
     let _notifNudgeShown = false;
+    let _dsbDismissedSession = false;
 
     function requestBillNotifications() {
       if (!('Notification' in window)) return;
@@ -14652,7 +14681,7 @@
         dueSoon.forEach(rec => {
           if (_notifSessionFired.has(rec.id)) return;
           _notifSessionFired.add(rec.id);
-          const isOverdue = rec.nextDue <= today;
+          const isOverdue = rec.nextDue < today;
           const when = isOverdue
             ? 'is overdue!'
             : rec.nextDue === today ? 'is due today'
@@ -14670,12 +14699,12 @@
       // Dashboard banner
       const banner = document.getElementById('dueSoonBanner');
       const itemsEl = document.getElementById('dueSoonItems');
-      if (!banner || !itemsEl) return;
+      if (!banner || !itemsEl || _dsbDismissedSession) return;
 
       if (!dueSoon.length) { banner.classList.remove('vis'); return; }
 
       itemsEl.innerHTML = dueSoon.map(rec => {
-        const isOverdue = rec.nextDue <= today;
+        const isOverdue = rec.nextDue < today;
         const daysUntil = Math.ceil((new Date(rec.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
         const whenLabel = isOverdue
           ? `<span style="color:var(--ex);font-weight:700;">overdue</span>`
@@ -14693,11 +14722,13 @@
 
     function dismissDueSoonBanner() {
       const banner = document.getElementById('dueSoonBanner');
-      if (banner) banner.classList.remove('vis');
+      if (banner) {
+        banner.classList.remove('vis');
+        _dsbDismissedSession = true;
+      }
     }
 
     window.dismissDueSoonBanner = dismissDueSoonBanner;
-    window.markAsPaid = markAsPaid;
 
     // -- Skeleton Loading Placeholders --
 
