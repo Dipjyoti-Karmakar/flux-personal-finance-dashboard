@@ -14542,7 +14542,6 @@
         const json = await res.json();
         if (json.result === 'success' && json.rates) {
           _fxRates = json.rates; // rates[USD] = how many USD = 1 INR
-          _fxRates.USD = 0.010526; // Force USD to 95 INR per 1 USD as requested
           _fxRateTs = Date.now();
           localStorage.setItem('flux_fx_rates', JSON.stringify(_fxRates));
           localStorage.setItem('flux_fx_ts', String(_fxRateTs));
