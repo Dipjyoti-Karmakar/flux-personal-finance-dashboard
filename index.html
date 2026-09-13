@@ -8500,7 +8500,7 @@
             shake('txCurrency');
             return;
           }
-          finalAmt = amt / rate;
+          finalAmt = Math.round((amt / rate) * 100) / 100;
           fxFields = { originalAmount: amt, currency: txCurrency, fxRate: rate };
         }
         // Guard converted amount too — e.g. 999 trillion JPY would still be astronomical in INR
@@ -14545,14 +14545,14 @@
     // ══════════════════════════════════════════════════════
 
     // Static fallback rates (1 INR = X foreign currency units)
-    const FX_FALLBACK = { USD: 0.010526, EUR: 0.011, GBP: 0.0095, JPY: 1.78, AED: 0.044, SGD: 0.016, AUD: 0.018, CAD: 0.016, CHF: 0.010 };
+    const FX_FALLBACK = { USD: 0.01046, EUR: 0.011, GBP: 0.0095, JPY: 1.78, AED: 0.044, SGD: 0.016, AUD: 0.018, CAD: 0.016, CHF: 0.010 };
     const FX_SYMBOLS = { USD: '$', EUR: '\u20ac', GBP: '\u00a3', JPY: '\u00a5', AED: '\u062f.\u0625', SGD: 'S$', AUD: 'A$', CAD: 'C$', CHF: 'Fr' };
     const FX_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 
     async function fetchExchangeRates() {
       try {
-        const stored = localStorage.getItem('flux_fx_rates');
-        const ts = parseInt(localStorage.getItem('flux_fx_ts') || '0', 10);
+        const stored = localStorage.getItem('flux_fx_rates_v2');
+        const ts = parseInt(localStorage.getItem('flux_fx_ts_v2') || '0', 10);
         if (stored && Date.now() - ts < FX_CACHE_TTL) {
           try {
             const parsed = JSON.parse(stored);
@@ -14583,8 +14583,8 @@
         if (json.result === 'success' && json.rates) {
           _fxRates = json.rates; // rates[USD] = how many USD = 1 INR
           _fxRateTs = Date.now();
-          localStorage.setItem('flux_fx_rates', JSON.stringify(_fxRates));
-          localStorage.setItem('flux_fx_ts', String(_fxRateTs));
+          localStorage.setItem('flux_fx_rates_v2', JSON.stringify(_fxRates));
+          localStorage.setItem('flux_fx_ts_v2', String(_fxRateTs));
         }
       } catch (e) {
         // Offline fallback
