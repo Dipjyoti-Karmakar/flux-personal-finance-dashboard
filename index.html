@@ -8531,7 +8531,7 @@
           if (txFxHintEl) txFxHintEl.textContent = '';
 
           // Log the addition
-          writeLog('ADD', { desc, amt, cat, date, mode: cMode, type: cType, eventId: eventId }, cType);
+          writeLog('ADD', { desc, amt: finalAmt, cat, date, mode: cMode, type: cType, eventId: eventId }, cType);
 
           showToast(navigator.onLine ? 'Transaction added' : 'Saved offline. Will sync when connected.', 'ok');
 
