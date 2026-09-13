@@ -7023,9 +7023,9 @@
                   <option value="CHF">Fr CHF</option>
                 </select>
               </div>
-              <div id="txFxHint"></div>
               <div class="fd"><label>Date</label><input type="date" id="txDt"></div>
             </div>
+            <div id="txFxHint"></div>
             <div class="fd full-mob"><label>Event (Optional)</label><select id="txEvent">
                 <option value="">— No Event —</option>
               </select></div>
@@ -8451,14 +8451,13 @@
         const txCurrency = (document.getElementById('txCurrency') || {}).value || 'INR';
         let finalAmt = amt;
         let fxFields = {};
-        if (txCurrency !== 'INR' && _fxRates && _fxRates[txCurrency]) {
-          // _fxRates[currency] = units of that currency per 1 INR, so finalAmt = amt / rate = INR value
-          const rate = _fxRates[txCurrency];
-          finalAmt = amt / rate;
-          fxFields = { originalAmount: amt, currency: txCurrency, fxRate: rate };
-        } else if (txCurrency !== 'INR' && FX_FALLBACK[txCurrency]) {
-          // FX rates not loaded yet — use fallback so we don't silently save wrong amount
-          const rate = FX_FALLBACK[txCurrency];
+        if (txCurrency !== 'INR') {
+          const rate = (_fxRates && _fxRates[txCurrency]) ? _fxRates[txCurrency] : FX_FALLBACK[txCurrency];
+          if (!rate) {
+            showToast(`Exchange rate for ${txCurrency} unavailable`, 'er');
+            shake('txCurrency');
+            return;
+          }
           finalAmt = amt / rate;
           fxFields = { originalAmount: amt, currency: txCurrency, fxRate: rate };
         }
@@ -13141,7 +13140,8 @@
                        oldRec.freq !== data.freq || 
                        oldRec.customDays !== data.customDays || 
                        oldRec.paymentsLimit !== data.paymentsLimit ||
-                       oldAltStr !== newAltStr);
+                       oldAltStr !== newAltStr ||
+                       (oldRec.autoLog !== false) !== data.autoLog);
           }
           if (!changed) return; // No actual changes made, skip the network call and toast
           try {
@@ -14513,11 +14513,24 @@
         const ts = parseInt(localStorage.getItem('flux_fx_ts') || '0', 10);
         if (stored && Date.now() - ts < FX_CACHE_TTL) {
           try {
-            _fxRates = JSON.parse(stored);
-            _fxRateTs = ts;
-            return;
+            const parsed = JSON.parse(stored);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+              let valid = true;
+              for (const key in parsed) {
+                if (!isFinite(parsed[key]) || parsed[key] <= 0) {
+                  valid = false;
+                  break;
+                }
+              }
+              if (valid && Object.keys(parsed).length > 0) {
+                _fxRates = parsed;
+                _fxRateTs = ts;
+                return;
+              }
+            }
+            throw new Error('Invalid cache payload structure');
           } catch (e) {
-            console.warn('[FX] Cache parse failed, re-fetching', e);
+            console.warn('[FX] Cache parse/validation failed, re-fetching', e);
           }
         }
         // open.er-api.com: free, no key, returns rates relative to base
