@@ -8541,8 +8541,32 @@
               return true;
             });
             if (matchedRec) {
-              newTx._recurring = true;
-              newTx.subId = matchedRec.id;
+              // If this transaction is an early payment candidate for an active upcoming bill (nextDue > today
+              // and within its prepayment window), DO NOT pre-tag _recurring here.
+              // Letting detectEarlyPayments() handle it ensures:
+              // 1. nextDue is advanced to the next billing cycle
+              // 2. paymentsMade is properly incremented (and paymentsLimit enforced)
+              // 3. The ⚡ Early payment toast & activity log entry are triggered
+              // 4. The transaction gets tagged with _recurring and subId upon detection
+              let isEarlyPayCandidate = false;
+              const todayStr = getTodayStr();
+              if (matchedRec.nextDue && matchedRec.nextDue > todayStr) {
+                let wDays = 15;
+                if (matchedRec.freq === 'yearly') wDays = 60;
+                if (matchedRec.freq === 'weekly') wDays = 3;
+                if (matchedRec.freq === 'daily') wDays = 1;
+                if (matchedRec.freq === 'custom') wDays = Math.max(1, Math.floor((matchedRec.customDays || 1) / 2));
+                const dueD = new Date(matchedRec.nextDue + 'T00:00:00');
+                dueD.setDate(dueD.getDate() - wDays);
+                const minD = getLocalIsoDateStr(dueD);
+                if (date >= minD && date <= todayStr) {
+                  isEarlyPayCandidate = true;
+                }
+              }
+              if (!isEarlyPayCandidate) {
+                newTx._recurring = true;
+                newTx.subId = matchedRec.id;
+              }
             }
           }
         }
@@ -12522,7 +12546,7 @@
           if (today < minD) continue;
 
           const _recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
-          const _allRecAmtsEP = [Math.abs(rec.amount), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+          const _allRecAmtsEP = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
           const _epCandidates = txs.filter(t => {
             if (t.type !== rec.type) return false;
             if (!t.desc || !_recNameLc) return false;
@@ -12616,8 +12640,11 @@
             _earlyPayProcessing.delete(rec.id);
           }
         }
-        // Re-render subscription cards so badges update (only if we actually found an early payment)
-        if (anyMatched && document.getElementById('subView').style.display !== 'none') renderRecurring();
+        // Re-render subscription cards and update due-soon banner (only if we actually found an early payment)
+        if (anyMatched) {
+          renderRecurring();
+          if (typeof checkUpcomingBills === 'function') checkUpcomingBills();
+        }
         return anyMatched;
       } catch (e) {
         console.error('detectEarlyPayments failed:', e);
