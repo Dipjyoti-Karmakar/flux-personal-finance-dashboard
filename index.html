@@ -6447,8 +6447,11 @@
       flex-shrink: 0;
     }
 
-    /* Expense Hero specific badge */
+    /* Expense Hero specific badge — absolute so it doesn't affect card height */
     .mob-hero-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
       display: inline-flex;
       align-items: center;
       gap: 3px;
@@ -6457,8 +6460,6 @@
       font-weight: 700;
       padding: 3px 8px;
       border-radius: 12px;
-      margin-left: 8px;
-      vertical-align: middle;
     }
 
     .mob-hero-badge.up {
