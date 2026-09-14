@@ -9223,17 +9223,17 @@
             const diff = tE - prevExp;
             const pct = Math.round(Math.abs(diff) / prevExp * 100);
             if (diff > 0) {
-              badge.className = 'mob-hero-badge mob-only up';
+              badge.className = 'mob-hero-badge up';
               badge.innerHTML = '↑ ' + pct + '%';
             } else if (diff < 0) {
-              badge.className = 'mob-hero-badge mob-only down';
+              badge.className = 'mob-hero-badge down';
               badge.innerHTML = '↓ ' + pct + '%';
             } else {
-              badge.className = 'mob-hero-badge mob-only';
+              badge.className = 'mob-hero-badge';
               badge.innerHTML = '= 0%';
             }
           } else {
-            badge.className = 'mob-hero-badge mob-only';
+            badge.className = 'mob-hero-badge';
             badge.innerHTML = 'No prior data';
           }
           badge.style.display = 'inline-flex';
