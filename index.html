@@ -12787,7 +12787,7 @@
           + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
           + '</div>'
           + '<div class="sub-card-actions">'
-          + (isManualOverdue ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">\u2705 Mark as Paid</button>' : '')
+          + (isManualOverdue ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">\u2705 Paid</button>' : '')
           + '<button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(' + recIdJson + ',' + (!rec.active) + ')">' + pauseLabel + '</button>'
           + '<button class="sub-action-btn edit-btn" onclick="openEditRecurring(' + recIdJson + ')"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>'
           + '<button class="sub-action-btn del-btn" onclick="askArchiveRecurring(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Archive</button>'
@@ -13131,7 +13131,7 @@
       if (toggle) toggle.classList.toggle('on', currentRecAutoLog);
       if (sub) sub.textContent = currentRecAutoLog
         ? 'Transaction is created automatically'
-        : 'Waits for your manual ‘Mark as Paid’ confirmation';
+        : 'Waits for your manual \u2018Paid\u2019 confirmation';
     }
 
     function toggleRecAutoLog() {
@@ -14709,7 +14709,7 @@
         if (e === 'not_manual') {
           // B7 FIX: Surface this clearly — sub was switched to auto-log between render and click.
           showToast('This subscription now auto-logs \u2014 no manual action needed.', 'ok');
-          renderRecurring(); // Refresh card so the Mark as Paid button disappears
+          renderRecurring(); // Refresh card so the Paid button disappears
         } else if (e === 'invalid_amount') {
           // B8 FIX: Show actionable error for corrupted subscription amount.
           showToast('Subscription has an invalid amount \u2014 please edit and re-save it.', 'er');
