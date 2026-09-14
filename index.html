@@ -12881,7 +12881,7 @@
           + '</div>'
           + '<div class="sub-card-right">'
           + '<div style="display:flex; gap:6px; align-items:center;">'
-          + (rec.autoLog === false && rec.active && !isManualDue ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">PAID</button>' : '')
+          + (rec.autoLog === false && rec.active && !isManualDue ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">PAY</button>' : '')
           + badgeHtml
           + '</div>'
           + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div>'
