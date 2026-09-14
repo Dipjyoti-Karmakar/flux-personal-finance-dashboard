@@ -477,11 +477,14 @@
     }
 
     .thtog.on {
-      border-color: var(--ac)
+      background: var(--ac);
+      border-color: var(--ac);
     }
 
     .thtog.on::after {
-      transform: translateX(22px)
+      transform: translateX(22px);
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
     }
 
     .thtog::after {
@@ -12795,15 +12798,53 @@
             + '</div>';
         }
 
-        // Active card template — Archive replaces Remove
-        const isManualOverdue = rec.autoLog === false && rec.active && isDue;
+        // Active/Paused card template
+        // Paid button logic: show for manual-mode subs when due date has arrived
+        // AND no matching payment has been logged in the detection window yet.
+        // Uses same name+amount+type matching as detectEarlyPayments so it
+        // correctly survives pause, resume, and archive→restore cycles.
+        let isManualDue = false;
+        if (rec.autoLog === false && rec.nextDue) {
+          const recDue = rec.nextDue;
+          if (recDue <= today) {
+            let wDays = 15;
+            if (rec.freq === 'yearly') wDays = 60;
+            if (rec.freq === 'weekly') wDays = 3;
+            if (rec.freq === 'daily') wDays = 1;
+            if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
+            const dueDate = new Date(recDue + 'T00:00:00');
+            const windowStart = new Date(dueDate); windowStart.setDate(windowStart.getDate() - wDays);
+            const windowEnd = new Date(dueDate); windowEnd.setDate(windowEnd.getDate() + wDays);
+            const minD = windowStart.toISOString().slice(0, 10);
+            const maxD = windowEnd.toISOString().slice(0, 10) < today ? windowEnd.toISOString().slice(0, 10) : today;
+            const recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
+            const allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+            const alreadyPaid = txs && txs.some(t => {
+              if (t.type !== rec.type) return false;
+              if (!t.desc || !recNameLc) return false;
+              const txDescLc = t.desc.trim().toLowerCase();
+              if (recNameLc !== txDescLc) {
+                if (recNameLc.length < 4 || txDescLc.length < 4) return false;
+                if (!(txDescLc.includes(recNameLc) || recNameLc.includes(txDescLc))) return false;
+                if (Math.min(recNameLc.length, txDescLc.length) / Math.max(recNameLc.length, txDescLc.length) < 0.5) return false;
+              }
+              if (!allAmts.includes(Math.abs(t.amount || 0))) return false;
+              if (rec.cat && t.cat && rec.cat !== t.cat) return false;
+              if (t.date < minD || t.date > maxD) return false;
+              return true;
+            });
+            isManualDue = !alreadyPaid;
+          }
+        }
         const pauseLabel = rec.active
           ? '<img src="emojis/pause.png" class="c-ico" alt=""> Pause'
           : '<img src="emojis/resume.png" class="c-ico" alt=""> Resume';
         const manualTag = rec.autoLog === false
           ? '<span style="font-size:9px;color:var(--mu);font-family:\'DM Mono\',monospace;background:color-mix(in srgb,var(--mu) 10%,transparent);border:1px solid color-mix(in srgb,var(--mu) 20%,transparent);border-radius:4px;padding:1px 5px;margin-left:4px;">manual</span>'
           : '';
-        return '<div class="sub-card card-in ' + (rec.active ? '' : 'sub-paused') + (isManualOverdue ? ' sub-overdue' : '') + '" style="' + animStyle + '">'
+        // Overdue highlight only when active — paused subs show their paused style instead
+        const isManualOverdueVisual = isManualDue && rec.active;
+        return '<div class="sub-card card-in ' + (rec.active ? '' : 'sub-paused') + (isManualOverdueVisual ? ' sub-overdue' : '') + '" style="' + animStyle + '">'
           + '<div class="sub-card-top">'
           + '<div class="sub-card-icon">' + catIcon + '</div>'
           + '<div class="sub-card-info">'
@@ -12814,7 +12855,7 @@
           + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
           + '</div>'
           + '<div class="sub-card-actions">'
-          + (isManualOverdue ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">\u2705 Paid</button>' : '')
+          + (isManualDue ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">Paid</button>' : '')
           + '<button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(' + recIdJson + ',' + (!rec.active) + ')">' + pauseLabel + '</button>'
           + '<button class="sub-action-btn edit-btn" onclick="openEditRecurring(' + recIdJson + ')"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>'
           + '<button class="sub-action-btn del-btn" onclick="askArchiveRecurring(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Archive</button>'
@@ -12823,6 +12864,7 @@
           + '<div class="sub-hist-panel" id="hist-panel-' + rec.id + '"><div class="sub-hist-inner" id="hist-inner-' + rec.id + '"></div></div>'
           + '</div>';
       }).join('');
+
 
       const stableHtml = newHtml.replace(/style="animation:[^"]*"/g, 'style=""');
 
