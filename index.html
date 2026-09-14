@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 
 <head>
@@ -4547,17 +4547,6 @@
     }
     .mark-paid-btn:hover {
       background: color-mix(in srgb, var(--in) 24%, transparent) !important;
-    }
-
-    /* ── Log Payment action button (always-visible on active manual subs) ── */
-    .sub-action-btn.log-pay-btn {
-      color: var(--in);
-      border-color: color-mix(in srgb, var(--in) 25%, transparent);
-    }
-    .sub-action-btn.log-pay-btn:hover {
-      background: color-mix(in srgb, var(--in) 14%, transparent);
-      color: var(--in);
-      border-color: color-mix(in srgb, var(--in) 40%, transparent);
     }
 
     /* ── Due-Soon Dashboard Banner ── */
@@ -12893,7 +12882,7 @@
           + '<div class="sub-card-renewal">Next Renewal: <span>' + renewalDate + '</span>' + (rec.paymentsLimit ? ' &nbsp;\u00b7&nbsp; ' + (rec.paymentsMade || 0) + '/' + rec.paymentsLimit + ' paid' : '') + '</div>'
           + '</div>'
           + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div>'
-          + (rec.autoLog === false && rec.active && !isManualDue ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">&#x2705; Log Payment</button>' : '')
+          + (rec.autoLog === false && rec.active && !isManualDue ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">Log Payment</button>' : '')
           + '</div>'
           + '</div>'
           + (isManualDue ? '<div style="margin-top:13px; border-top:1px solid var(--bd); padding-top:13px;"><button class="sub-action-btn mark-paid-btn" style="width:100%; padding:10px; font-size:12px; font-weight:500; background:color-mix(in srgb,var(--in) 15%,transparent); color:var(--in); border:1px solid color-mix(in srgb,var(--in) 30%,transparent); border-radius:10px; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="markAsPaid(' + recIdJson + ')"><span style="font-weight:bold; font-size:13px;">✓</span> Mark as Paid</button></div>' : '')
