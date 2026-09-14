@@ -12812,9 +12812,9 @@
             if (rec.freq === 'weekly') wDays = 3;
             if (rec.freq === 'daily') wDays = 1;
             if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
-            const dueDate = new Date(recDue + 'T00:00:00');
-            const windowStart = new Date(dueDate); windowStart.setDate(windowStart.getDate() - wDays);
-            const windowEnd = new Date(dueDate); windowEnd.setDate(windowEnd.getDate() + wDays);
+            const dueDate = new Date(recDue + 'T00:00:00Z');
+            const windowStart = new Date(dueDate); windowStart.setUTCDate(windowStart.getUTCDate() - wDays);
+            const windowEnd = new Date(dueDate); windowEnd.setUTCDate(windowEnd.getUTCDate() + wDays);
             const minD = windowStart.toISOString().slice(0, 10);
             const maxD = windowEnd.toISOString().slice(0, 10) < today ? windowEnd.toISOString().slice(0, 10) : today;
             const recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
@@ -12855,7 +12855,7 @@
           + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
           + '</div>'
           + '<div class="sub-card-actions">'
-          + (isManualDue ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">Paid</button>' : '')
+          + ((isManualDue && rec.active) ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">Paid</button>' : '')
           + '<button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(' + recIdJson + ',' + (!rec.active) + ')">' + pauseLabel + '</button>'
           + '<button class="sub-action-btn edit-btn" onclick="openEditRecurring(' + recIdJson + ')"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>'
           + '<button class="sub-action-btn del-btn" onclick="askArchiveRecurring(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Archive</button>'
