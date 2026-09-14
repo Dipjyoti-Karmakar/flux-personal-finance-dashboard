@@ -4512,7 +4512,7 @@
       color: var(--ex);
     }
 
-    /* ── Mark as Paid button ── */
+    /* ── Mark as Paid button (overdue banner) ── */
     .mark-paid-btn {
       background: color-mix(in srgb, var(--in) 14%, transparent) !important;
       color: var(--in) !important;
@@ -4521,6 +4521,17 @@
     }
     .mark-paid-btn:hover {
       background: color-mix(in srgb, var(--in) 24%, transparent) !important;
+    }
+
+    /* ── Log Payment action button (always-visible on active manual subs) ── */
+    .sub-action-btn.log-pay-btn {
+      color: var(--in);
+      border-color: color-mix(in srgb, var(--in) 25%, transparent);
+    }
+    .sub-action-btn.log-pay-btn:hover {
+      background: color-mix(in srgb, var(--in) 14%, transparent);
+      color: var(--in);
+      border-color: color-mix(in srgb, var(--in) 40%, transparent);
     }
 
     /* ── Due-Soon Dashboard Banner ── */
@@ -12813,9 +12824,11 @@
             if (rec.freq === 'weekly') wDays = 3;
             if (rec.freq === 'daily') wDays = 1;
             if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
-            const dueDate = new Date(recDue + 'T00:00:00Z');
-            const windowStart = new Date(dueDate); windowStart.setUTCDate(windowStart.getUTCDate() - wDays);
-            const windowEnd = new Date(dueDate); windowEnd.setUTCDate(windowEnd.getUTCDate() + wDays);
+            // FIX: use local midnight ('T00:00:00') not UTC ('T00:00:00Z') — otherwise the
+            // window boundary is off by the timezone offset (e.g. 5h30m in IST).
+            const dueDate = new Date(recDue + 'T00:00:00');
+            const windowStart = new Date(dueDate); windowStart.setDate(windowStart.getDate() - wDays);
+            const windowEnd = new Date(dueDate); windowEnd.setDate(windowEnd.getDate() + wDays);
             const minD = windowStart.toISOString().slice(0, 10);
             const maxD = windowEnd.toISOString().slice(0, 10) < today ? windowEnd.toISOString().slice(0, 10) : today;
             const recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
@@ -12857,6 +12870,7 @@
           + '</div>'
           + (isManualDue ? '<div style="margin-top:13px; border-top:1px solid var(--bd); padding-top:13px;"><button class="sub-action-btn mark-paid-btn" style="width:100%; padding:10px; font-size:12px; font-weight:500; background:color-mix(in srgb,var(--in) 15%,transparent); color:var(--in); border:1px solid color-mix(in srgb,var(--in) 30%,transparent); border-radius:10px; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="markAsPaid(' + recIdJson + ')"><span style="font-weight:bold; font-size:13px;">✓</span> Mark as Paid</button></div>' : '')
           + '<div class="sub-card-actions">'
+          + (rec.autoLog === false && rec.active && !isManualDue ? '<button class="sub-action-btn log-pay-btn" onclick="markAsPaid(' + recIdJson + ')">&#x2705; Log Payment</button>' : '')
           + '<button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(' + recIdJson + ',' + (!rec.active) + ')">' + pauseLabel + '</button>'
           + '<button class="sub-action-btn edit-btn" onclick="openEditRecurring(' + recIdJson + ')"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>'
           + '<button class="sub-action-btn del-btn" onclick="askArchiveRecurring(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Archive</button>'
@@ -14788,7 +14802,49 @@
     async function markAsPaid(recId) {
       if (!userId || !recId) return;
       if (_markingPaid.has(recId)) return; // re-entrancy guard
+
+      const rec = recurringList.find(r => r.id === recId);
+      if (!rec) { showToast('Subscription not found', 'er'); return; }
+      if (!rec.nextDue) { showToast('No due date set', 'er'); return; }
+      // Guard against corrupted amount before showing the confirm dialog
+      if (!rec.amount || rec.amount <= 0) { showToast('Subscription has an invalid amount \u2014 please edit and re-save it.', 'er'); return; }
+
+      // Claim the slot BEFORE showing the modal so a second tap while the modal is open
+      // is rejected immediately (showConfirm is synchronous; _doMarkAsPaid is async).
       _markingPaid.add(recId);
+
+      // Show confirmation modal before logging payment — prevents accidental taps
+      const amtDisplay = '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+      showConfirm(
+        'Log Payment',
+        `Log a payment of ${amtDisplay} for \u201c${rec.name}\u201d? This will record today\u2019s expense and advance the next due date.`,
+        () => _doMarkAsPaid(recId),
+        false // not destructive — use the positive action style
+      );
+      // Release the slot when the modal is dismissed without confirming.
+      // closeConfirm() is always called (both on Confirm and Cancel) so we hook into
+      // the existing confirmActionCallback pattern: if the user cancels, no callback
+      // fires and _doMarkAsPaid never removes the ID — we must clean it up here.
+      // We use a one-shot MutationObserver on the modal's class list rather than
+      // patching closeConfirm() globally.
+      const _modal = document.getElementById('confirmMod');
+      if (_modal) {
+        const _obs = new MutationObserver(() => {
+          if (!_modal.classList.contains('op')) {
+            // Modal closed — if _doMarkAsPaid didn't run (cancel), release the guard.
+            // If it DID run, _doMarkAsPaid's finally{} already deleted the ID, so
+            // this delete is a harmless no-op.
+            _markingPaid.delete(recId);
+            _obs.disconnect();
+          }
+        });
+        _obs.observe(_modal, { attributes: true, attributeFilter: ['class'] });
+      }
+    }
+
+    async function _doMarkAsPaid(recId) {
+      // _markingPaid was already added by markAsPaid() before showing the modal.
+      // No need to add again; just proceed. The finally{} below will always clean up.
       try {
         const rec = recurringList.find(r => r.id === recId);
         if (!rec) { showToast('Subscription not found', 'er'); return; }
