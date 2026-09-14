@@ -14815,26 +14815,28 @@
 
       // Show confirmation modal before logging payment — prevents accidental taps
       const amtDisplay = '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+      let confirmed = false;
       showConfirm(
         'Log Payment',
         `Log a payment of ${amtDisplay} for \u201c${rec.name}\u201d? This will record today\u2019s expense and advance the next due date.`,
-        () => _doMarkAsPaid(recId),
+        () => {
+          confirmed = true;
+          _doMarkAsPaid(recId);
+        },
         false // not destructive — use the positive action style
       );
       // Release the slot when the modal is dismissed without confirming.
-      // closeConfirm() is always called (both on Confirm and Cancel) so we hook into
-      // the existing confirmActionCallback pattern: if the user cancels, no callback
-      // fires and _doMarkAsPaid never removes the ID — we must clean it up here.
       // We use a one-shot MutationObserver on the modal's class list rather than
       // patching closeConfirm() globally.
       const _modal = document.getElementById('confirmMod');
       if (_modal) {
         const _obs = new MutationObserver(() => {
           if (!_modal.classList.contains('op')) {
-            // Modal closed — if _doMarkAsPaid didn't run (cancel), release the guard.
-            // If it DID run, _doMarkAsPaid's finally{} already deleted the ID, so
-            // this delete is a harmless no-op.
-            _markingPaid.delete(recId);
+            // Modal closed — if not confirmed (canceled), release the guard.
+            // If confirmed, _doMarkAsPaid's finally{} will delete the ID.
+            if (!confirmed) {
+              _markingPaid.delete(recId);
+            }
             _obs.disconnect();
           }
         });
