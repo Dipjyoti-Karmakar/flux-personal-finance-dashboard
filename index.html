@@ -8534,7 +8534,9 @@
               }
               if (cType !== rec.type) return false;
               const _allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
-              if (!_allAmts.includes(Math.abs(amt))) return false;
+              // B16 FIX: Compare against finalAmt (INR-converted), not the raw foreign amt.
+              // Without this, a $10 USD entry (≈₹830) could never match a ₹830 subscription.
+              if (!_allAmts.includes(Math.abs(finalAmt))) return false;
               if (!rec.cat || !cat || rec.cat !== cat) return false;
               return true;
             });
@@ -8575,6 +8577,9 @@
           // Reset currency selector and hint so next entry starts clean
           const txCurrEl = document.getElementById('txCurrency');
           if (txCurrEl) txCurrEl.value = 'INR';
+          // B15 FIX: Also reset the visual overlay so it shows ₹ again, not the old symbol.
+          const txCurrOverlayEl = document.getElementById('txCurrOverlay');
+          if (txCurrOverlayEl) txCurrOverlayEl.textContent = '\u20b9';
           const txFxHintEl = document.getElementById('txFxHint');
           if (txFxHintEl) txFxHintEl.textContent = '';
 
@@ -13182,13 +13187,14 @@
           if (oldRec) {
             const oldAltStr = JSON.stringify(oldRec.altAmounts || []);
             const newAltStr = JSON.stringify(data.altAmounts || []);
-            changed = (oldRec.name !== data.name || 
-                       oldRec.amount !== data.amount || 
-                       oldRec.cat !== data.cat || 
-                       oldRec.nextDue !== data.nextDue || 
-                       oldRec.type !== data.type || 
-                       oldRec.freq !== data.freq || 
-                       oldRec.customDays !== data.customDays || 
+            changed = (oldRec.name !== data.name ||
+                       oldRec.amount !== data.amount ||
+                       oldRec.cat !== data.cat ||
+                       oldRec.nextDue !== data.nextDue ||
+                       oldRec.type !== data.type ||
+                       oldRec.mode !== data.mode ||   // B10 FIX: mode was missing from change detection
+                       oldRec.freq !== data.freq ||
+                       oldRec.customDays !== data.customDays ||
                        oldRec.paymentsLimit !== data.paymentsLimit ||
                        oldAltStr !== newAltStr ||
                        (oldRec.autoLog !== false) !== data.autoLog);
@@ -14588,11 +14594,23 @@
         const res = await fetch('https://open.er-api.com/v6/latest/INR');
         if (!res.ok) throw new Error('FX fetch failed');
         const json = await res.json();
-        if (json.result === 'success' && json.rates) {
-          _fxRates = json.rates; // rates[USD] = how many USD = 1 INR
-          _fxRateTs = Date.now();
-          localStorage.setItem('flux_fx_rates_v2', JSON.stringify(_fxRates));
-          localStorage.setItem('flux_fx_ts_v2', String(_fxRateTs));
+        if (json.result === 'success' && json.rates && typeof json.rates === 'object' && !Array.isArray(json.rates)) {
+          // B14 FIX: Sanitize rates from API — only keep positive finite numeric values.
+          // Mirrors the validation already applied when reading from the localStorage cache.
+          const sanitized = {};
+          let validCount = 0;
+          for (const [k, v] of Object.entries(json.rates)) {
+            if (typeof v === 'number' && Number.isFinite(v) && v > 0) {
+              sanitized[k] = v;
+              validCount++;
+            }
+          }
+          if (validCount > 0) {
+            _fxRates = sanitized; // rates[USD] = how many USD per 1 INR
+            _fxRateTs = Date.now();
+            localStorage.setItem('flux_fx_rates_v2', JSON.stringify(_fxRates));
+            localStorage.setItem('flux_fx_ts_v2', String(_fxRateTs));
+          }
         }
       } catch (e) {
         // Offline fallback
@@ -14650,6 +14668,8 @@
           if (!recDoc.exists()) throw 'not_found';
           const data = recDoc.data();
           if (data.autoLog !== false) throw 'not_manual';
+          // B8 FIX: Reject zero/missing amount — prevents logging a ₹0 transaction
+          if (!data.amount || data.amount <= 0) throw 'invalid_amount';
 
           // Use authoritative server-side values, not stale local cache
           const serverNextDue = data.nextDue || rec.nextDue;
@@ -14662,7 +14682,7 @@
             type: data.type || 'expense',
             mode: data.mode || 'online',
             desc: committedName,
-            amount: Math.abs(data.amount || 0),
+            amount: Math.abs(data.amount),
             cat: data.cat || 'other',
             date: today,
             createdAt: Date.now(),
@@ -14686,7 +14706,14 @@
         showToast(msg, 'ok');
         renderRecurring();
       } catch (e) {
-        if (e !== 'not_found' && e !== 'not_manual') {
+        if (e === 'not_manual') {
+          // B7 FIX: Surface this clearly — sub was switched to auto-log between render and click.
+          showToast('This subscription now auto-logs \u2014 no manual action needed.', 'ok');
+          renderRecurring(); // Refresh card so the Mark as Paid button disappears
+        } else if (e === 'invalid_amount') {
+          // B8 FIX: Show actionable error for corrupted subscription amount.
+          showToast('Subscription has an invalid amount \u2014 please edit and re-save it.', 'er');
+        } else if (e !== 'not_found') {
           console.error('markAsPaid failed:', e);
           showToast('Failed to log payment', 'er');
         }
@@ -14708,7 +14735,9 @@
 
     function requestBillNotifications() {
       if (!('Notification' in window)) return;
-      if (Notification.permission === 'granted') { _billReminderEnabled = true; return; }
+      // B2 FIX: If permission was already granted in a previous session, enable reminders
+      // AND immediately fire checkUpcomingBills so push notifications actually send.
+      if (Notification.permission === 'granted') { _billReminderEnabled = true; checkUpcomingBills(); return; }
       if (Notification.permission === 'denied') return;
       if (_notifNudgeShown) return;
       _notifNudgeShown = true;
@@ -14764,9 +14793,20 @@
       // Dashboard banner
       const banner = document.getElementById('dueSoonBanner');
       const itemsEl = document.getElementById('dueSoonItems');
-      if (!banner || !itemsEl || _dsbDismissedSession) return;
+      if (!banner || !itemsEl) return;
 
       if (!dueSoon.length) { banner.classList.remove('vis'); return; }
+
+      // B3 FIX: If dismissed this session, only re-show if there are newly-overdue items
+      // (nextDue < today) that weren't previously shown — prevents banner from being
+      // permanently suppressed when a new bill goes overdue after the user dismissed.
+      const today2 = getTodayStr();
+      if (_dsbDismissedSession) {
+        const hasNewOverdue = dueSoon.some(r => r.nextDue < today2 && !_notifSessionFired.has(r.id));
+        if (!hasNewOverdue) return;
+        // A genuinely new overdue item appeared — un-dismiss so it gets seen.
+        _dsbDismissedSession = false;
+      }
 
       itemsEl.innerHTML = dueSoon.map(rec => {
         const isOverdue = rec.nextDue < today;
