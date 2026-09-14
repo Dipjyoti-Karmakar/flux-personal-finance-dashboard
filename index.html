@@ -12127,7 +12127,7 @@
         else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">📥 Imported</span>`;
         else if (l.a === 'DELETE') actionPill = '';
         else if (l.a === 'ADD') {
-          if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);">🔄 Auto-recurring</span>`;
+          if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);"><span style="font-size:8px;">🔄</span> Auto-recurring</span>`;
           else actionPill = `<span style="${pSty}background:var(--ib);color:var(--in);border:1px solid var(--in);">➕ Added</span>`;
         }
         else actionPill = `<span style="${pSty}background:var(--s3);color:var(--tx);border:1px solid var(--bd);">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
