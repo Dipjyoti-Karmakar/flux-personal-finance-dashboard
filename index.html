@@ -7021,7 +7021,7 @@
         <div class="sc card-in">
           <div class="sl">Active Days</div>
           <div class="sv med neu" id="sDays">0</div>
-          <div class="ss">days with ≥1 txn</div>
+          <div class="ss">days with ≥1 expense</div>
         </div>
       </div>
 
@@ -9312,7 +9312,7 @@
 
       animateVal(document.getElementById('sAvg'), elapsedDays > 0 ? avgNumerator / elapsedDays : 0, fmtRound);
 
-      const aDays = new Set(sTxs.map(t => t.date)).size;
+      const aDays = new Set(sTxs.filter(t => t.type === 'expense').map(t => t.date)).size;
       animateVal(document.getElementById('sDays'), aDays, v => Math.round(v).toString());
     }
 
