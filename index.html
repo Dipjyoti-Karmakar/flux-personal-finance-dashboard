@@ -13467,11 +13467,43 @@
       const today = getTodayStr();
       let newNextDue = rec.nextDue && rec.nextDue.match(/^\d{4}-\d{2}-\d{2}$/) ? rec.nextDue : today;
       if (newNextDue <= today) {
-        let guard = 0;
-        while (newNextDue <= today && guard++ < 1000) {
-          const next = computeNextDue(newNextDue, rec.freq, rec.customDays, rec.billingDay);
-          if (!next || next === newNextDue) break;
-          newNextDue = next;
+        let shouldAdvance = true;
+        if (rec.autoLog === false) {
+          let wDays = 15;
+          if (rec.freq === 'yearly') wDays = 60;
+          if (rec.freq === 'weekly') wDays = 3;
+          if (rec.freq === 'daily') wDays = 1;
+          if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
+          const dueDateObj = new Date(newNextDue + 'T00:00:00Z');
+          const winStart = new Date(dueDateObj); winStart.setUTCDate(winStart.getUTCDate() - wDays);
+          const winEnd = new Date(dueDateObj); winEnd.setUTCDate(winEnd.getUTCDate() + wDays);
+          const minD = winStart.toISOString().slice(0, 10);
+          const maxD = winEnd.toISOString().slice(0, 10) < today ? winEnd.toISOString().slice(0, 10) : today;
+          const recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
+          const allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+          const paymentFound = txs && txs.some(t => {
+            if (t.type !== rec.type) return false;
+            if (!t.desc || !recNameLc) return false;
+            const txDescLc = t.desc.trim().toLowerCase();
+            if (recNameLc !== txDescLc) {
+              if (recNameLc.length < 4 || txDescLc.length < 4) return false;
+              if (!(txDescLc.includes(recNameLc) || recNameLc.includes(txDescLc))) return false;
+              if (Math.min(recNameLc.length, txDescLc.length) / Math.max(recNameLc.length, txDescLc.length) < 0.5) return false;
+            }
+            if (!allAmts.includes(Math.abs(t.amount || 0))) return false;
+            if (rec.cat && t.cat && rec.cat !== t.cat) return false;
+            if (t.date < minD || t.date > maxD) return false;
+            return true;
+          });
+          if (!paymentFound) shouldAdvance = false;
+        }
+        if (shouldAdvance) {
+          let guard = 0;
+          while (newNextDue <= today && guard++ < 1000) {
+            const next = computeNextDue(newNextDue, rec.freq, rec.customDays, rec.billingDay);
+            if (!next || next === newNextDue) break;
+            newNextDue = next;
+          }
         }
       }
       const updateData = { archived: deleteField(), nextDue: newNextDue };
