@@ -4437,21 +4437,19 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      border: 1px solid color-mix(in srgb, var(--in) 35%, transparent);
-      background: color-mix(in srgb, var(--in) 12%, transparent);
-      color: var(--in);
-      font-family: 'DM Mono', monospace;
+      gap: 3px;
       font-size: 9px;
+      font-family: 'DM Mono', monospace;
       font-weight: 700;
-      letter-spacing: .3px;
+      letter-spacing: .4px;
       text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 50px;
+      color: var(--in);
+      background: color-mix(in srgb, var(--in) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--in) 35%, transparent);
       cursor: pointer;
-      white-space: nowrap;
-      transition: background .15s, border-color .15s;
-      min-height: 28px;
+      transition: all 0.2s ease;
     }
     .log-pay-pill:hover {
       background: color-mix(in srgb, var(--in) 22%, transparent);
@@ -12881,8 +12879,12 @@
           + '<div class="sub-card-plan">' + planLabel + ' Plan<span style="white-space:nowrap">&nbsp;\u00b7&nbsp; ' + freqLabel + '</span></div>'
           + '<div class="sub-card-renewal">Next Renewal: <span>' + renewalDate + '</span>' + (rec.paymentsLimit ? ' &nbsp;\u00b7&nbsp; ' + (rec.paymentsMade || 0) + '/' + rec.paymentsLimit + ' paid' : '') + '</div>'
           + '</div>'
-          + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div>'
-          + (rec.autoLog === false && rec.active && !isManualDue ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">Log Payment</button>' : '')
+          + '<div class="sub-card-right">'
+          + '<div style="display:flex; gap:6px; align-items:center;">'
+          + (rec.autoLog === false && rec.active && !isManualDue ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">PAID</button>' : '')
+          + badgeHtml
+          + '</div>'
+          + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div>'
           + '</div>'
           + '</div>'
           + (isManualDue ? '<div style="margin-top:13px; border-top:1px solid var(--bd); padding-top:13px;"><button class="sub-action-btn mark-paid-btn" style="width:100%; padding:10px; font-size:12px; font-weight:500; background:color-mix(in srgb,var(--in) 15%,transparent); color:var(--in); border:1px solid color-mix(in srgb,var(--in) 30%,transparent); border-radius:10px; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="markAsPaid(' + recIdJson + ')"><span style="font-weight:bold; font-size:13px;">✓</span> Mark as Paid</button></div>' : '')
