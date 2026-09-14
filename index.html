@@ -4406,9 +4406,6 @@
       color: var(--mu);
       letter-spacing: .3px;
       margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .sub-card-renewal {
@@ -12814,7 +12811,7 @@
             + '<div class="sub-card-icon">' + catIcon + '</div>'
             + '<div class="sub-card-info">'
             + '<div class="sub-card-name">' + esc(rec.name) + '</div>'
-            + '<div class="sub-card-plan">' + planLabel + ' Plan &nbsp;\u00b7&nbsp; ' + freqLabel + '</div>'
+            + '<div class="sub-card-plan">' + planLabel + ' Plan<span style="white-space:nowrap">&nbsp;\u00b7&nbsp; ' + freqLabel + '</span></div>'
             + '<div class="sub-card-renewal">Last Due: <span>' + renewalDate + '</span>' + (rec.paymentsLimit ? ' &nbsp;\u00b7&nbsp; ' + (rec.paymentsMade || 0) + '/' + rec.paymentsLimit + ' paid' : '') + '</div>'
             + '</div>'
             + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
@@ -12881,7 +12878,7 @@
           + '<div class="sub-card-icon">' + catIcon + '</div>'
           + '<div class="sub-card-info">'
           + '<div class="sub-card-name">' + esc(rec.name) + manualTag + '</div>'
-          + '<div class="sub-card-plan">' + planLabel + ' Plan &nbsp;\u00b7&nbsp; ' + freqLabel + '</div>'
+          + '<div class="sub-card-plan">' + planLabel + ' Plan<span style="white-space:nowrap">&nbsp;\u00b7&nbsp; ' + freqLabel + '</span></div>'
           + '<div class="sub-card-renewal">Next Renewal: <span>' + renewalDate + '</span>' + (rec.paymentsLimit ? ' &nbsp;\u00b7&nbsp; ' + (rec.paymentsMade || 0) + '/' + rec.paymentsLimit + ' paid' : '') + '</div>'
           + '</div>'
           + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div>'
