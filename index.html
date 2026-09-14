@@ -12763,11 +12763,11 @@
           badgeHtml = '<span class="sub-badge badge-archived">\u23f9 Ended</span>';
         } else if (!rec.active) {
           badgeHtml = '<span class="sub-badge badge-paused">\u23f8 Paused</span>';
-        } else if (rec.autoLog === false && isDue) {
+        } else if (isDue && rec.autoLog === false) {
           badgeHtml = '<span class="sub-badge badge-overdue">\u26a0 Overdue</span>';
-        } else if (rec.autoLog === false && daysUntil !== null && daysUntil === 0) {
+        } else if (isDue) {
           badgeHtml = '<span class="sub-badge badge-due">\u26a1 Due Now</span>';
-        } else if (rec.autoLog === false && daysUntil !== null && daysUntil > 0 && daysUntil <= 7) {
+        } else if (daysUntil !== null && daysUntil <= 7) {
           badgeHtml = '<span class="sub-badge badge-soon">\u23f0 In ' + daysUntil + 'd</span>';
         } else {
           badgeHtml = '<span class="sub-badge badge-active">\u2713 Active</span>';
