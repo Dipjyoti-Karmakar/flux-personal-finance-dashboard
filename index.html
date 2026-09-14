@@ -4870,16 +4870,10 @@
       gap: 7px;
       padding-top: 13px;
       border-top: 1px solid var(--bd);
-      overflow-x: auto;
-      scrollbar-width: none; /* Firefox */
-      -webkit-overflow-scrolling: touch;
-    }
-    .sub-card-actions::-webkit-scrollbar {
-      display: none; /* Safari/Chrome */
     }
 
     .sub-action-btn {
-      flex: 1 0 auto;
+      flex: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -5226,14 +5220,13 @@
       }
 
       .sub-action-btn {
-        font-size: 9px;
-        padding: 7px 12px;
-        gap: 4px;
-        flex: 0 0 auto;
+        font-size: 8.5px;
+        padding: 7px 3px;
+        gap: 3px;
       }
 
       .sub-card-actions {
-        padding-bottom: 2px;
+        flex-wrap: wrap;
       }
 
       .sub-hist-stats {
