@@ -13327,16 +13327,55 @@
           const today = getTodayStr();
           const startDue = rec.nextDue && rec.nextDue.match(/^\d{4}-\d{2}-\d{2}$/) ? rec.nextDue : today;
           if (startDue <= today) {
-            // Fast-forward nextDue to the future, guard against infinite loop with cycle cap
-            let currentDue = startDue;
-            let guard = 0;
-            while (currentDue <= today && guard++ < 1000) {
-              const next = computeNextDue(currentDue, rec.freq, rec.customDays, rec.billingDay);
-              if (!next || next === currentDue) break; // computeNextDue returned invalid/same
-              currentDue = next;
+            // For manual-mode subs: check if a payment was already logged for this
+            // due cycle before fast-forwarding. If no payment found, keep nextDue
+            // as-is so the Paid button stays visible after resuming.
+            let shouldAdvance = true;
+            if (rec.autoLog === false) {
+              let wDays = 15;
+              if (rec.freq === 'yearly') wDays = 60;
+              if (rec.freq === 'weekly') wDays = 3;
+              if (rec.freq === 'daily') wDays = 1;
+              if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
+              const dueDateObj = new Date(startDue + 'T00:00:00Z');
+              const winStart = new Date(dueDateObj); winStart.setUTCDate(winStart.getUTCDate() - wDays);
+              const winEnd = new Date(dueDateObj); winEnd.setUTCDate(winEnd.getUTCDate() + wDays);
+              const minD = winStart.toISOString().slice(0, 10);
+              const maxD = winEnd.toISOString().slice(0, 10) < today ? winEnd.toISOString().slice(0, 10) : today;
+              const recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
+              const allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+              const paymentFound = txs && txs.some(t => {
+                if (t.type !== rec.type) return false;
+                if (!t.desc || !recNameLc) return false;
+                const txDescLc = t.desc.trim().toLowerCase();
+                if (recNameLc !== txDescLc) {
+                  if (recNameLc.length < 4 || txDescLc.length < 4) return false;
+                  if (!(txDescLc.includes(recNameLc) || recNameLc.includes(txDescLc))) return false;
+                  if (Math.min(recNameLc.length, txDescLc.length) / Math.max(recNameLc.length, txDescLc.length) < 0.5) return false;
+                }
+                if (!allAmts.includes(Math.abs(t.amount || 0))) return false;
+                if (rec.cat && t.cat && rec.cat !== t.cat) return false;
+                if (t.date < minD || t.date > maxD) return false;
+                return true;
+              });
+              // If no payment found, keep nextDue so the Paid button stays visible
+              if (!paymentFound) shouldAdvance = false;
             }
-            if (currentDue.match(/^\d{4}-\d{2}-\d{2}$/)) updateData.nextDue = currentDue;
+            if (shouldAdvance) {
+              // Fast-forward nextDue to the future, guard against infinite loop with cycle cap
+              let currentDue = startDue;
+              let guard = 0;
+              while (currentDue <= today && guard++ < 1000) {
+                const next = computeNextDue(currentDue, rec.freq, rec.customDays, rec.billingDay);
+                if (!next || next === currentDue) break; // computeNextDue returned invalid/same
+                currentDue = next;
+              }
+              if (currentDue.match(/^\d{4}-\d{2}-\d{2}$/)) updateData.nextDue = currentDue;
+            }
+            // If shouldAdvance is false, we leave nextDue unchanged so the Paid button
+            // remains visible after resume (payment still pending for this cycle).
           }
+
         }
       } catch (e) {
         console.warn('Error computing nextDue during toggle:', e);
