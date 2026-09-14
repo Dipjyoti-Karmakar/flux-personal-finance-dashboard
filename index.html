@@ -12812,7 +12812,7 @@
         // Uses same name+amount+type matching as detectEarlyPayments so it
         // correctly survives pause, resume, and archive→restore cycles.
         let isManualDue = false;
-        if (rec.autoLog === false && rec.nextDue) {
+        if (rec.autoLog === false && rec.nextDue && rec.active && !rec.archived) {
           const recDue = rec.nextDue;
           if (recDue <= today) {
             let wDays = 15;
