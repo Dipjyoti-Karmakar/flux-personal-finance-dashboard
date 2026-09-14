@@ -12855,7 +12855,7 @@
           + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
           + '</div>'
           + '<div class="sub-card-actions">'
-          + ((isManualDue && rec.active) ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">Paid</button>' : '')
+          + (isManualDue ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">Paid</button>' : '')
           + '<button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(' + recIdJson + ',' + (!rec.active) + ')">' + pauseLabel + '</button>'
           + '<button class="sub-action-btn edit-btn" onclick="openEditRecurring(' + recIdJson + ')"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>'
           + '<button class="sub-action-btn del-btn" onclick="askArchiveRecurring(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Archive</button>'
