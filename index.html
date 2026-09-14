@@ -12862,8 +12862,8 @@
           + '</div>'
           + '<div class="sub-card-right">' + badgeHtml + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div></div>'
           + '</div>'
+          + (isManualDue ? '<div style="margin-top:13px; border-top:1px solid var(--bd); padding-top:13px;"><button class="sub-action-btn mark-paid-btn" style="width:100%; padding:10px; font-size:12px; font-weight:500; background:color-mix(in srgb,var(--in) 15%,transparent); color:var(--in); border:1px solid color-mix(in srgb,var(--in) 30%,transparent); border-radius:10px; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="markAsPaid(' + recIdJson + ')"><span style="font-size:1.1em;">✅</span> Mark as Paid</button></div>' : '')
           + '<div class="sub-card-actions">'
-          + (isManualDue ? '<button class="sub-action-btn mark-paid-btn" onclick="markAsPaid(' + recIdJson + ')">Paid</button>' : '')
           + '<button class="sub-action-btn pause-btn" onclick="toggleRecurringActive(' + recIdJson + ',' + (!rec.active) + ')">' + pauseLabel + '</button>'
           + '<button class="sub-action-btn edit-btn" onclick="openEditRecurring(' + recIdJson + ')"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button>'
           + '<button class="sub-action-btn del-btn" onclick="askArchiveRecurring(' + recIdJson + ')"><img src="emojis/remove.png" class="c-ico" alt=""> Archive</button>'
