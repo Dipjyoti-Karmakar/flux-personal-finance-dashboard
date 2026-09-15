@@ -14836,7 +14836,7 @@
       let confirmed = false;
       showConfirm(
         'Log Payment',
-        `Log a payment of ${amtDisplay} for \u201c${rec.name}\u201d? This will record today\u2019s ${rec.type === 'income' ? 'income' : 'expense'} and advance the next due date.`,
+        `Log a payment of ${amtDisplay} for \u201c${rec.name}\u201d due on ${fmtDt(rec.nextDue)}? This will record today\u2019s ${rec.type === 'income' ? 'income' : 'expense'} and advance the next due date.`,
         () => {
           confirmed = true;
           _doMarkAsPaid(recId);
