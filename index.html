@@ -14836,7 +14836,7 @@
       let confirmed = false;
       showConfirm(
         'Log Payment',
-        `Log a payment of ${amtDisplay} for \u201c${rec.name}\u201d? This will record today\u2019s expense and advance the next due date.`,
+        `Log a payment of ${amtDisplay} for \u201c${rec.name}\u201d? This will record today\u2019s ${rec.type === 'income' ? 'income' : 'expense'} and advance the next due date.`,
         () => {
           confirmed = true;
           _doMarkAsPaid(recId);
@@ -14917,11 +14917,19 @@
         // IMPORTANT: mutate side-effect Set AFTER the transaction commits, not inside callback
         _pendingRecUpdates.add(recId);
 
+        // OPTIMISTIC LOCAL UPDATE:
+        // Update the local object so the UI reflects the payment instantly before the snapshot arrives.
+        rec.nextDue = committedNextDue;
+        rec.paymentsMade = committedPaymentsMade;
+        if (committedDeactivate) rec.active = false;
+
         const msg = committedDeactivate
-          ? `\u2705 Final payment logged — ${committedName} complete`
+          ? `\u2705 Final payment logged \u2014 ${committedName} complete`
           : `\u2705 Payment logged for ${committedName}`;
         showToast(msg, 'ok');
+        
         renderRecurring();
+        if (typeof checkUpcomingBills === 'function') checkUpcomingBills();
       } catch (e) {
         if (e === 'not_manual') {
           // B7 FIX: Surface this clearly — sub was switched to auto-log between render and click.
