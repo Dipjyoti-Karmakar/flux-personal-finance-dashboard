@@ -12847,38 +12847,44 @@
         // Uses same name+amount+type matching as detectEarlyPayments so it
         // correctly survives pause, resume, and archive→restore cycles.
         let isManualDue = false;
+        let showEarlyPay = false;
         if (rec.autoLog === false && rec.nextDue && rec.active && !rec.archived) {
           const recDue = rec.nextDue;
-          if (recDue <= today) {
-            let wDays = 15;
-            if (rec.freq === 'yearly') wDays = 60;
-            if (rec.freq === 'weekly') wDays = 3;
-            if (rec.freq === 'daily') wDays = 1;
-            if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
-            // FIX: use local midnight ('T00:00:00') not UTC ('T00:00:00Z') — otherwise the
-            // window boundary is off by the timezone offset (e.g. 5h30m in IST).
-            const dueDate = new Date(recDue + 'T00:00:00');
-            const windowStart = new Date(dueDate); windowStart.setDate(windowStart.getDate() - wDays);
-            const windowEnd = new Date(dueDate); windowEnd.setDate(windowEnd.getDate() + wDays);
-            const minD = windowStart.toISOString().slice(0, 10);
-            const maxD = windowEnd.toISOString().slice(0, 10) < today ? windowEnd.toISOString().slice(0, 10) : today;
-            const recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
-            const allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
-            const alreadyPaid = txs && txs.some(t => {
-              if (t.type !== rec.type) return false;
-              if (!t.desc || !recNameLc) return false;
-              const txDescLc = t.desc.trim().toLowerCase();
-              if (recNameLc !== txDescLc) {
-                if (recNameLc.length < 4 || txDescLc.length < 4) return false;
-                if (!(txDescLc.includes(recNameLc) || recNameLc.includes(txDescLc))) return false;
-                if (Math.min(recNameLc.length, txDescLc.length) / Math.max(recNameLc.length, txDescLc.length) < 0.5) return false;
-              }
-              if (!allAmts.includes(Math.abs(t.amount || 0))) return false;
-              if (rec.cat && t.cat && rec.cat !== t.cat) return false;
-              if (t.date < minD || t.date > maxD) return false;
-              return true;
-            });
-            isManualDue = !alreadyPaid;
+          let wDays = 15;
+          if (rec.freq === 'yearly') wDays = 60;
+          if (rec.freq === 'weekly') wDays = 3;
+          if (rec.freq === 'daily') wDays = 1;
+          if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
+          // FIX: use local midnight ('T00:00:00') not UTC ('T00:00:00Z') — otherwise the
+          // window boundary is off by the timezone offset (e.g. 5h30m in IST).
+          const dueDate = new Date(recDue + 'T00:00:00');
+          const windowStart = new Date(dueDate); windowStart.setDate(windowStart.getDate() - wDays);
+          const windowEnd = new Date(dueDate); windowEnd.setDate(windowEnd.getDate() + wDays);
+          const minD = windowStart.toISOString().slice(0, 10);
+          const maxD = windowEnd.toISOString().slice(0, 10) < today ? windowEnd.toISOString().slice(0, 10) : today;
+          const recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
+          const allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
+          const alreadyPaid = txs && txs.some(t => {
+            if (t.type !== rec.type) return false;
+            if (!t.desc || !recNameLc) return false;
+            const txDescLc = t.desc.trim().toLowerCase();
+            if (recNameLc !== txDescLc) {
+              if (recNameLc.length < 4 || txDescLc.length < 4) return false;
+              if (!(txDescLc.includes(recNameLc) || recNameLc.includes(txDescLc))) return false;
+              if (Math.min(recNameLc.length, txDescLc.length) / Math.max(recNameLc.length, txDescLc.length) < 0.5) return false;
+            }
+            if (!allAmts.includes(Math.abs(t.amount || 0))) return false;
+            if (rec.cat && t.cat && rec.cat !== t.cat) return false;
+            if (t.date < minD || t.date > maxD) return false;
+            return true;
+          });
+
+          if (!alreadyPaid) {
+            if (recDue <= today) {
+              isManualDue = true;
+            } else if (today >= minD) {
+              showEarlyPay = true;
+            }
           }
         }
         const pauseLabel = rec.active
@@ -12899,7 +12905,7 @@
           + '</div>'
           + '<div class="sub-card-right">'
           + '<div style="display:flex; gap:6px; align-items:center;">'
-          + (rec.autoLog === false && rec.active && !isManualDue ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">PAY</button>' : '')
+          + (showEarlyPay ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">PAY</button>' : '')
           + badgeHtml
           + '</div>'
           + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div>'
