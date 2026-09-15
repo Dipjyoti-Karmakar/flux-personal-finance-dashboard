@@ -6354,6 +6354,20 @@
       gap: 8px;
     }
 
+    @media(min-width: 640px) {
+      /* Uniform dashboard animation on desktop */
+      #dashboardView .mg > .pn,
+      #dashboardView .mg > .insight-card,
+      #dashboardView .mg > .ys {
+        animation: cardInDown .6s cubic-bezier(0.16, 1, 0.3, 1) backwards !important;
+        animation-delay: .2s !important;
+      }
+      /* Trend Chart appears slightly faster */
+      #dashboardView .mg > .pn:nth-child(2) {
+        animation-delay: .1s !important;
+      }
+    }
+
     /* ── Mobile Redesign Additions ── */
     .mobile-bottom-nav {
       position: fixed;
