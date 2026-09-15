@@ -4329,6 +4329,9 @@
         gap: 16px;
         align-items: start;
       }
+      .sub-grid .sub-card {
+        --card-delay: var(--card-row);
+      }
     }
 
     /* Subscription Card */
@@ -4342,6 +4345,7 @@
       min-width: 0;
       max-width: 100%;
       box-sizing: border-box;
+      --card-delay: var(--card-idx);
     }
 
     .sub-card:hover {
