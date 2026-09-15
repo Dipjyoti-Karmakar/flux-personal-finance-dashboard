@@ -12849,20 +12849,19 @@
         let isManualDue = false;
         if (rec.autoLog === false && rec.nextDue && rec.active && !rec.archived) {
           const recDue = rec.nextDue;
-          let wDays = 15;
-          if (rec.freq === 'yearly') wDays = 60;
-          if (rec.freq === 'weekly') wDays = 3;
-          if (rec.freq === 'daily') wDays = 1;
-          if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
-          // FIX: use local midnight ('T00:00:00') not UTC ('T00:00:00Z') — otherwise the
-          // window boundary is off by the timezone offset (e.g. 5h30m in IST).
-          const dueDate = new Date(recDue + 'T00:00:00');
-          const windowStart = new Date(dueDate); windowStart.setDate(windowStart.getDate() - wDays);
-          const windowEnd = new Date(dueDate); windowEnd.setDate(windowEnd.getDate() + wDays);
-          const minD = windowStart.toISOString().slice(0, 10);
-          const maxD = windowEnd.toISOString().slice(0, 10) < today ? windowEnd.toISOString().slice(0, 10) : today;
-          
-          if (today >= minD) {
+          if (recDue <= today) {
+            let wDays = 15;
+            if (rec.freq === 'yearly') wDays = 60;
+            if (rec.freq === 'weekly') wDays = 3;
+            if (rec.freq === 'daily') wDays = 1;
+            if (rec.freq === 'custom') wDays = Math.max(1, Math.floor((rec.customDays || 1) / 2));
+            // FIX: use local midnight ('T00:00:00') not UTC ('T00:00:00Z') — otherwise the
+            // window boundary is off by the timezone offset (e.g. 5h30m in IST).
+            const dueDate = new Date(recDue + 'T00:00:00');
+            const windowStart = new Date(dueDate); windowStart.setDate(windowStart.getDate() - wDays);
+            const windowEnd = new Date(dueDate); windowEnd.setDate(windowEnd.getDate() + wDays);
+            const minD = windowStart.toISOString().slice(0, 10);
+            const maxD = windowEnd.toISOString().slice(0, 10) < today ? windowEnd.toISOString().slice(0, 10) : today;
             const recNameLc = rec.name ? rec.name.trim().toLowerCase() : '';
             const allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
             const alreadyPaid = txs && txs.some(t => {
