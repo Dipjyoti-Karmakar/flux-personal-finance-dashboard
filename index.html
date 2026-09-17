@@ -8054,14 +8054,14 @@
           await signOut(auth);
         } catch (e) {
           console.error(e);
-          showToast(window.i18next.t('toasts.sign_out_failed'), "er");
+          showToast(i18n.t('toasts.sign_out_failed'), "er");
         }
       } else {
         try {
           await signInWithPopup(auth, provider);
         } catch (e) {
           console.error(e);
-          showToast(window.i18next.t('toasts.login_failed'), "er");
+          showToast(i18n.t('toasts.login_failed'), "er");
         }
       }
     }
