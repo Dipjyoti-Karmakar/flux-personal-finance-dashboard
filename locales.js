@@ -4,7 +4,8 @@ window.TRANSLATIONS = {
       header: {
         logo_sub: "Personal Finance",
         dark_mode: "Dark",
-        light_mode: "Light"
+        light_mode: "Light",
+        lang_select: "Select Language"
       },
       toasts: {
         sign_out_failed: "Sign out failed",
@@ -17,7 +18,8 @@ window.TRANSLATIONS = {
       header: {
         logo_sub: "Finanzas Personales",
         dark_mode: "Oscuro",
-        light_mode: "Claro"
+        light_mode: "Claro",
+        lang_select: "Seleccionar Idioma"
       },
       toasts: {
         sign_out_failed: "Fallo al cerrar sesión",
@@ -30,7 +32,8 @@ window.TRANSLATIONS = {
       header: {
         logo_sub: "व्यक्तिगत वित्त",
         dark_mode: "डार्क",
-        light_mode: "लाइट"
+        light_mode: "लाइट",
+        lang_select: "भाषा चुनें"
       },
       toasts: {
         sign_out_failed: "साइन आउट विफल रहा",

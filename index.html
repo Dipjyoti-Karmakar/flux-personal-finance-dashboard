@@ -6876,7 +6876,7 @@
             <button class="thtog" id="thtog_desktop"></button>
           </div>
           <!-- Language Selector -->
-          <select id="langSelect" onchange="changeLang(this.value)" style="padding: 4px 8px; border-radius: 6px; background: var(--s2); color: var(--tx); border: 1px solid var(--bd); font-size: 12px; font-family: 'DM Mono', monospace; outline: none; cursor: pointer;">
+          <select id="langSelect" onchange="changeLang(this.value)" aria-label="Select Language" data-i18n-label="header.lang_select" style="padding: 2px 6px; border-radius: 6px; background: var(--s2); color: var(--tx); border: 1px solid var(--bd); font-size: 12px; font-family: 'DM Mono', monospace; outline: none; cursor: pointer;">
             <option value="en">EN</option>
             <option value="es">ES</option>
             <option value="hi">HI</option>
@@ -7799,8 +7799,10 @@
     let analysisMode = 'month';
 
     // --- i18n Initialization ---
-    i18next
-      .use(i18nextBrowserLanguageDetector)
+    const i18n = window.i18next;
+    
+    i18n
+      .use(window.i18nextBrowserLanguageDetector)
       .init({
         fallbackLng: 'en',
         debug: false,
@@ -7812,21 +7814,28 @@
       }, function(err, t) {
         // Init complete, update DOM
         if (document.getElementById('langSelect')) {
-          document.getElementById('langSelect').value = (i18next.language || 'en').split('-')[0];
+          const resolved = i18n.resolvedLanguage || 'en';
+          document.getElementById('langSelect').value = resolved.split('-')[0];
         }
         updateDOM();
       });
 
     window.changeLang = function(lng) {
-      i18next.changeLanguage(lng, function() {
+      i18n.changeLanguage(lng, function() {
         updateDOM();
       });
     };
 
     window.updateDOM = function() {
+      const currentLang = i18n.resolvedLanguage || 'en';
+      document.documentElement.lang = currentLang;
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        el.innerText = i18next.t(key);
+        el.innerText = i18n.t(key);
+      });
+      document.querySelectorAll('[data-i18n-label]').forEach(el => {
+        const key = el.getAttribute('data-i18n-label');
+        el.setAttribute('aria-label', i18n.t(key));
       });
     };
 
@@ -8045,14 +8054,14 @@
           await signOut(auth);
         } catch (e) {
           console.error(e);
-          showToast(i18next.t('toasts.sign_out_failed'), "er");
+          showToast(window.i18next.t('toasts.sign_out_failed'), "er");
         }
       } else {
         try {
           await signInWithPopup(auth, provider);
         } catch (e) {
           console.error(e);
-          showToast(i18next.t('toasts.login_failed'), "er");
+          showToast(window.i18next.t('toasts.login_failed'), "er");
         }
       }
     }
