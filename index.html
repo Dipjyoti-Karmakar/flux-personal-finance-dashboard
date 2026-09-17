@@ -7800,6 +7800,25 @@
 
     // --- i18n Initialization ---
     const i18n = window.i18next;
+
+    window.updateDOM = function() {
+      const currentLang = i18n.resolvedLanguage || 'en';
+      document.documentElement.lang = currentLang;
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.innerText = i18n.t(key);
+      });
+      document.querySelectorAll('[data-i18n-label]').forEach(el => {
+        const key = el.getAttribute('data-i18n-label');
+        el.setAttribute('aria-label', i18n.t(key));
+      });
+    };
+
+    window.changeLang = function(lng) {
+      i18n.changeLanguage(lng, function() {
+        window.updateDOM();
+      });
+    };
     
     i18n
       .use(window.i18nextBrowserLanguageDetector)
@@ -7817,28 +7836,8 @@
           const resolved = i18n.resolvedLanguage || 'en';
           document.getElementById('langSelect').value = resolved.split('-')[0];
         }
-        updateDOM();
+        window.updateDOM();
       });
-
-    window.changeLang = function(lng) {
-      i18n.changeLanguage(lng, function() {
-        updateDOM();
-      });
-    };
-
-    window.updateDOM = function() {
-      const currentLang = i18n.resolvedLanguage || 'en';
-      document.documentElement.lang = currentLang;
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        el.innerText = i18n.t(key);
-      });
-      document.querySelectorAll('[data-i18n-label]').forEach(el => {
-        const key = el.getAttribute('data-i18n-label');
-        el.setAttribute('aria-label', i18n.t(key));
-      });
-    };
-
     let cDtFilt = 'today';
     let cTyFilt = 'all';
     let cModeFilt = 'all';
