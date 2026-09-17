@@ -2870,9 +2870,7 @@
         text-overflow: ellipsis;
       }
 
-      #txFxHint:empty {
-        display: none;
-      }
+
 
       .sbtn {
         padding: 16px;
@@ -4622,69 +4620,6 @@
     }
     .dsb-pay-btn:hover { background: color-mix(in srgb, var(--in) 25%, transparent); }
 
-    /* ── Foreign Currency Pill on TX card ── */
-    .tx-fx-pill {
-      display: inline-block;
-      font-size: 9px;
-      font-family: 'DM Mono', monospace;
-      font-weight: 600;
-      letter-spacing: .3px;
-      color: var(--mu);
-      background: color-mix(in srgb, var(--mu) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--mu) 20%, transparent);
-      border-radius: 4px;
-      padding: 1px 5px;
-      margin-left: 4px;
-      vertical-align: middle;
-    }
-
-    /* ── Currency selector in Add TX form ── */
-    .tx-currency-row {
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-    }
-    .tx-currency-row .fd:first-child { flex: 1; }
-    .tx-currency-wrapper {
-      position: relative;
-      width: 55px;
-      flex-shrink: 0;
-    }
-    #txCurrency {
-      width: 100%;
-      padding-left: 0;
-      padding-right: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-    #txCurrOverlay {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--s2);
-      border: 1px solid var(--bd);
-      border-radius: var(--rs);
-      color: var(--tx);
-      font-family: 'DM Mono', monospace;
-      font-size: 16px;
-      pointer-events: none;
-      box-sizing: border-box;
-    }
-    #txCurrency:focus + #txCurrOverlay {
-      border-color: color-mix(in srgb, var(--tx) 50%, transparent);
-    }
-    #txFxHint {
-      font-size: 10px;
-      color: var(--mu);
-      margin-top: 4px;
-      min-height: 14px;
-      font-family: 'DM Mono', monospace;
-    }
-    #txFxHint:empty {
-      display: none;
-    }
 
     /* ── Auto-log toggle row in recurring modal ── */
     .rec-autolog-row {
@@ -7100,28 +7035,10 @@
               </div>
             </div>
             <div class="fr">
-              <div class="tx-currency-row">
-                <div class="fd"><label>Amount</label><input type="number" id="txA" placeholder="0.00" min="0"
-                    step="0.01" oninput="onTxAmountChange()"></div>
-                <div class="tx-currency-wrapper">
-                  <select id="txCurrency" onchange="document.getElementById('txCurrOverlay').textContent = this.options[this.selectedIndex].text.split(' ')[0]; onTxCurrencyChange()" title="Currency">
-                    <option value="INR" title="INR">₹ INR</option>
-                    <option value="USD" title="USD">$ USD</option>
-                    <option value="EUR" title="EUR">€ EUR</option>
-                    <option value="GBP" title="GBP">£ GBP</option>
-                    <option value="JPY" title="JPY">¥ JPY</option>
-                    <option value="AED" title="AED">د.إ AED</option>
-                    <option value="SGD" title="SGD">S$ SGD</option>
-                    <option value="AUD" title="AUD">A$ AUD</option>
-                    <option value="CAD" title="CAD">C$ CAD</option>
-                    <option value="CHF" title="CHF">Fr CHF</option>
-                  </select>
-                  <div id="txCurrOverlay">₹</div>
-                </div>
-              </div>
+              <div class="fd"><label>Amount</label><input type="number" id="txA" placeholder="0.00" min="0"
+                  step="0.01"></div>
               <div class="fd"><label>Date</label><input type="date" id="txDt"></div>
             </div>
-            <div id="txFxHint"></div>
             <div class="fd full-mob"><label>Event (Optional)</label><select id="txEvent">
                 <option value="">— No Event —</option>
               </select></div>
@@ -7899,8 +7816,6 @@
     let currentRecFreq = 'monthly';
     let currentRecMode = 'online';
     let currentRecAutoLog = true; // Auto-log toggle state for recurring modal
-    let _fxRates = null;          // Cached exchange rates { USD: 0.012, ... } (INR-based)
-    let _fxRateTs = 0;            // Timestamp of last FX fetch
     let _notifSessionFired = new Set(); // Sub IDs already notified this session
     let _showingArchivedSubs = false; // true = Archived view, false = Active view
     let reportPeriodMode = 'month';
@@ -8111,7 +8026,6 @@
         loadActivityLog();
         loadRecurring();
         // Kick off non-blocking feature initialisation
-        fetchExchangeRates().catch(() => {}); // FX rates for multi-currency
         requestBillNotifications();           // Soft notification permission nudge
         // Clear stale localStorage activity log (migrated to Firestore)
         try { localStorage.removeItem('flux_activity_log'); } catch (_) { }
@@ -8544,22 +8458,10 @@
         }
 
         const eventId = document.getElementById('txEvent').value || '';
-        const txCurrency = (document.getElementById('txCurrency') || {}).value || 'INR';
         let finalAmt = amt;
-        let fxFields = {};
-        if (txCurrency !== 'INR') {
-          const rate = (_fxRates && _fxRates[txCurrency]) ? _fxRates[txCurrency] : FX_FALLBACK[txCurrency];
-          if (!rate) {
-            showToast(`Exchange rate for ${txCurrency} unavailable`, 'er');
-            shake('txCurrency');
-            return;
-          }
-          finalAmt = Math.round((amt / rate) * 100) / 100;
-          fxFields = { originalAmount: amt, currency: txCurrency, fxRate: rate };
-        }
         // Guard converted amount too — e.g. 999 trillion JPY would still be astronomical in INR
         if (!isFinite(finalAmt) || finalAmt <= 0 || finalAmt > MAX_AMOUNT) { shake('txA'); return; }
-        const newTx = { type: cType, mode: cMode, desc, amount: finalAmt, cat, date, createdAt: Date.now(), ...fxFields };
+        const newTx = { type: cType, mode: cMode, desc, amount: finalAmt, cat, date, createdAt: Date.now() };
         if (eventId) newTx.eventId = eventId;
         const txId = uid();
 
@@ -8580,8 +8482,7 @@
               }
               if (cType !== rec.type) return false;
               const _allAmts = [Math.abs(rec.amount || 0), ...(rec.altAmounts || []).map(a => Math.abs(a))];
-              // B16 FIX: Compare against finalAmt (INR-converted), not the raw foreign amt.
-              // Without this, a $10 USD entry (≈₹830) could never match a ₹830 subscription.
+
               if (!_allAmts.includes(Math.abs(finalAmt))) return false;
               if (!rec.cat || !cat || rec.cat !== cat) return false;
               return true;
@@ -8644,14 +8545,6 @@
           document.getElementById('txD').value = '';
           document.getElementById('txA').value = '';
           document.getElementById('txDt').value = getTodayStr();
-          // Reset currency selector and hint so next entry starts clean
-          const txCurrEl = document.getElementById('txCurrency');
-          if (txCurrEl) txCurrEl.value = 'INR';
-          // B15 FIX: Also reset the visual overlay so it shows ₹ again, not the old symbol.
-          const txCurrOverlayEl = document.getElementById('txCurrOverlay');
-          if (txCurrOverlayEl) txCurrOverlayEl.textContent = '\u20b9';
-          const txFxHintEl = document.getElementById('txFxHint');
-          if (txFxHintEl) txFxHintEl.textContent = '';
 
           // Log the addition
           writeLog('ADD', { desc, amt: finalAmt, cat, date, mode: cMode, type: cType, eventId: eventId }, cType);
@@ -9486,7 +9379,6 @@
       </div>
       <div class="ta-wrap">
         <span class="ta ${safeType}">${fmt(tx.amount)}</span>
-        ${tx.currency && tx.currency !== 'INR' ? `<span class="tx-fx-pill">${tx.originalAmount ? (typeof FX_SYMBOLS !== 'undefined' && FX_SYMBOLS[tx.currency] ? FX_SYMBOLS[tx.currency] : '') + Number(tx.originalAmount).toLocaleString('en-IN', {maximumFractionDigits:2}) + ' ' + tx.currency : tx.currency}</span>` : ''}
       </div>
       <div style="display:flex;gap:4px;margin-left:8px">
         <button class="td" onclick="editTx(${esc(JSON.stringify(tx.id))})" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
@@ -14752,90 +14644,7 @@
       _deferredPrompt = null;
     });
 
-    // ══════════════════════════════════════════════════════
-    // Feature 8: Multi-Currency — FX Rate Fetching + Hints
-    // ══════════════════════════════════════════════════════
 
-    // Static fallback rates (1 INR = X foreign currency units)
-    const FX_FALLBACK = { USD: 0.01046, EUR: 0.011, GBP: 0.0095, JPY: 1.78, AED: 0.044, SGD: 0.016, AUD: 0.018, CAD: 0.016, CHF: 0.010 };
-    const FX_SYMBOLS = { USD: '$', EUR: '\u20ac', GBP: '\u00a3', JPY: '\u00a5', AED: '\u062f.\u0625', SGD: 'S$', AUD: 'A$', CAD: 'C$', CHF: 'Fr' };
-    const FX_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
-
-    async function fetchExchangeRates() {
-      try {
-        const stored = localStorage.getItem('flux_fx_rates_v2');
-        const ts = parseInt(localStorage.getItem('flux_fx_ts_v2') || '0', 10);
-        if (stored && Date.now() - ts < FX_CACHE_TTL) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-              let valid = true;
-              for (const key in parsed) {
-                const val = parsed[key];
-                if (typeof val !== 'number' || !Number.isFinite(val) || val <= 0) {
-                  valid = false;
-                  break;
-                }
-              }
-              if (valid && Object.keys(parsed).length > 0) {
-                _fxRates = parsed;
-                _fxRateTs = ts;
-                return;
-              }
-            }
-            throw new Error('Invalid cache payload structure');
-          } catch (e) {
-            console.warn('[FX] Cache parse/validation failed, re-fetching', e);
-          }
-        }
-        // open.er-api.com: free, no key, returns rates relative to base
-        const res = await fetch('https://open.er-api.com/v6/latest/INR');
-        if (!res.ok) throw new Error('FX fetch failed');
-        const json = await res.json();
-        if (json.result === 'success' && json.rates && typeof json.rates === 'object' && !Array.isArray(json.rates)) {
-          // B14 FIX: Sanitize rates from API — only keep positive finite numeric values.
-          // Mirrors the validation already applied when reading from the localStorage cache.
-          const sanitized = {};
-          let validCount = 0;
-          for (const [k, v] of Object.entries(json.rates)) {
-            if (typeof v === 'number' && Number.isFinite(v) && v > 0) {
-              sanitized[k] = v;
-              validCount++;
-            }
-          }
-          if (validCount > 0) {
-            _fxRates = sanitized; // rates[USD] = how many USD per 1 INR
-            _fxRateTs = Date.now();
-            localStorage.setItem('flux_fx_rates_v2', JSON.stringify(_fxRates));
-            localStorage.setItem('flux_fx_ts_v2', String(_fxRateTs));
-          }
-        }
-      } catch (e) {
-        // Offline fallback
-        if (!_fxRates) _fxRates = { ...FX_FALLBACK };
-        console.warn('[FX] Using fallback rates:', e.message);
-      }
-    }
-
-    function onTxCurrencyChange() {
-      onTxAmountChange();
-    }
-
-    function onTxAmountChange() {
-      const hintEl = document.getElementById('txFxHint');
-      if (!hintEl) return;
-      const sel = document.getElementById('txCurrency');
-      const currency = sel ? sel.value : 'INR';
-      if (currency === 'INR') { hintEl.textContent = ''; return; }
-      const amt = parseFloat(document.getElementById('txA').value);
-      if (!amt || isNaN(amt) || amt <= 0) { hintEl.textContent = ''; return; }
-      const rates = (_fxRates && _fxRates[currency]) ? _fxRates : null;
-      const rate = rates ? rates[currency] : FX_FALLBACK[currency];
-      if (!rate) { hintEl.textContent = ''; return; }
-      const inrAmt = amt / rate;
-      const isLive = !!(rates && rates[currency]);
-      hintEl.textContent = `\u2248 \u20b9${inrAmt.toLocaleString('en-IN', { maximumFractionDigits: 2 })}${isLive ? ' at live rate' : ' (est. rate)'}`;
-    }
 
     // ══════════════════════════════════════════════════════
     // Feature 7: markAsPaid — Manual subscription confirmation
