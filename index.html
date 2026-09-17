@@ -7749,7 +7749,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const CICO = {
@@ -7998,6 +7998,10 @@
       experimentalAutoDetectLongPolling: true
     });
     const provider = new GoogleAuthProvider();
+    getRedirectResult(auth).catch((error) => {
+      console.error("Redirect auth error:", error);
+      showToast(window.i18next ? window.i18next.t('toasts.login_failed') : "Login failed", "er");
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
       apTheme(theme);
@@ -8057,7 +8061,7 @@
         }
       } else {
         try {
-          await signInWithPopup(auth, provider);
+          await signInWithRedirect(auth, provider);
         } catch (e) {
           console.error(e);
           showToast(i18n.t('toasts.login_failed'), "er");
