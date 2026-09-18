@@ -29,10 +29,6 @@
     integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3"
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
-  <!-- i18next scripts -->
-  <script src="https://unpkg.com/i18next@23.10.1/dist/umd/i18next.min.js"></script>
-  <script src="https://unpkg.com/i18next-browser-languagedetector@7.2.0/dist/umd/i18nextBrowserLanguageDetector.min.js"></script>
-  <script src="locales.js"></script>
   <style>
     :root {
       --bg: #0d0f14;
@@ -6866,21 +6862,12 @@
       <div class="header-top">
         <div>
           <div class="logo">Flu<span>x</span></div>
-          <div class="logo-sub" data-i18n="header.logo_sub">Personal Finance</div>
+          <div class="logo-sub">Personal Finance</div>
         </div>
-        <!-- Controls: Theme Toggle & Language -->
-        <div style="display:flex; align-items:center; gap:16px;">
-          <!-- Desktop and Mobile Theme Toggle -->
-          <div style="display:flex; align-items:center; gap:8px;" class="theme-toggle-desktop">
-            <span class="thlbl" data-i18n="header.dark_mode">Dark</span>
-            <button class="thtog" id="thtog_desktop"></button>
-          </div>
-          <!-- Language Selector -->
-          <select id="langSelect" onchange="changeLang(this.value)" aria-label="Select Language" data-i18n-label="header.lang_select" style="padding: 2px 6px; border-radius: 6px; background: var(--s2); color: var(--tx); border: 1px solid var(--bd); font-size: 12px; font-family: 'DM Mono', monospace; outline: none; cursor: pointer;">
-            <option value="en">EN</option>
-            <option value="es">ES</option>
-            <option value="hi">HI</option>
-          </select>
+        <!-- Desktop and Mobile Theme Toggle -->
+        <div style="display:flex; align-items:center; gap:8px;" class="theme-toggle-desktop">
+          <span class="thlbl">Dark</span>
+          <button class="thtog" id="thtog_desktop"></button>
         </div>
       </div>
       <div class="hr">
@@ -7749,7 +7736,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const CICO = {
@@ -7798,46 +7785,6 @@
     let statsMode = 'month';
     let analysisMode = 'month';
 
-    // --- i18n Initialization ---
-    const i18n = window.i18next;
-
-    window.updateDOM = function() {
-      const currentLang = i18n.resolvedLanguage || 'en';
-      document.documentElement.lang = currentLang;
-      document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        el.innerText = i18n.t(key);
-      });
-      document.querySelectorAll('[data-i18n-label]').forEach(el => {
-        const key = el.getAttribute('data-i18n-label');
-        el.setAttribute('aria-label', i18n.t(key));
-      });
-    };
-
-    window.changeLang = function(lng) {
-      i18n.changeLanguage(lng, function() {
-        window.updateDOM();
-      });
-    };
-    
-    i18n
-      .use(window.i18nextBrowserLanguageDetector)
-      .init({
-        fallbackLng: 'en',
-        debug: false,
-        resources: window.TRANSLATIONS || {},
-        detection: {
-          order: ['localStorage', 'navigator'],
-          caches: ['localStorage']
-        }
-      }, function(err, t) {
-        // Init complete, update DOM
-        if (document.getElementById('langSelect')) {
-          const resolved = i18n.resolvedLanguage || 'en';
-          document.getElementById('langSelect').value = resolved.split('-')[0];
-        }
-        window.updateDOM();
-      });
     let cDtFilt = 'today';
     let cTyFilt = 'all';
     let cModeFilt = 'all';
@@ -7998,10 +7945,6 @@
       experimentalAutoDetectLongPolling: true
     });
     const provider = new GoogleAuthProvider();
-    getRedirectResult(auth).catch((error) => {
-      console.error("Redirect auth error:", error);
-      showToast(window.i18next ? window.i18next.t('toasts.login_failed') : "Login failed", "er");
-    });
 
     document.addEventListener('DOMContentLoaded', () => {
       apTheme(theme);
@@ -8057,14 +8000,14 @@
           await signOut(auth);
         } catch (e) {
           console.error(e);
-          showToast(i18n.t('toasts.sign_out_failed'), "er");
+          showToast("Sign out failed", "er");
         }
       } else {
         try {
-          await signInWithRedirect(auth, provider);
+          await signInWithPopup(auth, provider);
         } catch (e) {
           console.error(e);
-          showToast(i18n.t('toasts.login_failed'), "er");
+          showToast("Login failed", "er");
         }
       }
     }
