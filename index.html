@@ -11869,6 +11869,7 @@
         if (p.isNewEvent) return `<div>${esc(p.desc)}</div><div class="log-meta">New event created</div>`;
         if (p.isDelEvent) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Deleted event</div>`;
         if (p.isRestore) return `<div>${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600">${fmt(p.amt)}</span><span> </span><span>Restored transaction</span></div>`;
+        if (p.isManualPay) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span>Manual subscription payment</span></div>`;
         if (p.isAuto) {
           let dRange = p.dateRange;
           if (!dRange && p.desc.includes('(Auto Catch-up)')) {
@@ -14761,7 +14762,19 @@
           ? `\u2705 Final payment logged \u2014 ${committedName} complete`
           : `\u2705 Payment logged for ${committedName}`;
         showToast(msg, 'ok');
-        
+
+        // Log the manual payment to the activity log
+        const txType = rec.type || 'expense';
+        writeLog('ADD', {
+          desc: committedName,
+          amt: Math.abs(rec.amount),
+          cat: rec.cat || 'other',
+          date: today,
+          mode: rec.mode || 'online',
+          type: txType,
+          isManualPay: true,
+        }, txType);
+
         renderRecurring();
         if (typeof checkUpcomingBills === 'function') checkUpcomingBills();
       } catch (e) {
