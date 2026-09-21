@@ -9008,14 +9008,19 @@
 
       const isPDF = receipt.type === 'application/pdf';
 
-      // Map MIME type -> correct file extension (only used as fallback if name has no extension)
+      // Map MIME type -> correct file extension
       const mimeToExt = {
-        'application/pdf': 'pdf',
-        'image/jpeg':      'jpg',
-        'image/jpg':       'jpg',
-        'image/png':       'png',
-        'image/webp':      'webp',
-        'image/gif':       'gif',
+        'application/pdf':   'pdf',
+        'image/jpeg':        'jpg',
+        'image/jpg':         'jpg',   // non-standard but reported by some Android browsers
+        'image/png':         'png',
+        'image/webp':        'webp',
+        'image/gif':         'gif',
+        'image/bmp':         'bmp',
+        'image/tiff':        'tiff',
+        'image/heic':        'heic',
+        'image/heif':        'heif',
+        'image/svg+xml':     'svg',
       };
 
       // Use the original uploaded filename, but validate the extension.
