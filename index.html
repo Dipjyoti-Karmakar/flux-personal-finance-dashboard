@@ -8296,13 +8296,14 @@
           if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount > 0) {
             // V8: Explicit property pick to prevent prototype pollution — Object.assign
             // copies __proto__ as a regular key which can still pollute downstream spreads.
-            const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId } = data;
+            const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId, receipt } = data;
             const clean = { date, amount, type, mode, desc, cat, createdAt };
             if (eventId) clean.eventId = eventId;
             if (_imp) clean._imp = true;
             if (_recurring) clean._recurring = true;
             if (_auto) clean._auto = true;
             if (subId) clean.subId = subId;
+            if (receipt && receipt.url) clean.receipt = receipt;
 
             // Apply pending optimistic tags to ensure they survive echo snapshots
             if (_pendingTxUpdates.has(doc.id)) {
