@@ -12528,6 +12528,17 @@
         // Decode HTML entities that may have been baked into old stored logs (legacy double-encoding bug)
         const htmlDec = s => String(s).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
         const dfn = (label, oldV, newV) => {
+          if (label === 'Receipts') {
+            const ov = parseInt(oldV) || 0;
+            const nv = parseInt(newV) || 0;
+            const diff = nv - ov;
+            if (diff > 0) {
+              return `<div class="diff-row"><span class="diff-label">RECPT</span><div class="diff-values"><span class="diff-new">+${diff} receipt${diff > 1 ? 's' : ''} added</span></div></div>`;
+            } else if (diff < 0) {
+              const absDiff = -diff;
+              return `<div class="diff-row"><span class="diff-label">RECPT</span><div class="diff-values"><span style="color:var(--ex);font-size:11px;font-family:'DM Mono',monospace;font-weight:600;background:color-mix(in srgb, var(--ex) 10%, transparent);padding:1px 6px;border-radius:4px;">-${absDiff} receipt${absDiff > 1 ? 's' : ''} deleted</span></div></div>`;
+            }
+          }
           const displayLabel = labelMap[label] || label.toUpperCase();
           return `<div class="diff-row"><span class="diff-label">${displayLabel}</span><div class="diff-values"><span class="diff-old">${esc(htmlDec(oldV))}</span><span class="diff-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span class="diff-new">${esc(htmlDec(newV))}</span></div></div>`;
         };
