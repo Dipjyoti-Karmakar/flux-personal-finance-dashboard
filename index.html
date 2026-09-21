@@ -8982,24 +8982,56 @@
     // ── Receipt helpers: download & viewer ───────────────────────────────────
     async function downloadReceipt(receipt) {
       if (!receipt || !receipt.url) return;
+
+      const isPDF = receipt.type === 'application/pdf';
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || (/MacIntel/.test(navigator.platform) && navigator.maxTouchPoints > 1);
+
+      // Images can use Cloudinary's fl_attachment to force download immediately (synchronously)
+      // This bypasses mobile Safari's async popup blocking.
+      if (!isPDF) {
+        const nameNoExt = (receipt.name || 'receipt').replace(/\.[^.]+$/, '');
+        const safeName = nameNoExt.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment)/, `/upload/fl_attachment:${safeName}/`);
+        const a = document.createElement('a');
+        a.href = dlUrl;
+        a.download = receipt.name || 'receipt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        return;
+      }
+
+      // PDFs (raw) don't support fl_attachment on Cloudinary. We must fetch as blob.
+      // To satisfy mobile popup blockers, we pre-open the window synchronously before `await`.
+      let win = null;
+      if (isMobile) {
+        win = window.open('', '_blank');
+        if (win) win.document.write('<div style="font-family:sans-serif;padding:20px;text-align:center;">Processing PDF...</div>');
+      }
+
       try {
         const resp = await fetch(receipt.url);
         if (!resp.ok) throw new Error('Network response was not ok');
         const blob = await resp.blob();
         const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = receipt.name || 'receipt';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        
+        if (isMobile && win) {
+          win.location.href = blobUrl;
+          // Safari natively views the blob PDF in the new tab; user can tap "Share -> Save to Files".
+        } else {
+          if (win) win.close();
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = receipt.name || 'receipt';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
         setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
       } catch (e) {
-        console.warn('Blob download failed, falling back to fl_attachment URL:', e.message);
-        const nameNoExt = (receipt.name || 'receipt').replace(/\.[^.]+$/, '');
-        const safeName = nameNoExt.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment)/, `/upload/fl_attachment:${safeName}/`);
-        window.open(dlUrl, '_blank', 'noopener');
+        if (win) win.close();
+        console.warn('Blob download failed:', e.message);
+        window.open(receipt.url, '_blank', 'noopener'); // final fallback
       }
     }
 
