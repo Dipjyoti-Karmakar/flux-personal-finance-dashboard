@@ -8948,7 +8948,7 @@
       const drop  = document.getElementById(dropId);
       if (file) {
         const sizeMB = (file.size / 1024 / 1024).toFixed(1);
-        if (label) label.textContent = `📎 ${file.name} (${sizeMB} MB)`;
+        if (label) label.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${esc(file.name)} (${sizeMB} MB)`;
         if (drop) drop.classList.add('has-file');
       } else {
         if (label) label.textContent = 'Click or drag to attach receipt';
@@ -9921,7 +9921,7 @@
           ${tx._recurring ? '<span class="bg tx-badge-sub">subscription</span>' : ''}
           ${evtBadge}
           ${tx._imp ? '<span class="bg ip">xlsx</span>' : ''}
-          ${tx.receipts && tx.receipts.length ? `<button class="receipt-badge" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipts))},0)" title="View / Download Receipt" aria-label="View receipt for ${esc(tx.desc)}">📎 ${tx.receipts.length > 1 ? tx.receipts.length + ' receipts' : 'receipt'}</button>` : ''}
+          ${tx.receipts && tx.receipts.length ? `<button class="receipt-badge" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipts))},0)" title="View / Download Receipt" aria-label="View receipt for ${esc(tx.desc)}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${tx.receipts.length > 1 ? tx.receipts.length + ' receipts' : 'receipt'}</button>` : ''}
           <span>${fmtDt(tx.date)}</span>
         </div>
       </div>
@@ -12511,7 +12511,7 @@
           let extraHtml = dRange ? `<span style="opacity:0.5;margin:0 4px;">•</span><span>${dRange}</span>` : '';
           return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span>Auto-recurring</span>${extraHtml}</div>`;
         }
-        let recHtml = p.receipts ? `<span style="opacity:0.5;margin:0 4px;">•</span><span style="font-size:10px;border:1px solid var(--ac);color:var(--ac);padding:1px 5px;border-radius:12px;">📎 ${p.receipts} ${p.receipts > 1 ? 'receipts' : 'receipt'}</span>` : '';
+        let recHtml = p.receipts ? `<span style="opacity:0.5;margin:0 4px;">•</span><span style="font-size:10px;border:1px solid var(--ac);color:var(--ac);padding:1px 5px;border-radius:12px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${p.receipts} ${p.receipts > 1 ? 'receipts' : 'receipt'}</span>` : '';
         return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat || 'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode}</span>${recHtml}</div>`;
       }
       if (action === 'EDIT') {
