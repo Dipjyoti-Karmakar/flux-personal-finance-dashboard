@@ -8936,8 +8936,9 @@
         setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
       } catch (e) {
         console.warn('Blob download failed, falling back to fl_attachment URL:', e.message);
-        // Fallback: Cloudinary fl_attachment forces Content-Disposition:attachment from server
-        const safeName = (receipt.name || 'receipt').replace(/[^a-zA-Z0-9._-]/g, '_');
+        // Strip file extension — Cloudinary treats dots as URL delimiters and rejects them in fl_attachment
+        const nameNoExt = (receipt.name || 'receipt').replace(/\.[^.]+$/, '');
+        const safeName = nameNoExt.replace(/[^a-zA-Z0-9_-]/g, '_');
         const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment)/, `/upload/fl_attachment:${safeName}/`);
         window.open(dlUrl, '_blank', 'noopener');
       }
