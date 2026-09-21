@@ -11609,6 +11609,7 @@
 
       // Build array-of-arrays for SheetJS (header row first)
       const wsData = [headers];
+      const hyperlinks = {};
 
       exportTxs.forEach(t => {
         // Guard: malformed/missing date
@@ -11629,6 +11630,7 @@
           baseRow.push(t.eventId && events[t.eventId] ? events[t.eventId].name : '');
         }
 
+
         if (hasReceipts) {
           // Only receipts with valid URLs
           const validReceipts = Array.isArray(t.receipts)
@@ -11638,8 +11640,11 @@
           if (validReceipts.length === 0) {
             baseRow.push('');
           } else if (validReceipts.length === 1) {
-            // Single receipt: URL as cell value — Excel auto-detects and makes clickable
-            baseRow.push(validReceipts[0].url);
+            // Single receipt: use a formula placeholder, we'll inject HYPERLINK later
+            const r = validReceipts[0];
+            const label = r.name || 'receipt';
+            baseRow.push(label);
+            hyperlinks[wsData.length] = { url: r.url, label };
           } else {
             // Multiple receipts: each URL on its own line, all copy-pasteable
             baseRow.push(validReceipts.map(r => r.url).join('\n'));
@@ -11651,6 +11656,13 @@
       // Create worksheet from the data array
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
+      // --- Inject HYPERLINK formulas for single-receipt cells ---
+      // This forces Excel to natively apply the blue+underline hyperlink style
+      Object.entries(hyperlinks).forEach(([rowIdxStr, meta]) => {
+        const cellRef = XLSX.utils.encode_cell({ r: Number(rowIdxStr), c: receiptColIdx });
+        if (!ws[cellRef]) return;
+        ws[cellRef] = { f: `HYPERLINK("${meta.url}", "${meta.label}")`, v: meta.label, t: 's' };
+      });
 
       // --- Style the header row (bold + background) using cell styles ---
       headers.forEach((_, colIdx) => {
