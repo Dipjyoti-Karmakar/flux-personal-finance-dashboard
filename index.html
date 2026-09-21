@@ -6935,6 +6935,18 @@
       /* Always visible on all screen sizes — overrides any media-query hide rule */
       .txi .td-receipt, .txi-wrap .td-receipt { display: inline-flex !important; }
 
+      /* Receipt badge pill — sits in the left info/badge row, never affects amount alignment */
+      .receipt-badge {
+        display: inline-flex; align-items: center; gap: 3px;
+        padding: 2px 7px; border-radius: 20px;
+        border: 1px solid var(--ac); background: color-mix(in srgb, var(--ac) 12%, transparent);
+        color: var(--ac); font-size: 10px; font-family: 'DM Mono', monospace;
+        cursor: pointer; line-height: 1.4; white-space: nowrap;
+        transition: background .15s;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .receipt-badge:hover { background: color-mix(in srgb, var(--ac) 22%, transparent); }
+
       /* ── Receipt Viewer Modal ──────────────────────────────────────────────── */
       #receiptViewerMod {
         position: fixed; inset: 0; z-index: 4000;
@@ -9775,6 +9787,7 @@
           ${tx._recurring ? '<span class="bg tx-badge-sub">subscription</span>' : ''}
           ${evtBadge}
           ${tx._imp ? '<span class="bg ip">xlsx</span>' : ''}
+          ${tx.receipt && tx.receipt.url ? `<button class="receipt-badge" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipt))})" title="View / Download Receipt" aria-label="View receipt for ${esc(tx.desc)}">📎 receipt</button>` : ''}
           <span>${fmtDt(tx.date)}</span>
         </div>
       </div>
@@ -9785,13 +9798,6 @@
         <button class="td" onclick="editTx(${esc(JSON.stringify(tx.id))})" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
-        ${tx.receipt && tx.receipt.url ? `
-        <button class="td td-receipt" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipt))})" title="View Receipt" aria-label="View receipt for ${esc(tx.desc)}">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        </button>
-        <button class="td td-receipt" onclick="downloadReceipt(${esc(JSON.stringify(tx.receipt))})" title="Download Receipt" aria-label="Download receipt for ${esc(tx.desc)}">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        </button>` : ''}
         <button class="td" onclick="askDelTx(${esc(JSON.stringify(tx.id))})" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
