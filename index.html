@@ -8893,17 +8893,50 @@
       _editReceiptMode = mode;
       document.getElementById('eRTab_replace')?.classList.toggle('act', mode === 'replace');
       document.getElementById('eRTab_add')?.classList.toggle('act', mode === 'add');
+      // Update drop zone label to reflect the chosen mode
+      const lbl = document.getElementById('eReceiptFileLabel');
+      if (lbl) lbl.textContent = mode === 'replace' ? 'Click or drag to replace existing receipt' : 'Click or drag to add alongside existing receipt';
     }
 
     function removeEditReceipt() {
-      window._editReceiptRemoved = true;
-      document.getElementById('eReceiptCurrent').style.display = 'none';
-      const toggle = document.getElementById('eReceiptToggle');
-      if (toggle) toggle.style.display = 'none';
-      showToast('Receipt will be removed when you save', 'ok');
+      showConfirm(
+        'Remove Receipt',
+        'Are you sure you want to remove the attached receipt? This cannot be undone until you cancel the edit.',
+        () => {
+          window._editReceiptRemoved = true;
+          document.getElementById('eReceiptCurrent').style.display = 'none';
+          const toggle = document.getElementById('eReceiptToggle');
+          if (toggle) toggle.style.display = 'none';
+          // Reset label to plain attach
+          const lbl = document.getElementById('eReceiptFileLabel');
+          if (lbl) lbl.textContent = 'Click or drag to attach receipt';
+          showToast('Receipt will be removed when you save', 'ok');
+        },
+        false
+      );
     }
 
-    // ── Receipt Viewer ──────────────────────────────────────────────────────
+    // ── Receipt helpers: download & viewer ───────────────────────────────────
+    async function downloadReceipt(receipt) {
+      if (!receipt || !receipt.url) return;
+      try {
+        const resp = await fetch(receipt.url);
+        if (!resp.ok) throw new Error('Fetch failed');
+        const blob = await resp.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = receipt.name || 'receipt';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
+      } catch {
+        // Fallback: open in new tab if fetch blocked
+        window.open(receipt.url, '_blank', 'noopener');
+      }
+    }
+
     function openReceiptViewer(receipt) {
       if (!receipt || !receipt.url) return;
       const mod = document.getElementById('receiptViewerMod');
@@ -8914,15 +8947,15 @@
       if (!mod || !body) return;
 
       title.textContent = receipt.name || 'Receipt';
-      dlBtn.href = receipt.url;
-      dlBtn.download = receipt.name || 'receipt';
+      // Blob-fetch download preserves original filename (cross-origin href+download doesn't)
+      dlBtn.onclick = (e) => { e.preventDefault(); downloadReceipt(receipt); };
       openBtn.href = receipt.url;
 
       // Render content based on type
       const isImage = receipt.type && receipt.type.startsWith('image/');
       const isPDF   = receipt.type === 'application/pdf';
       if (isImage) {
-        body.innerHTML = `<img src="${escAttr(receipt.url)}" alt="Receipt: ${esc(receipt.name || '')}">` ;
+        body.innerHTML = `<img src="${escAttr(receipt.url)}" alt="Receipt: ${esc(receipt.name || '')}">`;
       } else if (isPDF) {
         body.innerHTML = `<iframe src="${escAttr(receipt.url)}" title="Receipt PDF"></iframe>`;
       } else {
@@ -9745,8 +9778,12 @@
         <button class="td" onclick="editTx(${esc(JSON.stringify(tx.id))})" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
-        ${tx.receipt && tx.receipt.url ? `<button class="td td-receipt" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipt))})" title="View Receipt" aria-label="View receipt for ${esc(tx.desc)}">
+        ${tx.receipt && tx.receipt.url ? `
+        <button class="td td-receipt" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipt))})" title="View Receipt" aria-label="View receipt for ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </button>
+        <button class="td td-receipt" onclick="downloadReceipt(${esc(JSON.stringify(tx.receipt))})" title="Download Receipt" aria-label="Download receipt for ${esc(tx.desc)}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         </button>` : ''}
         <button class="td" onclick="askDelTx(${esc(JSON.stringify(tx.id))})" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -14929,6 +14966,7 @@
     window.previewReceipt = previewReceipt;
     window.removeEditReceipt = removeEditReceipt;
     window.setEditReceiptMode = setEditReceiptMode;
+    window.downloadReceipt = downloadReceipt;
     window.openReceiptViewer = openReceiptViewer;
     window.closeReceiptViewer = closeReceiptViewer;
     window.exportExcel = exportExcel;
