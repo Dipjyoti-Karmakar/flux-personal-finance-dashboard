@@ -7191,7 +7191,7 @@
             <div class="fd full-mob">
               <label>Receipt <span style="color:var(--mu);font-weight:400">(Optional — JPG, PNG, PDF, max 10 MB)</span></label>
               <label class="receipt-drop" id="receiptAddDrop" for="receiptAddFile">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                 <span id="receiptAddLabel">Click or drag to attach receipt</span>
                 <input type="file" id="receiptAddFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="previewReceipt('add', this)">
               </label>
@@ -7952,7 +7952,11 @@
     // Cloudinary unsigned upload config
     const CLOUDINARY_CLOUD = 'wuzhyarc';
     const CLOUDINARY_PRESET = 'flux_receipts';
-    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/auto/upload`;
+    // Images use /image/upload; PDFs use /raw/upload (avoids 401 from image-only presets)
+    const CLOUDINARY_IMG_URL  = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
+    const CLOUDINARY_RAW_URL  = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/raw/upload`;
+    // Keep the old name as a fallback alias used elsewhere
+    const CLOUDINARY_UPLOAD_URL = CLOUDINARY_IMG_URL;
 
     const CICO = {
       food: '<img src="emojis/food.png" class="c-ico" alt="" />',
@@ -8404,6 +8408,19 @@
         text.style.color = 'var(--tx)';
 
         debouncedRender();
+        // Guard: if a receipt upload is in-flight for a tx that just appeared in the
+        // snapshot without its receipt (race: snapshot arrived before setDoc confirmed
+        // the receipt field), re-patch from the in-memory pending receipt map.
+        if (_pendingReceiptPatches && _pendingReceiptPatches.size > 0) {
+          _pendingReceiptPatches.forEach((rMeta, txId) => {
+            const tx = txs.find(t => t.id === txId);
+            if (tx && !tx.receipt) {
+              tx.receipt = rMeta; // re-apply until Firestore confirms it
+            } else if (tx && tx.receipt && tx.receipt.url === rMeta.url) {
+              _pendingReceiptPatches.delete(txId); // confirmed — stop patching
+            }
+          });
+        }
       }, (err) => {
         console.error("Cloud sync error:", err);
         const dot = document.getElementById('cloudDot');
@@ -8692,7 +8709,11 @@
           if (progLabel) { progLabel.style.display = 'block'; progLabel.textContent = 'Uploading\u2026'; }
           try {
             const rMeta = await uploadReceipt(receiptFile, txId, 'receiptAddProgBar', progLabel);
-            if (rMeta) newTx.receipt = rMeta;
+            if (rMeta) {
+              newTx.receipt = rMeta;
+              // Register so onSnapshot guard can re-apply if snapshot arrives before Firestore confirms receipt
+              _pendingReceiptPatches.set(txId, rMeta);
+            }
             // B5/B8: reset progress so re-opening Add form shows clean state
             if (progWrap) progWrap.style.display = 'none';
             if (progBar) progBar.style.width = '0%';
@@ -8862,6 +8883,9 @@
       // WL2: sanitise filename — strip path separators, truncate to 100 chars
       const safeName = file.name.replace(/[/\\]/g, '_').slice(0, 100) || 'receipt';
 
+      // Choose endpoint by resource type: raw/upload for PDFs, image/upload for everything else
+      const uploadUrl = effectiveType === 'application/pdf' ? CLOUDINARY_RAW_URL : CLOUDINARY_IMG_URL;
+
       const fd = new FormData();
       fd.append('file', file);
       fd.append('upload_preset', CLOUDINARY_PRESET);
@@ -8869,7 +8893,7 @@
       // Use XHR so we can track upload progress
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', CLOUDINARY_UPLOAD_URL);
+        xhr.open('POST', uploadUrl);
         xhr.upload.onprogress = (e) => {
           if (!e.lengthComputable) return;
           const pct = Math.round(e.loaded / e.total * 100);
@@ -9189,6 +9213,7 @@
     // Values: plain field map for links; null-sentinel per key for unlinks (delete that field).
     const _pendingTxUpdates = new Map(); // Map<txId, { field: value|null }>
     const _pendingTxTokens = new Map();  // Per-operation identity tokens for _pendingTxUpdates safety timeouts
+    const _pendingReceiptPatches = new Map(); // Map<txId, receiptMeta> — guards snapshot race wiping receipt badge
     let _txOpSeq = 0;                    // Monotonic counter — incremented for each link/unlink/autoTag op
     const _txWriteLocks = new Map();     // Prevent concurrent writers on same txId (txId -> opToken)
     let _tagPastRunning = false;         // Re-entrancy guard for tagPastSubscriptions
