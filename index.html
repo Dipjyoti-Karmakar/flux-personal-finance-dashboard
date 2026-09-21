@@ -6958,6 +6958,16 @@
         display: none; align-items: center; justify-content: center; padding: 16px;
       }
       #receiptViewerMod.op { display: flex; }
+      #rvCloseFloating {
+        position: absolute; top: 10px; right: 10px;
+        width: 36px; height: 36px; min-width: 36px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.25);
+        background: rgba(0,0,0,0.55); color: #fff;
+        cursor: pointer; font-size: 20px; z-index: 10;
+        transition: background .15s;
+      }
+      #rvCloseFloating:hover { background: rgba(255,255,255,0.15); }
       .receipt-viewer-box {
         background: var(--sf); border-radius: var(--r); border: 1px solid var(--bd);
         max-width: 780px; width: 100%; max-height: 92vh;
@@ -7951,11 +7961,11 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Open
           </a>
-          <button class="receipt-viewer-close" onclick="closeReceiptViewer()" aria-label="Close viewer">&times;</button>
         </div>
       </div>
       <div class="receipt-viewer-body" id="rvBody"></div>
     </div>
+    <button id="rvCloseFloating" onclick="closeReceiptViewer()" aria-label="Close viewer">&times;</button>
   </div>
 
   <script type="module">
