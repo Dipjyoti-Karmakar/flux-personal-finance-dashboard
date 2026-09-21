@@ -11598,14 +11598,19 @@
         return;
       }
 
-      const hasEvents = exportTxs.some(t => t.eventId && events[t.eventId]);
+      const hasEvents   = exportTxs.some(t => t.eventId && events[t.eventId]);
+      const hasReceipts = exportTxs.some(t => t.receipts && t.receipts.length > 0);
       const headers = ['Date', 'Description', 'Amount', 'Type', 'Mode', 'Category'];
-      if (hasEvents) headers.push('Event');
+      if (hasEvents)   headers.push('Event');
+      if (hasReceipts) headers.push('Receipt');
 
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
       // Build array-of-arrays for SheetJS (header row first)
       const wsData = [headers];
+      // Keep a parallel list of receipt hyperlink objects per row (index 0 = header → null)
+      const receiptCells = [null];
+
       exportTxs.forEach(t => {
         const [y, mo, d] = t.date.split('-');
         const row = [
@@ -11619,11 +11624,38 @@
         if (hasEvents) {
           row.push(t.eventId && events[t.eventId] ? `🎨 ${events[t.eventId].name}` : '');
         }
+        if (hasReceipts) {
+          if (t.receipts && t.receipts.length > 0) {
+            // Use first receipt as the primary hyperlink; list all names in cell text
+            const names = t.receipts.map(r => r.name || 'receipt').join(', ');
+            row.push(names);
+            // Store hyperlink metadata for first receipt (applied after ws is created)
+            receiptCells.push({ url: t.receipts[0].url, label: names });
+          } else {
+            row.push('');
+            receiptCells.push(null);
+          }
+        }
         wsData.push(row);
       });
 
       // Create worksheet from the data array
       const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+      // --- Inject hyperlinks into Receipt column cells ---
+      if (hasReceipts) {
+        const receiptColIdx = headers.indexOf('Receipt');
+        receiptCells.forEach((meta, rowIdx) => {
+          if (!meta) return;
+          const cellRef = XLSX.utils.encode_cell({ r: rowIdx, c: receiptColIdx });
+          if (!ws[cellRef]) return;
+          ws[cellRef].l = { Target: meta.url, Tooltip: meta.url };
+          ws[cellRef].s = {
+            font: { color: { rgb: '0563C1' }, underline: true },
+            alignment: { wrapText: true }
+          };
+        });
+      }
 
       // --- Style the header row (bold + background) using cell styles ---
       headers.forEach((_, colIdx) => {
@@ -11642,7 +11674,8 @@
           const val = row[ci] !== undefined ? String(row[ci]) : '';
           return Math.max(max, val.length);
         }, h.length);
-        return { wch: Math.min(maxLen + 4, 60) };
+        // Receipt column: cap at 50 since URLs are long
+        return { wch: Math.min(maxLen + 4, ci === headers.indexOf('Receipt') ? 50 : 60) };
       });
       ws['!cols'] = colWidths;
 
