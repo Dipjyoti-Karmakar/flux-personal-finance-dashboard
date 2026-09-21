@@ -7961,7 +7961,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
     // Cloudinary unsigned upload config
     const CLOUDINARY_CLOUD = 'wuzhyarc';
     const CLOUDINARY_PRESET = 'flux_receipts';
@@ -8176,7 +8175,7 @@
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
       experimentalAutoDetectLongPolling: true
     });
-    const storage = getStorage(app);
+    const storage_unused = null; // Firebase Storage not used (requires paid plan)
     const provider = new GoogleAuthProvider();
 
 
@@ -8902,35 +8901,16 @@
       // WL2: sanitise filename
       const safeName = file.name.replace(/[/\\]/g, '_').slice(0, 100) || 'receipt';
 
-      // ── PDFs → Firebase Storage (no ACL restrictions, always publicly readable) ──
-      if (effectiveType === 'application/pdf') {
-        const path = `receipts/${userId}/${txId}_${Date.now()}_${safeName}`;
-        const fileRef = storageRef(storage, path);
-        const task = uploadBytesResumable(fileRef, file, { contentType: 'application/pdf' });
-        return new Promise((resolve, reject) => {
-          task.on('state_changed',
-            (snap) => {
-              const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
-              const bar = document.getElementById(barId);
-              if (bar) bar.style.width = pct + '%';
-              if (labelEl) labelEl.textContent = pct < 100 ? `Uploading… ${pct}%` : 'Processing…';
-            },
-            (err) => reject(new Error(err.message || 'Firebase Storage upload failed')),
-            async () => {
-              const url = await getDownloadURL(task.snapshot.ref);
-              resolve({ url, path, name: safeName, size: file.size, type: 'application/pdf', storage: 'firebase' });
-            }
-          );
-        });
-      }
+      // PDFs → /raw/upload (Cloudinary stores as raw, not image-processed)
+      // Images → /image/upload
+      const uploadUrl = effectiveType === 'application/pdf' ? CLOUDINARY_RAW_URL : CLOUDINARY_IMG_URL;
 
-      // ── Images → Cloudinary ──
       const fd = new FormData();
       fd.append('file', file);
       fd.append('upload_preset', CLOUDINARY_PRESET);
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', CLOUDINARY_IMG_URL);
+        xhr.open('POST', uploadUrl);
         xhr.upload.onprogress = (e) => {
           if (!e.lengthComputable) return;
           const pct = Math.round(e.loaded / e.total * 100);
