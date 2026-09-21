@@ -11600,7 +11600,7 @@
       }
 
       const hasEvents   = exportTxs.some(t => t.eventId && events[t.eventId]);
-      const hasReceipts = exportTxs.some(t => Array.isArray(t.receipts) && t.receipts.some(r => r && r.url));
+      const hasReceipts = exportTxs.some(t => Array.isArray(t.receipts) && t.receipts.some(r => r && typeof r.url === 'string' && r.url.trim().startsWith('http')));
       const headers = ['Date', 'Description', 'Amount', 'Type', 'Mode', 'Category'];
       if (hasEvents)   headers.push('Event');
       if (hasReceipts) headers.push('Receipt');
@@ -11635,7 +11635,7 @@
         if (hasReceipts) {
           // Only receipts with valid URLs
           const validReceipts = Array.isArray(t.receipts)
-            ? t.receipts.filter(r => r && r.url)
+            ? t.receipts.filter(r => r && typeof r.url === 'string' && r.url.trim().startsWith('http'))
             : [];
 
           if (validReceipts.length === 0) {
@@ -11677,6 +11677,17 @@
           alignment: { horizontal: 'center', vertical: 'center' }
         };
       });
+
+      // --- Apply wrapText to receipt column cells to preserve line breaks for multiple URLs ---
+      if (hasReceipts) {
+        for (let r = 1; r < wsData.length; r++) {
+          const cellRef = XLSX.utils.encode_cell({ r, c: receiptColIdx });
+          if (ws[cellRef]) {
+            ws[cellRef].s = ws[cellRef].s || {};
+            ws[cellRef].s.alignment = { vertical: 'top', wrapText: true };
+          }
+        }
+      }
 
       // --- Auto-fit column widths based on content ---
       const colWidths = headers.map((h, ci) => {
