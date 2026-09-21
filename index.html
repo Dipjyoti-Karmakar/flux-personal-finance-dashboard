@@ -8985,27 +8985,21 @@
 
       const isPDF = receipt.type === 'application/pdf';
 
-      // Map MIME type -> correct file extension (fallback if filename is missing or wrong)
+      // Map MIME type -> correct file extension (only used as fallback if name has no extension)
       const mimeToExt = {
-        'application/pdf':  'pdf',
-        'image/jpeg':       'jpg',
-        'image/jpg':        'jpg',
-        'image/png':        'png',
-        'image/webp':       'webp',
-        'image/gif':        'gif',
+        'application/pdf': 'pdf',
+        'image/jpeg':      'jpg',
+        'image/jpg':       'jpg',
+        'image/png':       'png',
+        'image/webp':      'webp',
+        'image/gif':       'gif',
       };
 
-      // Returns the filename with the correct extension guaranteed.
-      // If receipt.name already has the right ext, keeps it. Otherwise appends/replaces.
-      function ensureExt(name, mimeType) {
-        const correctExt = mimeToExt[mimeType] || (name.split('.').pop() || 'bin');
-        // Strip any existing extension, then append the correct one
-        const base = name.replace(/\.[^.]+$/, '') || 'receipt';
-        return `${base}.${correctExt}`;
-      }
-
+      // Use the original uploaded filename as-is.
+      // Only append an extension if the name has none (edge case).
       const rawName = receipt.name || 'receipt';
-      const dlName = ensureExt(rawName, receipt.type || '');
+      const hasExt = rawName.includes('.') && rawName.split('.').pop().length > 0;
+      const dlName = hasExt ? rawName : rawName + '.' + (mimeToExt[receipt.type || ''] || 'bin');
 
       // Images can use Cloudinary's fl_attachment to force download immediately (synchronously)
       if (!isPDF) {
