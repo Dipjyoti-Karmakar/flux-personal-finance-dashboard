@@ -7599,7 +7599,8 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 <span id="eReceiptName" style="overflow:hidden;text-overflow:ellipsis;">receipt</span>
               </a>
-              <a id="eReceiptDlLink" href="#" download class="receipt-dl-btn" target="_blank" rel="noopener">
+              <!-- B1: use downloadReceipt() blob approach instead of plain href download (cross-origin filename fix) -->
+              <a id="eReceiptDlLink" href="#" onclick="event.preventDefault();downloadReceipt(window._editReceiptMeta)" class="receipt-dl-btn">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Download
               </a>
@@ -8686,15 +8687,21 @@
         if (receiptFile) {
           const progWrap = document.getElementById('receiptAddProgWrap');
           const progLabel = document.getElementById('receiptAddProgLabel');
+          const progBar = document.getElementById('receiptAddProgBar');
           if (progWrap) progWrap.style.display = 'block';
-          if (progLabel) { progLabel.style.display = 'block'; progLabel.textContent = 'Uploading…'; }
+          if (progLabel) { progLabel.style.display = 'block'; progLabel.textContent = 'Uploading\u2026'; }
           try {
             const rMeta = await uploadReceipt(receiptFile, txId, 'receiptAddProgBar', progLabel);
             if (rMeta) newTx.receipt = rMeta;
+            // B5/B8: reset progress so re-opening Add form shows clean state
+            if (progWrap) progWrap.style.display = 'none';
+            if (progBar) progBar.style.width = '0%';
+            if (progLabel) { progLabel.style.display = 'none'; progLabel.textContent = ''; }
           } catch (e) {
             showToast('Receipt upload failed: ' + e.message, 'er');
             if (progWrap) progWrap.style.display = 'none';
-            if (progLabel) progLabel.style.display = 'none';
+            if (progBar) progBar.style.width = '0%';
+            if (progLabel) { progLabel.style.display = 'none'; progLabel.textContent = ''; }
             return;
           }
         }
@@ -8839,10 +8846,21 @@
 
     async function uploadReceipt(file, _txId, barId, labelEl) {
       if (!file) return null;
-      if (!RECEIPT_ACCEPT_TYPES.includes(file.type))
+      // WL1: fall back to extension check if MIME type is missing (some Android browsers)
+      let effectiveType = file.type;
+      if (!effectiveType || effectiveType === 'application/octet-stream') {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const extMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+                         webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf' };
+        effectiveType = extMap[ext] || '';
+      }
+      if (!RECEIPT_ACCEPT_TYPES.includes(effectiveType))
         throw new Error('Unsupported format. Use JPG, PNG, WEBP, GIF, or PDF.');
       if (file.size > RECEIPT_MAX_BYTES)
         throw new Error('File exceeds 10 MB limit.');
+
+      // WL2: sanitise filename — strip path separators, truncate to 100 chars
+      const safeName = file.name.replace(/[/\\]/g, '_').slice(0, 100) || 'receipt';
 
       const fd = new FormData();
       fd.append('file', file);
@@ -8865,12 +8883,15 @@
             resolve({
               url: res.secure_url,
               publicId: res.public_id,
-              name: file.name,
+              name: safeName,
               size: file.size,
-              type: file.type
+              type: effectiveType
             });
           } else {
-            reject(new Error('Upload failed: ' + xhr.statusText));
+            // B4: parse Cloudinary JSON error body for a meaningful message
+            let errMsg = xhr.statusText || 'Upload failed';
+            try { const r = JSON.parse(xhr.responseText); if (r.error?.message) errMsg = r.error.message; } catch (_) {}
+            reject(new Error(errMsg));
           }
         };
         xhr.onerror = () => reject(new Error('Network error during upload.'));
@@ -9035,8 +9056,10 @@
       if (txData._auto) undoData._auto = true;
       if (txData.subId) undoData.subId = txData.subId;
       if (txData.createdAt) undoData.createdAt = txData.createdAt;
-      // Preserve receipt so undo can restore it (but store storagePath separately for hard-delete on commit)
-      if (txData.receipt) { undoData.receipt = txData.receipt; undoData._receiptPath = txData.receipt.path; }
+      // B7: store receipt for undo restore, but do NOT include _receiptPath as a
+      // Firestore field — it would pollute the document. Keep it only in-memory.
+      if (txData.receipt) { undoData.receipt = txData.receipt; }
+      const _undoReceiptPublicId = txData.receipt?.publicId || null; // B6: use publicId not .path
       _undoTxData = { id, data: undoData };
       // Remove from local array immediately for responsive feel
       txs = txs.filter(t => t.id !== id);
@@ -9070,9 +9093,9 @@
 
       if (!userId) return;
 
-      // Delete the receipt from Firebase Storage (fire-and-forget, non-blocking)
-      if (logData && logData._receiptPath) {
-        deleteReceiptFromStorage(logData._receiptPath).catch(() => {});
+      // B6: Cloudinary uses publicId not .path; deleteReceiptFromStorage is a no-op for now
+      if (logData?._receiptPublicId) {
+        deleteReceiptFromStorage(logData._receiptPublicId).catch(() => {});
       }
 
       try {
@@ -9957,6 +9980,11 @@
 
     function closeEditMod() {
       document.getElementById('editMod').classList.remove('op');
+      // B2: reset removed flag so stale state doesn't carry to next edit
+      window._editReceiptRemoved = false;
+      // B3: clear file input so stale file doesn't re-upload on next open
+      const ef = document.getElementById('eReceiptFile');
+      if (ef) ef.value = '';
       editingTxId = null;
     }
 
@@ -9975,12 +10003,10 @@
         const type = document.getElementById('eTy').value;
         const mode = document.getElementById('eMo').value;
 
-        if (!desc) { shake('eDesc'); return; }
-        // FIXED: Same NaN/Infinity guard as addTx — parseFloat("") gives NaN (!NaN=true passes
-        // incorrectly), and parseFloat("1e500") gives Infinity (> 0 passes incorrectly).
-        // V13: Also guard against excessive amounts.
-        if (isNaN(amt) || !isFinite(amt) || amt <= 0 || amt > MAX_AMOUNT) { shake('eAmt'); return; }
-        if (!date) { shake('eDt'); return; }
+        if (!desc) { _saveEditBusy = false; if (_editSaveBtn) _editSaveBtn.disabled = false; shake('eDesc'); return; }
+        // B10: re-enable button on all early validation returns
+        if (isNaN(amt) || !isFinite(amt) || amt <= 0 || amt > MAX_AMOUNT) { _saveEditBusy = false; if (_editSaveBtn) _editSaveBtn.disabled = false; shake('eAmt'); return; }
+        if (!date) { _saveEditBusy = false; if (_editSaveBtn) _editSaveBtn.disabled = false; shake('eDt'); return; }
 
         const eventId = document.getElementById('eEvent').value || '';
 
@@ -10027,10 +10053,15 @@
             await deleteReceiptFromStorage(prevReceipt.path);
           }
           // Upload new file (for both 'replace' and 'add' modes)
+          // B11: pass eReceiptDrop label for status feedback during edit upload
+          const eDropLabel = document.getElementById('eReceiptFileLabel');
+          if (eDropLabel) eDropLabel.textContent = 'Uploading\u2026';
           try {
-            const rMeta = await uploadReceipt(eReceiptFile, editingTxId + '_' + Date.now(), null, null);
+            const rMeta = await uploadReceipt(eReceiptFile, editingTxId + '_' + Date.now(), null, eDropLabel);
             if (rMeta) updatedTx.receipt = rMeta;
+            if (eDropLabel) eDropLabel.textContent = '\u2714 Uploaded: ' + (rMeta?.name || '');
           } catch (e) {
+            if (eDropLabel) eDropLabel.textContent = 'Click or drag to attach receipt';
             showToast('Receipt upload failed: ' + e.message, 'er');
             return;
           }
