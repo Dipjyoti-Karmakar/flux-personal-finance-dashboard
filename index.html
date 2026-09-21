@@ -4,6 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Prevent browser from serving stale cached JS/HTML -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Flux - Personal Finance</title>
   <link rel="manifest" href="manifest.json?v=2">
   <meta name="theme-color" content="#c8a96e">
@@ -7957,6 +7961,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
     // Cloudinary unsigned upload config
     const CLOUDINARY_CLOUD = 'wuzhyarc';
     const CLOUDINARY_PRESET = 'flux_receipts';
@@ -8171,6 +8176,7 @@
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
       experimentalAutoDetectLongPolling: true
     });
+    const storage = getStorage(app);
     const provider = new GoogleAuthProvider();
 
 
@@ -8878,7 +8884,7 @@
     const RECEIPT_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
     const RECEIPT_ACCEPT_TYPES = ['image/jpeg','image/png','image/webp','image/gif','application/pdf'];
 
-    async function uploadReceipt(file, _txId, barId, labelEl) {
+    async function uploadReceipt(file, txId, barId, labelEl) {
       if (!file) return null;
       // WL1: fall back to extension check if MIME type is missing (some Android browsers)
       let effectiveType = file.type;
@@ -8893,42 +8899,50 @@
       if (file.size > RECEIPT_MAX_BYTES)
         throw new Error('File exceeds 10 MB limit.');
 
-      // WL2: sanitise filename — strip path separators, truncate to 100 chars
+      // WL2: sanitise filename
       const safeName = file.name.replace(/[/\\]/g, '_').slice(0, 100) || 'receipt';
 
-      // PDFs use resource_type=raw (sent as FormData field — overrides image-only preset config)
-      // Images use the image endpoint directly
-      const uploadUrl = effectiveType === 'application/pdf' ? CLOUDINARY_RAW_URL : CLOUDINARY_IMG_URL;
+      // ── PDFs → Firebase Storage (no ACL restrictions, always publicly readable) ──
+      if (effectiveType === 'application/pdf') {
+        const path = `receipts/${userId}/${txId}_${Date.now()}_${safeName}`;
+        const fileRef = storageRef(storage, path);
+        const task = uploadBytesResumable(fileRef, file, { contentType: 'application/pdf' });
+        return new Promise((resolve, reject) => {
+          task.on('state_changed',
+            (snap) => {
+              const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
+              const bar = document.getElementById(barId);
+              if (bar) bar.style.width = pct + '%';
+              if (labelEl) labelEl.textContent = pct < 100 ? `Uploading… ${pct}%` : 'Processing…';
+            },
+            (err) => reject(new Error(err.message || 'Firebase Storage upload failed')),
+            async () => {
+              const url = await getDownloadURL(task.snapshot.ref);
+              resolve({ url, path, name: safeName, size: file.size, type: 'application/pdf', storage: 'firebase' });
+            }
+          );
+        });
+      }
 
+      // ── Images → Cloudinary ──
       const fd = new FormData();
       fd.append('file', file);
       fd.append('upload_preset', CLOUDINARY_PRESET);
-      // Explicitly declare resource type for PDFs so Cloudinary stores as raw (public, not image-processed)
-      if (effectiveType === 'application/pdf') fd.append('resource_type', 'raw');
-
-      // Use XHR so we can track upload progress
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', uploadUrl);
+        xhr.open('POST', CLOUDINARY_IMG_URL);
         xhr.upload.onprogress = (e) => {
           if (!e.lengthComputable) return;
           const pct = Math.round(e.loaded / e.total * 100);
           const bar = document.getElementById(barId);
           if (bar) bar.style.width = pct + '%';
-          if (labelEl) labelEl.textContent = pct < 100 ? `Uploading\u2026 ${pct}%` : 'Processing\u2026';
+          if (labelEl) labelEl.textContent = pct < 100 ? `Uploading… ${pct}%` : 'Processing…';
         };
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             const res = JSON.parse(xhr.responseText);
-            resolve({
-              url: res.secure_url,
-              publicId: res.public_id,
-              name: safeName,
-              size: file.size,
-              type: effectiveType
-            });
+            resolve({ url: res.secure_url, publicId: res.public_id, name: safeName, size: file.size, type: effectiveType });
           } else {
-            // B4: parse Cloudinary JSON error body for a meaningful message
             let errMsg = xhr.statusText || 'Upload failed';
             try { const r = JSON.parse(xhr.responseText); if (r.error?.message) errMsg = r.error.message; } catch (_) {}
             reject(new Error(errMsg));
@@ -9029,17 +9043,36 @@
       dlBtn.onclick = (e) => { e.preventDefault(); downloadReceipt(receipt); };
       openBtn.href = receipt.url;
 
-      const isImage = receipt.type && receipt.type.startsWith('image/');
-      const isPDF   = receipt.type === 'application/pdf';
+      // Detect type: use stored type, or fall back to URL extension
+      let rType = receipt.type || '';
+      if (!rType) {
+        const ext = (receipt.url || '').split('?')[0].split('.').pop().toLowerCase();
+        const extMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+                         webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf' };
+        rType = extMap[ext] || '';
+      }
+
+      const isImage = rType.startsWith('image/');
+      const isPDF   = rType === 'application/pdf';
+      // Old PDFs uploaded to /image/upload/ return 401 — detect and warn
+      const isBrokenPDF = isPDF && receipt.url && receipt.url.includes('/image/upload/');
+
       if (isImage) {
         body.innerHTML = `<img src="${escAttr(receipt.url)}" alt="Receipt: ${esc(receipt.name || '')}">`;
-      } else if (isPDF) {
-        // iframes don't work on mobile for PDFs — show a styled open-card instead
+      } else if (isPDF && !isBrokenPDF) {
+        // Raw Cloudinary PDFs (/raw/upload/) are publicly accessible
         body.innerHTML = `<div class="rv-pdf-card">
           <div style="font-size:40px;line-height:1">📄</div>
           <div style="font-weight:600;margin:8px 0 4px;font-size:14px;color:var(--tx)">${esc(receipt.name || 'document.pdf')}</div>
           <div style="font-size:12px;color:var(--mu);margin-bottom:16px">PDF — tap Open to view</div>
           <a href="${escAttr(receipt.url)}" target="_blank" rel="noopener" class="receipt-viewer-btn pr" style="text-decoration:none;display:inline-flex">Open PDF</a>
+        </div>`;
+      } else if (isBrokenPDF) {
+        // Old PDF uploaded to image endpoint — Cloudinary returns 401 for these
+        body.innerHTML = `<div class="rv-pdf-card">
+          <div style="font-size:36px">⚠️</div>
+          <div style="font-weight:600;margin:8px 0 4px;font-size:14px;color:var(--tx)">${esc(receipt.name || 'document.pdf')}</div>
+          <div style="font-size:12px;color:var(--mu);margin-bottom:12px;max-width:240px;text-align:center">This PDF was uploaded with an older version and can no longer be accessed. Please remove it and re-upload.</div>
         </div>`;
       } else {
         body.innerHTML = `<div class="rv-unsupported">📄 Cannot preview this file type.<br><a href="${escAttr(receipt.url)}" target="_blank" rel="noopener" style="color:var(--ac)">Open in new tab</a></div>`;
