@@ -11604,6 +11604,7 @@
       if (hasEvents)   headers.push('Event');
       if (hasReceipts) headers.push('Receipt');
 
+      const receiptColIdx = hasReceipts ? headers.indexOf('Receipt') : -1;
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
       // Build array-of-arrays for SheetJS (header row first)
