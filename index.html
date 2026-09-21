@@ -9013,7 +9013,9 @@
         
         const a = document.createElement('a');
         a.href = blobUrl;
-        a.download = receipt.name || 'receipt.pdf';
+        const rawName = receipt.name || 'receipt.pdf';
+        const dlName = rawName.toLowerCase().endsWith('.pdf') ? rawName : rawName + '.pdf';
+        a.download = dlName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
