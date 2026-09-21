@@ -8840,7 +8840,7 @@
           if (rBar) rBar.style.width = '0%';
 
           // Log the addition
-          writeLog('ADD', { desc, amt: finalAmt, cat, date, mode: cMode, type: cType, eventId: eventId }, cType);
+          writeLog('ADD', { desc, amt: finalAmt, cat, date, mode: cMode, type: cType, eventId: eventId, receipts: newTx.receipts ? newTx.receipts.length : 0 }, cType);
 
           showToast(navigator.onLine ? 'Transaction added' : 'Saved offline. Will sync when connected.', 'ok');
 
@@ -8982,12 +8982,6 @@
     // ── Receipt helpers: download & viewer ───────────────────────────────────
     async function downloadReceipt(receipt) {
       if (!receipt || !receipt.url) return;
-      const isPDF = receipt.type === 'application/pdf';
-      if (isPDF) {
-        // Raw Cloudinary PDFs serve publicly — open in new tab (browser shows native PDF viewer)
-        window.open(receipt.url, '_blank', 'noopener');
-        return;
-      }
       try {
         const resp = await fetch(receipt.url);
         if (!resp.ok) throw new Error('Network response was not ok');
@@ -10218,6 +10212,9 @@
 
             const oldEvtId = b.eventId || '';
             const newEvtId = eventId || '';
+            const oldRec = (b.receipts || []).length;
+            const newRec = (updatedTx.receipts || []).length;
+            if (oldRec !== newRec) diffs.push({ label: 'Receipts', oldV: oldRec.toString(), newV: newRec.toString() });
             if (diffs.length > 0 || oldEvtId !== newEvtId) {
               if (oldEvtId !== newEvtId) diffs.push({ label: 'Event', oldV: oldEvtId ? events[oldEvtId]?.name || 'Old Event' : 'None', newV: newEvtId ? events[newEvtId]?.name || 'New Event' : 'None' });
               writeLog('EDIT', { desc: b.desc, diffs, eventId: newEvtId, amt: b.amount, cat: b.cat, date: b.date, mode: b.mode, type: b.type });
@@ -12482,7 +12479,8 @@
           let extraHtml = dRange ? `<span style="opacity:0.5;margin:0 4px;">•</span><span>${dRange}</span>` : '';
           return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span>Auto-recurring</span>${extraHtml}</div>`;
         }
-        return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat || 'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
+        let recHtml = p.receipts ? `<span style="opacity:0.5;margin:0 4px;">•</span><span style="font-size:10px;border:1px solid var(--ac);color:var(--ac);padding:1px 5px;border-radius:12px;">📎 ${p.receipts} ${p.receipts > 1 ? 'receipts' : 'receipt'}</span>` : '';
+        return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat || 'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode}</span>${recHtml}</div>`;
       }
       if (action === 'EDIT') {
         if (p.isEventEdit) return `<div>${esc(p.desc)}</div><div class="log-meta">Event updated</div>`;
@@ -12494,7 +12492,7 @@
           metaHtml = `<div class="log-meta" style="margin-top:2px;margin-bottom:6px;"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;">${fmt(p.amt)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.cat || 'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode || 'offline'}</span></div>`;
         }
 
-        const labelMap = { 'Desc': 'DESC', 'Amt': 'AMT', 'Cat': 'CAT', 'Date': 'DATE', 'Mode': 'MODE', 'Type': 'TYPE', 'Event': 'EVENT' };
+        const labelMap = { 'Desc': 'DESC', 'Amt': 'AMT', 'Cat': 'CAT', 'Date': 'DATE', 'Mode': 'MODE', 'Type': 'TYPE', 'Event': 'EVENT', 'Receipts': 'RECPT' };
         // Decode HTML entities that may have been baked into old stored logs (legacy double-encoding bug)
         const htmlDec = s => String(s).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
         const dfn = (label, oldV, newV) => {
