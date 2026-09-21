@@ -23,12 +23,14 @@ service cloud.firestore {
           && request.resource.data.amount is number
           && request.resource.data.desc is string
           && request.resource.data.type in ['income', 'expense']
-          && (!('receipt' in request.resource.data) || request.resource.data.receipt is map);
+          && (!('receipt' in request.resource.data) || request.resource.data.receipt is map)
+          && (!('receipts' in request.resource.data) || request.resource.data.receipts is list);
         allow update: if isOwner(userId)
           && request.resource.data.amount is number
           && request.resource.data.desc is string
           && request.resource.data.type in ['income', 'expense']
-          && (!('receipt' in request.resource.data) || request.resource.data.receipt is map);
+          && (!('receipt' in request.resource.data) || request.resource.data.receipt is map)
+          && (!('receipts' in request.resource.data) || request.resource.data.receipts is list);
       }
 
       // Subscriptions (Recurring) Collection

@@ -6999,6 +6999,24 @@
       .receipt-viewer-body .rv-unsupported {
         text-align: center; color: var(--mu); font-size: 13px; padding: 32px;
       }
+      /* PDF open-card shown instead of broken iframe */
+      .rv-pdf-card {
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 40px 24px; text-align: center; height: 100%;
+      }
+      /* Edit modal receipt list */
+      .receipt-list-item {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 10px; border-radius: 8px;
+        background: var(--sb2); margin-bottom: 6px;
+        border: 1px solid var(--bd);
+      }
+      .receipt-list-icon { font-size: 16px; flex-shrink: 0; }
+      .receipt-list-name {
+        flex: 1; font-size: 12px; color: var(--tx);
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .receipt-list-actions { display: flex; gap: 4px; flex-shrink: 0; }
     </style>
 
 
@@ -7591,32 +7609,16 @@
             </div>
           </div>
           <!-- ── Receipt Section ───────────────────────── -->
-          <!-- Existing receipt (shown when tx has one) -->
-          <div class="fd full-mob" id="eReceiptCurrent" style="display:none">
-            <label>Attached Receipt</label>
-            <div class="receipt-existing-row">
-              <a id="eReceiptViewLink" href="#" onclick="event.preventDefault();openReceiptViewer(window._editReceiptMeta)" class="receipt-link-btn" title="View receipt">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <span id="eReceiptName" style="overflow:hidden;text-overflow:ellipsis;">receipt</span>
-              </a>
-              <!-- B1: use downloadReceipt() blob approach instead of plain href download (cross-origin filename fix) -->
-              <a id="eReceiptDlLink" href="#" onclick="event.preventDefault();downloadReceipt(window._editReceiptMeta)" class="receipt-dl-btn">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                Download
-              </a>
-              <button class="receipt-rm-btn" onclick="removeEditReceipt()">✕ Remove</button>
-            </div>
+          <!-- Existing receipts list (populated by editTx()) -->
+          <div class="fd full-mob" id="eReceiptListSection" style="display:none">
+            <label>Attached Receipts</label>
+            <div id="eReceiptList"></div>
           </div>
-          <!-- Add/Replace receipt section -->
+          <!-- Attach new receipt -->
           <div class="fd full-mob" id="eReceiptNewSection">
             <label id="eReceiptNewLabel">Attach Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span></label>
-            <!-- Tabs: only shown when a receipt already exists -->
-            <div class="receipt-edit-toggle" id="eReceiptToggle" style="display:none">
-              <button class="receipt-edit-tab" id="eRTab_replace" onclick="setEditReceiptMode('replace')">↺ Replace existing</button>
-              <button class="receipt-edit-tab act" id="eRTab_add" onclick="setEditReceiptMode('add')">＋ Add alongside</button>
-            </div>
             <label class="receipt-drop" id="eReceiptDrop" for="eReceiptFile">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
               <span id="eReceiptFileLabel">Click or drag to attach receipt</span>
               <input type="file" id="eReceiptFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="previewReceipt('edit', this)">
             </label>
@@ -7930,7 +7932,13 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <span class="receipt-viewer-title" id="rvTitle">Receipt</span>
         <div class="receipt-viewer-actions">
-          <a id="rvDownloadBtn" href="#" download class="receipt-viewer-btn pr" target="_blank" rel="noopener">
+          <!-- Navigation: only visible when multiple receipts -->
+          <div id="rvNav" style="display:none;align-items:center;gap:4px;margin-right:6px">
+            <button class="receipt-viewer-btn" onclick="rvNav(-1)" aria-label="Previous receipt" style="padding:4px 8px">&#8249;</button>
+            <span id="rvNavLabel" style="font-size:11px;color:var(--mu);white-space:nowrap">1 / 1</span>
+            <button class="receipt-viewer-btn" onclick="rvNav(1)" aria-label="Next receipt" style="padding:4px 8px">&#8250;</button>
+          </div>
+          <a id="rvDownloadBtn" href="#" class="receipt-viewer-btn pr">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Download
           </a>
@@ -7938,7 +7946,7 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
             Open
           </a>
-          <button class="receipt-viewer-close" onclick="closeReceiptViewer()" aria-label="Close viewer">×</button>
+          <button class="receipt-viewer-close" onclick="closeReceiptViewer()" aria-label="Close viewer">&times;</button>
         </div>
       </div>
       <div class="receipt-viewer-body" id="rvBody"></div>
@@ -8313,16 +8321,20 @@
         snapshot.forEach(doc => {
           const data = doc.data();
           if (typeof data.date === 'string' && data.date && typeof data.amount === 'number' && isFinite(data.amount) && data.amount > 0) {
-            // V8: Explicit property pick to prevent prototype pollution — Object.assign
-            // copies __proto__ as a regular key which can still pollute downstream spreads.
-            const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId, receipt } = data;
+            // V8: Explicit property pick to prevent prototype pollution
+            const { date, amount, type, mode, desc, cat, eventId, createdAt, _imp, _recurring, _auto, subId, receipt, receipts } = data;
             const clean = { date, amount, type, mode, desc, cat, createdAt };
             if (eventId) clean.eventId = eventId;
             if (_imp) clean._imp = true;
             if (_recurring) clean._recurring = true;
             if (_auto) clean._auto = true;
             if (subId) clean.subId = subId;
-            if (receipt && receipt.url) clean.receipt = receipt;
+            // Normalize: old single receipt → receipts array; new receipts array passes through
+            if (Array.isArray(receipts) && receipts.length) {
+              clean.receipts = receipts.filter(r => r && r.url);
+            } else if (receipt && receipt.url) {
+              clean.receipts = [receipt]; // backward compat
+            }
 
             // Apply pending optimistic tags to ensure they survive echo snapshots
             if (_pendingTxUpdates.has(doc.id)) {
@@ -8414,10 +8426,11 @@
         if (_pendingReceiptPatches && _pendingReceiptPatches.size > 0) {
           _pendingReceiptPatches.forEach((rMeta, txId) => {
             const tx = txs.find(t => t.id === txId);
-            if (tx && !tx.receipt) {
-              tx.receipt = rMeta; // re-apply until Firestore confirms it
-            } else if (tx && tx.receipt && tx.receipt.url === rMeta.url) {
-              _pendingReceiptPatches.delete(txId); // confirmed — stop patching
+            if (tx && (!tx.receipts || !tx.receipts.some(r => r.url === rMeta.url))) {
+              // Receipt not yet in tx — re-apply optimistically
+              tx.receipts = [...(tx.receipts || []).filter(r => r.url !== rMeta.url), rMeta];
+            } else if (tx && tx.receipts && tx.receipts.some(r => r.url === rMeta.url)) {
+              _pendingReceiptPatches.delete(txId); // Firestore confirmed — stop patching
             }
           });
         }
@@ -8710,8 +8723,8 @@
           try {
             const rMeta = await uploadReceipt(receiptFile, txId, 'receiptAddProgBar', progLabel);
             if (rMeta) {
-              newTx.receipt = rMeta;
-              // Register so onSnapshot guard can re-apply if snapshot arrives before Firestore confirms receipt
+              newTx.receipts = [rMeta]; // array model
+              // Register so onSnapshot guard can re-apply if snapshot arrives before Firestore confirms receipts
               _pendingReceiptPatches.set(txId, rMeta);
             }
             // B5/B8: reset progress so re-opening Add form shows clean state
@@ -8946,29 +8959,23 @@
       }
     }
 
-    // Edit modal receipt mode: 'replace' (old deleted) or 'add' (both kept)
-    let _editReceiptMode = 'add'; // default: add alongside
-    function setEditReceiptMode(mode) {
-      _editReceiptMode = mode;
-      document.getElementById('eRTab_replace')?.classList.toggle('act', mode === 'replace');
-      document.getElementById('eRTab_add')?.classList.toggle('act', mode === 'add');
-      // Update drop zone label to reflect the chosen mode
-      const lbl = document.getElementById('eReceiptFileLabel');
-      if (lbl) lbl.textContent = mode === 'replace' ? 'Click or drag to replace existing receipt' : 'Click or drag to add alongside existing receipt';
-    }
+    // Edit modal: track which existing receipt indices the user removed
+    let _editRemovedIdxs = new Set();
 
-    function removeEditReceipt() {
+    function removeEditReceiptAt(idx) {
       showConfirm(
         'Remove Receipt',
-        'Are you sure you want to remove the attached receipt? This cannot be undone until you cancel the edit.',
+        'Remove this receipt? The change is saved when you tap Save.',
         () => {
-          window._editReceiptRemoved = true;
-          document.getElementById('eReceiptCurrent').style.display = 'none';
-          const toggle = document.getElementById('eReceiptToggle');
-          if (toggle) toggle.style.display = 'none';
-          // Reset label to plain attach
-          const lbl = document.getElementById('eReceiptFileLabel');
-          if (lbl) lbl.textContent = 'Click or drag to attach receipt';
+          _editRemovedIdxs.add(idx);
+          // Hide that specific row in the list
+          const row = document.getElementById('eRItem_' + idx);
+          if (row) row.style.display = 'none';
+          // If all rows hidden, hide the section heading
+          const list = document.getElementById('eReceiptList');
+          if (list && [...list.children].every(c => c.style.display === 'none')) {
+            document.getElementById('eReceiptListSection').style.display = 'none';
+          }
           showToast('Receipt will be removed when you save', 'ok');
         },
         false
@@ -9001,47 +9008,80 @@
       }
     }
 
-    function openReceiptViewer(receipt) {
-      if (!receipt || !receipt.url) return;
-      const mod = document.getElementById('receiptViewerMod');
-      const body = document.getElementById('rvBody');
+    // ── Receipt Viewer ───────────────────────────────────────────────────
+    let _rvReceipts = [];  // current array being viewed
+    let _rvIndex   = 0;   // current position
+
+    function _rvRenderSlide(receipt) {
+      const body  = document.getElementById('rvBody');
       const title = document.getElementById('rvTitle');
       const dlBtn = document.getElementById('rvDownloadBtn');
       const openBtn = document.getElementById('rvOpenBtn');
-      if (!mod || !body) return;
-
+      if (!body) return;
       title.textContent = receipt.name || 'Receipt';
-      // Blob-fetch download preserves original filename (cross-origin href+download doesn't)
       dlBtn.onclick = (e) => { e.preventDefault(); downloadReceipt(receipt); };
       openBtn.href = receipt.url;
 
-      // Render content based on type
       const isImage = receipt.type && receipt.type.startsWith('image/');
       const isPDF   = receipt.type === 'application/pdf';
       if (isImage) {
         body.innerHTML = `<img src="${escAttr(receipt.url)}" alt="Receipt: ${esc(receipt.name || '')}">`;
       } else if (isPDF) {
-        body.innerHTML = `<iframe src="${escAttr(receipt.url)}" title="Receipt PDF"></iframe>`;
+        // iframes don't work on mobile for PDFs — show a styled open-card instead
+        body.innerHTML = `<div class="rv-pdf-card">
+          <div style="font-size:40px;line-height:1">📄</div>
+          <div style="font-weight:600;margin:8px 0 4px;font-size:14px;color:var(--tx)">${esc(receipt.name || 'document.pdf')}</div>
+          <div style="font-size:12px;color:var(--mu);margin-bottom:16px">PDF — tap Open to view</div>
+          <a href="${escAttr(receipt.url)}" target="_blank" rel="noopener" class="receipt-viewer-btn pr" style="text-decoration:none;display:inline-flex">Open PDF</a>
+        </div>`;
       } else {
         body.innerHTML = `<div class="rv-unsupported">📄 Cannot preview this file type.<br><a href="${escAttr(receipt.url)}" target="_blank" rel="noopener" style="color:var(--ac)">Open in new tab</a></div>`;
       }
+    }
+
+    function openReceiptViewer(receiptsOrSingle, startIndex) {
+      // Accept either a receipts[] array (new) or a single receipt object (legacy inline calls)
+      const arr = Array.isArray(receiptsOrSingle) ? receiptsOrSingle : [receiptsOrSingle];
+      if (!arr.length || !arr[0]?.url) return;
+      _rvReceipts = arr;
+      _rvIndex = (typeof startIndex === 'number' && startIndex >= 0 && startIndex < arr.length) ? startIndex : 0;
+
+      const mod = document.getElementById('receiptViewerMod');
+      if (!mod) return;
+
+      // Show/hide navigation
+      const nav = document.getElementById('rvNav');
+      const navLabel = document.getElementById('rvNavLabel');
+      if (nav) nav.style.display = arr.length > 1 ? 'flex' : 'none';
+      if (navLabel) navLabel.textContent = `${_rvIndex + 1} / ${arr.length}`;
+
+      _rvRenderSlide(arr[_rvIndex]);
       mod.classList.add('op');
       document.body.style.overflow = 'hidden';
     }
 
+    function rvNav(dir) {
+      if (!_rvReceipts.length) return;
+      _rvIndex = (_rvIndex + dir + _rvReceipts.length) % _rvReceipts.length;
+      const navLabel = document.getElementById('rvNavLabel');
+      if (navLabel) navLabel.textContent = `${_rvIndex + 1} / ${_rvReceipts.length}`;
+      _rvRenderSlide(_rvReceipts[_rvIndex]);
+    }
+
     function closeReceiptViewer() {
       const mod = document.getElementById('receiptViewerMod');
-      if (mod) { mod.classList.remove('op'); document.getElementById('rvBody').innerHTML = ''; }
+      if (mod) { mod.classList.remove('op'); const b = document.getElementById('rvBody'); if (b) b.innerHTML = ''; }
       document.body.style.overflow = '';
+      _rvReceipts = []; _rvIndex = 0;
     }
 
     function escAttr(s) { return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
     function askDelTx(id) {
       const tx = txs.find(t => t.id === id);
-      const hasReceipt = tx && tx.receipt && tx.receipt.url;
+      const hasReceipt = tx && tx.receipts && tx.receipts.length > 0;
       const msg = hasReceipt
-        ? 'Are you sure? This will also permanently delete the attached receipt. You will have 5 seconds to undo after confirming.'
+        ? 'Are you sure? This will also permanently delete the attached receipt(s). You will have 5 seconds to undo after confirming.'
         : 'Are you sure? You will have 5 seconds to undo after confirming.';
       showConfirm('Delete Transaction', msg, () => executeSoftDelete(id), true);
     }
@@ -9835,7 +9875,7 @@
           ${tx._recurring ? '<span class="bg tx-badge-sub">subscription</span>' : ''}
           ${evtBadge}
           ${tx._imp ? '<span class="bg ip">xlsx</span>' : ''}
-          ${tx.receipt && tx.receipt.url ? `<button class="receipt-badge" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipt))})" title="View / Download Receipt" aria-label="View receipt for ${esc(tx.desc)}">📎 receipt</button>` : ''}
+          ${tx.receipts && tx.receipts.length ? `<button class="receipt-badge" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipts))},0)" title="View / Download Receipt" aria-label="View receipt for ${esc(tx.desc)}">📎 ${tx.receipts.length > 1 ? tx.receipts.length + ' receipts' : 'receipt'}</button>` : ''}
           <span>${fmtDt(tx.date)}</span>
         </div>
       </div>
@@ -9971,25 +10011,30 @@
       document.getElementById('eEvent').value = tx.eventId || '';
 
       // ── Receipt state ────────────────────────────────────────────────────
-      window._editReceiptRemoved = false;
-      window._editReceiptMeta = tx.receipt || null;
-      _editReceiptMode = 'add'; // reset to default
-      const eCurr = document.getElementById('eReceiptCurrent');
-      const eToggle = document.getElementById('eReceiptToggle');
-      const eNewLabel = document.getElementById('eReceiptNewLabel');
-      if (tx.receipt && tx.receipt.url) {
-        // Show existing receipt row
-        const nameEl = document.getElementById('eReceiptName');
-        const dlEl   = document.getElementById('eReceiptDlLink');
-        if (nameEl) nameEl.textContent = tx.receipt.name || 'receipt';
-        if (dlEl)   { dlEl.href = tx.receipt.url; dlEl.download = tx.receipt.name || 'receipt'; }
-        if (eCurr) eCurr.style.display = '';
-        // Show mode toggle tabs
-        if (eToggle) { eToggle.style.display = 'flex'; setEditReceiptMode('add'); }
-        if (eNewLabel) eNewLabel.innerHTML = 'Upload Another Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span>';
+      _editRemovedIdxs = new Set();
+      const existingReceipts = tx.receipts || (tx.receipt ? [tx.receipt] : []);
+      const listSection = document.getElementById('eReceiptListSection');
+      const listEl      = document.getElementById('eReceiptList');
+      const eNewLabel   = document.getElementById('eReceiptNewLabel');
+      if (existingReceipts.length > 0 && listSection && listEl) {
+        listEl.innerHTML = existingReceipts.map((r, i) => {
+          const isPDF = r.type === 'application/pdf';
+          const icon  = isPDF ? '📄' : '🖼️';
+          const safeR = esc(JSON.stringify(r));
+          return `<div class="receipt-list-item" id="eRItem_${i}">
+            <span class="receipt-list-icon">${icon}</span>
+            <span class="receipt-list-name" title="${escAttr(r.name || 'receipt')}">${esc(r.name || 'receipt')}</span>
+            <div class="receipt-list-actions">
+              <button class="receipt-link-btn" onclick="openReceiptViewer(${safeR})" title="View">View</button>
+              <button class="receipt-dl-btn" onclick="downloadReceipt(${safeR})" title="Download">&#8595;</button>
+              <button class="receipt-rm-btn" onclick="removeEditReceiptAt(${i})">✕</button>
+            </div>
+          </div>`;
+        }).join('');
+        listSection.style.display = '';
+        if (eNewLabel) eNewLabel.innerHTML = 'Attach Another Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span>';
       } else {
-        if (eCurr)    eCurr.style.display = 'none';
-        if (eToggle)  eToggle.style.display = 'none';
+        if (listSection) listSection.style.display = 'none';
         if (eNewLabel) eNewLabel.innerHTML = 'Attach Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span>';
       }
       // Reset file input & drop zone
@@ -10005,9 +10050,8 @@
 
     function closeEditMod() {
       document.getElementById('editMod').classList.remove('op');
-      // B2: reset removed flag so stale state doesn't carry to next edit
-      window._editReceiptRemoved = false;
-      // B3: clear file input so stale file doesn't re-upload on next open
+      // Reset multi-receipt edit state
+      _editRemovedIdxs = new Set();
       const ef = document.getElementById('eReceiptFile');
       if (ef) ef.value = '';
       editingTxId = null;
@@ -10040,7 +10084,8 @@
           const b = window._editSnapshot;
           const oldEvtId = b.eventId || '';
           const noFileChosen = !document.getElementById('eReceiptFile')?.files[0];
-          const noReceiptChange = !window._editReceiptRemoved && noFileChosen;
+          const prevReceipts  = b.receipts || (b.receipt ? [b.receipt] : []);
+          const noReceiptChange = _editRemovedIdxs.size === 0 && noFileChosen;
           if (b.desc === desc && b.amount === amt && (b.cat || 'other') === (cat || 'other') &&
               b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId && noReceiptChange) {
             closeEditMod();
@@ -10065,34 +10110,36 @@
           updatedTx.createdAt = window._editSnapshot.createdAt || Date.now();
         }
 
-        // ── Receipt handling in edit flow ──────────────────────────────────
-        const eReceiptFile = document.getElementById('eReceiptFile')?.files[0];
-        const prevReceipt  = window._editSnapshot?.receipt;
-        if (window._editReceiptRemoved) {
-          // User hit ✕ Remove — delete from Storage and clear field
-          if (prevReceipt?.path) await deleteReceiptFromStorage(prevReceipt.path);
-          updatedTx.receipt = deleteField();
-        } else if (eReceiptFile) {
-          if (_editReceiptMode === 'replace' && prevReceipt?.path) {
-            // Replace: delete old file first
-            await deleteReceiptFromStorage(prevReceipt.path);
-          }
-          // Upload new file (for both 'replace' and 'add' modes)
-          // B11: pass eReceiptDrop label for status feedback during edit upload
+        // ── Receipt handling in edit flow (array model) ──────────────────────────
+        const eReceiptFile  = document.getElementById('eReceiptFile')?.files[0];
+        const prevReceipts  = (window._editSnapshot?.receipts || (window._editSnapshot?.receipt ? [window._editSnapshot.receipt] : []));
+        // Filter out indices the user removed
+        let nextReceipts = prevReceipts.filter((_, i) => !_editRemovedIdxs.has(i));
+        // Append new upload if selected
+        if (eReceiptFile) {
           const eDropLabel = document.getElementById('eReceiptFileLabel');
           if (eDropLabel) eDropLabel.textContent = 'Uploading\u2026';
           try {
             const rMeta = await uploadReceipt(eReceiptFile, editingTxId + '_' + Date.now(), null, eDropLabel);
-            if (rMeta) updatedTx.receipt = rMeta;
-            if (eDropLabel) eDropLabel.textContent = '\u2714 Uploaded: ' + (rMeta?.name || '');
+            if (rMeta) {
+              nextReceipts = [...nextReceipts, rMeta];
+              _pendingReceiptPatches.set(editingTxId, rMeta);
+            }
+            if (eDropLabel) eDropLabel.textContent = '\u2714 Uploaded: ' + (nextReceipts.at(-1)?.name || '');
           } catch (e) {
             if (eDropLabel) eDropLabel.textContent = 'Click or drag to attach receipt';
             showToast('Receipt upload failed: ' + e.message, 'er');
+            _saveEditBusy = false; if (_editSaveBtn) _editSaveBtn.disabled = false;
             return;
           }
-        } else if (prevReceipt && !window._editReceiptRemoved) {
-          // No change — preserve existing receipt in the Firestore update
-          updatedTx.receipt = prevReceipt;
+        }
+        // Write to Firestore; always remove legacy single-receipt field
+        if (nextReceipts.length > 0) {
+          updatedTx.receipts = nextReceipts;
+          updatedTx.receipt  = deleteField();
+        } else if (prevReceipts.length > 0) {
+          updatedTx.receipts = deleteField();
+          updatedTx.receipt  = deleteField();
         }
 
         let saved = false;
@@ -15033,11 +15080,11 @@
     window.saveEditTx = saveEditTx;
     // Receipt
     window.previewReceipt = previewReceipt;
-    window.removeEditReceipt = removeEditReceipt;
-    window.setEditReceiptMode = setEditReceiptMode;
+    window.removeEditReceiptAt = removeEditReceiptAt;
     window.downloadReceipt = downloadReceipt;
     window.openReceiptViewer = openReceiptViewer;
     window.closeReceiptViewer = closeReceiptViewer;
+    window.rvNav = rvNav;
     window.exportExcel = exportExcel;
     window.doImport = doImport;
     window.closeMod = closeMod;
