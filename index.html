@@ -9018,11 +9018,17 @@
         'image/gif':       'gif',
       };
 
-      // Use the original uploaded filename as-is.
-      // Only append an extension if the name has none (edge case).
+      // Use the original uploaded filename, but validate the extension.
+      // If the name has a truncated/invalid extension (e.g. ".p" instead of ".pdf"),
+      // replace ONLY the extension while keeping the base name intact.
       const rawName = receipt.name || 'receipt';
-      const hasExt = rawName.includes('.') && rawName.split('.').pop().length > 0;
-      const dlName = hasExt ? rawName : rawName + '.' + (mimeToExt[receipt.type || ''] || 'bin');
+      const knownExts = new Set(['pdf','jpg','jpeg','png','webp','gif','bmp','tiff','tif','heic','heif','svg']);
+      const dotIdx = rawName.lastIndexOf('.');
+      const rawExt = dotIdx !== -1 ? rawName.slice(dotIdx + 1).toLowerCase() : '';
+      const correctExt = mimeToExt[receipt.type || ''] || 'bin';
+      const baseName = dotIdx !== -1 ? rawName.slice(0, dotIdx) : rawName;
+      // If no extension, or extension is unknown/wrong, fix it
+      const dlName = (rawExt && knownExts.has(rawExt)) ? rawName : baseName + '.' + correctExt;
 
       // Images can use Cloudinary's fl_attachment to force download immediately (synchronously)
       if (!isPDF) {
