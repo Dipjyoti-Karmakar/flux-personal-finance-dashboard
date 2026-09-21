@@ -7303,6 +7303,7 @@
                   <button class="ft mode-flt" onclick="setModeFilt('offline', this)">Offline</button>
                   <button class="ft mode-flt" onclick="setModeFilt('event', this)">Event</button>
                   <button class="ft mode-flt" onclick="setModeFilt('subscription', this)">Subscription</button>
+                  <button class="ft mode-flt" onclick="setModeFilt('receipt', this)">📎 Receipt</button>
                 </div>
               </div>
             </div>
@@ -9873,11 +9874,12 @@
       if (cTyFilt === 'income') list = list.filter(t => t.type === 'income');
       else if (cTyFilt === 'expense') list = list.filter(t => t.type === 'expense');
 
-      // Mode: All / Online / Offline / Subscription / Event (event already applied above when isEventFilter)
+      // Mode: All / Online / Offline / Subscription / Receipt / Event (event already applied above when isEventFilter)
       if (!isEventFilter) {
         if (cModeFilt === 'online') list = list.filter(t => t.mode === 'online');
         else if (cModeFilt === 'offline') list = list.filter(t => t.mode !== 'online');
         else if (cModeFilt === 'subscription') list = list.filter(t => !!t._recurring);
+        else if (cModeFilt === 'receipt') list = list.filter(t => t.receipts && t.receipts.length > 0);
       }
 
       // Apply text search filter
