@@ -22,11 +22,13 @@ service cloud.firestore {
           && request.resource.data.keys().hasAll(['desc', 'amount', 'type', 'date', 'createdAt'])
           && request.resource.data.amount is number
           && request.resource.data.desc is string
-          && request.resource.data.type in ['income', 'expense'];
+          && request.resource.data.type in ['income', 'expense']
+          && (!('receipt' in request.resource.data) || request.resource.data.receipt is map);
         allow update: if isOwner(userId)
           && request.resource.data.amount is number
           && request.resource.data.desc is string
-          && request.resource.data.type in ['income', 'expense'];
+          && request.resource.data.type in ['income', 'expense']
+          && (!('receipt' in request.resource.data) || request.resource.data.receipt is map);
       }
 
       // Subscriptions (Recurring) Collection

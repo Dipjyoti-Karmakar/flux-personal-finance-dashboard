@@ -14,7 +14,7 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
   <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=2">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com https://open.er-api.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://cdnjs.cloudflare.com https://unpkg.com https://twemoji.maxcdn.com; worker-src 'self' blob:;">
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com https://open.er-api.com https://firebasestorage.googleapis.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://cdnjs.cloudflare.com https://unpkg.com https://twemoji.maxcdn.com https://firebasestorage.googleapis.com; worker-src 'self' blob:">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap"
@@ -6852,10 +6852,141 @@
         transform: scale(1.65);
       }
 
+
       .sub-card-actions .c-ico {
         transform: scale(1.25);
       }
+
+      /* ── Receipt Upload Drop Zone ──────────────────────────────────────────── */
+      .receipt-drop {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px; border: 1.5px dashed var(--bs);
+        border-radius: var(--rs); cursor: pointer;
+        font-size: 12px; color: var(--mu); transition: border-color .2s, background .2s, color .2s;
+        background: var(--s2); user-select: none;
+      }
+      .receipt-drop:hover { border-color: var(--ac); background: var(--ag); color: var(--tx); }
+      .receipt-drop.has-file { border-color: var(--in); color: var(--in); background: rgba(93,186,138,.07); }
+      .receipt-drop svg { flex-shrink: 0; opacity: .6; }
+      .receipt-drop.has-file svg { opacity: 1; stroke: var(--in); }
+
+      /* Progress bar */
+      .receipt-prog-wrap {
+        height: 4px; border-radius: 2px; background: var(--s3); margin-top: 6px; overflow: hidden;
+      }
+      .receipt-prog-bar {
+        height: 100%; border-radius: 2px;
+        background: linear-gradient(90deg, var(--ac), #e8c87a);
+        transition: width .25s ease; min-width: 0;
+      }
+      .receipt-prog-label {
+        font-size: 10px; color: var(--mu); margin-top: 4px;
+        font-family: 'DM Mono', monospace; letter-spacing: .5px;
+      }
+
+      /* Existing receipt row in edit modal */
+      .receipt-existing-row {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        padding: 9px 12px; background: var(--s2); border-radius: var(--rs);
+        border: 1px solid var(--bd);
+      }
+      .receipt-link-btn {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 12px; color: var(--ac); text-decoration: none;
+        flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+        transition: color .15s;
+      }
+      .receipt-link-btn:hover { color: var(--tx); text-decoration: underline; }
+      .receipt-link-btn svg { flex-shrink: 0; }
+      .receipt-dl-btn {
+        display: flex; align-items: center; gap: 5px;
+        padding: 4px 10px; border-radius: 8px; border: 1px solid var(--bd);
+        background: var(--s3); color: var(--mu); font-size: 11px; cursor: pointer;
+        transition: background .15s, color .15s; white-space: nowrap;
+      }
+      .receipt-dl-btn:hover { background: var(--ac); color: #000; border-color: var(--ac); }
+      .receipt-rm-btn {
+        padding: 4px 8px; border-radius: 8px; border: 1px solid transparent;
+        background: transparent; color: var(--ex); font-size: 11px; cursor: pointer;
+        transition: background .15s; white-space: nowrap;
+      }
+      .receipt-rm-btn:hover { background: var(--eb); }
+
+      /* Edit modal receipt add-more / replace section */
+      .receipt-edit-toggle {
+        display: flex; gap: 6px; margin-bottom: 8px;
+      }
+      .receipt-edit-tab {
+        flex: 1; padding: 6px 10px; border-radius: 8px;
+        border: 1px solid var(--bd); background: var(--s2); color: var(--mu);
+        font-size: 11px; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+        text-align: center; font-family: 'DM Mono', monospace; letter-spacing: .3px;
+      }
+      .receipt-edit-tab.act { background: var(--ag); color: var(--ac); border-color: var(--ac); }
+
+      /* Receipt icon badge on transaction row */
+      .td-receipt {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--bd);
+        background: transparent; color: var(--ac); cursor: pointer;
+        transition: background .15s, color .15s; text-decoration: none; flex-shrink: 0;
+      }
+      .td-receipt:hover { background: var(--ag); border-color: var(--ac); }
+
+      /* ── Receipt Viewer Modal ──────────────────────────────────────────────── */
+      #receiptViewerMod {
+        position: fixed; inset: 0; z-index: 4000;
+        background: rgba(0,0,0,.82); backdrop-filter: blur(6px);
+        display: none; align-items: center; justify-content: center; padding: 16px;
+      }
+      #receiptViewerMod.op { display: flex; }
+      .receipt-viewer-box {
+        background: var(--sf); border-radius: var(--r); border: 1px solid var(--bd);
+        max-width: 780px; width: 100%; max-height: 92vh;
+        display: flex; flex-direction: column; overflow: hidden;
+        box-shadow: 0 24px 64px rgba(0,0,0,.55);
+        animation: mo-in .22s var(--ease-out-expo);
+      }
+      .receipt-viewer-header {
+        display: flex; align-items: center; gap: 10px;
+        padding: 14px 18px; border-bottom: 1px solid var(--bd);
+      }
+      .receipt-viewer-title {
+        flex: 1; font-size: 13px; font-weight: 600; color: var(--tx);
+        overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+      }
+      .receipt-viewer-actions { display: flex; gap: 8px; }
+      .receipt-viewer-btn {
+        display: flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 10px; border: 1px solid var(--bd);
+        background: var(--s2); color: var(--tx); font-size: 12px;
+        cursor: pointer; transition: background .15s, border-color .15s; text-decoration: none;
+        white-space: nowrap;
+      }
+      .receipt-viewer-btn:hover { background: var(--ac); border-color: var(--ac); color: #000; }
+      .receipt-viewer-btn.pr { background: var(--ac); border-color: var(--ac); color: #000; }
+      .receipt-viewer-close {
+        width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+        border-radius: 50%; border: 1px solid var(--bd); background: transparent; color: var(--mu);
+        cursor: pointer; font-size: 18px; transition: background .15s, color .15s;
+      }
+      .receipt-viewer-close:hover { background: var(--eb); color: var(--ex); }
+      .receipt-viewer-body {
+        flex: 1; overflow: auto; display: flex; align-items: center; justify-content: center;
+        padding: 16px; background: var(--bg); min-height: 200px;
+      }
+      .receipt-viewer-body img {
+        max-width: 100%; max-height: 70vh; border-radius: var(--rs);
+        object-fit: contain; box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      }
+      .receipt-viewer-body iframe {
+        width: 100%; height: 68vh; border: none; border-radius: var(--rs);
+      }
+      .receipt-viewer-body .rv-unsupported {
+        text-align: center; color: var(--mu); font-size: 13px; padding: 32px;
+      }
     </style>
+
 
 
     <header>
@@ -7042,6 +7173,19 @@
             <div class="fd full-mob"><label>Event (Optional)</label><select id="txEvent">
                 <option value="">— No Event —</option>
               </select></div>
+            <!-- Receipt Upload (Optional) -->
+            <div class="fd full-mob">
+              <label>Receipt <span style="color:var(--mu);font-weight:400">(Optional — JPG, PNG, PDF, max 10 MB)</span></label>
+              <label class="receipt-drop" id="receiptAddDrop" for="receiptAddFile">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <span id="receiptAddLabel">Click or drag to attach receipt</span>
+                <input type="file" id="receiptAddFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="previewReceipt('add', this)">
+              </label>
+              <div class="receipt-prog-wrap" id="receiptAddProgWrap" style="display:none">
+                <div class="receipt-prog-bar" id="receiptAddProgBar" style="width:0%"></div>
+              </div>
+              <div class="receipt-prog-label" id="receiptAddProgLabel" style="display:none"></div>
+            </div>
             <button class="sbtn" onclick="addTx()">＋ Add Transaction</button>
           </div>
         </div>
@@ -7432,6 +7576,36 @@
               <input type="date" id="eDt">
             </div>
           </div>
+          <!-- ── Receipt Section ───────────────────────── -->
+          <!-- Existing receipt (shown when tx has one) -->
+          <div class="fd full-mob" id="eReceiptCurrent" style="display:none">
+            <label>Attached Receipt</label>
+            <div class="receipt-existing-row">
+              <a id="eReceiptViewLink" href="#" onclick="event.preventDefault();openReceiptViewer(window._editReceiptMeta)" class="receipt-link-btn" title="View receipt">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span id="eReceiptName" style="overflow:hidden;text-overflow:ellipsis;">receipt</span>
+              </a>
+              <a id="eReceiptDlLink" href="#" download class="receipt-dl-btn" target="_blank" rel="noopener">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download
+              </a>
+              <button class="receipt-rm-btn" onclick="removeEditReceipt()">✕ Remove</button>
+            </div>
+          </div>
+          <!-- Add/Replace receipt section -->
+          <div class="fd full-mob" id="eReceiptNewSection">
+            <label id="eReceiptNewLabel">Attach Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span></label>
+            <!-- Tabs: only shown when a receipt already exists -->
+            <div class="receipt-edit-toggle" id="eReceiptToggle" style="display:none">
+              <button class="receipt-edit-tab" id="eRTab_replace" onclick="setEditReceiptMode('replace')">↺ Replace existing</button>
+              <button class="receipt-edit-tab act" id="eRTab_add" onclick="setEditReceiptMode('add')">＋ Add alongside</button>
+            </div>
+            <label class="receipt-drop" id="eReceiptDrop" for="eReceiptFile">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              <span id="eReceiptFileLabel">Click or drag to attach receipt</span>
+              <input type="file" id="eReceiptFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="previewReceipt('edit', this)">
+            </label>
+          </div>
         </div>
       </div>
       <div class="mf">
@@ -7734,10 +7908,33 @@
     <button class="pwa-dismiss" onclick="event.stopPropagation();dismissPWA()" aria-label="Dismiss">&times;</button>
   </div>
 
+  <!-- ── Receipt Viewer Modal ─────────────────────────────────────────────── -->
+  <div id="receiptViewerMod" onclick="if(event.target===this)closeReceiptViewer()">
+    <div class="receipt-viewer-box">
+      <div class="receipt-viewer-header">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="receipt-viewer-title" id="rvTitle">Receipt</span>
+        <div class="receipt-viewer-actions">
+          <a id="rvDownloadBtn" href="#" download class="receipt-viewer-btn pr" target="_blank" rel="noopener">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
+          <a id="rvOpenBtn" href="#" target="_blank" rel="noopener" class="receipt-viewer-btn">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Open
+          </a>
+          <button class="receipt-viewer-close" onclick="closeReceiptViewer()" aria-label="Close viewer">×</button>
+        </div>
+      </div>
+      <div class="receipt-viewer-body" id="rvBody"></div>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, query, where, deleteField, orderBy, limit, serverTimestamp, getDocs, addDoc, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
     const CICO = {
       food: '<img src="emojis/food.png" class="c-ico" alt="" />',
@@ -7945,6 +8142,7 @@
       experimentalAutoDetectLongPolling: true
     });
     const provider = new GoogleAuthProvider();
+    const storage = getStorage(app);
 
     document.addEventListener('DOMContentLoaded', () => {
       apTheme(theme);
@@ -8465,6 +8663,24 @@
         if (eventId) newTx.eventId = eventId;
         const txId = uid();
 
+        // ── Receipt upload (optional, runs before Firestore write) ─────────────
+        const receiptFile = document.getElementById('receiptAddFile')?.files[0];
+        if (receiptFile) {
+          const progWrap = document.getElementById('receiptAddProgWrap');
+          const progLabel = document.getElementById('receiptAddProgLabel');
+          if (progWrap) progWrap.style.display = 'block';
+          if (progLabel) { progLabel.style.display = 'block'; progLabel.textContent = 'Uploading…'; }
+          try {
+            const rMeta = await uploadReceipt(receiptFile, txId, 'receiptAddProgBar', progLabel);
+            if (rMeta) newTx.receipt = rMeta;
+          } catch (e) {
+            showToast('Receipt upload failed: ' + e.message, 'er');
+            if (progWrap) progWrap.style.display = 'none';
+            if (progLabel) progLabel.style.display = 'none';
+            return;
+          }
+        }
+
         // IMMEDIATE subscription matching: tag the new tx right away if it matches
         // a subscription (including via altAmounts) so the badge appears instantly.
         if (recurringList && recurringList.length) {
@@ -8545,6 +8761,19 @@
           document.getElementById('txD').value = '';
           document.getElementById('txA').value = '';
           document.getElementById('txDt').value = getTodayStr();
+          // Reset receipt UI
+          const rFile = document.getElementById('receiptAddFile');
+          const rLabel = document.getElementById('receiptAddLabel');
+          const rDrop = document.getElementById('receiptAddDrop');
+          const rProgWrap = document.getElementById('receiptAddProgWrap');
+          const rProgLabel = document.getElementById('receiptAddProgLabel');
+          if (rFile) rFile.value = '';
+          if (rLabel) rLabel.textContent = 'Click or drag to attach receipt';
+          if (rDrop) rDrop.classList.remove('has-file');
+          if (rProgWrap) rProgWrap.style.display = 'none';
+          if (rProgLabel) rProgLabel.style.display = 'none';
+          const rBar = document.getElementById('receiptAddProgBar');
+          if (rBar) rBar.style.width = '0%';
 
           // Log the addition
           writeLog('ADD', { desc, amt: finalAmt, cat, date, mode: cMode, type: cType, eventId: eventId }, cType);
@@ -8586,13 +8815,121 @@
     }
     function shake(id) { const el = document.getElementById(id); el.style.borderColor = 'var(--ex)'; el.animate([{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'translateX(-3px)' }, { transform: 'translateX(0)' }], { duration: 280 }); setTimeout(() => { el.style.borderColor = ''; }, 600); }
 
+    // ── Receipt helpers ─────────────────────────────────────────────────────
+    const RECEIPT_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+    const RECEIPT_ACCEPT_TYPES = ['image/jpeg','image/png','image/webp','image/gif','application/pdf'];
+
+    async function uploadReceipt(file, txId, barId, labelEl) {
+      if (!file) return null;
+      if (!RECEIPT_ACCEPT_TYPES.includes(file.type))
+        throw new Error('Unsupported format. Use JPG, PNG, WEBP, GIF, or PDF.');
+      if (file.size > RECEIPT_MAX_BYTES)
+        throw new Error('File exceeds 10 MB limit.');
+      const ext = file.name.split('.').pop().toLowerCase() || 'bin';
+      const path = `receipts/${userId}/${txId}.${ext}`;
+      const sRef = storageRef(storage, path);
+      return new Promise((resolve, reject) => {
+        const task = uploadBytesResumable(sRef, file, { contentType: file.type });
+        task.on('state_changed',
+          snap => {
+            const pct = Math.round(snap.bytesTransferred / snap.totalBytes * 100);
+            const bar = document.getElementById(barId);
+            if (bar) bar.style.width = pct + '%';
+            if (labelEl) labelEl.textContent = pct < 100 ? `Uploading… ${pct}%` : 'Processing…';
+          },
+          reject,
+          async () => {
+            try {
+              const url = await getDownloadURL(task.snapshot.ref);
+              resolve({ url, path, name: file.name, size: file.size, type: file.type });
+            } catch (e) { reject(e); }
+          }
+        );
+      });
+    }
+
+    async function deleteReceiptFromStorage(storagePath) {
+      if (!storagePath) return;
+      try { await deleteObject(storageRef(storage, storagePath)); }
+      catch (e) { console.warn('Receipt Storage delete skipped:', e.code || e.message); }
+    }
+
+    function previewReceipt(ctx, input) {
+      const file = input.files[0];
+      const labelId  = ctx === 'add' ? 'receiptAddLabel'  : 'eReceiptFileLabel';
+      const dropId   = ctx === 'add' ? 'receiptAddDrop'   : 'eReceiptDrop';
+      const label = document.getElementById(labelId);
+      const drop  = document.getElementById(dropId);
+      if (file) {
+        const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+        if (label) label.textContent = `📎 ${file.name} (${sizeMB} MB)`;
+        if (drop) drop.classList.add('has-file');
+      } else {
+        if (label) label.textContent = 'Click or drag to attach receipt';
+        if (drop) drop.classList.remove('has-file');
+      }
+    }
+
+    // Edit modal receipt mode: 'replace' (old deleted) or 'add' (both kept)
+    let _editReceiptMode = 'add'; // default: add alongside
+    function setEditReceiptMode(mode) {
+      _editReceiptMode = mode;
+      document.getElementById('eRTab_replace')?.classList.toggle('act', mode === 'replace');
+      document.getElementById('eRTab_add')?.classList.toggle('act', mode === 'add');
+    }
+
+    function removeEditReceipt() {
+      window._editReceiptRemoved = true;
+      document.getElementById('eReceiptCurrent').style.display = 'none';
+      const toggle = document.getElementById('eReceiptToggle');
+      if (toggle) toggle.style.display = 'none';
+      showToast('Receipt will be removed when you save', 'ok');
+    }
+
+    // ── Receipt Viewer ──────────────────────────────────────────────────────
+    function openReceiptViewer(receipt) {
+      if (!receipt || !receipt.url) return;
+      const mod = document.getElementById('receiptViewerMod');
+      const body = document.getElementById('rvBody');
+      const title = document.getElementById('rvTitle');
+      const dlBtn = document.getElementById('rvDownloadBtn');
+      const openBtn = document.getElementById('rvOpenBtn');
+      if (!mod || !body) return;
+
+      title.textContent = receipt.name || 'Receipt';
+      dlBtn.href = receipt.url;
+      dlBtn.download = receipt.name || 'receipt';
+      openBtn.href = receipt.url;
+
+      // Render content based on type
+      const isImage = receipt.type && receipt.type.startsWith('image/');
+      const isPDF   = receipt.type === 'application/pdf';
+      if (isImage) {
+        body.innerHTML = `<img src="${escAttr(receipt.url)}" alt="Receipt: ${esc(receipt.name || '')}">` ;
+      } else if (isPDF) {
+        body.innerHTML = `<iframe src="${escAttr(receipt.url)}" title="Receipt PDF"></iframe>`;
+      } else {
+        body.innerHTML = `<div class="rv-unsupported">📄 Cannot preview this file type.<br><a href="${escAttr(receipt.url)}" target="_blank" rel="noopener" style="color:var(--ac)">Open in new tab</a></div>`;
+      }
+      mod.classList.add('op');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeReceiptViewer() {
+      const mod = document.getElementById('receiptViewerMod');
+      if (mod) { mod.classList.remove('op'); document.getElementById('rvBody').innerHTML = ''; }
+      document.body.style.overflow = '';
+    }
+
+    function escAttr(s) { return String(s).replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+
     function askDelTx(id) {
-      showConfirm(
-        'Delete Transaction',
-        'Are you sure? You will have 5 seconds to undo after confirming.',
-        () => executeSoftDelete(id),
-        true
-      );
+      const tx = txs.find(t => t.id === id);
+      const hasReceipt = tx && tx.receipt && tx.receipt.url;
+      const msg = hasReceipt
+        ? 'Are you sure? This will also permanently delete the attached receipt. You will have 5 seconds to undo after confirming.'
+        : 'Are you sure? You will have 5 seconds to undo after confirming.';
+      showConfirm('Delete Transaction', msg, () => executeSoftDelete(id), true);
     }
 
     function executeSoftDelete(id) {
@@ -8629,6 +8966,8 @@
       if (txData._auto) undoData._auto = true;
       if (txData.subId) undoData.subId = txData.subId;
       if (txData.createdAt) undoData.createdAt = txData.createdAt;
+      // Preserve receipt so undo can restore it (but store storagePath separately for hard-delete on commit)
+      if (txData.receipt) { undoData.receipt = txData.receipt; undoData._receiptPath = txData.receipt.path; }
       _undoTxData = { id, data: undoData };
       // Remove from local array immediately for responsive feel
       txs = txs.filter(t => t.id !== id);
@@ -8661,6 +9000,11 @@
       }
 
       if (!userId) return;
+
+      // Delete the receipt from Firebase Storage (fire-and-forget, non-blocking)
+      if (logData && logData._receiptPath) {
+        deleteReceiptFromStorage(logData._receiptPath).catch(() => {});
+      }
 
       try {
         await deleteDoc(doc(db, 'users', userId, 'transactions', id));
@@ -9384,6 +9728,9 @@
         <button class="td" onclick="editTx(${esc(JSON.stringify(tx.id))})" title="Edit" aria-label="Edit transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
+        ${tx.receipt && tx.receipt.url ? `<button class="td td-receipt" onclick="openReceiptViewer(${esc(JSON.stringify(tx.receipt))})" title="View Receipt" aria-label="View receipt for ${esc(tx.desc)}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </button>` : ''}
         <button class="td" onclick="askDelTx(${esc(JSON.stringify(tx.id))})" title="Delete" aria-label="Delete transaction: ${esc(tx.desc)}">
           <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
         </button>
@@ -9508,6 +9855,36 @@
       populateEventSelects();
       document.getElementById('eEvent').value = tx.eventId || '';
 
+      // ── Receipt state ────────────────────────────────────────────────────
+      window._editReceiptRemoved = false;
+      window._editReceiptMeta = tx.receipt || null;
+      _editReceiptMode = 'add'; // reset to default
+      const eCurr = document.getElementById('eReceiptCurrent');
+      const eToggle = document.getElementById('eReceiptToggle');
+      const eNewLabel = document.getElementById('eReceiptNewLabel');
+      if (tx.receipt && tx.receipt.url) {
+        // Show existing receipt row
+        const nameEl = document.getElementById('eReceiptName');
+        const dlEl   = document.getElementById('eReceiptDlLink');
+        if (nameEl) nameEl.textContent = tx.receipt.name || 'receipt';
+        if (dlEl)   { dlEl.href = tx.receipt.url; dlEl.download = tx.receipt.name || 'receipt'; }
+        if (eCurr) eCurr.style.display = '';
+        // Show mode toggle tabs
+        if (eToggle) { eToggle.style.display = 'flex'; setEditReceiptMode('add'); }
+        if (eNewLabel) eNewLabel.innerHTML = 'Upload Another Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span>';
+      } else {
+        if (eCurr)    eCurr.style.display = 'none';
+        if (eToggle)  eToggle.style.display = 'none';
+        if (eNewLabel) eNewLabel.innerHTML = 'Attach Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span>';
+      }
+      // Reset file input & drop zone
+      const eFile = document.getElementById('eReceiptFile');
+      const eFileLabel = document.getElementById('eReceiptFileLabel');
+      const eDrop = document.getElementById('eReceiptDrop');
+      if (eFile)  eFile.value = '';
+      if (eFileLabel) eFileLabel.textContent = 'Click or drag to attach receipt';
+      if (eDrop)  eDrop.classList.remove('has-file');
+
       document.getElementById('editMod').classList.add('op');
     }
 
@@ -9544,8 +9921,10 @@
         if (window._editSnapshot) {
           const b = window._editSnapshot;
           const oldEvtId = b.eventId || '';
+          const noFileChosen = !document.getElementById('eReceiptFile')?.files[0];
+          const noReceiptChange = !window._editReceiptRemoved && noFileChosen;
           if (b.desc === desc && b.amount === amt && (b.cat || 'other') === (cat || 'other') &&
-              b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId) {
+              b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId && noReceiptChange) {
             closeEditMod();
             return;
           }
@@ -9566,6 +9945,31 @@
         // HEAL: Restore createdAt for documents corrupted by a previous offline sync bug
         if (window._editSnapshot) {
           updatedTx.createdAt = window._editSnapshot.createdAt || Date.now();
+        }
+
+        // ── Receipt handling in edit flow ──────────────────────────────────
+        const eReceiptFile = document.getElementById('eReceiptFile')?.files[0];
+        const prevReceipt  = window._editSnapshot?.receipt;
+        if (window._editReceiptRemoved) {
+          // User hit ✕ Remove — delete from Storage and clear field
+          if (prevReceipt?.path) await deleteReceiptFromStorage(prevReceipt.path);
+          updatedTx.receipt = deleteField();
+        } else if (eReceiptFile) {
+          if (_editReceiptMode === 'replace' && prevReceipt?.path) {
+            // Replace: delete old file first
+            await deleteReceiptFromStorage(prevReceipt.path);
+          }
+          // Upload new file (for both 'replace' and 'add' modes)
+          try {
+            const rMeta = await uploadReceipt(eReceiptFile, editingTxId + '_' + Date.now(), null, null);
+            if (rMeta) updatedTx.receipt = rMeta;
+          } catch (e) {
+            showToast('Receipt upload failed: ' + e.message, 'er');
+            return;
+          }
+        } else if (prevReceipt && !window._editReceiptRemoved) {
+          // No change — preserve existing receipt in the Firestore update
+          updatedTx.receipt = prevReceipt;
         }
 
         let saved = false;
@@ -9644,6 +10048,7 @@
     // Global Escape key handler for all modals
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
+      if (document.getElementById('receiptViewerMod')?.classList.contains('op')) { closeReceiptViewer(); return; }
       if (document.getElementById('confirmMod').classList.contains('op')) { closeConfirm(); return; }
       if (document.getElementById('eventMod').classList.contains('op')) { closeEventMod(); return; }
       if (document.getElementById('editMod').classList.contains('op')) { closeEditMod(); return; }
@@ -14503,6 +14908,12 @@
     window.editTx = editTx;
     window.closeEditMod = closeEditMod;
     window.saveEditTx = saveEditTx;
+    // Receipt
+    window.previewReceipt = previewReceipt;
+    window.removeEditReceipt = removeEditReceipt;
+    window.setEditReceiptMode = setEditReceiptMode;
+    window.openReceiptViewer = openReceiptViewer;
+    window.closeReceiptViewer = closeReceiptViewer;
     window.exportExcel = exportExcel;
     window.doImport = doImport;
     window.closeMod = closeMod;
