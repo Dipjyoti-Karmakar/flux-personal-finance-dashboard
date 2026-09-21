@@ -11661,7 +11661,9 @@
       Object.entries(hyperlinks).forEach(([rowIdxStr, meta]) => {
         const cellRef = XLSX.utils.encode_cell({ r: Number(rowIdxStr), c: receiptColIdx });
         if (!ws[cellRef]) return;
-        ws[cellRef] = { f: `HYPERLINK("${meta.url}", "${meta.label}")`, v: meta.label, t: 's' };
+        const safeUrl = meta.url.replace(/"/g, '""');
+        const safeLabel = meta.label.replace(/"/g, '""');
+        ws[cellRef] = { f: `HYPERLINK("${safeUrl}", "${safeLabel}")`, v: meta.label, t: 's' };
       });
 
       // --- Style the header row (bold + background) using cell styles ---
