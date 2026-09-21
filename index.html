@@ -6966,27 +6966,28 @@
         animation: mo-in .22s var(--ease-out-expo);
       }
       .receipt-viewer-header {
-        display: flex; align-items: center; gap: 10px;
-        padding: 14px 18px; border-bottom: 1px solid var(--bd);
+        display: flex; align-items: center; gap: 8px;
+        padding: 12px 14px; border-bottom: 1px solid var(--bd);
+        overflow: visible;
       }
       .receipt-viewer-title {
-        flex: 1; font-size: 13px; font-weight: 600; color: var(--tx);
+        flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--tx);
         overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
       }
-      .receipt-viewer-actions { display: flex; gap: 8px; }
+      .receipt-viewer-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
       .receipt-viewer-btn {
-        display: flex; align-items: center; gap: 6px;
-        padding: 6px 14px; border-radius: 10px; border: 1px solid var(--bd);
+        display: flex; align-items: center; gap: 5px;
+        padding: 6px 10px; border-radius: 10px; border: 1px solid var(--bd);
         background: var(--s2); color: var(--tx); font-size: 12px;
         cursor: pointer; transition: background .15s, border-color .15s; text-decoration: none;
-        white-space: nowrap;
+        white-space: nowrap; flex-shrink: 0;
       }
       .receipt-viewer-btn:hover { background: var(--ac); border-color: var(--ac); color: #000; }
       .receipt-viewer-btn.pr { background: var(--ac); border-color: var(--ac); color: #000; }
       .receipt-viewer-close {
-        width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+        width: 32px; height: 32px; min-width: 32px; display: flex; align-items: center; justify-content: center;
         border-radius: 50%; border: 1px solid var(--bd); background: transparent; color: var(--mu);
-        cursor: pointer; font-size: 18px; transition: background .15s, color .15s;
+        cursor: pointer; font-size: 18px; transition: background .15s, color .15s; flex-shrink: 0;
       }
       .receipt-viewer-close:hover { background: var(--eb); color: var(--ex); }
       .receipt-viewer-body {
