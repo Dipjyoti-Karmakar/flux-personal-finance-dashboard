@@ -2653,7 +2653,7 @@
     @media (hover: none) {
 
       /* Hide inline edit/delete buttons on touch devices - swipe-to-action is used instead */
-      .txi .td {
+      .txi .td:not(.td-receipt) {
         display: none !important;
       }
     }
@@ -2953,7 +2953,7 @@
         box-shadow: none;
       }
 
-      .txi .td {
+      .txi .td:not(.td-receipt) {
         display: none;
       }
 
@@ -8919,22 +8919,17 @@
     // ── Receipt helpers: download & viewer ───────────────────────────────────
     async function downloadReceipt(receipt) {
       if (!receipt || !receipt.url) return;
-      try {
-        const resp = await fetch(receipt.url);
-        if (!resp.ok) throw new Error('Fetch failed');
-        const blob = await resp.blob();
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = receipt.name || 'receipt';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
-      } catch {
-        // Fallback: open in new tab if fetch blocked
-        window.open(receipt.url, '_blank', 'noopener');
-      }
+      // Use Cloudinary fl_attachment transform to force browser download with original filename.
+      // This avoids CORS issues entirely — the server sends Content-Disposition: attachment.
+      const safeName = (receipt.name || 'receipt').replace(/[^a-zA-Z0-9._-]/g, '_');
+      const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment)/, `/upload/fl_attachment:${safeName}/`);
+      const a = document.createElement('a');
+      a.href = dlUrl;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     function openReceiptViewer(receipt) {
