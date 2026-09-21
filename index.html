@@ -11608,9 +11608,7 @@
       const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
       // Build array-of-arrays for SheetJS (header row first)
-      // hyperlinks object: { [sheetRowIndex]: { url, label } }
-      const wsData    = [headers];
-      const hyperlinks = {};
+      const wsData = [headers];
 
       exportTxs.forEach(t => {
         // Guard: malformed/missing date
@@ -11639,12 +11637,12 @@
 
           if (validReceipts.length === 0) {
             baseRow.push('');
+          } else if (validReceipts.length === 1) {
+            // Single receipt: URL as cell value — Excel auto-detects and makes clickable
+            baseRow.push(validReceipts[0].url);
           } else {
-            // All receipt names comma-separated in one cell; hyperlink to first receipt
-            const names = validReceipts.map(r => r.name || 'receipt').join(', ');
-            baseRow.push(names);
-            // Track hyperlink for this row (applied after ws is created)
-            hyperlinks[wsData.length] = validReceipts[0].url;
+            // Multiple receipts: each URL on its own line, all copy-pasteable
+            baseRow.push(validReceipts.map(r => r.url).join('\n'));
           }
         }
         wsData.push(baseRow);
@@ -11653,13 +11651,6 @@
       // Create worksheet from the data array
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-      // --- Inject hyperlinks into Receipt column cells ---
-      // Excel will auto-style hyperlinked cells as blue + underline
-      Object.entries(hyperlinks).forEach(([rowIdxStr, url]) => {
-        const cellRef = XLSX.utils.encode_cell({ r: Number(rowIdxStr), c: receiptColIdx });
-        if (!ws[cellRef]) return;
-        ws[cellRef].l = { Target: url };
-      });
 
       // --- Style the header row (bold + background) using cell styles ---
       headers.forEach((_, colIdx) => {
