@@ -8896,12 +8896,15 @@
       // WL2: sanitise filename — strip path separators, truncate to 100 chars
       const safeName = file.name.replace(/[/\\]/g, '_').slice(0, 100) || 'receipt';
 
-      // Choose endpoint by resource type: raw/upload for PDFs, image/upload for everything else
+      // PDFs use resource_type=raw (sent as FormData field — overrides image-only preset config)
+      // Images use the image endpoint directly
       const uploadUrl = effectiveType === 'application/pdf' ? CLOUDINARY_RAW_URL : CLOUDINARY_IMG_URL;
 
       const fd = new FormData();
       fd.append('file', file);
       fd.append('upload_preset', CLOUDINARY_PRESET);
+      // Explicitly declare resource type for PDFs so Cloudinary stores as raw (public, not image-processed)
+      if (effectiveType === 'application/pdf') fd.append('resource_type', 'raw');
 
       // Use XHR so we can track upload progress
       return new Promise((resolve, reject) => {
@@ -8985,8 +8988,13 @@
     // ── Receipt helpers: download & viewer ───────────────────────────────────
     async function downloadReceipt(receipt) {
       if (!receipt || !receipt.url) return;
+      const isPDF = receipt.type === 'application/pdf';
+      if (isPDF) {
+        // Raw Cloudinary PDFs serve publicly — open in new tab (browser shows native PDF viewer)
+        window.open(receipt.url, '_blank', 'noopener');
+        return;
+      }
       try {
-        // fetch() works now — res.cloudinary.com is in CSP connect-src
         const resp = await fetch(receipt.url);
         if (!resp.ok) throw new Error('Network response was not ok');
         const blob = await resp.blob();
@@ -9000,7 +9008,6 @@
         setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
       } catch (e) {
         console.warn('Blob download failed, falling back to fl_attachment URL:', e.message);
-        // Strip file extension — Cloudinary treats dots as URL delimiters and rejects them in fl_attachment
         const nameNoExt = (receipt.name || 'receipt').replace(/\.[^.]+$/, '');
         const safeName = nameNoExt.replace(/[^a-zA-Z0-9_-]/g, '_');
         const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment)/, `/upload/fl_attachment:${safeName}/`);
