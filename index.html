@@ -11639,49 +11639,26 @@
 
           if (validReceipts.length === 0) {
             baseRow.push('');
-            wsData.push(baseRow);
-          } else if (validReceipts.length === 1) {
-            const r = validReceipts[0];
-            const label = r.name || 'receipt';
-            baseRow.push(label);
-            const sheetRow = wsData.length;
-            wsData.push(baseRow);
-            hyperlinks[sheetRow] = { url: r.url, label };
           } else {
-            // Multiple receipts: first goes on the main row, rest on continuation rows
-            validReceipts.forEach((r, ri) => {
-              const label = r.name || `receipt ${ri + 1}`;
-              if (ri === 0) {
-                baseRow.push(label);
-                const sheetRow = wsData.length;
-                wsData.push(baseRow);
-                hyperlinks[sheetRow] = { url: r.url, label };
-              } else {
-                const contRow = Array(headers.length).fill('');
-                contRow[receiptColIdx] = label;
-                const sheetRow = wsData.length;
-                wsData.push(contRow);
-                hyperlinks[sheetRow] = { url: r.url, label };
-              }
-            });
+            // All receipt names comma-separated in one cell; hyperlink to first receipt
+            const names = validReceipts.map(r => r.name || 'receipt').join(', ');
+            baseRow.push(names);
+            // Track hyperlink for this row (applied after ws is created)
+            hyperlinks[wsData.length] = validReceipts[0].url;
           }
-        } else {
-          wsData.push(baseRow);
         }
+        wsData.push(baseRow);
       });
 
       // Create worksheet from the data array
       const ws = XLSX.utils.aoa_to_sheet(wsData);
 
       // --- Inject hyperlinks into Receipt column cells ---
-      Object.entries(hyperlinks).forEach(([rowIdxStr, meta]) => {
+      // Excel will auto-style hyperlinked cells as blue + underline
+      Object.entries(hyperlinks).forEach(([rowIdxStr, url]) => {
         const cellRef = XLSX.utils.encode_cell({ r: Number(rowIdxStr), c: receiptColIdx });
         if (!ws[cellRef]) return;
-        ws[cellRef].l = { Target: meta.url, Tooltip: meta.label };
-        ws[cellRef].s = {
-          font:      { color: { rgb: '0563C1' }, underline: true },
-          alignment: { horizontal: 'left', vertical: 'center' }
-        };
+        ws[cellRef].l = { Target: url };
       });
 
       // --- Style the header row (bold + background) using cell styles ---
