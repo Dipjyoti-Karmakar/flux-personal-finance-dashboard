@@ -8985,15 +8985,36 @@
 
       const isPDF = receipt.type === 'application/pdf';
 
+      // Map MIME type -> correct file extension (fallback if filename is missing or wrong)
+      const mimeToExt = {
+        'application/pdf':  'pdf',
+        'image/jpeg':       'jpg',
+        'image/jpg':        'jpg',
+        'image/png':        'png',
+        'image/webp':       'webp',
+        'image/gif':        'gif',
+      };
+
+      // Returns the filename with the correct extension guaranteed.
+      // If receipt.name already has the right ext, keeps it. Otherwise appends/replaces.
+      function ensureExt(name, mimeType) {
+        const correctExt = mimeToExt[mimeType] || (name.split('.').pop() || 'bin');
+        // Strip any existing extension, then append the correct one
+        const base = name.replace(/\.[^.]+$/, '') || 'receipt';
+        return `${base}.${correctExt}`;
+      }
+
+      const rawName = receipt.name || 'receipt';
+      const dlName = ensureExt(rawName, receipt.type || '');
+
       // Images can use Cloudinary's fl_attachment to force download immediately (synchronously)
-      // This bypasses mobile Safari's async popup blocking.
       if (!isPDF) {
-        const nameNoExt = (receipt.name || 'receipt').replace(/\.[^.]+$/, '');
+        const nameNoExt = dlName.replace(/\.[^.]+$/, '');
         const safeName = nameNoExt.replace(/[^a-zA-Z0-9_-]/g, '_');
         const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment)/, `/upload/fl_attachment:${safeName}/`);
         const a = document.createElement('a');
         a.href = dlUrl;
-        a.download = receipt.name || 'receipt';
+        a.download = dlName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -9005,21 +9026,15 @@
         const resp = await fetch(receipt.url);
         if (!resp.ok) throw new Error('Network response was not ok');
         const originalBlob = await resp.blob();
-        
-        // Force octet-stream MIME type. If it remains 'application/pdf', many browsers (desktop and mobile)
-        // will hijack the download and just open it in a new tab to view inline. octet-stream forces a native download prompt.
+        // Force octet-stream so browser doesn't open inline
         const blob = new Blob([originalBlob], { type: 'application/octet-stream' });
         const blobUrl = URL.createObjectURL(blob);
-        
         const a = document.createElement('a');
         a.href = blobUrl;
-        const rawName = receipt.name || 'receipt.pdf';
-        const dlName = rawName.toLowerCase().endsWith('.pdf') ? rawName : rawName + '.pdf';
         a.download = dlName;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        
         setTimeout(() => URL.revokeObjectURL(blobUrl), 15000);
       } catch (e) {
         console.warn('Blob download failed:', e.message);
