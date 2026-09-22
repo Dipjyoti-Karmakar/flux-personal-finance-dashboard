@@ -9062,16 +9062,19 @@
       // If no extension, or extension is unknown/wrong, fix it
       const dlName = (rawExt && knownExts.has(rawExt)) ? rawName : baseName + '.' + correctExt;
 
-      // Images can use Cloudinary's fl_attachment to force download immediately (synchronously).
-      // Anchor the replacement to the bare /upload/ segment only (no trailing transform path)
-      // so existing transformation segments (e.g. /upload/w_auto/…) are not double-injected.
+      // Images: use Cloudinary fl_attachment to trigger download synchronously within the user-gesture
+      // event. Blob fetch (used for PDFs) requires await which loses the gesture context on iOS Safari,
+      // silently breaking the download. Trade-off: fl_attachment sanitizes special chars to underscores
+      // in the filename because only [A-Za-z0-9_-] are valid in Cloudinary URL params. a.download is
+      // ignored for cross-origin URLs so the filename comes from Cloudinary's Content-Disposition header.
       if (!isPDF) {
         const nameNoExt = dlName.replace(/\.[^.]+$/, '');
-        const safeName = nameNoExt.replace(/[^a-zA-Z0-9_-]/g, '_');
+        // Sanitize for Cloudinary URL param; fallback to 'receipt' if name is empty (e.g. ".jpg" input)
+        const safeName = nameNoExt.replace(/[^a-zA-Z0-9_-]/g, '_') || 'receipt';
         const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment\b)/, `/upload/fl_attachment:${safeName}/`);
         const a = document.createElement('a');
         a.href = dlUrl;
-        a.download = dlName;
+        a.download = dlName; // honored on same-origin; ignored on cross-origin (fl_attachment takes over)
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -9118,7 +9121,8 @@
       if (!rType) {
         const ext = (receipt.url || '').split('?')[0].split('.').pop().toLowerCase();
         const extMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-                         webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf' };
+                         webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf',
+                         bmp: 'image/bmp', tiff: 'image/tiff', tif: 'image/tiff' };
         rType = extMap[ext] || '';
       }
 
