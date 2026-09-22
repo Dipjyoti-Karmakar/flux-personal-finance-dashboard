@@ -9058,9 +9058,11 @@
       const dotIdx = rawName.lastIndexOf('.');
       const rawExt = dotIdx !== -1 ? rawName.slice(dotIdx + 1).toLowerCase() : '';
       const correctExt = mimeToExt[receipt.type || ''] || 'bin';
-      // Guard: if name is just an extension (e.g. ".pdf", ".jpg"), dotIdx===0 means no base name.
-      // Use 'receipt' as the base so dlName becomes "receipt.pdf" not ".pdf" or ".pdf.pdf".
-      const baseName = (dotIdx > 0 ? rawName.slice(0, dotIdx) : '') || 'receipt';
+      // Three cases for dotIdx:
+      //  > 0  → normal name (e.g. "invoice.pdf") — slice before the last dot
+      //  === 0 → extension-only (e.g. ".pdf") — no base, fall back to 'receipt'
+      //  === -1 → no dot at all (e.g. "receipt") — use rawName as the base
+      const baseName = dotIdx > 0 ? rawName.slice(0, dotIdx) : dotIdx === 0 ? 'receipt' : rawName;
       // If no extension, or extension is unknown/wrong, or base is empty (e.g. ".pdf"), fix it
       const dlName = (dotIdx > 0 && rawExt && knownExts.has(rawExt)) ? rawName : baseName + '.' + correctExt;
 
