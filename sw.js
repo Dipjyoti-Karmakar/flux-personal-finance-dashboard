@@ -1,10 +1,10 @@
-// Flux Service Worker — Offline-first caching strategy
-// V45: Bumped to v34 — added image crop/rotate feature (Cropper.js)
-const CACHE_NAME = 'flux-v34';
+// Flux Service Worker - Offline-first caching strategy
+// V46: Bumped to v35 - forced CDN cache bust via ?v=35 on core assets + strict Cropper check
+const CACHE_NAME = 'flux-v35';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './',
-  './index.html',
+  './?v=35',
+  './index.html?v=35',
   './manifest.json?v=2',
   './icon-192.png?v=2',
   './icon-512.png?v=2',

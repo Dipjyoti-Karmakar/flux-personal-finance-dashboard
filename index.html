@@ -9081,7 +9081,7 @@
           return;
         }
 
-        if (effectiveType.startsWith('image/')) {
+        if (effectiveType !== 'application/pdf') {
           _cropperInput = input;
           _cropperCtx = ctx;
           _cropperFile = file;
@@ -15503,7 +15503,7 @@
     let _deferredPrompt = null;
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').then((reg) => {
+      navigator.serviceWorker.register('./sw.js?v=35').then((reg) => {
         console.log('[PWA] Service Worker registered, scope:', reg.scope);
       }).catch((err) => {
         console.warn('[PWA] SW registration failed:', err);
