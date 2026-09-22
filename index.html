@@ -7257,7 +7257,7 @@
               <label>Receipt <span style="color:var(--mu);font-weight:400">(Optional — JPG, PNG, PDF, max 10 MB)</span></label>
               <label class="receipt-drop" id="receiptAddDrop" for="receiptAddFile">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                <span id="receiptAddLabel">Click or drag to attach receipt (CROP ENABLED!)</span>
+                <span id="receiptAddLabel">Click or drag to attach receipt</span>
                 <input type="file" id="receiptAddFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="if(window.previewReceipt)window.previewReceipt('add',this)">
               </label>
               <div class="receipt-prog-wrap" id="receiptAddProgWrap" style="display:none">
@@ -7667,7 +7667,7 @@
             <label id="eReceiptNewLabel">Attach Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span></label>
             <label class="receipt-drop" id="eReceiptDrop" for="eReceiptFile">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-              <span id="eReceiptFileLabel">Click or drag to attach receipt (CROP ENABLED!)</span>
+              <span id="eReceiptFileLabel">Click or drag to attach receipt</span>
               <input type="file" id="eReceiptFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="if(window.previewReceipt)window.previewReceipt('edit',this)">
             </label>
           </div>
@@ -9090,7 +9090,13 @@
             const image = document.getElementById('cropperImage');
             if (_cropper) { _cropper.destroy(); _cropper = null; }
             image.onload = function() {
-              _cropper = new Cropper(image, { viewMode: 1, autoCropArea: 1, responsive: true, restore: false });
+              _cropper = new Cropper(image, { 
+                viewMode: 1, 
+                dragMode: 'move',
+                autoCropArea: 1, 
+                responsive: true, 
+                restore: false 
+              });
             };
             image.src = e.target.result;
             document.getElementById('cropperModal').classList.add('vis');
