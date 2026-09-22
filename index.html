@@ -7051,20 +7051,51 @@
       #cropperModal {
         display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
         z-index: 100001; align-items: center; justify-content: center; backdrop-filter: blur(8px);
-        padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)) 16px; 
-        box-sizing: border-box; 
+        touch-action: none;
+        padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)) 16px;
       }
-      .cropper-container-wrapper { width: 100%; max-width: 600px; flex: 1; min-height: 0; background: var(--s2); border-radius: 12px; overflow: hidden; position: relative; }
-      .cropper-actions { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 600px; }
+      #cropperModal.vis { display: flex !important; }
+      .cropper-card {
+        width: 100%; max-width: 500px; height: 100%; max-height: 800px;
+        background: var(--bg); border-radius: 20px; overflow: hidden;
+        display: flex; flex-direction: column;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        border: 1px solid var(--bd);
+      }
+      .cropper-header {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 16px 20px; border-bottom: 1px solid var(--bd);
+        background: var(--s1);
+      }
+      .cropper-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; color: var(--tx); }
+      .cropper-close { background: none; border: none; color: var(--mu); cursor: pointer; padding: 4px; border-radius: 50%; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+      .cropper-close:hover { background: var(--s2); color: var(--tx); }
+      .cropper-container-wrapper { width: 100%; flex: 1; min-height: 0; background: #000; position: relative; }
+      
+      .cropper-footer {
+        padding: 16px 20px; background: var(--s1); border-top: 1px solid var(--bd);
+        display: flex; flex-direction: column; gap: 12px;
+      }
+      .cropper-tools {
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .cropper-tools span { font-size: 0.85rem; color: var(--mu); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+      .cropper-tool-btns { display: flex; gap: 8px; }
+      .cropper-tool-btns button {
+        background: var(--s2); color: var(--tx); border: 1px solid var(--bd);
+        width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+        cursor: pointer; transition: 0.2s;
+      }
+      .cropper-tool-btns button:hover { background: var(--s3); }
+      
+      .cropper-actions { display: flex; gap: 12px; }
       .cropper-actions button {
-        flex: 1; min-width: 80px; padding: 14px 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+        flex: 1; padding: 14px; border: none; border-radius: 12px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.2s;
       }
-      .cropper-btn-rotate { background: var(--s3); color: var(--tx); border: 1px solid var(--bd); max-width: 80px; }
-      .cropper-btn-rotate:hover { background: var(--s4); }
-      .cropper-btn-cancel { background: var(--eb); color: var(--ex); }
-      .cropper-btn-cancel:hover { opacity: 0.8; }
-      .cropper-btn-save { background: var(--ac); color: #000; flex: 2; }
-      .cropper-btn-save:hover { opacity: 0.9; }
+      .cropper-btn-cancel { background: var(--s2); color: var(--tx); border: 1px solid var(--bd); }
+      .cropper-btn-cancel:hover { background: var(--s3); }
+      .cropper-btn-save { background: var(--ac); color: #000; }
+      .cropper-btn-save:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(186,220,88,0.3); }
     </style>
 
 
