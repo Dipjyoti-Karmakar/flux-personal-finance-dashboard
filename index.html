@@ -8007,7 +8007,7 @@
     <div class="cropper-card">
       <div class="cropper-header">
         <h3>Adjust Receipt</h3>
-        <button class="cropper-close" id="cropCancelTop" aria-label="Close">
+        <button type="button" class="cropper-close" id="cropCancelTop" aria-label="Close">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
@@ -8018,17 +8018,17 @@
         <div class="cropper-tools">
           <span>Rotation</span>
           <div class="cropper-tool-btns">
-            <button id="cropRotateLeft" aria-label="Rotate Left">
+            <button type="button" id="cropRotateLeft" aria-label="Rotate Left">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
             </button>
-            <button id="cropRotateRight" aria-label="Rotate Right">
+            <button type="button" id="cropRotateRight" aria-label="Rotate Right">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
             </button>
           </div>
         </div>
         <div class="cropper-actions">
-          <button class="cropper-btn-cancel" id="cropCancel">Cancel</button>
-          <button class="cropper-btn-save" id="cropSave">Attach Receipt</button>
+          <button type="button" class="cropper-btn-cancel" id="cropCancel">Cancel</button>
+          <button type="button" class="cropper-btn-save" id="cropSave">Attach Receipt</button>
         </div>
       </div>
     </div>
@@ -9066,30 +9066,46 @@
     });
 
     document.getElementById('cropSave').addEventListener('click', () => {
-      if (!_cropper || !_cropperFile) return;
-      const c = _cropper;
-      _cropper.getCroppedCanvas({
-        maxWidth: 2000,
-        maxHeight: 2000,
-        fillColor: '#fff',
-      }).toBlob((blob) => {
-        if (!blob) { showToast('Could not process image.', 'er'); return; }
-        const newFile = new File([blob], _cropperFile.name, { type: 'image/jpeg' });
-        // Guard: cropped file must not exceed 10 MB
-        if (newFile.size > RECEIPT_MAX_BYTES) { showToast('Cropped image exceeds 10 MB limit.', 'er'); return; }
-        const dt = new DataTransfer();
-        dt.items.add(newFile);
-        if (_cropperInput) _cropperInput.files = dt.files;
-        const labelId = _cropperCtx === 'add' ? 'receiptAddLabel' : 'eReceiptFileLabel';
-        const dropId = _cropperCtx === 'add' ? 'receiptAddDrop' : 'eReceiptDrop';
-        const label = document.getElementById(labelId);
-        const drop = document.getElementById(dropId);
-        const sizeMB = (newFile.size / 1024 / 1024).toFixed(1);
-        if (label) label.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${esc(newFile.name)} (${sizeMB} MB)`;
-        if (drop) drop.classList.add('has-file');
-        document.getElementById('cropperModal').classList.remove('vis');
-        c.destroy(); _cropper = null;
-      }, 'image/jpeg', 0.85);
+      try {
+        if (!_cropper || !_cropperFile) return;
+        const c = _cropper;
+        const canvas = _cropper.getCroppedCanvas({
+          maxWidth: 2000,
+          maxHeight: 2000,
+          fillColor: '#fff',
+        });
+        
+        if (!canvas) {
+          alert("Error: getCroppedCanvas returned null.");
+          return;
+        }
+
+        canvas.toBlob((blob) => {
+          if (!blob) { alert('Could not process image blob.'); return; }
+          const newFile = new File([blob], _cropperFile.name, { type: 'image/jpeg' });
+          if (newFile.size > RECEIPT_MAX_BYTES) { showToast('Cropped image exceeds 10 MB limit.', 'er'); return; }
+          
+          try {
+            const dt = new DataTransfer();
+            dt.items.add(newFile);
+            if (_cropperInput) _cropperInput.files = dt.files;
+          } catch(err) {
+            alert("Error setting files: " + err.message);
+          }
+          
+          const labelId = _cropperCtx === 'add' ? 'receiptAddLabel' : 'eReceiptFileLabel';
+          const dropId = _cropperCtx === 'add' ? 'receiptAddDrop' : 'eReceiptDrop';
+          const label = document.getElementById(labelId);
+          const drop = document.getElementById(dropId);
+          const sizeMB = (newFile.size / 1024 / 1024).toFixed(1);
+          if (label) label.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${esc(newFile.name)} (${sizeMB} MB)`;
+          if (drop) drop.classList.add('has-file');
+          document.getElementById('cropperModal').classList.remove('vis');
+          c.destroy(); _cropper = null;
+        }, 'image/jpeg', 0.85);
+      } catch (err) {
+        alert("Crop Save Error: " + err.message);
+      }
     });
 
     function previewReceipt(ctx, input) {
