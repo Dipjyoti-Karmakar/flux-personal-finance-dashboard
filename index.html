@@ -9088,10 +9088,12 @@
           const reader = new FileReader();
           reader.onload = function(e) {
             const image = document.getElementById('cropperImage');
+            if (_cropper) { _cropper.destroy(); _cropper = null; }
+            image.onload = function() {
+              _cropper = new Cropper(image, { viewMode: 1, autoCropArea: 1, responsive: true, restore: false });
+            };
             image.src = e.target.result;
             document.getElementById('cropperModal').classList.add('vis');
-            if (_cropper) { _cropper.destroy(); _cropper = null; }
-            _cropper = new Cropper(image, { viewMode: 1, autoCropArea: 1, responsive: true, restore: false });
           };
           reader.onerror = function() { showToast('Could not read image file.', 'er'); input.value = ''; };
           reader.readAsDataURL(file);
