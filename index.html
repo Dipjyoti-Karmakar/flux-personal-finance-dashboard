@@ -9061,8 +9061,8 @@
       // Guard: if name is just an extension (e.g. ".pdf"), baseName would be "" which produces ".pdf"
       // (a hidden file on macOS/Linux). Fall back to 'receipt' for the base.
       const baseName = (dotIdx > 0 ? rawName.slice(0, dotIdx) : rawName) || 'receipt';
-      // If no extension, or extension is unknown/wrong, fix it
-      const dlName = (rawExt && knownExts.has(rawExt)) ? rawName : baseName + '.' + correctExt;
+      // If no extension, or extension is unknown/wrong, or base is empty (e.g. ".pdf"), fix it
+      const dlName = (dotIdx > 0 && rawExt && knownExts.has(rawExt)) ? rawName : baseName + '.' + correctExt;
 
       // Images: use Cloudinary fl_attachment to trigger download synchronously within the user-gesture
       // event. Blob fetch (used for PDFs) requires await which loses the gesture context on iOS Safari,
