@@ -18,11 +18,13 @@
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2">
   <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=2">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com https://open.er-api.com https://api.cloudinary.com https://res.cloudinary.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://cdnjs.cloudflare.com https://unpkg.com https://twemoji.maxcdn.com https://res.cloudinary.com; worker-src 'self' blob:">
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com https://open.er-api.com https://api.cloudinary.com https://res.cloudinary.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://cdnjs.cloudflare.com https://unpkg.com https://twemoji.maxcdn.com https://res.cloudinary.com; worker-src 'self' blob:">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
     integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw"
     crossorigin="anonymous"></script>
@@ -7044,6 +7046,24 @@
       }
       .receipt-list-icon-btn:hover { background: var(--ac); color: #000; border-color: var(--ac); }
       .receipt-list-icon-btn.del:hover { background: var(--eb); color: var(--ex); border-color: transparent; }
+
+      /* Cropper Modal */
+      #cropperModal {
+        display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+        z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+      }
+      #cropperModal.vis { display: flex; flex-direction: column; }
+      .cropper-container-wrapper { width: 90%; max-width: 600px; height: 60vh; background: var(--s2); border-radius: 12px; overflow: hidden; position: relative; }
+      .cropper-actions { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 90%; max-width: 600px; }
+      .cropper-actions button {
+        flex: 1; min-width: 120px; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      }
+      .cropper-btn-rotate { background: var(--s3); color: var(--tx); border: 1px solid var(--bd); }
+      .cropper-btn-rotate:hover { background: var(--s4); }
+      .cropper-btn-cancel { background: var(--eb); color: var(--ex); }
+      .cropper-btn-cancel:hover { opacity: 0.8; }
+      .cropper-btn-save { background: var(--ac); color: #000; }
+      .cropper-btn-save:hover { opacity: 0.9; }
     </style>
 
 
@@ -7978,6 +7998,19 @@
         </div>
       </div>
       <div class="receipt-viewer-body" id="rvBody"></div>
+    </div>
+  </div>
+
+  <!-- Cropper Modal -->
+  <div id="cropperModal">
+    <div class="cropper-container-wrapper">
+      <img id="cropperImage" src="" style="display:block; max-width: 100%;">
+    </div>
+    <div class="cropper-actions">
+      <button class="cropper-btn-rotate" id="cropRotateLeft">Rotate Left</button>
+      <button class="cropper-btn-rotate" id="cropRotateRight">Rotate Right</button>
+      <button class="cropper-btn-cancel" id="cropCancel">Cancel</button>
+      <button class="cropper-btn-save" id="cropSave">Crop & Attach</button>
     </div>
   </div>
 
@@ -8968,6 +9001,52 @@
       return Promise.resolve();
     }
 
+    let _cropper = null;
+    let _cropperInput = null;
+    let _cropperCtx = null;
+    let _cropperFile = null;
+
+    document.getElementById('cropCancel').addEventListener('click', () => {
+      document.getElementById('cropperModal').classList.remove('vis');
+      if (_cropperInput) _cropperInput.value = '';
+      if (_cropper) { _cropper.destroy(); _cropper = null; }
+    });
+
+    document.getElementById('cropRotateLeft').addEventListener('click', () => {
+      if (_cropper) _cropper.rotate(-90);
+    });
+
+    document.getElementById('cropRotateRight').addEventListener('click', () => {
+      if (_cropper) _cropper.rotate(90);
+    });
+
+    document.getElementById('cropSave').addEventListener('click', () => {
+      if (!_cropper || !_cropperFile) return;
+      const c = _cropper;
+      _cropper.getCroppedCanvas({
+        maxWidth: 2000,
+        maxHeight: 2000,
+        fillColor: '#fff',
+      }).toBlob((blob) => {
+        if (!blob) { showToast('Could not process image.', 'er'); return; }
+        const newFile = new File([blob], _cropperFile.name, { type: 'image/jpeg' });
+        // Guard: cropped file must not exceed 10 MB
+        if (newFile.size > RECEIPT_MAX_BYTES) { showToast('Cropped image exceeds 10 MB limit.', 'er'); return; }
+        const dt = new DataTransfer();
+        dt.items.add(newFile);
+        if (_cropperInput) _cropperInput.files = dt.files;
+        const labelId = _cropperCtx === 'add' ? 'receiptAddLabel' : 'eReceiptFileLabel';
+        const dropId = _cropperCtx === 'add' ? 'receiptAddDrop' : 'eReceiptDrop';
+        const label = document.getElementById(labelId);
+        const drop = document.getElementById(dropId);
+        const sizeMB = (newFile.size / 1024 / 1024).toFixed(1);
+        if (label) label.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${esc(newFile.name)} (${sizeMB} MB)`;
+        if (drop) drop.classList.add('has-file');
+        document.getElementById('cropperModal').classList.remove('vis');
+        c.destroy(); _cropper = null;
+      }, 'image/jpeg', 0.85);
+    });
+
     function previewReceipt(ctx, input) {
       const file = input.files[0];
       const labelId  = ctx === 'add' ? 'receiptAddLabel'  : 'eReceiptFileLabel';
@@ -8997,6 +9076,24 @@
           if (drop) drop.classList.remove('has-file');
           return;
         }
+
+        if (effectiveType.startsWith('image/')) {
+          _cropperInput = input;
+          _cropperCtx = ctx;
+          _cropperFile = file;
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const image = document.getElementById('cropperImage');
+            image.src = e.target.result;
+            document.getElementById('cropperModal').classList.add('vis');
+            if (_cropper) { _cropper.destroy(); _cropper = null; }
+            _cropper = new Cropper(image, { viewMode: 1, autoCropArea: 1, responsive: true, restore: false });
+          };
+          reader.onerror = function() { showToast('Could not read image file.', 'er'); input.value = ''; };
+          reader.readAsDataURL(file);
+          return;
+        }
+
         const sizeMB = (file.size / 1024 / 1024).toFixed(1);
         if (label) label.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${esc(file.name)} (${sizeMB} MB)`;
         if (drop) drop.classList.add('has-file');
