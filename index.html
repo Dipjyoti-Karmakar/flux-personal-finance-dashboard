@@ -9016,12 +9016,30 @@
       if (_cropper) { _cropper.destroy(); _cropper = null; }
     });
 
+    function rotateAndFitCropper(degree) {
+      if (!_cropper) return;
+      _cropper.clear();
+      _cropper.rotate(degree);
+      const imgData = _cropper.getImageData();
+      const contData = _cropper.getContainerData();
+      let nw = imgData.naturalWidth;
+      let nh = imgData.naturalHeight;
+      if (Math.abs(imgData.rotate) % 180 !== 0) {
+        nw = imgData.naturalHeight;
+        nh = imgData.naturalWidth;
+      }
+      const ratio = Math.min(contData.width / nw, contData.height / nh);
+      _cropper.zoomTo(ratio);
+      _cropper.moveTo((contData.width - nw * ratio) / 2, (contData.height - nh * ratio) / 2);
+      setTimeout(() => { _cropper.crop(); }, 10);
+    }
+
     document.getElementById('cropRotateLeft').addEventListener('click', () => {
-      if (_cropper) _cropper.rotate(-90);
+      rotateAndFitCropper(-90);
     });
 
     document.getElementById('cropRotateRight').addEventListener('click', () => {
-      if (_cropper) _cropper.rotate(90);
+      rotateAndFitCropper(90);
     });
 
     document.getElementById('cropSave').addEventListener('click', () => {
