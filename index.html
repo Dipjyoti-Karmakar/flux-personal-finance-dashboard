@@ -10254,7 +10254,8 @@
           } catch (e) {
             if (eDropLabel) eDropLabel.textContent = 'Click or drag to attach receipt';
             showToast('Receipt upload failed: ' + e.message, 'er');
-            _saveEditBusy = false; if (_editSaveBtn) _editSaveBtn.disabled = false;
+            _saveEditBusy = false;
+            if (_editSaveBtn) _editSaveBtn.disabled = false;
             return;
           }
         }
@@ -10276,9 +10277,23 @@
           prevTxState = { ...txs[localIdx] };
           const mergePayload = { ...updatedTx };
           if (removingEventId) delete mergePayload.eventId;
+          // Firestore deleteField() sentinels must not leak into the local txs object.
+          // Strip them and use real JS delete so the object is immediately clean.
+          if (nextReceipts.length === 0 && prevReceipts.length > 0) {
+            delete mergePayload.receipts;
+            delete mergePayload.receipt;
+          } else if (nextReceipts.length > 0) {
+            delete mergePayload.receipt; // always evict legacy single-receipt field locally
+          }
           // Preserve subscription-related flags not touched by the edit form
           txs[localIdx] = { ...txs[localIdx], ...mergePayload };
           if (removingEventId) delete txs[localIdx].eventId;
+          if (nextReceipts.length === 0 && prevReceipts.length > 0) {
+            delete txs[localIdx].receipts;
+            delete txs[localIdx].receipt;
+          } else if (nextReceipts.length > 0) {
+            delete txs[localIdx].receipt;
+          }
           debouncedRender();
         }
         try {
