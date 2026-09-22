@@ -8453,12 +8453,16 @@
         // snapshot without its receipt (race: snapshot arrived before setDoc confirmed
         // the receipt field), re-patch from the in-memory pending receipt map.
         if (_pendingReceiptPatches && _pendingReceiptPatches.size > 0) {
-          _pendingReceiptPatches.forEach((rMeta, txId) => {
+          _pendingReceiptPatches.forEach((patch, txId) => {
             const tx = txs.find(t => t.id === txId);
-            if (tx && (!tx.receipts || !tx.receipts.some(r => r.url === rMeta.url))) {
-              // Receipt not yet in tx — re-apply optimistically
-              tx.receipts = [...(tx.receipts || []).filter(r => r.url !== rMeta.url), rMeta];
-            } else if (tx && tx.receipts && tx.receipts.some(r => r.url === rMeta.url)) {
+            // patch is either a single rMeta object (add flow) or a full receipts array (edit flow)
+            const patchArr = Array.isArray(patch) ? patch : [patch];
+            const allUrls  = patchArr.map(r => r.url);
+            if (tx && !allUrls.every(url => (tx.receipts || []).some(r => r.url === url))) {
+              // Not all receipts confirmed yet — re-apply the full patch set optimistically
+              const merged = [...(tx.receipts || []).filter(r => !allUrls.includes(r.url)), ...patchArr];
+              tx.receipts = merged;
+            } else if (tx && allUrls.every(url => (tx.receipts || []).some(r => r.url === url))) {
               _pendingReceiptPatches.delete(txId); // Firestore confirmed — stop patching
             }
           });
@@ -8971,6 +8975,28 @@
       const label = document.getElementById(labelId);
       const drop  = document.getElementById(dropId);
       if (file) {
+        // Pre-validate size and type before the user even clicks Save
+        if (file.size > RECEIPT_MAX_BYTES) {
+          showToast('File exceeds 10 MB limit — please choose a smaller file.', 'er');
+          input.value = '';
+          if (label) label.textContent = 'Click or drag to attach receipt';
+          if (drop) drop.classList.remove('has-file');
+          return;
+        }
+        let effectiveType = file.type;
+        if (!effectiveType || effectiveType === 'application/octet-stream') {
+          const ext = file.name.split('.').pop().toLowerCase();
+          const extMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+                           webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf' };
+          effectiveType = extMap[ext] || '';
+        }
+        if (!RECEIPT_ACCEPT_TYPES.includes(effectiveType)) {
+          showToast('Unsupported format. Use JPG, PNG, WEBP, GIF, or PDF.', 'er');
+          input.value = '';
+          if (label) label.textContent = 'Click or drag to attach receipt';
+          if (drop) drop.classList.remove('has-file');
+          return;
+        }
         const sizeMB = (file.size / 1024 / 1024).toFixed(1);
         if (label) label.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${esc(file.name)} (${sizeMB} MB)`;
         if (drop) drop.classList.add('has-file');
@@ -9036,11 +9062,13 @@
       // If no extension, or extension is unknown/wrong, fix it
       const dlName = (rawExt && knownExts.has(rawExt)) ? rawName : baseName + '.' + correctExt;
 
-      // Images can use Cloudinary's fl_attachment to force download immediately (synchronously)
+      // Images can use Cloudinary's fl_attachment to force download immediately (synchronously).
+      // Anchor the replacement to the bare /upload/ segment only (no trailing transform path)
+      // so existing transformation segments (e.g. /upload/w_auto/…) are not double-injected.
       if (!isPDF) {
         const nameNoExt = dlName.replace(/\.[^.]+$/, '');
         const safeName = nameNoExt.replace(/[^a-zA-Z0-9_-]/g, '_');
-        const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment)/, `/upload/fl_attachment:${safeName}/`);
+        const dlUrl = receipt.url.replace(/\/upload\/(?!fl_attachment\b)/, `/upload/fl_attachment:${safeName}/`);
         const a = document.createElement('a');
         a.href = dlUrl;
         a.download = dlName;
@@ -9076,14 +9104,14 @@
     let _rvIndex   = 0;   // current position
 
     function _rvRenderSlide(receipt) {
-      const body  = document.getElementById('rvBody');
-      const title = document.getElementById('rvTitle');
-      const dlBtn = document.getElementById('rvDownloadBtn');
+      const body    = document.getElementById('rvBody');
+      const title   = document.getElementById('rvTitle');
+      const dlBtn   = document.getElementById('rvDownloadBtn');
       const openBtn = document.getElementById('rvOpenBtn');
       if (!body) return;
-      title.textContent = receipt.name || 'Receipt';
-      dlBtn.onclick = (e) => { e.preventDefault(); downloadReceipt(receipt); };
-      openBtn.href = receipt.url;
+      if (title)   title.textContent = receipt.name || 'Receipt';
+      if (dlBtn)   dlBtn.onclick = (e) => { e.preventDefault(); downloadReceipt(receipt); };
+      if (openBtn) openBtn.href = receipt.url || '#';
 
       // Detect type: use stored type, or fall back to URL extension
       let rType = receipt.type || '';
@@ -9123,8 +9151,10 @@
 
     function openReceiptViewer(receiptsOrSingle, startIndex) {
       // Accept either a receipts[] array (new) or a single receipt object (legacy inline calls)
-      const arr = Array.isArray(receiptsOrSingle) ? receiptsOrSingle : [receiptsOrSingle];
-      if (!arr.length || !arr[0]?.url) return;
+      const raw = Array.isArray(receiptsOrSingle) ? receiptsOrSingle : [receiptsOrSingle];
+      // Filter out any receipts missing a URL (corrupted data guard)
+      const arr = raw.filter(r => r && typeof r.url === 'string' && r.url.trim());
+      if (!arr.length) return;
       _rvReceipts = arr;
       _rvIndex = (typeof startIndex === 'number' && startIndex >= 0 && startIndex < arr.length) ? startIndex : 0;
 
@@ -10141,8 +10171,12 @@
       document.getElementById('editMod').classList.remove('op');
       // Reset multi-receipt edit state
       _editRemovedIdxs = new Set();
-      const ef = document.getElementById('eReceiptFile');
-      if (ef) ef.value = '';
+      const ef        = document.getElementById('eReceiptFile');
+      const eLabel    = document.getElementById('eReceiptFileLabel');
+      const eDrop     = document.getElementById('eReceiptDrop');
+      if (ef)     ef.value = '';
+      if (eLabel) eLabel.textContent = 'Click or drag to attach receipt';
+      if (eDrop)  eDrop.classList.remove('has-file');
       editingTxId = null;
     }
 
@@ -10212,7 +10246,9 @@
             const rMeta = await uploadReceipt(eReceiptFile, editingTxId + '_' + Date.now(), null, eDropLabel);
             if (rMeta) {
               nextReceipts = [...nextReceipts, rMeta];
-              _pendingReceiptPatches.set(editingTxId, rMeta);
+              // Store the full updated receipts array so that if a Firestore snapshot
+              // arrives before setDoc confirms, the guard re-applies ALL receipts, not just the new one.
+              _pendingReceiptPatches.set(editingTxId, nextReceipts);
             }
             if (eDropLabel) eDropLabel.textContent = '\u2714 Uploaded: ' + (nextReceipts.at(-1)?.name || '');
           } catch (e) {
@@ -11683,8 +11719,10 @@
         for (let r = 1; r < wsData.length; r++) {
           const cellRef = XLSX.utils.encode_cell({ r, c: receiptColIdx });
           if (ws[cellRef]) {
-            ws[cellRef].s = ws[cellRef].s || {};
-            ws[cellRef].s.alignment = { vertical: 'top', wrapText: true };
+            // Deep-merge: preserve any existing style (e.g. font/fill set elsewhere)
+            ws[cellRef].s = Object.assign({}, ws[cellRef].s, {
+              alignment: Object.assign({}, (ws[cellRef].s || {}).alignment, { vertical: 'top', wrapText: true })
+            });
           }
         }
       }
@@ -11693,7 +11731,11 @@
       const colWidths = headers.map((h, ci) => {
         const maxLen = wsData.reduce((max, row) => {
           const val = row[ci] !== undefined ? String(row[ci]) : '';
-          return Math.max(max, val.length);
+          // For multi-URL cells (newline-separated), use the longest single line, not total length
+          const lineMax = val.includes('\n')
+            ? val.split('\n').reduce((m, l) => Math.max(m, l.length), 0)
+            : val.length;
+          return Math.max(max, lineMax);
         }, h.length);
         const cap = (ci === receiptColIdx) ? 40 : 60;
         return { wch: Math.min(maxLen + 4, cap) };
@@ -12770,7 +12812,7 @@
         else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">📥 Imported</span>`;
         else if (l.a === 'DELETE') actionPill = '';
         else if (l.a === 'ADD') {
-          if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);"><span style="font-size:8px;">🔄</span> Auto-recurring</span>`;
+          if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);">Auto-recurring</span>`;
           else actionPill = `<span style="${pSty}background:var(--ib);color:var(--in);border:1px solid var(--in);">➕ Added</span>`;
         }
         else actionPill = `<span style="${pSty}background:var(--s3);color:var(--tx);border:1px solid var(--bd);">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
