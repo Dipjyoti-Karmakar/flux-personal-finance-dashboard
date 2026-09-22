@@ -1,6 +1,6 @@
 // Flux Service Worker — Offline-first caching strategy
-// V44: Bumped to v33 — unlink fix (_recurring removal), ML error handler retry, auth state reset
-const CACHE_NAME = 'flux-v33';
+// V45: Bumped to v34 — added image crop/rotate feature (Cropper.js)
+const CACHE_NAME = 'flux-v34';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './',
@@ -9,7 +9,9 @@ const PRE_CACHE = [
   './icon-192.png?v=2',
   './icon-512.png?v=2',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css'
 ];
 
 // Install: pre-cache core assets
