@@ -9058,7 +9058,9 @@
       const dotIdx = rawName.lastIndexOf('.');
       const rawExt = dotIdx !== -1 ? rawName.slice(dotIdx + 1).toLowerCase() : '';
       const correctExt = mimeToExt[receipt.type || ''] || 'bin';
-      const baseName = dotIdx !== -1 ? rawName.slice(0, dotIdx) : rawName;
+      // Guard: if name is just an extension (e.g. ".pdf"), baseName would be "" which produces ".pdf"
+      // (a hidden file on macOS/Linux). Fall back to 'receipt' for the base.
+      const baseName = (dotIdx > 0 ? rawName.slice(0, dotIdx) : rawName) || 'receipt';
       // If no extension, or extension is unknown/wrong, fix it
       const dlName = (rawExt && knownExts.has(rawExt)) ? rawName : baseName + '.' + correctExt;
 
