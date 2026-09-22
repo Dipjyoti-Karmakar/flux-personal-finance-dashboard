@@ -7051,18 +7051,23 @@
       #cropperModal {
         display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
         z-index: 100001; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+        touch-action: none; /* Prevent body scroll on mobile */
       }
-      #cropperModal.vis { display: flex !important; flex-direction: column; }
-      .cropper-container-wrapper { width: 90%; max-width: 600px; height: 60vh; background: var(--s2); border-radius: 12px; overflow: hidden; position: relative; }
-      .cropper-actions { margin-top: 20px; display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; width: 90%; max-width: 600px; }
+      #cropperModal.vis { 
+        display: flex !important; flex-direction: column; 
+        padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)) 16px; 
+        box-sizing: border-box; 
+      }
+      .cropper-container-wrapper { width: 100%; max-width: 600px; flex: 1; min-height: 0; background: var(--s2); border-radius: 12px; overflow: hidden; position: relative; }
+      .cropper-actions { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; max-width: 600px; }
       .cropper-actions button {
-        flex: 1; min-width: 120px; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        flex: 1; min-width: 80px; padding: 14px 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
       }
-      .cropper-btn-rotate { background: var(--s3); color: var(--tx); border: 1px solid var(--bd); }
+      .cropper-btn-rotate { background: var(--s3); color: var(--tx); border: 1px solid var(--bd); max-width: 80px; }
       .cropper-btn-rotate:hover { background: var(--s4); }
       .cropper-btn-cancel { background: var(--eb); color: var(--ex); }
       .cropper-btn-cancel:hover { opacity: 0.8; }
-      .cropper-btn-save { background: var(--ac); color: #000; }
+      .cropper-btn-save { background: var(--ac); color: #000; flex: 2; }
       .cropper-btn-save:hover { opacity: 0.9; }
     </style>
 
@@ -8007,8 +8012,12 @@
       <img id="cropperImage" src="" style="display:block; max-width: 100%;">
     </div>
     <div class="cropper-actions">
-      <button class="cropper-btn-rotate" id="cropRotateLeft">Rotate Left</button>
-      <button class="cropper-btn-rotate" id="cropRotateRight">Rotate Right</button>
+      <button class="cropper-btn-rotate" id="cropRotateLeft" aria-label="Rotate Left">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      </button>
+      <button class="cropper-btn-rotate" id="cropRotateRight" aria-label="Rotate Right">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+      </button>
       <button class="cropper-btn-cancel" id="cropCancel">Cancel</button>
       <button class="cropper-btn-save" id="cropSave">Crop & Attach</button>
     </div>
