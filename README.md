@@ -28,7 +28,7 @@ The application is optimized for the Indian locale (`en-IN`), formatting all cur
 ## Key Features
 
 - **Transaction Management:** Comprehensive CRUD operations for income and expenses. Includes support for receipt attachments (images/PDFs), online/offline payment tagging, full-text search, and advanced filtering.
-- **Receipt Management:** Secure, Cloudinary-backed storage for transaction receipts. Features a dedicated inline viewer and smart, format-aware file downloads.
+- **Receipt Management:** Secure, Cloudinary-backed storage for transaction receipts. Features a built-in image cropper with rotation support, a dedicated inline viewer, and smart, format-aware file downloads.
 - **Recurring Subscriptions:** Automates regular expenses with flexible frequencies (daily, weekly, monthly, yearly, custom). Supports pause/resume functionality, alternative price matching, and projected cost analysis.
 - **Analytics Dashboard:** Interactive Canvas 2D trend charts, dynamic category breakdowns, and auto-generated monthly spending insights.
 - **Reporting & Data Export:** Generate A4 PDF reports (via jsPDF) or export richly formatted `.xlsx` files with clickable receipt hyperlinks. Supports bulk CSV importing with duplicate detection.
