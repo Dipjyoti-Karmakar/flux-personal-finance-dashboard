@@ -12834,10 +12834,21 @@
       const actIcons = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
       const actLabels = { 'ADD': 'Added', 'EDIT': 'Edited', 'DELETE': 'Deleted', 'IMPORT': 'Imported' };
 
+      let currentLogDate = null;
+      function getOrd(n) { const s = ["th", "st", "nd", "rd"]; const v = n % 100; return s[(v - 20) % 10] || s[v] || s[0]; }
+
       listEl.innerHTML = logs.map(l => {
         const ts = l.ts || l.t;
         const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
-        const timeStr = `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })} ${d.getFullYear().toString().slice(-2)}, ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+        
+        const dateStr = `${d.getDate()}${getOrd(d.getDate())} ${d.toLocaleString('default', { month: 'short' })}, ${d.getFullYear().toString().slice(-2)}`;
+        let headerHtml = '';
+        if (dateStr !== currentLogDate) {
+          headerHtml = `<div class="log-date-header" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--mu);margin:16px 0 8px 0;text-transform:uppercase;letter-spacing:1px;font-weight:600;padding-left:8px;">${dateStr}</div>`;
+          currentLogDate = dateStr;
+        }
+
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         const isAuto = l.a === 'ADD' && (l.m || '').includes('isAuto');
         const isNewRec = l.a === 'ADD' && (l.m || '').includes('isNewRec');
@@ -12906,7 +12917,7 @@
           extraClass = 'log-card-new';
         }
 
-        return `<div class="${animClass} ${extraClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}${extraStyle}${selStyle}">
+        return `${headerHtml}<div class="${animClass} ${extraClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}${extraStyle}${selStyle}">
       <div class="dot ${dotColorClass}" ${dotColorClass === 'neutral' ? 'style="background:var(--mu);box-shadow:0 0 8px var(--mu)"' : ''}></div>
       <div class="ti">
         <div class="tn log-msg">${msgHtml}</div>
