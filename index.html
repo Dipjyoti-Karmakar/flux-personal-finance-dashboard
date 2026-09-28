@@ -6987,7 +6987,7 @@
       .cs-wrap.open .cs-menu { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
       .cs-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; background: transparent; border: none; border-radius: 8px; color: var(--tx); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; text-align: left; }
       .cs-opt:hover, .cs-opt:focus { background: var(--sf); color: var(--ac); outline:none; }
-      .cs-opt.act { background: var(--bg); color: var(--tx); font-weight: 700; }
+      .cs-opt.act { background: transparent; color: var(--tx); font-weight: 700; }
       .cs-opt-ico { display:inline-block; font-size:1.1em; line-height:1; }
     </style>
 
@@ -8631,7 +8631,7 @@
         div.onclick = () => selectCustomOption(opt);
         div.onkeydown = (e) => handleOptionKey(e, opt);
         const label = opt.charAt(0).toUpperCase() + opt.slice(1);
-        div.innerHTML = `<span class="bg ct" data-cat="${opt}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${CICO[opt] || ''} <span style="margin-left:4px;">${label}</span></span>`;
+        div.innerHTML = `<span class="bg ct" data-cat="${opt}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;line-height:1;box-shadow:none;">${CICO[opt] || ''} <span style="margin-left:4px;">${label}</span></span>`;
         optsContainer.appendChild(div);
       });
 
@@ -8645,7 +8645,7 @@
     function selectCustomOption(val) {
       document.getElementById('txC').value = val;
       const label = val.charAt(0).toUpperCase() + val.slice(1);
-      document.getElementById('txCLabel').innerHTML = `<span class="bg ct" data-cat="${val}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${CICO[val] || ''} <span style="margin-left:4px;">${label}</span></span>`;
+      document.getElementById('txCLabel').innerHTML = `<span class="bg ct" data-cat="${val}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;line-height:1;box-shadow:none;">${CICO[val] || ''} <span style="margin-left:4px;">${label}</span></span>`;
       document.getElementById('txCOptions').classList.remove('open');
       document.getElementById('txCTrigger').setAttribute('aria-expanded', 'false');
 
@@ -10287,7 +10287,7 @@
       if (btnText) {
         if (id === 'cs-eCat' || id === 'cs-recCat') {
           const displayIcon = iconHtml || (typeof CICO !== 'undefined' ? CICO[val] : '✦');
-          btnText.innerHTML = `<span class="bg ct" data-cat="${val}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${displayIcon} <span style="margin-left:4px;">${text}</span></span>`;
+          btnText.innerHTML = `<span class="bg ct" data-cat="${val}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;line-height:1;box-shadow:none;">${displayIcon} <span style="margin-left:4px;">${text}</span></span>`;
         } else {
           btnText.innerHTML = (iconHtml ? `<span class="cs-opt-ico">${iconHtml}</span> ` : '') + text;
         }
@@ -10337,7 +10337,7 @@
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
-        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', '${c}', '${name}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', '${c}', '${name}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;line-height:1;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
       }).join('');
       
       const hidden = document.getElementById('eCat');
@@ -10355,7 +10355,7 @@
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
-        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-recCat', '${c}', '${name}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-recCat', '${c}', '${name}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;line-height:1;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
       }).join('');
       
       const hidden = document.getElementById('recCat');
