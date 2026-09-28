@@ -7597,7 +7597,7 @@
       <div class="mb">
         <div class="fb2" style="padding:0">
           <div class="fr">
-            <div class="fd full-mob">
+            <div class="fd">
               <label>Type</label>
               <div class="cs-wrap" id="cs-eTy">
                 <input type="hidden" id="eTy" value="expense" onchange="updECat(this.value)">
@@ -7608,7 +7608,7 @@
                 </div>
               </div>
             </div>
-            <div class="fd full-mob">
+            <div class="fd">
               <label>Mode</label>
               <div class="cs-wrap" id="cs-eMo">
                 <input type="hidden" id="eMo" value="online">
@@ -7620,34 +7620,36 @@
               </div>
             </div>
           </div>
-          <div class="fd full-mob">
-            <label>Description</label>
-            <input type="text" id="eDesc" maxlength="50" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
-          </div>
-          <div class="fd full-mob">
-            <label>Category</label>
-            <div class="cs-wrap" id="cs-eCat">
-              <input type="hidden" id="eCat">
-              <button class="cs-btn" type="button" onclick="toggleCS('cs-eCat')"><span class="cs-val">Select Category</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
-              <div class="cs-menu" id="cs-eCat-menu"></div>
+          <div class="fr">
+            <div class="fd">
+              <label>Category</label>
+              <div class="cs-wrap" id="cs-eCat">
+                <input type="hidden" id="eCat">
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-eCat')"><span class="cs-val">Select Category</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <div class="cs-menu" id="cs-eCat-menu"></div>
+              </div>
+            </div>
+            <div class="fd">
+              <label>Amount (₹)</label>
+              <input type="number" id="eAmt" min="0" step="0.01" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
             </div>
           </div>
-          <div class="fd full-mob">
+          <div class="fr">
+            <div class="fd">
+              <label>Description</label>
+              <input type="text" id="eDesc" maxlength="50" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
+            </div>
+            <div class="fd">
+              <label>Date</label>
+              <input type="date" id="eDt" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
+            </div>
+          </div>
+          <div class="fd">
             <label>Event (Optional)</label>
             <div class="cs-wrap" id="cs-eEvent">
               <input type="hidden" id="eEvent">
               <button class="cs-btn" type="button" onclick="toggleCS('cs-eEvent')"><span class="cs-val">— No Event —</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
               <div class="cs-menu" id="cs-eEvent-menu"></div>
-            </div>
-          </div>
-          <div class="fr">
-            <div class="fd">
-              <label>Amount (₹)</label>
-              <input type="number" id="eAmt" min="0" step="0.01" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
-            </div>
-            <div class="fd">
-              <label>Date</label>
-              <input type="date" id="eDt" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
             </div>
           </div>
           <!-- ── Receipt Section ───────────────────────── -->
@@ -7786,20 +7788,22 @@
               <button class="alt-amt-add-btn" type="button" onclick="addAltAmount()">＋ Add</button>
             </div>
           </div>
-          <div style="margin-bottom:14px;">
-            <label
-              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Type</label>
-            <div class="tg" style="grid-template-columns:1fr 1fr;">
-              <button class="tb" id="recTypeExp" onclick="setRecType('expense')">Expense</button>
-              <button class="tb" id="recTypeInc" onclick="setRecType('income')">Income</button>
+          <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+            <div>
+              <label
+                style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Type</label>
+              <div class="tg" style="grid-template-columns:1fr 1fr;">
+                <button class="tb" id="recTypeExp" onclick="setRecType('expense')">Expense</button>
+                <button class="tb" id="recTypeInc" onclick="setRecType('income')">Income</button>
+              </div>
             </div>
-          </div>
-          <div style="margin-bottom:14px;">
-            <label
-              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Mode</label>
-            <div class="tg" style="grid-template-columns:1fr 1fr;">
-              <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true">Online</button>
-              <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false">Offline</button>
+            <div>
+              <label
+                style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Mode</label>
+              <div class="tg" style="grid-template-columns:1fr 1fr;">
+                <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true">Online</button>
+                <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false">Offline</button>
+              </div>
             </div>
           </div>
           <div style="margin-bottom:14px;">
