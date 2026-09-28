@@ -10304,7 +10304,7 @@
       
       const btn = w.querySelector('.cs-btn');
       if (btn) {
-         if (id === 'cs-eTy') {
+         if (id === 'cs-eTy' || id === 'cs-recTy') {
             btn.style.backgroundColor = val === 'expense' ? 'color-mix(in srgb, var(--ex) 15%, transparent)' : 'color-mix(in srgb, var(--in) 15%, transparent)';
             btn.style.borderColor = val === 'expense' ? 'var(--ex)' : 'var(--in)';
          } else if (id === 'cs-eCat' || id === 'cs-recCat') {
@@ -10313,7 +10313,7 @@
             // Pop animation
             btn.style.transform = 'scale(0.96)';
             setTimeout(() => btn.style.transform = 'none', 120);
-         } else if (id === 'cs-eMo') {
+         } else if (id === 'cs-eMo' || id === 'cs-recMo') {
             const color = val === 'online' ? 'var(--on)' : 'var(--of)';
             btn.style.backgroundColor = `color-mix(in srgb, ${color} 15%, transparent)`;
             btn.style.borderColor = color;
