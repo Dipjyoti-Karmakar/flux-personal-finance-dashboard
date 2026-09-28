@@ -8626,7 +8626,7 @@
         div.onclick = () => selectCustomOption(opt);
         div.onkeydown = (e) => handleOptionKey(e, opt);
         const label = opt.charAt(0).toUpperCase() + opt.slice(1);
-        div.innerHTML = `${CICO[opt] || ''} <span style="margin-left:8px;">${label}</span>`;
+        div.innerHTML = `<span class="bg ct" data-cat="${opt}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${CICO[opt] || ''} <span style="margin-left:4px;">${label}</span></span>`;
         optsContainer.appendChild(div);
       });
 
@@ -8640,7 +8640,7 @@
     function selectCustomOption(val) {
       document.getElementById('txC').value = val;
       const label = val.charAt(0).toUpperCase() + val.slice(1);
-      document.getElementById('txCLabel').innerHTML = `${CICO[val] || ''} <span style="margin-left:8px;">${label}</span>`;
+      document.getElementById('txCLabel').innerHTML = `<span class="bg ct" data-cat="${val}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${CICO[val] || ''} <span style="margin-left:4px;">${label}</span></span>`;
       document.getElementById('txCOptions').classList.remove('open');
       document.getElementById('txCTrigger').setAttribute('aria-expanded', 'false');
 
@@ -10279,7 +10279,13 @@
         hidden.dispatchEvent(new Event('change'));
       }
       const btnText = w.querySelector('.cs-val');
-      if(btnText) btnText.innerHTML = (iconHtml ? `<span class="cs-opt-ico">${iconHtml}</span> ` : '') + text;
+      if (btnText) {
+        if (id === 'cs-eCat' || id === 'cs-recCat') {
+          btnText.innerHTML = `<span class="bg ct" data-cat="${val}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${iconHtml} <span style="margin-left:4px;">${text}</span></span>`;
+        } else {
+          btnText.innerHTML = (iconHtml ? `<span class="cs-opt-ico">${iconHtml}</span> ` : '') + text;
+        }
+      }
       w.classList.remove('open');
       w.querySelectorAll('.cs-opt').forEach(opt => opt.classList.toggle('act', opt.dataset.val === val));
       
@@ -10288,10 +10294,9 @@
          if (id === 'cs-eTy') {
             btn.style.backgroundColor = val === 'expense' ? 'color-mix(in srgb, var(--ex) 15%, transparent)' : 'color-mix(in srgb, var(--in) 15%, transparent)';
             btn.style.borderColor = val === 'expense' ? 'var(--ex)' : 'var(--in)';
-         } else if (id === 'cs-eCat') {
-            const color = (typeof CAT_COLOR !== 'undefined' && CAT_COLOR[val]) ? CAT_COLOR[val] : '#ffd700';
-            btn.style.backgroundColor = `color-mix(in srgb, ${color} 15%, transparent)`;
-            btn.style.borderColor = color;
+         } else if (id === 'cs-eCat' || id === 'cs-recCat') {
+            btn.style.backgroundColor = 'var(--ib)';
+            btn.style.borderColor = 'var(--bd)';
             // Pop animation
             btn.style.transform = 'scale(0.96)';
             setTimeout(() => btn.style.transform = 'none', 120);
@@ -10326,7 +10331,7 @@
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
-        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', this.dataset.val, this.textContent.trim(), this.querySelector('.cs-opt-ico').innerHTML)"><span class="cs-opt-ico">${icon}</span> ${name}</button>`;
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', '${c}', '${name}', '${icon}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
       }).join('');
       
       const hidden = document.getElementById('eCat');
@@ -10344,7 +10349,7 @@
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
-        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-recCat', this.dataset.val, this.textContent.trim(), this.querySelector('.cs-opt-ico').innerHTML)"><span class="cs-opt-ico">${icon}</span> ${name}</button>`;
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-recCat', '${c}', '${name}', '${icon}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
       }).join('');
       
       const hidden = document.getElementById('recCat');
