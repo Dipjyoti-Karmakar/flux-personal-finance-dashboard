@@ -1144,12 +1144,16 @@
     }
 
     .bg {
-      padding: 2px 6px;
+      height: 18px;
+      box-sizing: border-box;
+      padding: 0 6px;
       border-radius: 7px;
       font-size: 9px;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
+      line-height: 1;
     }
 
     .bg .c-ico {
@@ -1406,8 +1410,12 @@
 
     /* Event badge and tx-event highlight */
     .event-badge {
-      display: inline-block;
-      padding: 2px 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 18px;
+      box-sizing: border-box;
+      padding: 0 8px;
       border-radius: 7px;
       font-family: 'DM Mono', monospace;
       font-size: 9px;
@@ -2037,10 +2045,14 @@
     }
 
     .now-badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 18px;
+      box-sizing: border-box;
       background: var(--eb);
       color: var(--ex);
-      padding: 3px 8px;
+      padding: 0 8px;
       border-radius: 7px;
       font-size: 9px;
       margin-left: 8px;
@@ -4441,7 +4453,11 @@
       font-weight: 700;
       letter-spacing: .4px;
       text-transform: uppercase;
-      padding: 3px 8px;
+      height: 18px;
+      box-sizing: border-box;
+      padding: 0 8px;
+      justify-content: center;
+      line-height: 1;
       border-radius: 7px;
       border: 1px solid transparent;
       white-space: nowrap;
@@ -6821,8 +6837,8 @@
 
       /* Receipt badge pill — sits in the left info/badge row, never affects amount alignment */
       .receipt-badge {
-        display: inline-flex; align-items: center; gap: 3px;
-        padding: 2px 7px; border-radius: 7px;
+        display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+        height: 18px; box-sizing: border-box; padding: 0 7px; border-radius: 7px;
         border: 1px solid var(--ac); background: color-mix(in srgb, var(--ac) 12%, transparent);
         color: var(--ac); font-size: 10px; font-family: 'DM Mono', monospace;
         cursor: pointer; line-height: 1.4; white-space: nowrap;
