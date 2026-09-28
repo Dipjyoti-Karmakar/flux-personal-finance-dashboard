@@ -5316,7 +5316,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
       gap: 10px;
     }
@@ -5328,17 +5328,77 @@
       color: var(--tx);
     }
 
-    .log-clear-btn {
-      padding: 6px 14px;
-      border: 1px solid var(--bd);
+    /* Filter pill bar */
+    .log-filter-bar {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .log-fpill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1.5px solid var(--bd);
       background: var(--s2);
+      color: var(--mu);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .2s cubic-bezier(0.16,1,0.3,1);
+      white-space: nowrap;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .log-fpill svg { flex-shrink: 0; opacity: .7; transition: opacity .2s; }
+
+    .log-fpill:hover {
+      border-color: var(--ac);
+      color: var(--ac);
+      background: var(--ag);
+      transform: translateY(-1px);
+    }
+    .log-fpill:hover svg { opacity: 1; }
+
+    .log-fpill.act {
+      border-color: var(--ac);
+      background: var(--ac);
+      color: #0d0f14;
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--ac) 35%, transparent);
+    }
+    .log-fpill.act svg { opacity: 1; }
+
+    /* colour-coded active states per filter */
+    .log-fpill.act-add    { background: var(--in); border-color: var(--in); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb,var(--in) 35%,transparent); }
+    .log-fpill.act-edit   { background: var(--ac); border-color: var(--ac); color: #0d0f14; box-shadow: 0 2px 8px color-mix(in srgb,var(--ac) 35%,transparent); }
+    .log-fpill.act-del    { background: var(--ex); border-color: var(--ex); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb,var(--ex) 35%,transparent); }
+    .log-fpill.act-import { background: var(--on); border-color: var(--on); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb,var(--on) 35%,transparent); }
+    .log-fpill.act-sub    { background:#a78bfa; border-color:#a78bfa; color:#fff; box-shadow: 0 2px 8px #a78bfa44; }
+    .log-fpill.act-evt    { background:#fb923c; border-color:#fb923c; color:#fff; box-shadow: 0 2px 8px #fb923c44; }
+    .log-fpill.act-inc    { background: var(--in); border-color: var(--in); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb,var(--in) 35%,transparent); }
+    .log-fpill.act-exp    { background: var(--ex); border-color: var(--ex); color: #fff; box-shadow: 0 2px 8px color-mix(in srgb,var(--ex) 35%,transparent); }
+
+    .log-clear-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 13px;
+      border: 1.5px solid var(--bd);
+      background: transparent;
       color: var(--mu);
       font-family: 'DM Mono', monospace;
       font-size: 10px;
       letter-spacing: .5px;
       text-transform: uppercase;
-      font-weight: 600;
-      border-radius: var(--rs);
+      font-weight: 700;
+      border-radius: 999px;
       cursor: pointer;
       transition: all .2s;
       white-space: nowrap;
@@ -5348,6 +5408,7 @@
     .log-clear-btn:hover {
       border-color: var(--ex);
       color: var(--ex);
+      background: color-mix(in srgb, var(--ex) 8%, transparent);
     }
 
     .log-msg {
@@ -5402,6 +5463,20 @@
       color: var(--di);
       line-height: 1.5;
       max-width: 280px;
+    }
+
+    /* Delete action bar */
+    #logDeleteAction {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: color-mix(in srgb, var(--ex) 8%, transparent);
+      border: 1.5px solid color-mix(in srgb, var(--ex) 25%, transparent);
+      padding: 10px 16px;
+      border-radius: 14px;
+      margin-bottom: 14px;
+      gap: 10px;
+      animation: fdI .25s cubic-bezier(0.16,1,0.3,1);
     }
 
     @media(max-width:520px) {
@@ -7245,44 +7320,82 @@
     </div>
 
     <div id="logView" style="display:none">
-      <div class="log-header" style="margin-bottom:12px;">
+      <div class="log-header">
         <div class="log-title">Activity Log</div>
-        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-          <select id="logFilter" onchange="renderLogs()"
-            style="width:auto;height:auto;padding:6px 10px;font-size:11px;border-radius:var(--rs);border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:'DM Mono',monospace;">
-            <option value="all">All</option>
-            <option value="ADD">➕ Added</option>
-            <option value="EDIT">✏️ Edited</option>
-            <option value="DELETE">🗑️ Deleted</option>
-            <option value="IMPORT">📥 Imported</option>
-            <option value="subscription">🔄 Subscription</option>
-            <option value="event">📅 Event</option>
-            <option value="income">↑ Income</option>
-            <option value="expense">↓ Expenses</option>
-          </select>
-          <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()"
-            style="color:var(--ex);border-color:var(--ex);">Delete Logs</button>
-        </div>
+        <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()" title="Select logs to delete">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          Delete Logs
+        </button>
       </div>
-      <div style="margin-bottom:16px; position:relative;">
-        <span
-          style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;">🔍</span>
+
+      <!-- Filter pill bar -->
+      <div class="log-filter-bar" id="logFilterBar" role="group" aria-label="Filter activity logs">
+        <button class="log-fpill act" data-fval="all" onclick="setLogFilter('all')" aria-pressed="true">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          All
+        </button>
+        <button class="log-fpill" data-fval="ADD" onclick="setLogFilter('ADD')" aria-pressed="false">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Added
+        </button>
+        <button class="log-fpill" data-fval="EDIT" onclick="setLogFilter('EDIT')" aria-pressed="false">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edited
+        </button>
+        <button class="log-fpill" data-fval="DELETE" onclick="setLogFilter('DELETE')" aria-pressed="false">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          Deleted
+        </button>
+        <button class="log-fpill" data-fval="IMPORT" onclick="setLogFilter('IMPORT')" aria-pressed="false">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Import
+        </button>
+        <button class="log-fpill" data-fval="subscription" onclick="setLogFilter('subscription')" aria-pressed="false">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Subscriptions
+        </button>
+        <button class="log-fpill" data-fval="event" onclick="setLogFilter('event')" aria-pressed="false">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Events
+        </button>
+        <button class="log-fpill" data-fval="income" onclick="setLogFilter('income')" aria-pressed="false">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+          Income
+        </button>
+        <button class="log-fpill" data-fval="expense" onclick="setLogFilter('expense')" aria-pressed="false">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+          Expense
+        </button>
+      </div>
+
+      <!-- Search bar -->
+      <div style="margin-bottom:14px;position:relative;">
+        <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--mu);" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)"
-          style="padding:10px 14px 10px 36px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);"
-          onfocus="this.style.borderColor='var(--on)';this.style.boxShadow='0 0 0 2px var(--ob)'"
+          style="padding:10px 14px 10px 38px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1.5px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);"
+          onfocus="this.style.borderColor='var(--ac)';this.style.boxShadow='0 0 0 3px color-mix(in srgb,var(--ac) 18%,transparent)'"
           onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='var(--sh-card)'" aria-label="Search logs">
       </div>
-      <div id="logDeleteAction"
-        style="display:none; justify-content:space-between; align-items:center; background:color-mix(in srgb,var(--ex) 10%,transparent); padding:10px 14px; border-radius:12px; margin-bottom:16px;">
-        <span id="logSelectCount" style="color:var(--ex);font-size:13px;font-weight:600;">0 selected</span>
+
+      <!-- Delete action bar -->
+      <div id="logDeleteAction">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ex)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          <span id="logSelectCount" style="color:var(--ex);font-size:13px;font-weight:700;">0 selected</span>
+        </div>
         <div style="display:flex;gap:8px;">
-          <button class="btn" style="padding:6px 12px;font-size:12px;min-width:auto;"
+          <button class="btn" style="padding:6px 14px;font-size:11px;min-width:auto;border-radius:999px;"
             onclick="toggleLogSelectionMode()">Cancel</button>
           <button class="btn pr"
-            style="padding:6px 12px;font-size:12px;min-width:auto;background:var(--ex);border-color:var(--ex);color:#fff;"
-            onclick="confirmDeleteSelectedLogs()">Confirm Delete</button>
+            style="padding:6px 14px;font-size:11px;min-width:auto;background:var(--ex);border-color:var(--ex);color:#fff;border-radius:999px;"
+            onclick="confirmDeleteSelectedLogs()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Delete
+          </button>
         </div>
       </div>
+
+      <input type="hidden" id="logFilter" value="all">
       <div id="logList"></div>
     </div>
   </div> <!-- /.app -->
@@ -15186,18 +15299,19 @@
 
       const btn = document.getElementById('btnToggleDeleteLogs');
       const actionDiv = document.getElementById('logDeleteAction');
+      const filterBar = document.getElementById('logFilterBar');
 
       if (logSelectionMode) {
         if (btn) btn.style.display = 'none';
+        if (filterBar) { filterBar.style.opacity = '0.4'; filterBar.style.pointerEvents = 'none'; }
         if (actionDiv) {
           actionDiv.style.display = 'flex';
-          actionDiv.style.animation = 'fdI 0.3s cubic-bezier(0.16,1,0.3,1)';
         }
       } else {
-        if (btn) btn.style.display = 'inline-block';
+        if (btn) btn.style.display = 'inline-flex';
+        if (filterBar) { filterBar.style.opacity = ''; filterBar.style.pointerEvents = ''; }
         if (actionDiv) {
           actionDiv.style.display = 'none';
-          actionDiv.style.animation = '';
         }
       }
       renderLogs();
@@ -15329,6 +15443,28 @@
     window.loadMoreTx = loadMoreTx;
     window.setTxSearch = setTxSearch;
     window.setLogSearch = function (val) { cLogSearch = val.toLowerCase(); renderLogs(); };
+    window.setLogFilter = function(val) {
+      const hidden = document.getElementById('logFilter');
+      if (hidden) hidden.value = val;
+      // Update pill active states with colour-coded classes
+      const activeMap = {
+        'all':          'act',
+        'ADD':          'act act-add',
+        'EDIT':         'act act-edit',
+        'DELETE':       'act act-del',
+        'IMPORT':       'act act-import',
+        'subscription': 'act act-sub',
+        'event':        'act act-evt',
+        'income':       'act act-inc',
+        'expense':      'act act-exp',
+      };
+      document.querySelectorAll('#logFilterBar .log-fpill').forEach(btn => {
+        const isActive = btn.dataset.fval === val;
+        btn.className = 'log-fpill' + (isActive ? ' ' + (activeMap[val] || 'act') : '');
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+      renderLogs();
+    };
     window.scrollToForm = scrollToForm;
     window.setEventFilter = setEventFilter;
     window.showCreateEvent = showCreateEvent;
