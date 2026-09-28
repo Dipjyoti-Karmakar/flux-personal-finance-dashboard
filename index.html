@@ -14209,10 +14209,10 @@
       document.getElementById('recAmount').value = '';
       document.getElementById('recNextDue').value = getTodayStr();
       document.getElementById('recTimesActive').value = '';
-      setRecType('expense');
+      selCS('cs-recTy', 'expense', 'Expense');
       selCS('cs-recCat', 'entertainment', 'Entertainment', CICO['entertainment'] || '✦');
       setRecFreq('monthly');
-      setRecMode('online');
+      selCS('cs-recMo', 'online', 'Online', '🌐');
       setRecAutoLog(true); // New subs default to auto-log ON
       // Alt amounts: clear and hide for new subscription
       _editingAltAmounts = [];
@@ -14237,11 +14237,11 @@
       // Always reset customDays to avoid stale value from a previously edited custom subscription
       document.getElementById('recCustomDays').value = rec.freq === 'custom' ? (rec.customDays || '') : '';
       document.getElementById('recTimesActive').value = rec.paymentsLimit || '';
-      setRecType(currentRecType);
+      selCS('cs-recTy', currentRecType, currentRecType === 'income' ? 'Income' : 'Expense');
       const catName = rec.cat ? rec.cat.charAt(0).toUpperCase() + rec.cat.slice(1) : 'Other';
       selCS('cs-recCat', rec.cat || 'other', catName, CICO[rec.cat] || '✦');
       setRecFreq(currentRecFreq);
-      setRecMode(currentRecMode);
+      selCS('cs-recMo', currentRecMode, currentRecMode === 'online' ? 'Online' : 'Offline', currentRecMode === 'online' ? '🌐' : '📵');
       setRecAutoLog(rec.autoLog !== false); // Default to true if field absent (existing data)
       // Alt amounts: load from record and show section
       _editingAltAmounts = Array.isArray(rec.altAmounts) ? [...rec.altAmounts] : [];
@@ -14257,12 +14257,6 @@
 
     function setRecType(type) {
       currentRecType = type;
-      const tyInput = document.getElementById('recTy');
-      if (tyInput) {
-        tyInput.value = type;
-        const valSpan = document.querySelector('#cs-recTy .cs-val');
-        if (valSpan) valSpan.innerHTML = type === 'income' ? 'Income' : 'Expense';
-      }
       if (typeof updRecCat === 'function') updRecCat(type);
     }
 
@@ -14279,16 +14273,6 @@
 
     function setRecMode(m) {
       currentRecMode = m;
-      const moInput = document.getElementById('recMo');
-      if (moInput) {
-        moInput.value = m;
-        const valSpan = document.querySelector('#cs-recMo .cs-val');
-        if (valSpan) {
-          valSpan.innerHTML = m === 'offline' 
-            ? '<span class="cs-opt-ico">📵</span> Offline'
-            : '<span class="cs-opt-ico">🌐</span> Online';
-        }
-      }
     }
 
     function setRecAutoLog(val) {
