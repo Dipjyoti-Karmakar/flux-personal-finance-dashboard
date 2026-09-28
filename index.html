@@ -118,7 +118,6 @@
       background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, hsla(38, 92%, 38%, 0.06) 100%);
     }
 
-    [data-theme="light"] .s2-bg,
     [data-theme="light"] .ctr,
     [data-theme="light"] .spc,
     [data-theme="light"] .txi-wrap .txi,
@@ -4203,22 +4202,6 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
 
-    .app-tab .tab-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 18px;
-      height: 18px;
-      padding: 0 5px;
-      border-radius: 9px;
-      background: var(--ac);
-      color: var(--bg);
-      font-size: 9px;
-      font-weight: 700;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
-
     /* ── Subscriptions Tab ── */
     #subView {
       max-width: 960px;
@@ -5392,40 +5375,6 @@
       color: var(--ex);
     }
 
-    .log-entry {
-      display: flex;
-      gap: 12px;
-      padding: 14px 16px;
-      background: var(--sf);
-      border: 1px solid var(--bd);
-      border-radius: var(--rs);
-      margin-bottom: 8px;
-      transition: all .2s;
-      align-items: flex-start;
-    }
-
-    .log-entry:hover {
-      border-color: var(--bs);
-      background: var(--s2);
-    }
-
-    .log-icon {
-      font-size: 16px;
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      background: var(--s2);
-    }
-
-    .log-body {
-      flex: 1;
-      min-width: 0;
-    }
-
     .log-msg {
       font-family: 'DM Sans', sans-serif;
       font-size: 13px;
@@ -5437,30 +5386,6 @@
     .log-msg strong {
       color: var(--ac);
       font-weight: 600;
-    }
-
-    .log-msg .log-change {
-      display: inline;
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-    }
-
-    .log-msg .log-from {
-      background: rgba(224, 112, 112, 0.12);
-      color: #e07070;
-      text-decoration: line-through;
-    }
-
-    .log-msg .log-to {
-      background: rgba(93, 186, 138, 0.12);
-      color: #5dba8a;
-    }
-
-    .log-msg .log-arrow {
-      color: var(--mu);
-      margin: 0 2px;
     }
 
     .log-time {
@@ -5523,11 +5448,6 @@
 
       .log-title {
         font-size: 18px;
-      }
-
-      .log-entry {
-        padding: 12px 14px;
-        gap: 10px;
       }
     }
 
@@ -5975,47 +5895,6 @@
       opacity: 0.95;
     }
 
-    .pill-tag {
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .pill-inc {
-      background: var(--ib);
-      color: var(--in);
-    }
-
-    .pill-exp {
-      background: var(--eb);
-      color: var(--ex);
-    }
-
-    .pill-rec {
-      background: var(--ag);
-      color: var(--ac);
-    }
-
-    .pill-skip {
-      background: var(--fb);
-      color: var(--of);
-    }
-
-    .pill-del {
-      background: color-mix(in srgb, var(--ex) 15%, transparent);
-      color: var(--ex);
-    }
-
-    .pill-evt {
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 9px;
-      font-family: 'DM Mono', monospace;
-      font-weight: 600;
-    }
-
     .log-meta {
       font-family: 'DM Mono', monospace;
       font-size: 11px;
@@ -6229,71 +6108,6 @@
       width: 1px;
       height: 20px;
       background: var(--bd);
-    }
-
-    .modal-action-bar {
-      margin-top: 24px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
-
-    .tx-item-left {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .tx-item-right {
-      text-align: right;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-    }
-
-    .tx-amount {
-      font-family: 'DM Mono', monospace;
-      font-weight: 600;
-      letter-spacing: -0.5px;
-    }
-
-    .tx-desc {
-      font-weight: 500;
-      font-size: 14px;
-      color: var(--tx);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 140px;
-      display: block;
-    }
-
-    .tx-date-mode {
-      font-size: 11px;
-      color: var(--mu);
-      font-family: 'DM Sans', sans-serif;
-    }
-
-    .flex-center-gap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .flex-between {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .flex-col-gap {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
 
     @media(min-width: 640px) {
@@ -6669,17 +6483,6 @@
       .mob-only {
         display: none !important;
       }
-    }
-
-    .emoji-icon {
-      width: 1.2em;
-      height: 1.2em;
-      display: inline-block;
-      object-fit: contain;
-      object-position: center center;
-      margin: 0;
-      vertical-align: middle;
-      transform: scale(1.65);
     }
 
     .custom-sel-wrapper {
@@ -9110,12 +8913,12 @@
         });
         
         if (!canvas) {
-          alert("Error: getCroppedCanvas returned null.");
+          showToast("Error: getCroppedCanvas returned null.", "er");
           return;
         }
 
         canvas.toBlob((blob) => {
-          if (!blob) { alert('Could not process image blob.'); return; }
+          if (!blob) { showToast('Could not process image blob.', 'er'); return; }
           const newFile = new File([blob], _cropperFile.name, { type: 'image/jpeg' });
           if (newFile.size > RECEIPT_MAX_BYTES) { showToast('Cropped image exceeds 10 MB limit.', 'er'); return; }
           
@@ -9124,7 +8927,7 @@
             dt.items.add(newFile);
             if (_cropperInput) _cropperInput.files = dt.files;
           } catch(err) {
-            alert("Error setting files: " + err.message);
+            showToast("Error setting files: " + err.message, "er");
           }
           
           const labelId = _cropperCtx === 'add' ? 'receiptAddLabel' : 'eReceiptFileLabel';
@@ -9138,7 +8941,7 @@
           c.destroy(); _cropper = null;
         }, 'image/jpeg', 0.85);
       } catch (err) {
-        alert("Crop Save Error: " + err.message);
+        showToast("Crop Save Error: " + err.message, "er");
       }
     });
 
@@ -9815,7 +9618,6 @@
               delete tx.subId;
             });
           }
-          console.log(`Cleaned ${toUntag.length} orphaned subscription tags.`);
         }
 
         toTag = [];
@@ -9910,7 +9712,6 @@
         }
 
         showToast(`Auto-tagged ${successfullyCommitted.size} past subscriptions!`, 'ok');
-        console.log(`Auto-tagged ${successfullyCommitted.size} past transactions as subscriptions.`);
         return toTag.length; // Signal: re-render needed
       } catch (e) {
         console.error('Failed to auto-tag past subscriptions:', e);
@@ -12399,7 +12200,6 @@
         );
         const snap = await getDocs(fallbackQ);
         if (snap.empty) return; // Nothing to migrate
-        console.log(`[Events] Migrating ${snap.size} stranded event(s) from transactions → events`);
         const batch = writeBatch(db);
         snap.forEach(d => {
           const data = d.data();
@@ -12417,7 +12217,6 @@
         });
         await batch.commit();
         showToast(`Restored ${snap.size} saved event(s)`, 'ok');
-        console.log('[Events] Migration complete');
       } catch (e) {
         // Non-fatal — if migration fails (e.g. rules not yet updated), just log it
         console.warn('[Events] Migration skipped:', e?.code || e?.message);
@@ -13568,7 +13367,6 @@
             globallyMatchedTxIds.add(matchedTx.id);
 
             writeLog('UPDATE', { desc: rec.name, isEarlyPay: true, newNextDue }, rec.type);
-            console.log(`Early payment detected for "${rec.name}" — due date advanced to ${newNextDue}`);
             showToast(`⚡ Early payment: "${rec.name}" — next due ${fmtDt(newNextDue)}`, 'ok');
           } catch (e) {
             console.error('Early payment detection failed for:', rec.name, e);
@@ -15085,7 +14883,6 @@
           ];
 
           const chartPanelTop = curY;
-          const sideColW = (W - pL - 15) / 2 - 3;
           const fullW = W - pL - 15;
 
           const catW = fullW;
@@ -15601,7 +15398,6 @@
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js?v=35').then((reg) => {
-        console.log('[PWA] Service Worker registered, scope:', reg.scope);
       }).catch((err) => {
         console.warn('[PWA] SW registration failed:', err);
       });
