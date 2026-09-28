@@ -6957,6 +6957,19 @@
       .cropper-btn-cancel:hover { background: var(--s3); }
       .cropper-btn-save { background: var(--ac); color: #000; }
       .cropper-btn-save:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(186,220,88,0.3); }
+
+      /* Custom Select Component (CS) for Modals */
+      .cs-wrap { position: relative; width: 100%; }
+      .cs-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; background: var(--sf); border: 1.5px solid var(--bd); border-radius: 12px; color: var(--tx); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; text-align: left; }
+      .cs-btn:focus, .cs-btn:hover { border-color: var(--ac); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 18%, transparent); outline:none; }
+      .cs-btn svg { width: 16px; height: 16px; color: var(--mu); transition: transform .2s; flex-shrink: 0; }
+      .cs-wrap.open .cs-btn svg { transform: rotate(180deg); }
+      .cs-menu { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--s2); border: 1.5px solid var(--bd); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 12px 32px rgba(0,0,0,0.25); opacity: 0; visibility: hidden; transform: translateY(-10px) scale(0.98); transform-origin: top; transition: all .2s cubic-bezier(0.16,1,0.3,1); z-index: 1000; max-height: 240px; overflow-y: auto; }
+      .cs-wrap.open .cs-menu { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+      .cs-opt { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; background: transparent; border: none; border-radius: 8px; color: var(--tx); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; text-align: left; }
+      .cs-opt:hover, .cs-opt:focus { background: var(--sf); color: var(--ac); outline:none; }
+      .cs-opt.act { background: var(--ac); color: #0d0f14; font-weight: 700; }
+      .cs-opt-ico { display:inline-block; font-size:1.1em; line-height:1; }
     </style>
 
 
@@ -7560,41 +7573,55 @@
           <div class="fr">
             <div class="fd full-mob">
               <label>Type</label>
-              <select id="eTy" onchange="updECat(this.value)">
-                <option value="income">Income</option>
-                <option value="expense">Expense</option>
-              </select>
+              <div class="cs-wrap" id="cs-eTy">
+                <input type="hidden" id="eTy" value="expense" onchange="updECat(this.value)">
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-eTy')"><span class="cs-val">Expense</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <div class="cs-menu">
+                  <button type="button" class="cs-opt" data-val="expense" onclick="selCS('cs-eTy', 'expense', 'Expense')">Expense</button>
+                  <button type="button" class="cs-opt" data-val="income" onclick="selCS('cs-eTy', 'income', 'Income')">Income</button>
+                </div>
+              </div>
             </div>
             <div class="fd full-mob">
               <label>Mode</label>
-              <select id="eMo">
-                <option value="online">Online</option>
-                <option value="offline">Offline</option>
-              </select>
+              <div class="cs-wrap" id="cs-eMo">
+                <input type="hidden" id="eMo" value="online">
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-eMo')"><span class="cs-val"><span class="cs-opt-ico">🌐</span> Online</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <div class="cs-menu">
+                  <button type="button" class="cs-opt" data-val="online" onclick="selCS('cs-eMo', 'online', 'Online', '🌐')"><span class="cs-opt-ico">🌐</span> Online</button>
+                  <button type="button" class="cs-opt" data-val="offline" onclick="selCS('cs-eMo', 'offline', 'Offline', '<span style=&quot;font-size:1.25em;vertical-align:-1px;&quot;>📵</span>')"><span class="cs-opt-ico"><span style="font-size:1.25em;vertical-align:-1px;">📵</span></span> Offline</button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="fd full-mob">
             <label>Description</label>
-            <input type="text" id="eDesc" maxlength="50">
+            <input type="text" id="eDesc" maxlength="50" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
           </div>
           <div class="fd full-mob">
             <label>Category</label>
-            <select id="eCat"></select>
+            <div class="cs-wrap" id="cs-eCat">
+              <input type="hidden" id="eCat">
+              <button class="cs-btn" type="button" onclick="toggleCS('cs-eCat')"><span class="cs-val">Select Category</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+              <div class="cs-menu" id="cs-eCat-menu"></div>
+            </div>
           </div>
           <div class="fd full-mob">
             <label>Event (Optional)</label>
-            <select id="eEvent">
-              <option value="">— No Event —</option>
-            </select>
+            <div class="cs-wrap" id="cs-eEvent">
+              <input type="hidden" id="eEvent">
+              <button class="cs-btn" type="button" onclick="toggleCS('cs-eEvent')"><span class="cs-val">— No Event —</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+              <div class="cs-menu" id="cs-eEvent-menu"></div>
+            </div>
           </div>
           <div class="fr">
             <div class="fd">
               <label>Amount (₹)</label>
-              <input type="number" id="eAmt" min="0" step="0.01">
+              <input type="number" id="eAmt" min="0" step="0.01" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
             </div>
             <div class="fd">
               <label>Date</label>
-              <input type="date" id="eDt">
+              <input type="date" id="eDt" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
             </div>
           </div>
           <!-- ── Receipt Section ───────────────────────── -->
@@ -10207,11 +10234,48 @@
       }
     }
 
+    // --- Custom Select Logic ---
+    window.toggleCS = function(id) {
+      document.querySelectorAll('.cs-wrap.open').forEach(w => { if(w.id !== id) w.classList.remove('open') });
+      const w = document.getElementById(id);
+      if(w) w.classList.toggle('open');
+    };
+    window.selCS = function(id, val, text, iconHtml) {
+      const w = document.getElementById(id);
+      if(!w) return;
+      const hidden = document.getElementById(id.replace('cs-', ''));
+      if(hidden) {
+        hidden.value = val;
+        hidden.dispatchEvent(new Event('change'));
+      }
+      const btnText = w.querySelector('.cs-val');
+      if(btnText) btnText.innerHTML = (iconHtml ? `<span class="cs-opt-ico">${iconHtml}</span> ` : '') + text;
+      w.classList.remove('open');
+      w.querySelectorAll('.cs-opt').forEach(opt => opt.classList.toggle('act', opt.dataset.val === val));
+    };
+    document.addEventListener('click', e => {
+      if(!e.target.closest('.cs-wrap')) {
+        document.querySelectorAll('.cs-wrap.open').forEach(w => w.classList.remove('open'));
+      }
+    });
+    // ----------------------------
+
     function updECat(type) {
-      const el = document.getElementById('eCat');
-      el.innerHTML = type === 'income' ?
-        '<option value="salary">Salary</option><option value="freelance">Freelance</option><option value="investment">Investment</option><option value="other">Other</option>' :
-        '<option value="food">Food</option><option value="transport">Transport</option><option value="housing">Housing</option><option value="entertainment">Entertainment</option><option value="health">Health</option><option value="shopping">Shopping</option><option value="utilities">Utilities</option><option value="occasions">Occasions</option><option value="stationery">Stationery</option><option value="other">Other</option>';
+      const menu = document.getElementById('cs-eCat-menu');
+      if (!menu) return;
+      const cats = type === 'income' ? 
+        ['salary','freelance','investment','other'] : 
+        ['food','transport','housing','entertainment','health','shopping','utilities','occasions','stationery','other'];
+      menu.innerHTML = cats.map(c => {
+        const name = c.charAt(0).toUpperCase() + c.slice(1);
+        const icon = CICO[c] || '✦';
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', '${c}', '${name}', '${icon}')"><span class="cs-opt-ico">${icon}</span> ${name}</button>`;
+      }).join('');
+      
+      const hidden = document.getElementById('eCat');
+      if (hidden && hidden.value && !cats.includes(hidden.value)) {
+         selCS('cs-eCat', cats[0], cats[0].charAt(0).toUpperCase() + cats[0].slice(1), CICO[cats[0]] || '✦');
+      }
     }
 
     function editTx(id) {
@@ -10223,16 +10287,26 @@
       // Store before snapshot for diffing
       window._editSnapshot = { ...tx };
 
-      document.getElementById('eTy').value = tx.type;
+      selCS('cs-eTy', tx.type, tx.type === 'income' ? 'Income' : 'Expense');
       updECat(tx.type);
-      document.getElementById('eCat').value = tx.cat;
-      document.getElementById('eMo').value = tx.mode;
+      
+      const catName = tx.cat ? tx.cat.charAt(0).toUpperCase() + tx.cat.slice(1) : 'Other';
+      selCS('cs-eCat', tx.cat || 'other', catName, CICO[tx.cat] || '✦');
+
+      const modeName = tx.mode === 'online' ? 'Online' : 'Offline';
+      const modeIco = tx.mode === 'online' ? '🌐' : '<span style="font-size:1.25em;vertical-align:-1px;">📵</span>';
+      selCS('cs-eMo', tx.mode || 'offline', modeName, modeIco);
+
       document.getElementById('eDesc').value = tx.desc;
       document.getElementById('eAmt').value = tx.amount;
       document.getElementById('eDt').value = tx.date;
 
       populateEventSelects();
-      document.getElementById('eEvent').value = tx.eventId || '';
+      if (tx.eventId && events[tx.eventId]) {
+        selCS('cs-eEvent', tx.eventId, esc(events[tx.eventId].name));
+      } else {
+        selCS('cs-eEvent', '', '— No Event —');
+      }
 
       // ── Receipt state ────────────────────────────────────────────────────
       _editRemovedIdxs = new Set();
@@ -12338,8 +12412,20 @@
         Object.values(events).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
       const txEvt = document.getElementById('txEvent');
       if (txEvt) txEvt.innerHTML = evtOpts;
-      const eEvt = document.getElementById('eEvent');
-      if (eEvt) eEvt.innerHTML = evtOpts;
+      
+      const csEEventMenu = document.getElementById('cs-eEvent-menu');
+      if (csEEventMenu) {
+         let html = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-eEvent', '', '— No Event —')">— No Event —</button>`;
+         html += Object.values(events).map(e => {
+            return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-eEvent', this.dataset.val, this.textContent)">${esc(e.name)}</button>`;
+         }).join('');
+         csEEventMenu.innerHTML = html;
+         const hidden = document.getElementById('eEvent');
+         if(hidden && hidden.value && !events[hidden.value]) {
+            selCS('cs-eEvent', '', '— No Event —');
+         }
+      }
+
       const evtFilterSel = document.getElementById('eventTxFilterSel');
       if (evtFilterSel) {
         const prev = cEventFilt;
