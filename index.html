@@ -7770,21 +7770,11 @@
             <div class="fd">
               <label
                 style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Category</label>
-              <select id="recCat" style="width:100%;box-sizing:border-box;">
-                <option value="food">Food</option>
-                <option value="transport">Transport</option>
-                <option value="housing">Housing</option>
-                <option value="entertainment">Entertainment</option>
-                <option value="health">Health</option>
-                <option value="shopping">Shopping</option>
-                <option value="utilities">Utilities</option>
-                <option value="occasions">Occasions</option>
-                <option value="salary">Salary</option>
-                <option value="freelance">Freelance</option>
-                <option value="investment">Investment</option>
-                <option value="stationery">Stationery</option>
-                <option value="other">Other</option>
-              </select>
+              <div class="cs-wrap" id="cs-recCat">
+                <input type="hidden" id="recCat">
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-recCat')" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;"><span class="cs-val">Select Category</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <div class="cs-menu" id="cs-recCat-menu"></div>
+              </div>
             </div>
           </div>
           <div class="alt-amounts-section" id="altAmountsSection" style="display:none;">
@@ -10344,6 +10334,24 @@
       const hidden = document.getElementById('eCat');
       if (hidden && hidden.value && !cats.includes(hidden.value)) {
          selCS('cs-eCat', cats[0], cats[0].charAt(0).toUpperCase() + cats[0].slice(1), CICO[cats[0]] || '✦');
+      }
+    }
+
+    function updRecCat(type) {
+      const menu = document.getElementById('cs-recCat-menu');
+      if (!menu) return;
+      const cats = type === 'income' ? 
+        ['salary','freelance','investment','other'] : 
+        ['food','transport','housing','entertainment','health','shopping','utilities','occasions','stationery','other'];
+      menu.innerHTML = cats.map(c => {
+        const name = c.charAt(0).toUpperCase() + c.slice(1);
+        const icon = CICO[c] || '✦';
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-recCat', this.dataset.val, this.textContent.trim(), this.querySelector('.cs-opt-ico').innerHTML)"><span class="cs-opt-ico">${icon}</span> ${name}</button>`;
+      }).join('');
+      
+      const hidden = document.getElementById('recCat');
+      if (hidden && hidden.value && !cats.includes(hidden.value)) {
+         selCS('cs-recCat', cats[0], cats[0].charAt(0).toUpperCase() + cats[0].slice(1), CICO[cats[0]] || '✦');
       }
     }
 
@@ -14167,10 +14175,10 @@
       document.getElementById('recurringModSaveBtn').textContent = 'Create Subscription';
       document.getElementById('recName').value = '';
       document.getElementById('recAmount').value = '';
-      document.getElementById('recCat').value = 'entertainment';
       document.getElementById('recNextDue').value = getTodayStr();
       document.getElementById('recTimesActive').value = '';
       setRecType('expense');
+      selCS('cs-recCat', 'entertainment', 'Entertainment', CICO['entertainment'] || '✦');
       setRecFreq('monthly');
       setRecMode('online');
       setRecAutoLog(true); // New subs default to auto-log ON
@@ -14193,12 +14201,13 @@
       document.getElementById('recurringModSaveBtn').textContent = 'Save Changes';
       document.getElementById('recName').value = rec.name || '';
       document.getElementById('recAmount').value = rec.amount || '';
-      document.getElementById('recCat').value = rec.cat || 'other';
       document.getElementById('recNextDue').value = rec.nextDue || '';
       // Always reset customDays to avoid stale value from a previously edited custom subscription
       document.getElementById('recCustomDays').value = rec.freq === 'custom' ? (rec.customDays || '') : '';
       document.getElementById('recTimesActive').value = rec.paymentsLimit || '';
       setRecType(currentRecType);
+      const catName = rec.cat ? rec.cat.charAt(0).toUpperCase() + rec.cat.slice(1) : 'Other';
+      selCS('cs-recCat', rec.cat || 'other', catName, CICO[rec.cat] || '✦');
       setRecFreq(currentRecFreq);
       setRecMode(currentRecMode);
       setRecAutoLog(rec.autoLog !== false); // Default to true if field absent (existing data)
@@ -14218,6 +14227,7 @@
       currentRecType = type;
       document.getElementById('recTypeExp').className = 'tb' + (type === 'expense' ? ' ae' : '');
       document.getElementById('recTypeInc').className = 'tb' + (type === 'income' ? ' ai' : '');
+      if (typeof updRecCat === 'function') updRecCat(type);
     }
 
     function setRecFreq(freq) {
