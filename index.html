@@ -15600,47 +15600,56 @@
 
       const count = selectedLogs.size;
       showConfirm(
-        'Delete Logs',
+        'Delete Logs (1/2)',
         `Permanently delete ${count} log${count !== 1 ? 's' : ''}? This cannot be undone.`,
-        async () => {
-          if (_logDeleteBusy) return;
-          _logDeleteBusy = true;
+        () => {
+          setTimeout(() => {
+            showConfirm(
+              'Final Warning (2/2)',
+              `Are you absolutely sure you want to delete ${count} log${count !== 1 ? 's' : ''}? This action is permanent.`,
+              async () => {
+                if (_logDeleteBusy) return;
+                _logDeleteBusy = true;
 
-          // Snapshot ids now — user can't change selection while confirm is open
-          const idsToDelete = [...selectedLogs];
+                // Snapshot ids now — user can't change selection while confirm is open
+                const idsToDelete = [...selectedLogs];
 
-          // Animate out immediately for instant feedback
-          idsToDelete.forEach(id => {
-            const el = document.querySelector(`[data-logid="${CSS.escape(id)}"]`);
-            if (el) {
-              el.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-              el.style.transform = 'scale(0.9) translateX(24px)';
-              el.style.opacity = '0';
-            }
-          });
+                // Animate out immediately for instant feedback
+                idsToDelete.forEach(id => {
+                  const el = document.querySelector(`[data-logid="${CSS.escape(id)}"]`);
+                  if (el) {
+                    el.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                    el.style.transform = 'scale(0.9) translateX(24px)';
+                    el.style.opacity = '0';
+                  }
+                });
 
-          try {
-            // Optimistic local removal — UI stays clean without waiting for snapshot
-            activityLogs = activityLogs.filter(l => !selectedLogs.has(l.id));
+                try {
+                  // Optimistic local removal — UI stays clean without waiting for snapshot
+                  activityLogs = activityLogs.filter(l => !selectedLogs.has(l.id));
 
-            // Batch delete in Firestore (max 499 per batch)
-            for (let i = 0; i < idsToDelete.length; i += 499) {
-              const chunk = idsToDelete.slice(i, i + 499);
-              const b = writeBatch(db);
-              chunk.forEach(id => b.delete(doc(db, 'users', userId, 'activities', id)));
-              await b.commit();
-            }
+                  // Batch delete in Firestore (max 499 per batch)
+                  for (let i = 0; i < idsToDelete.length; i += 499) {
+                    const chunk = idsToDelete.slice(i, i + 499);
+                    const b = writeBatch(db);
+                    chunk.forEach(id => b.delete(doc(db, 'users', userId, 'activities', id)));
+                    await b.commit();
+                  }
 
-            showToast(`Deleted ${idsToDelete.length} log${idsToDelete.length !== 1 ? 's' : ''}`, 'ok');
-            toggleLogSelectionMode(); // exit selection mode only on success
-          } catch (e) {
-            console.error('Log delete failed:', e);
-            showToast('Failed to delete logs — please try again', 'er');
-            // Reload from source to restore any partially-deleted state
-            if (typeof loadActivityLog === 'function') loadActivityLog();
-          } finally {
-            _logDeleteBusy = false;
-          }
+                  showToast(`Deleted ${idsToDelete.length} log${idsToDelete.length !== 1 ? 's' : ''}`, 'ok');
+                  toggleLogSelectionMode(); // exit selection mode only on success
+                } catch (e) {
+                  console.error('Log delete failed:', e);
+                  showToast('Failed to delete logs — please try again', 'er');
+                  // Reload from source to restore any partially-deleted state
+                  if (typeof loadActivityLog === 'function') loadActivityLog();
+                } finally {
+                  _logDeleteBusy = false;
+                }
+              },
+              true
+            );
+          }, 50);
         },
         true
       );
