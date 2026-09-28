@@ -7745,7 +7745,7 @@
             <div class="tg" style="grid-template-columns:1fr 1fr;">
               <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true">🌐
                 Online</button>
-              <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false">📵
+              <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false"><span style="font-size:1.25em;vertical-align:-1px;">📵</span>
                 Offline</button>
             </div>
           </div>
@@ -10095,7 +10095,7 @@
         <div class="tn">${esc(tx.desc)}</div>
         <div class="tm">
           <span class="bg ct" data-cat="${tx.cat || 'other'}">${CICO[tx.cat] || '✦'} ${tx.cat || 'other'}</span>
-          <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '🌐 online' : '📵 offline'}</span>
+          <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '🌐 online' : '<span style="font-size:1.25em;vertical-align:-1px;">📵</span> offline'}</span>
           ${tx._recurring ? '<span class="bg tx-badge-sub">subscription</span>' : ''}
           ${evtBadge}
           ${tx._imp ? '<span class="bg ip">xlsx</span>' : ''}
@@ -11003,7 +11003,7 @@
         <div class="ti">
           <div class="tn">${esc(tx.desc)}</div>
           <div class="tm">
-            <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '🌐 online' : '📵 offline'}</span>
+            <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '🌐 online' : '<span style="font-size:1.25em;vertical-align:-1px;">📵</span> offline'}</span>
             ${evtBadge}
             ${tx._imp ? '<span class="bg ip">xlsx</span>' : ''}
             <span>${fmtDt(tx.date)}</span>
@@ -11066,7 +11066,7 @@
       // FIXED: Use Set size with a minimum of 1 to prevent division by zero / Infinity avg/day
       const onlDays = Math.max(1, new Set(onl.map(t => t.date)).size);
       const oflDays = Math.max(1, new Set(ofl.map(t => t.date)).size);
-      const newHtml = `<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">🌐 Online ${op}%</span><span class="splb" style="color:var(--of)">📵 Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">🌐 Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length > 0 ? fmtS(oA / onlDays) + ' avg/day' : '—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)">📵 Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length > 0 ? fmtS(fA / oflDays) + ' avg/day' : '—'}</div></div></div>`;
+      const newHtml = `<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">🌐 Online ${op}%</span><span class="splb" style="color:var(--of)"><span style="font-size:1.25em;vertical-align:-1px;">📵</span> Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">🌐 Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length > 0 ? fmtS(oA / onlDays) + ' avg/day' : '—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)"><span style="font-size:1.25em;vertical-align:-1px;">📵</span> Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length > 0 ? fmtS(fA / oflDays) + ' avg/day' : '—'}</div></div></div>`;
       if (newHtml === _splitLastHtml) return;
       _splitLastHtml = newHtml;
       area.innerHTML = newHtml;
@@ -11466,7 +11466,7 @@
       const mnHTML = Array.from({ length: 12 }, (_, m) => mkMnCard(m, yr, yrMonths, isCur, cM, cD, todayISO, mMax, yrTot, cY, yrAvg, adaptiveMultiplier, lastCompletedYearActualTotal)).join('');
       const netClr = yrNet >= 0 ? 'var(--in)' : 'var(--ex)';
       const savRateHtml = yrSavRate !== null ? `<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${yrSavRate > 0 ? '+' : ''}${yrSavRate}%</span></div>` : '';
-      return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">🌐 Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl">📵 Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
+      return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">🌐 Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl"><span style="font-size:1.25em;vertical-align:-1px;">📵</span> Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
     }
 
     function mkMnCard(m, yr, yrMonths, isCurYr, cM, cD, todayISO, mMax, yrTot, cY, yrAvg, adaptiveMultiplier, lastCompletedYearActualTotal) {
@@ -11546,7 +11546,7 @@
     </div>
     <div style="display:flex;gap:10px;margin-bottom:${isCur ? '6px' : '0'}">
       <div class="ms"><span class="msl">🌐 Online</span><span class="msv" style="color:var(--on)">${onl > 0 ? fmtW(onl) : '—'}</span></div>
-      <div class="ms"><span class="msl">📵 Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
+      <div class="ms"><span class="msl"><span style="font-size:1.25em;vertical-align:-1px;">📵</span> Offline</span><span class="msv" style="color:var(--of)">${ofl > 0 ? fmtW(ofl) : '—'}</span></div>
     </div>
     ${tdHTML}
     <!-- progress bar redesign -->
