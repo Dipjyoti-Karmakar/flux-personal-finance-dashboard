@@ -6776,18 +6776,36 @@
       .receipt-drop.has-file svg { opacity: 1; stroke: var(--in); }
 
       /* Progress bar */
+      .receipt-prog-container {
+         margin-top: 12px; background: var(--s2); border: 1.5px solid var(--bd); border-radius: 12px;
+         padding: 12px 14px; display: flex; flex-direction: column; gap: 10px;
+      }
+      .receipt-prog-header {
+         display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; color: var(--tx);
+      }
+      .receipt-prog-status {
+         display: flex; align-items: center; gap: 8px;
+      }
+      .receipt-prog-status svg {
+         width: 16px; height: 16px; color: var(--ac); animation: pulse-op 1.5s infinite;
+      }
+      @keyframes pulse-op { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+      .receipt-prog-pct {
+         font-family: 'DM Mono', monospace; font-weight: 600; color: var(--ac);
+      }
       .receipt-prog-wrap {
-        height: 4px; border-radius: 2px; background: var(--s3); margin-top: 6px; overflow: hidden;
+         height: 6px; border-radius: 3px; background: var(--s3); overflow: hidden; position: relative;
       }
       .receipt-prog-bar {
-        height: 100%; border-radius: 2px;
-        background: linear-gradient(90deg, var(--ac), #e8c87a);
-        transition: width .25s ease; min-width: 0;
+         height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--ac), #e8c87a);
+         transition: width .25s cubic-bezier(0.16,1,0.3,1); min-width: 0; position: relative; overflow: hidden;
       }
-      .receipt-prog-label {
-        font-size: 10px; color: var(--mu); margin-top: 4px;
-        font-family: 'DM Mono', monospace; letter-spacing: .5px;
+      .receipt-prog-bar::after {
+         content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+         background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+         transform: translateX(-100%); animation: shimmer 1.5s infinite;
       }
+      @keyframes shimmer { 100% { transform: translateX(100%); } }
 
       /* Receipt icon badge on transaction row */
       .td-receipt {
@@ -7165,10 +7183,18 @@
                 <span id="receiptAddLabel">Click or drag to attach receipt</span>
                 <input type="file" id="receiptAddFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="if(window.previewReceipt)window.previewReceipt('add',this)">
               </label>
-              <div class="receipt-prog-wrap" id="receiptAddProgWrap" style="display:none">
-                <div class="receipt-prog-bar" id="receiptAddProgBar" style="width:0%"></div>
+              <div class="receipt-prog-container" id="receiptAddProgContainer" style="display:none">
+                <div class="receipt-prog-header">
+                  <div class="receipt-prog-status">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span id="receiptAddProgLabel">Uploading...</span>
+                  </div>
+                  <span class="receipt-prog-pct" id="receiptAddProgPct">0%</span>
+                </div>
+                <div class="receipt-prog-wrap">
+                  <div class="receipt-prog-bar" id="receiptAddProgBar" style="width:0%"></div>
+                </div>
               </div>
-              <div class="receipt-prog-label" id="receiptAddProgLabel" style="display:none"></div>
             </div>
             <button class="sbtn" onclick="addTx()">＋ Add Transaction</button>
           </div>
@@ -7637,6 +7663,18 @@
               <span id="eReceiptFileLabel">Click or drag to attach receipt</span>
               <input type="file" id="eReceiptFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="if(window.previewReceipt)window.previewReceipt('edit',this)">
             </label>
+            <div class="receipt-prog-container" id="eReceiptProgContainer" style="display:none">
+              <div class="receipt-prog-header">
+                <div class="receipt-prog-status">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <span id="eReceiptProgLabel">Uploading...</span>
+                </div>
+                <span class="receipt-prog-pct" id="eReceiptProgPct">0%</span>
+              </div>
+              <div class="receipt-prog-wrap">
+                <div class="receipt-prog-bar" id="eReceiptProgBar" style="width:0%"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -8767,27 +8805,26 @@
         // ── Receipt upload (optional, runs before Firestore write) ─────────────
         const receiptFile = document.getElementById('receiptAddFile')?.files[0];
         if (receiptFile) {
-          const progWrap = document.getElementById('receiptAddProgWrap');
+          const progContainer = document.getElementById('receiptAddProgContainer');
           const progLabel = document.getElementById('receiptAddProgLabel');
+          const progPct = document.getElementById('receiptAddProgPct');
           const progBar = document.getElementById('receiptAddProgBar');
-          if (progWrap) progWrap.style.display = 'block';
-          if (progLabel) { progLabel.style.display = 'block'; progLabel.textContent = 'Uploading\u2026'; }
+          if (progContainer) progContainer.style.display = 'flex';
+          if (progLabel) progLabel.textContent = 'Uploading...';
+          if (progPct) progPct.textContent = '0%';
+          if (progBar) progBar.style.width = '0%';
           try {
-            const rMeta = await uploadReceipt(receiptFile, txId, 'receiptAddProgBar', progLabel);
+            const rMeta = await uploadReceipt(receiptFile, txId, 'receiptAdd');
             if (rMeta) {
               newTx.receipts = [rMeta]; // array model
               // Register so onSnapshot guard can re-apply if snapshot arrives before Firestore confirms receipts
               _pendingReceiptPatches.set(txId, rMeta);
             }
             // B5/B8: reset progress so re-opening Add form shows clean state
-            if (progWrap) progWrap.style.display = 'none';
-            if (progBar) progBar.style.width = '0%';
-            if (progLabel) { progLabel.style.display = 'none'; progLabel.textContent = ''; }
+            if (progContainer) progContainer.style.display = 'none';
           } catch (e) {
             showToast('Receipt upload failed: ' + e.message, 'er');
-            if (progWrap) progWrap.style.display = 'none';
-            if (progBar) progBar.style.width = '0%';
-            if (progLabel) { progLabel.style.display = 'none'; progLabel.textContent = ''; }
+            if (progContainer) progContainer.style.display = 'none';
             return;
           }
         }
@@ -8930,7 +8967,7 @@
     const RECEIPT_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
     const RECEIPT_ACCEPT_TYPES = ['image/jpeg','image/png','image/webp','image/gif','application/pdf'];
 
-    async function uploadReceipt(file, txId, barId, labelEl) {
+    async function uploadReceipt(file, txId, prefix) {
       if (!file) return null;
       // WL1: fall back to extension check if MIME type is missing (some Android browsers)
       let effectiveType = file.type;
@@ -8961,9 +8998,14 @@
         xhr.upload.onprogress = (e) => {
           if (!e.lengthComputable) return;
           const pct = Math.round(e.loaded / e.total * 100);
-          const bar = document.getElementById(barId);
-          if (bar) bar.style.width = pct + '%';
-          if (labelEl) labelEl.textContent = pct < 100 ? `Uploading… ${pct}%` : 'Processing…';
+          if (prefix) {
+            const b = document.getElementById(prefix + 'ProgBar');
+            if(b) b.style.width = pct + '%';
+            const l = document.getElementById(prefix + 'ProgLabel');
+            if(l) l.textContent = pct < 100 ? 'Uploading...' : 'Processing...';
+            const p = document.getElementById(prefix + 'ProgPct');
+            if(p) p.textContent = pct + '%';
+          }
         };
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
@@ -10388,6 +10430,8 @@
       if (ef)     ef.value = '';
       if (eLabel) eLabel.textContent = 'Click or drag to attach receipt';
       if (eDrop)  eDrop.classList.remove('has-file');
+      const progC = document.getElementById('eReceiptProgContainer');
+      if (progC)  progC.style.display = 'none';
       editingTxId = null;
     }
 
@@ -10451,19 +10495,25 @@
         let nextReceipts = prevReceipts.filter((_, i) => !_editRemovedIdxs.has(i));
         // Append new upload if selected
         if (eReceiptFile) {
-          const eDropLabel = document.getElementById('eReceiptFileLabel');
-          if (eDropLabel) eDropLabel.textContent = 'Uploading\u2026';
+          const progContainer = document.getElementById('eReceiptProgContainer');
+          const progLabel = document.getElementById('eReceiptProgLabel');
+          const progPct = document.getElementById('eReceiptProgPct');
+          const progBar = document.getElementById('eReceiptProgBar');
+          if (progContainer) progContainer.style.display = 'flex';
+          if (progLabel) progLabel.textContent = 'Uploading...';
+          if (progPct) progPct.textContent = '0%';
+          if (progBar) progBar.style.width = '0%';
           try {
-            const rMeta = await uploadReceipt(eReceiptFile, editingTxId + '_' + Date.now(), null, eDropLabel);
+            const rMeta = await uploadReceipt(eReceiptFile, editingTxId + '_' + Date.now(), 'eReceipt');
             if (rMeta) {
               nextReceipts = [...nextReceipts, rMeta];
               // Store the full updated receipts array so that if a Firestore snapshot
               // arrives before setDoc confirms, the guard re-applies ALL receipts, not just the new one.
               _pendingReceiptPatches.set(editingTxId, nextReceipts);
             }
-            if (eDropLabel) eDropLabel.textContent = '\u2714 Uploaded: ' + (nextReceipts.at(-1)?.name || '');
+            if (progContainer) progContainer.style.display = 'none';
           } catch (e) {
-            if (eDropLabel) eDropLabel.textContent = 'Click or drag to attach receipt';
+            if (progContainer) progContainer.style.display = 'none';
             showToast('Receipt upload failed: ' + e.message, 'er');
             _saveEditBusy = false;
             if (_editSaveBtn) _editSaveBtn.disabled = false;
