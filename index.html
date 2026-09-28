@@ -6979,7 +6979,8 @@
 
       /* Custom Select Component (CS) for Modals */
       .cs-wrap { position: relative; width: 100%; }
-      .cs-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 12px 14px; background: var(--sf); border: 1.5px solid var(--bd); border-radius: 12px; color: var(--tx); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; text-align: left; }
+      .cs-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0 14px; height: 46px; box-sizing: border-box; background: var(--sf); border: 1.5px solid var(--bd); border-radius: 12px; color: var(--tx); font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all .2s; text-align: left; }
+      .fd input[type="text"], .fd input[type="number"], .fd input[type="date"] { padding: 0 14px !important; height: 46px !important; box-sizing: border-box !important; }
       .cs-btn:focus, .cs-btn:hover { border-color: var(--ac); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 18%, transparent); outline:none; }
       .cs-btn svg { width: 16px; height: 16px; color: var(--mu); transition: transform .2s; flex-shrink: 0; }
       .cs-wrap.open .cs-btn svg { transform: rotate(180deg); }
@@ -7789,21 +7790,27 @@
               <button class="alt-amt-add-btn" type="button" onclick="addAltAmount()">＋ Add</button>
             </div>
           </div>
-          <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-            <div>
-              <label
-                style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Type</label>
-              <div class="tg" style="grid-template-columns:1fr 1fr;">
-                <button class="tb" id="recTypeExp" onclick="setRecType('expense')">Expense</button>
-                <button class="tb" id="recTypeInc" onclick="setRecType('income')">Income</button>
+          <div class="fr">
+            <div class="fd">
+              <label>Type</label>
+              <div class="cs-wrap" id="cs-recTy">
+                <input type="hidden" id="recTy" value="expense" onchange="setRecType(this.value)">
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-recTy')"><span class="cs-val">Expense</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <div class="cs-menu">
+                  <button type="button" class="cs-opt" data-val="expense" onclick="selCS('cs-recTy', 'expense', 'Expense')">Expense</button>
+                  <button type="button" class="cs-opt" data-val="income" onclick="selCS('cs-recTy', 'income', 'Income')">Income</button>
+                </div>
               </div>
             </div>
-            <div>
-              <label
-                style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:8px;display:block;">Mode</label>
-              <div class="tg" style="grid-template-columns:1fr 1fr;">
-                <button class="tb ao" id="recModeOnl" onclick="setRecMode('online')" aria-pressed="true">Online</button>
-                <button class="tb" id="recModeOfl" onclick="setRecMode('offline')" aria-pressed="false">Offline</button>
+            <div class="fd">
+              <label>Mode</label>
+              <div class="cs-wrap" id="cs-recMo">
+                <input type="hidden" id="recMo" value="online" onchange="setRecMode(this.value)">
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-recMo')"><span class="cs-val"><span class="cs-opt-ico">🌐</span> Online</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <div class="cs-menu">
+                  <button type="button" class="cs-opt" data-val="online" onclick="selCS('cs-recMo', 'online', 'Online', '🌐')"><span class="cs-opt-ico">🌐</span> Online</button>
+                  <button type="button" class="cs-opt" data-val="offline" onclick="selCS('cs-recMo', 'offline', 'Offline', '<span style=&quot;font-size:1.25em;vertical-align:-1px;&quot;>📵</span>')"><span class="cs-opt-ico"><span style="font-size:1.25em;vertical-align:-1px;">📵</span></span> Offline</button>
+                </div>
               </div>
             </div>
           </div>
@@ -14234,8 +14241,12 @@
 
     function setRecType(type) {
       currentRecType = type;
-      document.getElementById('recTypeExp').className = 'tb' + (type === 'expense' ? ' ae' : '');
-      document.getElementById('recTypeInc').className = 'tb' + (type === 'income' ? ' ai' : '');
+      const tyInput = document.getElementById('recTy');
+      if (tyInput) {
+        tyInput.value = type;
+        const valSpan = document.querySelector('#cs-recTy .cs-val');
+        if (valSpan) valSpan.innerHTML = type === 'income' ? 'Income' : 'Expense';
+      }
       if (typeof updRecCat === 'function') updRecCat(type);
     }
 
@@ -14252,12 +14263,16 @@
 
     function setRecMode(m) {
       currentRecMode = m;
-      const onlBtn = document.getElementById('recModeOnl');
-      const oflBtn = document.getElementById('recModeOfl');
-      onlBtn.className = 'tb' + (m === 'online' ? ' ao' : '');
-      oflBtn.className = 'tb' + (m === 'offline' ? ' af' : '');
-      onlBtn.setAttribute('aria-pressed', m === 'online' ? 'true' : 'false');
-      oflBtn.setAttribute('aria-pressed', m === 'offline' ? 'true' : 'false');
+      const moInput = document.getElementById('recMo');
+      if (moInput) {
+        moInput.value = m;
+        const valSpan = document.querySelector('#cs-recMo .cs-val');
+        if (valSpan) {
+          valSpan.innerHTML = m === 'offline' 
+            ? '<span class="cs-opt-ico"><span style="font-size:1.25em;vertical-align:-1px;">📵</span></span> Offline'
+            : '<span class="cs-opt-ico">🌐</span> Online';
+        }
+      }
     }
 
     function setRecAutoLog(val) {
