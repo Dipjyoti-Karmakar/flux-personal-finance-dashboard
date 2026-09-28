@@ -13125,13 +13125,21 @@
         logs = logs.filter(l => (l.m || '').toLowerCase().includes(cLogSearch));
       }
 
+      const svgEdit = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
+      const svgImport = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
+      const svgAdd = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+      const svgDel = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
+      const svgAuto = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>`;
+      const svgDef = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>`;
+      const svgEmpty = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+
       if (logs.length === 0) {
-        listEl.innerHTML = `<div class="log-empty"><div class="log-empty-icon">📝</div><div class="log-empty-title">No activity yet</div><div class="log-empty-sub">Your transaction history and edits will appear here.</div></div>`;
+        listEl.innerHTML = `<div class="log-empty"><div class="log-empty-icon">${svgEmpty}</div><div class="log-empty-title">No activity yet</div><div class="log-empty-sub">Your transaction history and edits will appear here.</div></div>`;
         return;
       }
 
       // Action icon colours and labels
-      const actIcons = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
+      const actIcons = { 'ADD': svgAdd, 'EDIT': svgEdit, 'DELETE': svgDel, 'IMPORT': svgImport };
       const actLabels = { 'ADD': 'Added', 'EDIT': 'Edited', 'DELETE': 'Deleted', 'IMPORT': 'Imported' };
 
       let currentLogDate = null;
@@ -13172,14 +13180,14 @@
         const pSty = "padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px;letter-spacing:0.3px;";
 
         let actionPill = '';
-        if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);"><span style="font-size:8px;">✏️</span> Edited</span>`;
-        else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">📥 Imported</span>`;
+        if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);">${svgEdit} Edited</span>`;
+        else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">${svgImport} Imported</span>`;
         else if (l.a === 'DELETE') actionPill = '';
         else if (l.a === 'ADD') {
-          if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);">Auto-recurring</span>`;
-          else actionPill = `<span style="${pSty}background:var(--ib);color:var(--in);border:1px solid var(--in);">➕ Added</span>`;
+          if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);">${svgAuto} Auto-recurring</span>`;
+          else actionPill = `<span style="${pSty}background:var(--ib);color:var(--in);border:1px solid var(--in);">${svgAdd} Added</span>`;
         }
-        else actionPill = `<span style="${pSty}background:var(--s3);color:var(--tx);border:1px solid var(--bd);">${actIcons[l.a] || '•'} ${actionLabel}</span>`;
+        else actionPill = `<span style="${pSty}background:var(--s3);color:var(--tx);border:1px solid var(--bd);">${actIcons[l.a] || svgDef} ${actionLabel}</span>`;
 
         let typePill = '';
         if (txType === 'income') typePill = `<span style="${pSty}background:transparent;color:var(--in);border:1px dashed var(--in);">↑ Income</span>`;
