@@ -7320,6 +7320,10 @@
             <option value="EDIT">✏️ Edited</option>
             <option value="DELETE">🗑️ Deleted</option>
             <option value="IMPORT">📥 Imported</option>
+            <option value="subscription">🔄 Subscription</option>
+            <option value="event">📅 Event</option>
+            <option value="income">↑ Income</option>
+            <option value="expense">↓ Expenses</option>
           </select>
           <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()"
             style="color:var(--ex);border-color:var(--ex);">Delete Logs</button>
@@ -12778,8 +12782,44 @@
       });
       logs.sort((a, b) => (b.ts || b.t || 0) - (a.ts || a.t || 0));
 
+      // Helper: try to infer tx type from legacy log messages that don't have 'tp' field
+      function inferTxType(l) {
+        if (l.tp) return l.tp;
+        if (l.a !== 'ADD' && l.a !== 'DELETE') return null;
+        const m = (l.m || '').toLowerCase();
+        if (/salary|freelance|investment|income/.test(m)) return 'income';
+        return null;
+      }
+
       if (filter !== 'all') {
-        logs = logs.filter(l => l.a === filter);
+        logs = logs.filter(l => {
+          if (['ADD', 'EDIT', 'DELETE', 'IMPORT'].includes(filter)) {
+            return l.a === filter;
+          }
+          if (filter === 'income' || filter === 'expense') {
+            return inferTxType(l) === filter;
+          }
+          
+          let parsedData = {};
+          const rawMsg = l.m || '';
+          if (rawMsg.startsWith('{') || rawMsg.startsWith('[')) {
+            try { parsedData = JSON.parse(rawMsg); } catch (e) { }
+          }
+          
+          if (filter === 'subscription') {
+            return parsedData.isAuto || parsedData.isNewRec || parsedData.isRecEdit || 
+                   parsedData.isRecPauseToggle || parsedData.isDelRec || 
+                   parsedData.isRecArchive || parsedData.isRecRestore || 
+                   parsedData.isDelRecPermanent || parsedData.isEarlyPay ||
+                   rawMsg.includes('isAuto') || rawMsg.includes('isNewRec');
+          }
+          if (filter === 'event') {
+            return parsedData.eventId || parsedData.isNewEvent || 
+                   parsedData.isEventEdit || parsedData.isDelEvent || 
+                   parsedData.isEventBulk;
+          }
+          return false;
+        });
       }
       if (cLogSearch) {
         logs = logs.filter(l => (l.m || '').toLowerCase().includes(cLogSearch));
@@ -12793,15 +12833,6 @@
       // Action icon colours and labels
       const actIcons = { 'ADD': '➕', 'EDIT': '✏️', 'DELETE': '🗑️', 'IMPORT': '📥' };
       const actLabels = { 'ADD': 'Added', 'EDIT': 'Edited', 'DELETE': 'Deleted', 'IMPORT': 'Imported' };
-
-      // Helper: try to infer tx type from legacy log messages that don't have 'tp' field
-      function inferTxType(l) {
-        if (l.tp) return l.tp;
-        if (l.a !== 'ADD' && l.a !== 'DELETE') return null;
-        const m = (l.m || '').toLowerCase();
-        if (/salary|freelance|investment|income/.test(m)) return 'income';
-        return null;
-      }
 
       listEl.innerHTML = logs.map(l => {
         const ts = l.ts || l.t;
