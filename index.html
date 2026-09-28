@@ -10285,7 +10285,8 @@
       const btnText = w.querySelector('.cs-val');
       if (btnText) {
         if (id === 'cs-eCat' || id === 'cs-recCat') {
-          btnText.innerHTML = `<span class="bg ct" data-cat="${val}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${iconHtml} <span style="margin-left:4px;">${text}</span></span>`;
+          const displayIcon = iconHtml || (typeof CICO !== 'undefined' ? CICO[val] : '✦');
+          btnText.innerHTML = `<span class="bg ct" data-cat="${val}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${displayIcon} <span style="margin-left:4px;">${text}</span></span>`;
         } else {
           btnText.innerHTML = (iconHtml ? `<span class="cs-opt-ico">${iconHtml}</span> ` : '') + text;
         }
@@ -10335,7 +10336,7 @@
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
-        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', '${c}', '${name}', '${icon}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', '${c}', '${name}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
       }).join('');
       
       const hidden = document.getElementById('eCat');
@@ -10353,7 +10354,7 @@
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
-        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-recCat', '${c}', '${name}', '${icon}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-recCat', '${c}', '${name}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-block;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
       }).join('');
       
       const hidden = document.getElementById('recCat');
