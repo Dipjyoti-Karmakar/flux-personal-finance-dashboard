@@ -8028,7 +8028,7 @@
       localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
       experimentalAutoDetectLongPolling: true
     });
-    const storage_unused = null; // Firebase Storage not used (requires paid plan)
+
     const provider = new GoogleAuthProvider();
 
 
@@ -9381,8 +9381,8 @@
     // Debounced render - coalesces rapid Firestore snapshot fires (e.g. during batch imports)
     let _renderTimer = null;
     function debouncedRender() {
-      if (_renderTimer) cancelAnimationFrame(_renderTimer);
-      _renderTimer = requestAnimationFrame(() => {
+      if (_renderTimer) clearTimeout(_renderTimer);
+      _renderTimer = setTimeout(() => {
         _renderTimer = null;
         render();
         // Auto-add subscriptions whose due date has arrived.
@@ -9409,9 +9409,9 @@
         // (e.g. right after adding/editing a subscription's altAmounts) can no
         // longer starve this call.
         if (!_tagPastDone) {
-          tagPastSubscriptions().catch(e => console.error('tagPastSubscriptions failed:', e)).then((count) => {
+          tagPastSubscriptions().then((count) => {
             if (count === 0) _tagPastDone = true;
-          });
+          }).catch(e => console.error('tagPastSubscriptions failed:', e));
         }
 
         // Background sweep to ensure any transaction that matches a subscription
@@ -10080,7 +10080,6 @@
       if (existingReceipts.length > 0 && listSection && listEl) {
         listEl.innerHTML = existingReceipts.map((r, i) => {
           const isPDF = r.type === 'application/pdf';
-          const icon  = isPDF ? '📄' : '🖼️';
           const safeR = esc(JSON.stringify(r));
           return `<div class="receipt-list-item" id="eRItem_${i}">
             <span class="receipt-list-type-pill ${isPDF ? 'pdf' : 'img'}">${isPDF ? 'PDF' : 'IMG'}</span>
