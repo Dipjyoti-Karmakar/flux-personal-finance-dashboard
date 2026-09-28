@@ -15231,42 +15231,58 @@
       }
     }
 
+    let _logDeleteBusy = false;
     function confirmDeleteSelectedLogs() {
       if (!userId) { toggleLogSelectionMode(); selectedLogs.clear(); return; }
-      if (selectedLogs.size === 0) {
-        toggleLogSelectionMode();
-        return;
-      }
+      if (selectedLogs.size === 0) { toggleLogSelectionMode(); return; }
+      if (_logDeleteBusy) return;
 
-      showConfirm('Delete Logs', `Are you sure you want to delete ${selectedLogs.size} log(s)?`, () => {
-        setTimeout(() => {
-          showConfirm('Confirm Deletion', 'Are you REALLY sure? This action cannot be undone.', async () => {
-            try {
-              const idsToDelete = [...selectedLogs];
-              // Batch limit is 500; chunk if selection is large
-              for (let i = 0; i < idsToDelete.length; i += 499) {
-                const chunk = idsToDelete.slice(i, i + 499);
-                const b = writeBatch(db);
-                chunk.forEach(id => {
-                  const el = document.querySelector(`[data-logid="${CSS.escape(id)}"]`);
-                  if (el) {
-                    el.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
-                    el.style.transform = 'scale(0.9) translateX(30px)';
-                    el.style.opacity = '0';
-                  }
-                  b.delete(doc(db, 'users', userId, 'activities', id));
-                });
-                await b.commit();
-              }
-              showToast(`Deleted ${idsToDelete.length} logs`, 'ok');
-            } catch (e) {
-              console.error(e);
-              showToast('Failed to delete logs', 'er');
+      const count = selectedLogs.size;
+      showConfirm(
+        'Delete Logs',
+        `Permanently delete ${count} log${count !== 1 ? 's' : ''}? This cannot be undone.`,
+        async () => {
+          if (_logDeleteBusy) return;
+          _logDeleteBusy = true;
+
+          // Snapshot ids now — user can't change selection while confirm is open
+          const idsToDelete = [...selectedLogs];
+
+          // Animate out immediately for instant feedback
+          idsToDelete.forEach(id => {
+            const el = document.querySelector(`[data-logid="${CSS.escape(id)}"]`);
+            if (el) {
+              el.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+              el.style.transform = 'scale(0.9) translateX(24px)';
+              el.style.opacity = '0';
             }
-            setTimeout(() => toggleLogSelectionMode(), 250);
-          }, true);
-        }, 300);
-      }, true);
+          });
+
+          try {
+            // Optimistic local removal — UI stays clean without waiting for snapshot
+            activityLogs = activityLogs.filter(l => !selectedLogs.has(l.id));
+
+            // Batch delete in Firestore (max 499 per batch)
+            for (let i = 0; i < idsToDelete.length; i += 499) {
+              const chunk = idsToDelete.slice(i, i + 499);
+              const b = writeBatch(db);
+              chunk.forEach(id => b.delete(doc(db, 'users', userId, 'activities', id)));
+              await b.commit();
+            }
+
+            showToast(`Deleted ${idsToDelete.length} log${idsToDelete.length !== 1 ? 's' : ''}`, 'ok');
+            toggleLogSelectionMode(); // exit selection mode only on success
+          } catch (e) {
+            console.error('Log delete failed:', e);
+            showToast('Failed to delete logs — please try again', 'er');
+            // Reload from source to restore any partially-deleted state
+            if (typeof loadActivityLog === 'function') loadActivityLog();
+          } finally {
+            _logDeleteBusy = false;
+          }
+        },
+        true
+      );
     }
     window.addTx = addTx;
     window.askDelTx = askDelTx;
