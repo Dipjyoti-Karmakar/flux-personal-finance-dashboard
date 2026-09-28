@@ -10252,6 +10252,33 @@
       if(btnText) btnText.innerHTML = (iconHtml ? `<span class="cs-opt-ico">${iconHtml}</span> ` : '') + text;
       w.classList.remove('open');
       w.querySelectorAll('.cs-opt').forEach(opt => opt.classList.toggle('act', opt.dataset.val === val));
+      
+      const btn = w.querySelector('.cs-btn');
+      if (btn) {
+         if (id === 'cs-eTy') {
+            btn.style.backgroundColor = val === 'expense' ? 'color-mix(in srgb, var(--ex) 15%, transparent)' : 'color-mix(in srgb, var(--in) 15%, transparent)';
+            btn.style.borderColor = val === 'expense' ? 'var(--ex)' : 'var(--in)';
+         } else if (id === 'cs-eCat') {
+            const color = (typeof CAT_COLOR !== 'undefined' && CAT_COLOR[val]) ? CAT_COLOR[val] : '#ffd700';
+            btn.style.backgroundColor = `color-mix(in srgb, ${color} 15%, transparent)`;
+            btn.style.borderColor = color;
+            // Pop animation
+            btn.style.transform = 'scale(0.96)';
+            setTimeout(() => btn.style.transform = 'none', 120);
+         } else if (id === 'cs-eMo') {
+            const color = val === 'online' ? 'var(--on)' : 'var(--of)';
+            btn.style.backgroundColor = `color-mix(in srgb, ${color} 15%, transparent)`;
+            btn.style.borderColor = color;
+         } else if (id === 'cs-eEvent') {
+            if (val) {
+               btn.style.backgroundColor = 'color-mix(in srgb, var(--ac) 15%, transparent)';
+               btn.style.borderColor = 'var(--ac)';
+            } else {
+               btn.style.backgroundColor = 'var(--sf)';
+               btn.style.borderColor = 'var(--bd)';
+            }
+         }
+      }
     };
     document.addEventListener('click', e => {
       if(!e.target.closest('.cs-wrap')) {
@@ -10269,7 +10296,7 @@
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
-        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', '${c}', '${name}', '${icon}')"><span class="cs-opt-ico">${icon}</span> ${name}</button>`;
+        return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', this.dataset.val, this.textContent.trim(), this.querySelector('.cs-opt-ico').innerHTML)"><span class="cs-opt-ico">${icon}</span> ${name}</button>`;
       }).join('');
       
       const hidden = document.getElementById('eCat');
