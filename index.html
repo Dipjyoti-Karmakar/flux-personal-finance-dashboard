@@ -7186,6 +7186,8 @@
       .cs-opt:hover, .cs-opt:focus { background: var(--sf); color: var(--ac); outline:none; }
       .cs-opt.act { background: transparent; color: var(--tx); font-weight: 700; }
       .cs-opt-ico { display:inline-block; font-size:1.1em; line-height:1; }
+      #txPanel { overflow: visible; }
+      #txPanel .ph { border-radius: var(--r) var(--r) 0 0; }
     </style>
 
 
@@ -7337,7 +7339,7 @@
       <!-- 2-Column Main Dashboard Grid -->
       <div class="mg">
         <!-- Top Row -->
-        <div class="pn">
+        <div class="pn" id="txPanel">
           <div class="ph"><span class="pt">New Transaction</span></div>
           <div class="fb2">
             <div class="fr">
