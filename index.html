@@ -4028,31 +4028,35 @@
     /* -- Autocomplete Dropdown -- */
     .ac-list {
       position: absolute;
-      top: 100%;
+      top: calc(100% + 6px);
       left: 0;
       right: 0;
       z-index: 500;
       background: var(--sf);
-      border: 1px solid var(--bd);
-      border-radius: var(--rs);
-      max-height: 160px;
+      border: 1.5px solid var(--bd);
+      border-radius: var(--r);
+      max-height: 180px;
       overflow-y: auto;
       display: none;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      margin-top: 4px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 0;
+      padding: 6px;
     }
 
     .ac-list.vis {
       display: block;
+      animation: fdI .18s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .ac-item {
-      padding: 8px 12px;
+      padding: 9px 12px;
       cursor: pointer;
       font-family: 'DM Mono', monospace;
       font-size: 12px;
+      font-weight: 500;
       color: var(--tx);
-      transition: background .15s;
+      border-radius: 8px;
+      transition: background .15s, color .15s;
     }
 
     .ac-item:hover,
@@ -5979,32 +5983,66 @@
       box-shadow: var(--sh-hov);
     }
 
-    /* Extracted UI Classes */
+    /* ── Activity Log Cards ── */
     .log-card {
-      padding: 14px 16px;
+      padding: 14px 18px;
       border: 1px solid var(--bd);
+      border-radius: var(--rs);
       background: var(--sf);
+      margin-bottom: 8px;
+      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s;
+      animation: sIn .3s var(--ease-out-expo) both;
+      box-shadow: var(--sh-card);
+    }
+    .log-card:hover {
+      transform: translateX(4px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      border-color: var(--bs);
     }
 
     .log-card-deleted {
-      padding: 14px 16px;
-      border: 1px dashed var(--ex);
-      background: color-mix(in srgb, var(--ex) 5%, transparent);
-      opacity: 0.85;
+      padding: 14px 18px;
+      border: 1px solid color-mix(in srgb, var(--ex) 25%, var(--bd));
+      border-left: 3px solid var(--ex);
+      border-radius: var(--rs);
+      background: color-mix(in srgb, var(--ex) 4%, var(--sf));
+      opacity: 0.9;
+      margin-bottom: 8px;
+      animation: sIn .3s var(--ease-out-expo) both;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .log-card-deleted:hover {
+      transform: translateX(4px);
     }
 
     .log-card-skip {
-      padding: 14px 16px;
-      border: 1px dashed var(--of);
-      background: color-mix(in srgb, var(--of) 5%, transparent);
+      padding: 14px 18px;
+      border: 1px solid color-mix(in srgb, var(--of) 25%, var(--bd));
+      border-left: 3px solid var(--of);
+      border-radius: var(--rs);
+      background: color-mix(in srgb, var(--of) 4%, var(--sf));
       opacity: 0.95;
+      margin-bottom: 8px;
+      animation: sIn .3s var(--ease-out-expo) both;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .log-card-skip:hover {
+      transform: translateX(4px);
     }
 
     .log-card-new {
-      padding: 14px 16px;
-      border: 1px dashed var(--ac);
-      background: color-mix(in srgb, var(--ac) 5%, transparent);
+      padding: 14px 18px;
+      border: 1px solid color-mix(in srgb, var(--ac) 25%, var(--bd));
+      border-left: 3px solid var(--ac);
+      border-radius: var(--rs);
+      background: color-mix(in srgb, var(--ac) 4%, var(--sf));
       opacity: 0.95;
+      margin-bottom: 8px;
+      animation: sIn .3s var(--ease-out-expo) both;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .log-card-new:hover {
+      transform: translateX(4px);
     }
 
     .log-meta {
@@ -6131,15 +6169,34 @@
 
     .load-more-wrap {
       text-align: center;
-      padding: 16px;
+      padding: 20px 16px;
     }
 
     .load-more-btn {
-      background: var(--s2);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
       color: var(--ac);
-      border: 1px solid var(--ac);
-      font-size: 11px;
-      padding: 10px 16px;
+      border: 1.5px solid color-mix(in srgb, var(--ac) 40%, transparent);
+      font-family: 'DM Mono', monospace;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 9px 22px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all .25s cubic-bezier(0.16,1,0.3,1);
+    }
+    .load-more-btn:hover {
+      background: var(--ag);
+      border-color: var(--ac);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px color-mix(in srgb, var(--ac) 20%, transparent);
+    }
+    .load-more-btn:active {
+      transform: translateY(0) scale(0.96);
     }
 
     .btn-destructive {
@@ -6153,9 +6210,12 @@
       top: -12px;
       z-index: 10;
       margin: -12px -14px 12px -14px;
-      padding: 14px 18px;
-      background: var(--s2);
+      padding: 12px 18px;
+      background: color-mix(in srgb, var(--sf) 85%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--bd);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     }
 
     .evt-header-wrap {
@@ -6258,21 +6318,23 @@
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      gap: 6px;
+      gap: 4px;
       background: none;
       border: none;
-      color: #6c757d;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 11px;
-      font-weight: 500;
+      color: var(--mu);
+      font-family: 'DM Mono', monospace;
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
       cursor: pointer;
       flex: 1;
-      transition: all 0.3s ease;
+      transition: color 0.25s cubic-bezier(0.16,1,0.3,1);
       position: relative;
     }
 
     .mob-nav-item.act {
-      color: var(--nav-col);
+      color: var(--nav-col, var(--ac));
     }
 
     .mob-nav-item::after {
@@ -6282,34 +6344,34 @@
       left: 50%;
       transform: translateX(-50%);
       width: 0;
-      height: 3px;
+      height: 2.5px;
       border-radius: 2px;
-      background: var(--nav-col);
+      background: var(--nav-col, var(--ac));
       opacity: 0;
-      transition: width 0.3s ease, opacity 0.3s ease;
+      transition: width 0.3s cubic-bezier(0.16,1,0.3,1), opacity 0.3s ease;
     }
 
     .mob-nav-item.act::after {
-      width: 18px;
+      width: 20px;
       opacity: 1;
     }
 
     .mob-nav-icon {
-      width: 48px;
-      height: 48px;
+      width: 46px;
+      height: 46px;
       border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      transition: all 0.3s ease;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
     }
 
     .mob-nav-item.act .mob-nav-icon {
-      background: color-mix(in srgb, var(--nav-col) 8%, transparent);
-      border-color: color-mix(in srgb, var(--nav-col) 15%, transparent);
-      box-shadow: 0 4px 12px color-mix(in srgb, var(--nav-col) 10%, transparent);
+      background: color-mix(in srgb, var(--nav-col, var(--ac)) 10%, transparent);
+      border-color: color-mix(in srgb, var(--nav-col, var(--ac)) 20%, transparent);
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--nav-col, var(--ac)) 12%, transparent);
     }
 
     .mob-nav-center {
@@ -6610,30 +6672,34 @@
       padding: 10px 14px;
       background: var(--sf);
       border: 1px solid var(--bd);
-      border-radius: 8px;
+      border-radius: var(--rs);
       cursor: pointer;
       color: var(--tx);
       font-size: 14px;
+      height: 44px;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .custom-sel-trigger:hover {
-      border-color: var(--tx);
+      border-color: var(--ac);
+      box-shadow: 0 0 0 3px var(--ag);
     }
 
     .custom-sel-options {
       position: absolute;
-      top: calc(100% + 4px);
+      top: calc(100% + 6px);
       left: 0;
       width: 100%;
       background: var(--sf);
-      border: 1px solid var(--bd);
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      border: 1.5px solid var(--bd);
+      border-radius: var(--r);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0,0,0,0.12);
       z-index: 9999;
-      max-height: 200px;
+      max-height: 220px;
       overflow-y: auto;
       display: none;
+      padding: 6px;
+      animation: fdI .18s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .custom-sel-options.open {
@@ -6641,22 +6707,131 @@
     }
 
     .custom-sel-option {
-      padding: 10px 14px;
+      padding: 10px 12px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      transition: background 0.2s;
+      gap: 8px;
+      border-radius: 8px;
+      transition: background 0.15s, color 0.15s;
+      font-size: 13px;
+      color: var(--tx);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
     }
 
     .custom-sel-option:hover,
     .custom-sel-option:focus {
-      background: var(--bg);
+      background: var(--s2);
+      color: var(--ac);
       outline: none;
     }
 
     .custom-sel-arrow {
       font-size: 10px;
       color: var(--mu);
+      transition: transform 0.2s ease;
+    }
+
+    /* ── Premium Custom Checkbox ── */
+    .flux-checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+      user-select: none;
+    }
+    .flux-checkbox-wrap:hover {
+      background: var(--s3);
+    }
+    .flux-checkbox {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      border: 1.5px solid var(--bs);
+      background: var(--s2);
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .flux-checkbox:checked {
+      background: var(--ac);
+      border-color: var(--ac);
+      box-shadow: 0 0 0 3px var(--ag);
+    }
+    .flux-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 5px;
+      width: 5px;
+      height: 9px;
+      border: 2px solid #0d0f14;
+      border-top: none;
+      border-left: none;
+      transform: rotate(45deg);
+    }
+    .flux-checkbox-label {
+      font-size: 13px;
+      color: var(--tx);
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    /* ── Event Color Swatch Picker ── */
+    .evt-color-palette {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .evt-color-swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+    .evt-color-swatch:hover {
+      transform: scale(1.18);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .evt-color-swatch.active {
+      border-color: var(--tx) !important;
+      transform: scale(1.22);
+      box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ac);
+    }
+    .evt-color-custom-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .evt-color-custom-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--mu);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .evt-color-hex-pill {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--tx);
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-weight: 600;
     }
   </style>
   <style>
@@ -6675,8 +6850,12 @@
 
 <body>
   <div id="offlineBanner"
-    style="display:none; position:fixed; top:0; left:0; width:100%; background:var(--ex); color:#fff; text-align:center; padding:6px; font-size:12px; font-weight:600; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,0.2);">
-    Offline Mode - Changes are saved locally and will sync when reconnected.
+    style="display:none; position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:9999; white-space:nowrap;"
+    aria-live="assertive" role="alert">
+    <div style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:color-mix(in srgb, var(--ex) 12%, var(--sf)); border:1px solid color-mix(in srgb, var(--ex) 40%, transparent); border-radius:50px; box-shadow:0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); color:var(--ex); font-family:'DM Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase;">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--ex);box-shadow:0 0 8px var(--ex);flex-shrink:0;display:inline-block;"></span>
+      Offline — changes saved locally
+    </div>
   </div>
   <div id="splash-screen" aria-hidden="true">
 
@@ -7749,12 +7928,25 @@
           </div>
           <div class="fd full-mob" style="margin-bottom:14px;">
             <label
-              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Color</label>
-            <div style="display:flex;gap:8px;align-items:center;">
+              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Color</label>
+            <div class="evt-color-palette" id="evtColorPalette">
+              <button type="button" class="evt-color-swatch active" data-color="#c8a96e" style="background:#c8a96e;" onclick="setEvtColor('#c8a96e', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#e07070" style="background:#e07070;" onclick="setEvtColor('#e07070', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#5dba8a" style="background:#5dba8a;" onclick="setEvtColor('#5dba8a', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#6e9dc8" style="background:#6e9dc8;" onclick="setEvtColor('#6e9dc8', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#9d7ac8" style="background:#9d7ac8;" onclick="setEvtColor('#9d7ac8', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#f59e0b" style="background:#f59e0b;" onclick="setEvtColor('#f59e0b', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#30cfd0" style="background:#30cfd0;" onclick="setEvtColor('#30cfd0', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#fb923c" style="background:#fb923c;" onclick="setEvtColor('#fb923c', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#e879f9" style="background:#e879f9;" onclick="setEvtColor('#e879f9', this)"></button>
+              <button type="button" class="evt-color-swatch" data-color="#34d399" style="background:#34d399;" onclick="setEvtColor('#34d399', this)"></button>
+            </div>
+            <div class="evt-color-custom-row" style="margin-top:10px;">
+              <span class="evt-color-custom-label">Custom</span>
               <input type="color" id="evtColor" value="#c8a96e"
-                style="width:48px;height:36px;padding:2px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--s2);cursor:pointer;">
-              <span id="evtColorHex"
-                style="font-family:'DM Mono',monospace;font-size:12px;color:var(--mu);">#c8a96e</span>
+                style="width:32px;height:28px;padding:2px;border:1px solid var(--bd);border-radius:8px;background:var(--s2);cursor:pointer;flex-shrink:0;"
+                onchange="setEvtColorFromPicker(this.value)">
+              <span class="evt-color-hex-pill" id="evtColorHex">#c8a96e</span>
             </div>
           </div>
         </div>
@@ -7949,23 +8141,27 @@
             </select>
           </div>
           <div
-            style="margin-bottom:16px;padding:14px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--rs);">
+            style="margin-bottom:16px;padding:16px;background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);">
             <label
-              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Include
+              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:12px;display:block;">Include
               in Report</label>
-            <div style="display:flex;flex-direction:column;gap:8px;">
-              <label
-                style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;text-transform:none;letter-spacing:0;"><input
-                  type="checkbox" id="rptIncome" checked> Income transactions</label>
-              <label
-                style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;text-transform:none;letter-spacing:0;"><input
-                  type="checkbox" id="rptExpenses" checked> Expense transactions</label>
-              <label
-                style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;text-transform:none;letter-spacing:0;"><input
-                  type="checkbox" id="rptCatBreakdown" checked> Category breakdown</label>
-              <label
-                style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--tx);cursor:pointer;text-transform:none;letter-spacing:0;"><input
-                  type="checkbox" id="rptTxList" checked> Full transaction list</label>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <label class="flux-checkbox-wrap">
+                <input type="checkbox" id="rptIncome" class="flux-checkbox" checked>
+                <span class="flux-checkbox-label">Income transactions</span>
+              </label>
+              <label class="flux-checkbox-wrap">
+                <input type="checkbox" id="rptExpenses" class="flux-checkbox" checked>
+                <span class="flux-checkbox-label">Expense transactions</span>
+              </label>
+              <label class="flux-checkbox-wrap">
+                <input type="checkbox" id="rptCatBreakdown" class="flux-checkbox" checked>
+                <span class="flux-checkbox-label">Category breakdown</span>
+              </label>
+              <label class="flux-checkbox-wrap">
+                <input type="checkbox" id="rptTxList" class="flux-checkbox" checked>
+                <span class="flux-checkbox-label">Full transaction list</span>
+              </label>
             </div>
           </div>
           <button class="pdf-gen-btn" id="pdfGenBtn" onclick="generatePDF()">📄 Generate &amp; Download PDF</button>
@@ -12643,14 +12839,37 @@
       document.getElementById('evtName').value = '';
       document.getElementById('evtStart').value = '';
       document.getElementById('evtEnd').value = '';
-      document.getElementById('evtColor').value = '#c8a96e';
-      document.getElementById('evtColorHex').textContent = '#c8a96e';
+      syncEvtColorSwatch('#c8a96e');
       document.getElementById('eventMod').classList.add('op');
     }
 
     function closeEventMod() {
       document.getElementById('eventMod').classList.remove('op');
       editingEventId = null;
+    }
+
+    // ── Event Color Swatch Picker helpers ──
+    function setEvtColor(color, btnEl) {
+      // Update hidden color input + hex pill
+      document.getElementById('evtColor').value = color;
+      document.getElementById('evtColorHex').textContent = color;
+      // Update active swatch
+      document.querySelectorAll('.evt-color-swatch').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+    }
+    function setEvtColorFromPicker(color) {
+      document.getElementById('evtColorHex').textContent = color;
+      // Deselect preset swatches (custom color chosen)
+      document.querySelectorAll('.evt-color-swatch').forEach(b => {
+        b.classList.toggle('active', b.dataset.color === color);
+      });
+    }
+    function syncEvtColorSwatch(color) {
+      document.querySelectorAll('.evt-color-swatch').forEach(b => {
+        b.classList.toggle('active', b.dataset.color === color);
+      });
+      document.getElementById('evtColor').value = color;
+      document.getElementById('evtColorHex').textContent = color;
     }
 
     document.getElementById('evtColor').addEventListener('input', (e) => {
@@ -12727,8 +12946,7 @@
       document.getElementById('evtName').value = evt.name || '';
       document.getElementById('evtStart').value = evt.start || '';
       document.getElementById('evtEnd').value = evt.end || '';
-      document.getElementById('evtColor').value = evt.color || '#c8a96e';
-      document.getElementById('evtColorHex').textContent = evt.color || '#c8a96e';
+      syncEvtColorSwatch(evt.color || '#c8a96e');
       document.getElementById('eventMod').classList.add('op');
     }
 
