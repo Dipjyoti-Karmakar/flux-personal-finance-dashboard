@@ -12721,6 +12721,7 @@
       const evt = events[evtId];
       if (!evt) return;
       editingEventId = evtId;
+      window._editEvtSnapshot = { ...evt };
       document.getElementById('eventModTitle').textContent = 'Edit Event';
       document.getElementById('eventModSaveBtn').textContent = 'Save Changes';
       document.getElementById('evtName').value = evt.name || '';
@@ -14234,6 +14235,7 @@
       const rec = recurringList.find(r => r.id === id);
       if (!rec) return;
       editingRecurringId = id;
+      window._editRecSnapshot = { ...rec, _alt: Array.isArray(rec.altAmounts) ? [...rec.altAmounts] : [] };
       currentRecType = rec.type || 'expense';
       currentRecFreq = rec.freq || 'monthly';
       currentRecMode = rec.mode || 'online';
@@ -16495,6 +16497,84 @@
         });
       }, { passive: true });
     }
+
+    // -- Universal Edit Change Checker --
+    setInterval(() => {
+      // 1. Transaction Edit
+      if (document.getElementById('editMod').classList.contains('op') && editingTxId && window._editSnapshot) {
+        const btn = document.querySelector('#editMod .btn.pr');
+        if (btn && !_saveEditBusy) {
+          const desc = document.getElementById('eDesc').value.trim();
+          const amt = parseFloat(document.getElementById('eAmt').value);
+          const cat = document.getElementById('eCat').value;
+          const date = document.getElementById('eDt').value;
+          const type = document.getElementById('eTy').value;
+          const mode = document.getElementById('eMo').value;
+          const eventId = document.getElementById('eEvent').value || '';
+          
+          const b = window._editSnapshot;
+          const oldEvtId = b.eventId || '';
+          const noFileChosen = !document.getElementById('eReceiptFile')?.files[0];
+          const noReceiptChange = (typeof _editRemovedIdxs !== 'undefined' ? _editRemovedIdxs.size === 0 : true) && noFileChosen;
+          
+          if (b.desc === desc && b.amount === amt && (b.cat || 'other') === (cat || 'other') &&
+              b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId && noReceiptChange) {
+            btn.disabled = true;
+          } else {
+            btn.disabled = false;
+          }
+        }
+      }
+      
+      // 2. Recurring Edit
+      if (document.getElementById('recurringMod').classList.contains('op') && editingRecurringId && window._editRecSnapshot) {
+        const btn = document.getElementById('recurringModSaveBtn');
+        if (btn && typeof _saveRecBusy !== 'undefined' && !_saveRecBusy) {
+          const name = document.getElementById('recName').value.trim();
+          const amount = parseFloat(document.getElementById('recAmount').value);
+          const cat = document.getElementById('recCat').value;
+          const nextDue = document.getElementById('recNextDue').value;
+          const customDays = parseInt(document.getElementById('recCustomDays').value, 10);
+          const paymentsLimit = parseInt(document.getElementById('recTimesActive').value, 10);
+          const type = currentRecType;
+          const freq = currentRecFreq;
+          const mode = currentRecMode;
+          const autoLog = currentRecAutoLog;
+          
+          const b = window._editRecSnapshot;
+          const sameAlt = b._alt.length === (typeof _editingAltAmounts !== 'undefined' ? _editingAltAmounts.length : 0) && 
+                          b._alt.every((v, i) => v === _editingAltAmounts[i]);
+          
+          if (b.name === name && b.amount === amount && (b.cat || 'other') === (cat || 'other') &&
+              (b.nextDue || '') === nextDue && (b.customDays || '') == (customDays || '') &&
+              (b.paymentsLimit || '') == (paymentsLimit || '') &&
+              (b.type || 'expense') === type && (b.freq || 'monthly') === freq &&
+              (b.mode || 'online') === mode && (b.autoLog !== false) === autoLog && sameAlt) {
+            btn.disabled = true;
+          } else {
+            btn.disabled = false;
+          }
+        }
+      }
+      
+      // 3. Event Edit
+      if (document.getElementById('eventMod').classList.contains('op') && editingEventId && window._editEvtSnapshot) {
+        const btn = document.getElementById('eventModSaveBtn');
+        if (btn && typeof _saveEventBusy !== 'undefined' && !_saveEventBusy) {
+          const name = document.getElementById('evtName').value.trim();
+          const start = document.getElementById('evtStart').value;
+          const end = document.getElementById('evtEnd').value;
+          const color = document.getElementById('evtColor').value || '#c8a96e';
+          
+          const b = window._editEvtSnapshot;
+          if (b.name === name && b.start === start && b.end === end && (b.color || '#c8a96e') === color) {
+            btn.disabled = true;
+          } else {
+            btn.disabled = false;
+          }
+        }
+      }
+    }, 200);
 
     // -- Autocomplete for Description Input --
     function initAutocomplete() {
