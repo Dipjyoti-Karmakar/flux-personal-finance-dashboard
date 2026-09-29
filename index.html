@@ -7369,9 +7369,14 @@
                   step="0.01"></div>
               <div class="fd"><label>Date</label><input type="date" id="txDt"></div>
             </div>
-            <div class="fd full-mob"><label>Event (Optional)</label><select id="txEvent">
-                <option value="">— No Event —</option>
-              </select></div>
+            <div class="fd full-mob">
+              <label>Event (Optional)</label>
+              <div class="cs-wrap" id="cs-txEvent">
+                <input type="hidden" id="txEvent">
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-txEvent')"><span class="cs-val">— No Event —</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <div class="cs-menu" id="cs-txEvent-menu"></div>
+              </div>
+            </div>
             <!-- Receipt Upload (Optional) -->
             <div class="fd full-mob">
               <label>Receipt <span style="color:var(--mu);font-weight:400">(Optional — JPG, PNG, PDF, max 10 MB)</span></label>
@@ -9120,6 +9125,7 @@
           document.getElementById('txD').value = '';
           document.getElementById('txA').value = '';
           document.getElementById('txDt').value = getTodayStr();
+          selCS('cs-txEvent', '', '— No Event —');
           // Reset receipt UI
           const rFile = document.getElementById('receiptAddFile');
           const rLabel = document.getElementById('receiptAddLabel');
@@ -12720,18 +12726,28 @@
     }
 
     function populateEventSelects() {
-      const evtOpts = '<option value="">\u2014 No Event \u2014</option>' +
-        Object.values(events).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
-      const txEvt = document.getElementById('txEvent');
-      if (txEvt) txEvt.innerHTML = evtOpts;
+      // For custom selects (cs-wrap structure)
+      let html = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-txEvent', '', '— No Event —')">— No Event —</button>`;
+      html += Object.values(events).map(e => {
+        return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-txEvent', this.dataset.val, this.textContent)">${esc(e.name)}</button>`;
+      }).join('');
       
+      const csTxEventMenu = document.getElementById('cs-txEvent-menu');
+      if (csTxEventMenu) {
+         csTxEventMenu.innerHTML = html;
+         const hiddenTx = document.getElementById('txEvent');
+         if(hiddenTx && hiddenTx.value && !events[hiddenTx.value]) {
+            selCS('cs-txEvent', '', '— No Event —');
+         }
+      }
+
       const csEEventMenu = document.getElementById('cs-eEvent-menu');
       if (csEEventMenu) {
-         let html = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-eEvent', '', '— No Event —')">— No Event —</button>`;
-         html += Object.values(events).map(e => {
+         let htmlEdit = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-eEvent', '', '— No Event —')">— No Event —</button>`;
+         htmlEdit += Object.values(events).map(e => {
             return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-eEvent', this.dataset.val, this.textContent)">${esc(e.name)}</button>`;
          }).join('');
-         csEEventMenu.innerHTML = html;
+         csEEventMenu.innerHTML = htmlEdit;
          const hidden = document.getElementById('eEvent');
          if(hidden && hidden.value && !events[hidden.value]) {
             selCS('cs-eEvent', '', '— No Event —');
