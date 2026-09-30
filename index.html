@@ -6834,6 +6834,700 @@
       padding: 3px 10px;
       font-weight: 600;
     }
+
+    /* ══════════════════════════════════════════════════════
+       FLUX UI/UX REFINEMENT LAYER — Premium polish additions
+       ══════════════════════════════════════════════════════ */
+
+    /* ── Missing cardInDown animation (referenced in JS) ── */
+    @keyframes cardInDown {
+      from { opacity: 0; transform: translateY(-18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Header: desktop top row layout ── */
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    /* ── Log header action row ── */
+    .log-header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* ── Log search bar ── */
+    .log-search-wrap {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .log-search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      color: var(--mu);
+    }
+
+    .log-search-input {
+      padding: 10px 14px 10px 38px;
+      font-size: 13px;
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 24px;
+      background: var(--sf);
+      border: 1.5px solid var(--bd);
+      color: var(--tx);
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      box-shadow: var(--sh-card);
+    }
+
+    .log-search-input:focus {
+      border-color: var(--ac);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 18%, transparent);
+    }
+
+    .log-search-input::placeholder { color: var(--di); }
+
+    /* ── Log delete action bar internals ── */
+    .log-del-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log-select-count {
+      color: var(--ex);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .log-del-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .log-cancel-btn {
+      padding: 6px 14px !important;
+      font-size: 11px !important;
+      min-width: auto !important;
+      border-radius: 999px !important;
+    }
+
+    .log-del-btn {
+      padding: 6px 14px !important;
+      font-size: 11px !important;
+      min-width: auto !important;
+      background: var(--ex) !important;
+      border-color: var(--ex) !important;
+      color: #fff !important;
+      border-radius: 999px !important;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* ── Panel header action group (right-aligned flex row) ── */
+    .ph-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Event New button in panel header ── */
+    .event-new-btn {
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--ac);
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background .2s;
+    }
+
+    .event-new-btn:hover {
+      background: var(--ag);
+    }
+
+    /* ── Custom date range wrapper (inside filter) ── */
+    #customDtWrap {
+      display: none;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--bd);
+      background: var(--s2);
+      gap: 8px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      overflow: hidden;
+      box-sizing: border-box;
+      max-width: 100%;
+    }
+
+    #customDtWrap.vis { display: flex; }
+
+    .cdt-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1 1 110px;
+      min-width: 0;
+    }
+
+    .cdt-label {
+      font-size: 9px;
+      color: var(--mu);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .cdt-input {
+      padding: 8px 10px !important;
+      font-size: 12px !important;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .cdt-clear-btn {
+      padding: 8px 12px;
+      height: 35px;
+      flex: 1 1 100%;
+    }
+
+    /* ── Event TX Filter wrapper ── */
+    #eventTxFilterWrap {
+      display: none;
+      padding: 10px 16px 12px;
+      border-top: 1px solid var(--bd);
+      background: var(--s2);
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #eventTxFilterWrap.vis { display: flex; }
+
+    .etf-label {
+      font-size: 9px;
+      color: var(--mu);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* ── Filter bar column layout (inside tx panel) ── */
+    .fltr-col {
+      padding: 0;
+      flex-direction: column;
+      align-items: stretch;
+      border-bottom: none;
+      overflow: hidden;
+    }
+
+    /* ── Trend area: proper padding via class ── */
+    .trend-area-body {
+      padding: 16px 20px 24px;
+      min-height: 220px;
+      position: relative;
+    }
+
+    /* ── Category area body ── */
+    .cat-area-body {
+      padding: 12px 16px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    /* ── "View All" link (mobile-only) ── */
+    .view-all-link {
+      cursor: pointer;
+    }
+
+    /* ── Theme toggle desktop: hide on mobile (mobile has its own in bottom nav) ── */
+    .theme-toggle-desktop {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    @media (max-width: 520px) {
+      .theme-toggle-desktop { display: none !important; }
+    }
+
+    /* ── App Tabs: premium sliding indicator ── */
+    .app-tabs {
+      position: relative;
+      border: 1px solid var(--bd);
+    }
+
+    .app-tab {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Active tab: smooth highlight pill with glow */
+    .app-tab.act {
+      color: var(--ac);
+      background: linear-gradient(135deg,
+        color-mix(in srgb, var(--ac) 8%, var(--sf)),
+        color-mix(in srgb, var(--ac) 4%, var(--sf))
+      );
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    /* Accent underline on active tab */
+    .app-tab.act::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--ac);
+      opacity: 0.7;
+      transition: width .25s var(--ease-out-expo);
+    }
+
+    .app-tab:hover::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 2px;
+      border-radius: 2px;
+      background: var(--bs);
+      opacity: 0.5;
+    }
+
+    /* ── Transaction Search: proper class (removes inline styles) ── */
+    .tx-search-input {
+      padding: 9px 14px 9px 36px;
+      font-size: 13px;
+      width: 100%;
+      border-radius: 24px;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      color: var(--tx);
+      font-family: 'DM Sans', sans-serif;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .tx-search-input:focus {
+      border-color: var(--ac);
+      box-shadow: 0 0 0 3px var(--ag);
+    }
+
+    .tx-search-input::placeholder {
+      color: var(--di);
+    }
+
+    .tx-search-wrap {
+      position: relative;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--bd);
+    }
+
+    .tx-search-wrap::before {
+      content: '';
+      position: absolute;
+      left: 26px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237a8099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-size: contain;
+      pointer-events: none;
+    }
+
+    /* ── Subscriptions: archived toggle button ── */
+    .sub-archived-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 14px;
+      border-radius: 50px;
+      border: 1.5px solid var(--bd);
+      background: transparent;
+      color: var(--di);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .2s cubic-bezier(0.16,1,0.3,1);
+      white-space: nowrap;
+    }
+
+    .sub-archived-toggle:hover {
+      border-color: var(--ac);
+      color: var(--ac);
+      background: var(--ag);
+    }
+
+    /* ── Summary cards: richer hover with accent glow ── */
+    .sc:hover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(circle at 80% 20%, color-mix(in srgb, var(--ac) 4%, transparent), transparent 65%);
+      pointer-events: none;
+    }
+
+    /* ── Panel headers: a touch more contrast ── */
+    .ph {
+      background: linear-gradient(180deg,
+        color-mix(in srgb, var(--sf) 94%, var(--s2)) 0%,
+        var(--sf) 100%
+      );
+    }
+
+    /* ── Panel title: slightly larger / more presence ── */
+    .pt {
+      font-size: 11px;
+      letter-spacing: 1.8px;
+    }
+
+    /* ── Yearly section title: thicker line ── */
+    .yst::after {
+      height: 1px;
+      background: linear-gradient(90deg, var(--bs), transparent);
+    }
+
+    /* ── Insight card: left-accent gradient polish ── */
+    .insight-item.pos {
+      background: linear-gradient(90deg,
+        color-mix(in srgb, var(--in) 7%, var(--s2)) 0%,
+        var(--s2) 55%
+      );
+    }
+    .insight-item.neg {
+      background: linear-gradient(90deg,
+        color-mix(in srgb, var(--ex) 7%, var(--s2)) 0%,
+        var(--s2) 55%
+      );
+    }
+    .insight-item.neu {
+      background: linear-gradient(90deg,
+        color-mix(in srgb, var(--ac) 6%, var(--s2)) 0%,
+        var(--s2) 55%
+      );
+    }
+
+    /* ── Modal: slightly more presence ── */
+    .mo {
+      border-width: 1px;
+      border-color: color-mix(in srgb, var(--ac) 12%, var(--bs));
+    }
+
+    /* ── Modal title: proper weight ── */
+    .mti {
+      font-size: 12px;
+      letter-spacing: 2px;
+    }
+
+    /* ── Subscription summary bar: gradient value colors ── */
+    .sub-summary-val {
+      background: linear-gradient(135deg, currentColor 70%, color-mix(in srgb, currentColor 70%, #fff));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Due-soon banner: more refined look ── */
+    #dueSoonBanner {
+      border-radius: var(--rs);
+      border-left: 3px solid var(--ex);
+    }
+
+    /* ── Toast: refined pill shape ── */
+    .tst {
+      border-radius: 50px;
+      padding: 12px 24px;
+    }
+
+    /* ── Log cards: left-accent strip ── */
+    .log-card {
+      border-left: 3px solid var(--bd);
+      transition: border-left-color .2s ease, transform 0.2s, box-shadow 0.2s;
+    }
+    .log-card:hover {
+      border-left-color: var(--ac);
+    }
+
+    /* ── Category tag: more refined hover state ── */
+    .cat-tag:hover {
+      background: color-mix(in srgb, var(--ac) 4%, var(--s2));
+    }
+
+    /* ── Sparkline bar: smoother, no harsh border ── */
+    .spk {
+      border-radius: 3px 3px 0 0;
+      border: none;
+      box-shadow: inset 0 -1px 0 rgba(224,112,112,0.3);
+    }
+    .spk.cm {
+      border: none;
+      border-top: 2px dashed rgba(224, 112, 112, 0.85);
+    }
+
+    /* ── Mobile nav: glassmorphism backdrop ── */
+    .mobile-bottom-nav {
+      background: color-mix(in srgb, var(--sf) 88%, transparent);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--bd);
+    }
+
+    /* ── Mobile nav center button: bigger glow ── */
+    .mob-nav-center {
+      box-shadow:
+        0 4px 16px color-mix(in srgb, var(--ac) 40%, transparent),
+        0 0 0 3px color-mix(in srgb, var(--ac) 15%, transparent);
+    }
+    .mob-nav-center:active {
+      transform: translateY(-8px) scale(0.95);
+    }
+
+    /* ── Mobile cat icon: subtle tinted background ── */
+    #catAreaWrap .cat-icon-wrap {
+      background: color-mix(in srgb, var(--ac) 6%, var(--s2));
+      border: 1px solid var(--bd);
+    }
+
+    /* ── Budget bar: thicker track ── */
+    .mbw {
+      height: 5px;
+      border-radius: 3px;
+      background: var(--s3);
+    }
+
+    /* ── Filter pills: tighter hover ── */
+    .ft:hover {
+      background: color-mix(in srgb, var(--ac) 5%, transparent);
+    }
+
+    /* ── Autocomplete: show icon emoji properly ── */
+    .ac-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Subscription card: icon border radius refinement ── */
+    .sub-card-icon {
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    /* ── Sub action buttons: text size bump ── */
+    .sub-action-btn {
+      font-size: 10px;
+    }
+
+    /* ── Confirm modal: center proper on desktop ── */
+    @media (min-width: 521px) {
+      #confirmMod {
+        align-items: center;
+        padding: 24px;
+      }
+      #confirmMod .mo {
+        max-width: 400px;
+        border-radius: 20px;
+        animation: fuD .35s var(--ease-spring);
+        padding-bottom: 0;
+      }
+    }
+
+    /* ── Transaction amount: better weight for large numbers ── */
+    .sv.big {
+      font-size: 32px;
+      letter-spacing: -1px;
+    }
+
+    /* ── Inline stat label: better visibility ── */
+    .sl {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      letter-spacing: 1.8px;
+    }
+
+    /* ── Panel body (form area): consistent padding ── */
+    .fb2 {
+      padding: 22px 24px;
+    }
+
+    /* ── Custom select trigger refinement ── */
+    .custom-sel-trigger {
+      background: var(--s2);
+      height: 46px;
+    }
+
+    /* ── CS Button (modal custom select): improve height consistency ── */
+    .cs-btn {
+      height: 46px;
+      border-radius: 12px;
+      background: var(--s2);
+    }
+
+    /* ── Receipt drop zone: refine ── */
+    .receipt-drop {
+      border-radius: var(--r);
+      padding: 14px 16px;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    /* ── Trend tooltip: more premium ── */
+    .trend-tip {
+      border-radius: 12px;
+      padding: 12px 16px;
+    }
+
+    /* ── Sync status pill: clean border-radius ── */
+    #cloudStatus {
+      border-radius: 50px;
+      padding: 7px 14px;
+    }
+
+    /* ── Offline banner: rounded pill ── */
+    #offlineBanner > div {
+      border-radius: 50px !important;
+    }
+
+    /* ── Load-more button: ensure always visible ── */
+    .load-more-wrap { padding: 16px; }
+
+    /* ── Light theme: enhance sub summary gradient ── */
+    [data-theme="light"] .sub-summary-val {
+      -webkit-text-fill-color: currentColor;
+      background: none;
+    }
+
+    /* ── Mobile: search bar wrapper ── */
+    @media (max-width: 520px) {
+      .tx-search-wrap { padding: 8px 12px; }
+      .tx-search-input { font-size: 15px; border-radius: 20px; }
+      .tx-search-wrap::before { left: 24px; }
+    }
+
+    /* ── Sub grid: 3 columns on large screens ── */
+    @media (min-width: 960px) {
+      .sub-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+    }
+
+    /* ── Yearly section: consistent top margin ── */
+    .ys {
+      margin-top: 24px;
+    }
+
+    /* ── Log view header border ── */
+    .log-header {
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--bd);
+      margin-bottom: 20px;
+    }
+
+    /* ── Custom dt-clear: hover state ── */
+    .stats-custom-dt .dt-clear:hover {
+      color: var(--ex);
+      text-decoration: none;
+    }
+
+    /* ── Insight empty: better look ── */
+    .insight-empty {
+      padding: 48px 24px;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+    }
+
+    /* ── Event color swatch: consistent sizing ── */
+    .evt-color-swatch {
+      width: 26px;
+      height: 26px;
+    }
+
+    /* ── Diff container: more readable ── */
+    .diff-new {
+      border-radius: 5px;
+      padding: 2px 7px;
+    }
+
+    /* ── Category drill-down inner: border glow ── */
+    .cat-tx-inner {
+      border-color: var(--bs);
+    }
+
+    /* ── Dashboard section sticky header ── */
+    .dash-section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: var(--bg);
+      padding-top: 8px;
+      padding-bottom: 12px;
+    }
+
+    /* ── Section title (Playfair serif headings in dashboard) ── */
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--tx);
+      letter-spacing: -.2px;
+    }
+
+    /* ── Split events body: proper padding ── */
+    .split-events-body {
+      padding: 24px;
+    }
+
+    /* ── Sub-summary value: accessible color text gradient ── */
+    /* (light theme: disable gradient clip for readability) */
+
+    /* ── Category area mobile icon: proper theme token ── */
+    @media (max-width: 520px) {
+      #catAreaWrap .cat-icon-wrap {
+        background: color-mix(in srgb, var(--ac) 6%, var(--s2));
+      }
+    }
+
+    /* ── Dashboard section cards: hover glow fix ── */
+    .sc { position: relative; overflow: hidden; }
+
   </style>
   <style>
     img.emoji {
@@ -7188,6 +7882,26 @@
       .cs-opt-ico { display:inline-block; font-size:1.1em; line-height:1; }
       #txPanel { overflow: visible; }
       #txPanel .ph { border-radius: var(--r) var(--r) 0 0; }
+
+      /* ── Missing mo-in animation (receipt viewer) ── */
+      @keyframes mo-in {
+        from { opacity: 0; transform: scale(0.97) translateY(8px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+      }
+
+      /* ── Cropper: use proper surface var instead of --s1 (undefined) ── */
+      .cropper-header { background: var(--s2) !important; }
+      .cropper-footer { background: var(--s2) !important; }
+
+      /* ── CS button: use secondary surface for consistency ── */
+      .cs-btn { background: var(--s2) !important; }
+
+      /* ── Receipt viewer box: slightly more rounded ── */
+      .receipt-viewer-box { border-radius: calc(var(--r) + 4px); }
+
+      /* ── Receipt drop: slightly larger click target ── */
+      .receipt-drop { min-height: 52px; }
+
     </style>
 
 
@@ -7199,7 +7913,7 @@
           <div class="logo-sub">Personal Finance</div>
         </div>
         <!-- Desktop and Mobile Theme Toggle -->
-        <div style="display:flex; align-items:center; gap:8px;" class="theme-toggle-desktop">
+        <div class="theme-toggle-desktop">
           <span class="thlbl">Dark</span>
           <button class="thtog" id="thtog_desktop"></button>
         </div>
@@ -7259,10 +7973,8 @@
     <!-- Dashboard View -->
     <div id="dashboardView">
 
-      <div id="dashHeader"
-        style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding-top:8px; padding-bottom:12px;">
-        <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Summary
-        </div>
+      <div id="dashHeader" class="dash-section-header">
+        <div class="section-title">Summary</div>
         <div class="fltr" style="padding:0; border:none; margin:0;">
           <button class="ft act" id="stM_month" onclick="setStatsMode('month')">This Month</button>
           <button class="ft" id="stM_yr" onclick="setStatsMode('year')">This Year</button>
@@ -7277,10 +7989,8 @@
         <span class="dt-clear" onclick="clearStatsDt()">clear</span>
       </div>
 
-      <div id="analysisHeader"
-        style="display:none; align-items:flex-end; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px; position:sticky; top:0; z-index:20; background:var(--bg); padding-top:8px; padding-bottom:12px;">
-        <div style="font-family:'Playfair Display',serif; font-size:20px; font-weight:600; color:var(--tx)">Analysis
-        </div>
+      <div id="analysisHeader" class="dash-section-header" style="display:none;">
+        <div class="section-title">Analysis</div>
         <div class="fltr" style="padding:0; border:none; margin:0;">
           <button class="ft dt-flt-analysis act" id="aM_month" onclick="setAnalysisMode('month')">This Month</button>
           <button class="ft dt-flt-analysis" id="aM_year" onclick="setAnalysisMode('year')">This Year</button>
@@ -7412,8 +8122,7 @@
                 onclick="setTrendMode('income')">Income</button><button class="tt-btn" id="ttBoth"
                 onclick="setTrendMode('both')">Both</button></div>
           </div>
-          <div class="ca" id="trendArea" role="img" aria-label="Spending trend chart"
-            style="padding:16px 20px 24px; min-height:220px; position:relative;">
+          <div class="ca trend-area-body" id="trendArea" role="img" aria-label="Spending trend chart">
             <div class="empty-state">
               <div class="empty-icon">📈</div>
               <div class="empty-title">No expense data</div>
@@ -7426,8 +8135,7 @@
         <!-- Left Side: Transactions List -->
         <div class="pn pn-fixed" id="txPanel">
           <div class="ph"><span class="pt">Transactions</span><span class="pb" id="txCnt">0</span></div>
-          <div class="fltr"
-            style="padding:0; flex-direction:column; align-items:stretch; border-bottom:none; overflow:hidden;">
+          <div class="fltr fltr-col">
             <div class="fltr-scroll">
               <button class="ft dt-flt act" onclick="setDt('today', this)">Today</button>
               <button class="ft dt-flt" onclick="setDt('month', this)">This Month</button>
@@ -7435,24 +8143,16 @@
               <button class="ft dt-flt" onclick="setDt('all', this)">All</button>
               <button class="ft dt-flt" onclick="setDt('custom', this)">Custom</button>
             </div>
-            <div id="customDtWrap"
-              style="display:none; padding:12px 16px; border-bottom:1px solid var(--bd); background:var(--s2); gap:8px; align-items:flex-end; flex-wrap: wrap; overflow:hidden; box-sizing:border-box; max-width:100%;">
-              <div style="display:flex; flex-direction:column; gap:6px; flex: 1 1 110px; min-width:0;">
-                <label
-                  style="font-size:9px; color:var(--mu); font-family:'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; font-weight:600;">From
-                  Date</label>
-                <input type="date" id="cDtFrom" onchange="updCustomDt()"
-                  style="padding:8px 10px; font-size:12px; min-width:0; width:100%; box-sizing:border-box;">
+            <div id="customDtWrap">
+              <div class="cdt-field">
+                <label class="cdt-label">From Date</label>
+                <input type="date" id="cDtFrom" onchange="updCustomDt()" class="cdt-input">
               </div>
-              <div style="display:flex; flex-direction:column; gap:6px; flex: 1 1 110px; min-width:0;">
-                <label
-                  style="font-size:9px; color:var(--mu); font-family:'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; font-weight:600;">To
-                  Date</label>
-                <input type="date" id="cDtTo" onchange="updCustomDt()"
-                  style="padding:8px 10px; font-size:12px; min-width:0; width:100%; box-sizing:border-box;">
+              <div class="cdt-field">
+                <label class="cdt-label">To Date</label>
+                <input type="date" id="cDtTo" onchange="updCustomDt()" class="cdt-input">
               </div>
-              <button class="btn" onclick="clearCustomDt()"
-                style="padding:8px 12px; height:35px; flex: 1 1 100%;">Clear</button>
+              <button class="btn cdt-clear-btn" onclick="clearCustomDt()">Clear</button>
             </div>
             <div class="fltr-scroll fltr-sections">
               <div class="fltr-row">
@@ -7475,21 +8175,15 @@
                 </div>
               </div>
             </div>
-            <div id="eventTxFilterWrap"
-              style="display:none; padding:10px 16px 12px; border-top:1px solid var(--bd); background:var(--s2);">
-              <div style="display:flex;flex-direction:column;gap:6px;">
-                <label
-                  style="font-size:9px; color:var(--mu); font-family:'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; font-weight:600;">Event</label>
-                <select id="eventTxFilterSel" onchange="setEventFilter(this.value)"
-                  style="padding:8px 10px; font-size:12px; height:auto;">
-                  <option value="all">All</option>
-                </select>
-              </div>
+            <div id="eventTxFilterWrap">
+              <label class="etf-label">Event</label>
+              <select id="eventTxFilterSel" onchange="setEventFilter(this.value)" style="height:auto;">
+                <option value="all">All</option>
+              </select>
             </div>
           </div>
-          <div style="padding:8px 16px;border-bottom:1px solid var(--bd);">
-            <input type="text" id="txSearch" placeholder="Search transactions…" oninput="setTxSearch(this.value)"
-              style="padding:8px 12px;font-size:12px;width:100%;border-radius:20px;background:var(--s2);border:1px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;"
+          <div class="tx-search-wrap">
+            <input type="text" id="txSearch" class="tx-search-input" placeholder="Search transactions…" oninput="setTxSearch(this.value)"
               aria-label="Search transactions by description">
           </div>
           <div class="txl" id="txList">
@@ -7503,9 +8197,9 @@
 
         <!-- By Category -->
         <div class="pn pn-fixed section-in-down" id="catAreaWrap" style="animation-delay:.2s;">
-          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only"
-              style="cursor:pointer; display:none;" onclick="toggleViewAllCats();">View All</span></div>
-          <div class="ca" style="padding: 12px 16px; flex:1; min-height:0; overflow-y:auto;" id="ctArea">
+          <div class="ph"><span class="pt">By Category</span><span class="pb mob-only view-all-link"
+              style="display:none;" onclick="toggleViewAllCats();">View All</span></div>
+          <div class="ca cat-area-body" id="ctArea">
             <div class="empty-state" style="padding:24px 16px">
               <div class="empty-icon">📂</div>
               <div class="empty-title">No data yet</div>
@@ -7521,17 +8215,16 @@
       <div class="pn section-in-down" style="margin-top: 24px; animation-delay:.3s;" id="splitEventCard">
         <div class="ph">
           <span class="pt" id="splitEventTitle">Online vs Offline</span>
-          <div style="display:flex;align-items:center;gap:8px;">
+          <div class="ph-actions">
             <div class="split-toggle">
               <button class="st-btn act" id="stSplit" onclick="setSplitView('split')">Online/Offline</button>
               <button class="st-btn" id="stEvents" onclick="setSplitView('events')">Events</button>
             </div>
-            <button class="pb" id="eventNewBtn" onclick="showCreateEvent()"
-              style="cursor:pointer;border:none;background:none;font-family:'DM Mono',monospace;font-size:12px;color:var(--ac);font-weight:600;display:none;">＋
-              New</button>
+            <button class="pb event-new-btn" id="eventNewBtn" onclick="showCreateEvent()"
+              style="display:none;">＋ New</button>
           </div>
         </div>
-        <div class="ca split-events-body" style="padding: 24px;">
+        <div class="ca split-events-body">
           <div id="spArea">
             <div class="empty-state" style="padding:24px 16px">
               <div class="empty-icon">⚡</div>
@@ -7611,7 +8304,7 @@
     <div id="logView" style="display:none">
       <div class="log-header">
         <div class="log-title">Activity Log</div>
-        <div style="display:flex; gap:8px; align-items:center;">
+        <div class="log-header-actions">
           <!-- Filter Dropdown -->
           <div class="log-filter-wrapper" id="logFilterWrapper">
             <button class="log-filter-btn" id="logFilterMainBtn" onclick="toggleLogFilterMenu()">
@@ -7665,27 +8358,21 @@
       </div>
 
       <!-- Search bar -->
-      <div style="margin-bottom:14px;position:relative;">
-        <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--mu);" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="logSearch" placeholder="Search logs..." oninput="setLogSearch(this.value)"
-          style="padding:10px 14px 10px 38px;font-size:13px;width:100%;box-sizing:border-box;border-radius:24px;background:var(--sf);border:1.5px solid var(--bd);color:var(--tx);font-family:'DM Sans',sans-serif;outline:none;transition:all 0.2s;box-shadow:var(--sh-card);"
-          onfocus="this.style.borderColor='var(--ac)';this.style.boxShadow='0 0 0 3px color-mix(in srgb,var(--ac) 18%,transparent)'"
-          onblur="this.style.borderColor='var(--bd)';this.style.boxShadow='var(--sh-card)'" aria-label="Search logs">
+      <div class="log-search-wrap">
+        <svg class="log-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="logSearch" class="log-search-input" placeholder="Search logs..." oninput="setLogSearch(this.value)" aria-label="Search logs">
       </div>
 
       <!-- Delete action bar -->
       <div id="logDeleteAction">
-        <div style="display:flex;align-items:center;gap:8px;">
+        <div class="log-del-info">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ex)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-          <span id="logSelectCount" style="color:var(--ex);font-size:13px;font-weight:700;">0 selected</span>
+          <span id="logSelectCount" class="log-select-count">0 selected</span>
         </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn" style="padding:6px 14px;font-size:11px;min-width:auto;border-radius:999px;"
-            onclick="toggleLogSelectionMode()">Cancel</button>
-          <button class="btn pr"
-            style="padding:6px 14px;font-size:11px;min-width:auto;background:var(--ex);border-color:var(--ex);color:#fff;border-radius:999px;"
-            onclick="confirmDeleteSelectedLogs()">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        <div class="log-del-actions">
+          <button class="btn log-cancel-btn" onclick="toggleLogSelectionMode()">Cancel</button>
+          <button class="btn pr log-del-btn" onclick="confirmDeleteSelectedLogs()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
             Delete
           </button>
         </div>

@@ -19,7 +19,7 @@
 
 ## Overview
 
-Flux is a robust web application housed entirely within a single `index.html` file (~16,000+ lines). It relies on **Firebase Authentication** and **Cloud Firestore** for secure, real-time data synchronization. Built with a PWA-first approach, it offers comprehensive offline support via persistent local caching.
+Flux is a robust web application housed entirely within a single `index.html` file (~17,000+ lines). It relies on **Firebase Authentication** and **Cloud Firestore** for secure, real-time data synchronization. Built with a PWA-first approach, it offers comprehensive offline support via persistent local caching.
 
 The application is optimized for the Indian locale (`en-IN`), formatting all currency in **INR (₹)**.
 
