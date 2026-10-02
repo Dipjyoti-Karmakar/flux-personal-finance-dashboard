@@ -11946,12 +11946,14 @@
 
         if (pulseTargets.length > 0) {
           let pulseRaf;
+          let isHovering = false; // pause pulse during hover so highlights aren't wiped
           const startT = performance.now();
           const pulseDuration = 2200; // ms per full cycle
 
           const drawPulse = (now) => {
             // Stop if the canvas has been replaced (tab switch / re-render)
             if (!cv.isConnected) return;
+            if (isHovering) { pulseRaf = requestAnimationFrame(drawPulse); return; }
             const elapsed = (now - startT) % pulseDuration;
             const phase = elapsed / pulseDuration; // 0..1
             // sin wave: peaks at 0.5 cycle (alpha 0→1→0)
@@ -11994,6 +11996,9 @@
 
           pulseRaf = requestAnimationFrame(drawPulse);
 
+          // Expose hover state for handleMove / handleLeave below
+          cv._pulseSetHover = (v) => { isHovering = v; };
+
           // Clean up animation when the AbortController fires (tab switch, re-render)
           signal.addEventListener('abort', () => { cancelAnimationFrame(pulseRaf); });
         }
@@ -12004,6 +12009,7 @@
       if (refPts.length > 0) {
         const handleMove = (e) => {
           if (e.cancelable) e.preventDefault();
+          if (cv._pulseSetHover) cv._pulseSetHover(true); // pause pulse during hover
           const currentRect = cv.getBoundingClientRect();
           let cx = e.clientX;
           if (e.touches && e.touches.length > 0) cx = e.touches[0].clientX;
@@ -12018,22 +12024,20 @@
           if (showExp && ePts[closestIdx]) tipHTML += `<div class="val" style="color:${expColor}">Exp: ${fmt(ePts[closestIdx].val)}</div>`;
           if (showInc && iPts[closestIdx]) tipHTML += `<div class="val" style="color:${incColor}">Inc: ${fmt(iPts[closestIdx].val)}</div>`;
           tip.innerHTML = tipHTML;
-          // Tooltip uses position: fixed and transform: translate(-50%, -100%)
-          // so it's relative to viewport and centered horizontally / aligned bottom
           const ptX = currentRect.left + refPts[closestIdx].x;
           let displayY = currentRect.top + refPts[closestIdx].y - 10;
           tip.style.left = '0px'; tip.style.top = '0px'; tip.classList.add('sh');
           const tipRect = tip.getBoundingClientRect();
           const tipW = tipRect.width, tipH = tipRect.height;
-          // Clamp horizontally: keep tip fully inside viewport
           let displayX = Math.max(tipW / 2 + 8, Math.min(ptX, window.innerWidth - tipW / 2 - 8));
-          // Flip below point if too close to top
           if (displayY - tipH < 8) displayY = currentRect.top + refPts[closestIdx].y + tipH + 14;
-
           tip.style.left = displayX + 'px'; tip.style.top = displayY + 'px';
         };
 
-        const handleLeave = () => { drawBase(); tip.classList.remove('sh'); };
+        const handleLeave = () => {
+          if (cv._pulseSetHover) cv._pulseSetHover(false); // resume pulse
+          drawBase(); tip.classList.remove('sh');
+        };
         const handleGlobalTap = (e) => { if (!cv.contains(e.target)) handleLeave(); };
 
         cv.addEventListener('mousemove', handleMove, { signal });
