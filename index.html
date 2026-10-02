@@ -2635,10 +2635,20 @@
       letter-spacing: .3px
     }
 
-    .trend-toggle .tt-btn.act {
+    .trend-toggle #ttExp.act {
+      border-color: var(--ex);
+      color: var(--ex);
+      background: color-mix(in srgb, var(--sf) 90%, var(--ex));
+    }
+    .trend-toggle #ttInc.act {
+      border-color: var(--in);
+      color: var(--in);
+      background: color-mix(in srgb, var(--sf) 90%, var(--in));
+    }
+    .trend-toggle #ttBoth.act {
       border-color: var(--ac);
       color: var(--ac);
-      background: color-mix(in srgb, var(--sf) 90%, var(--ac))
+      background: color-mix(in srgb, var(--sf) 90%, var(--ac));
     }
 
     /* Mobile Adjustments */
@@ -11744,11 +11754,32 @@
       const gW = w - px * 2, gH = Math.max(1, h - pyT - pyB);
       const max = Math.max(...(showExp ? expVals : []), ...(showInc ? incVals : []), 1);
 
+      // ── Today cutoff: find the index of today (or the last past key) ──
+      const todayStr = (() => {
+        const n = new Date();
+        const y = n.getFullYear();
+        const m = String(n.getMonth() + 1).padStart(2, '0');
+        if (isDaily) {
+          const d = String(n.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        } else {
+          return `${y}-${m}`;
+        }
+      })();
+
+      // todayIdx: index of the last key that is <= today
+      let todayIdx = keys.length - 1;
+      for (let i = 0; i < keys.length; i++) {
+        if (keys[i] > todayStr) { todayIdx = i - 1; break; }
+      }
+      todayIdx = Math.max(0, todayIdx);
+
       const makePts = (vArr) => keys.map((k, i) => ({
         x: keys.length === 1 ? w / 2 : px + (i / (keys.length - 1)) * gW,
         y: pyT + gH - (vArr[i] / max) * gH,
         val: vArr[i],
-        label: fmtL(k)
+        label: fmtL(k),
+        isFuture: i > todayIdx
       }));
       const ePts = showExp ? makePts(expVals) : [];
       const iPts = showInc ? makePts(incVals) : [];
@@ -11756,18 +11787,21 @@
       // Drawing helper for one line series
       const drawSeries = (pts, color, glowColor, gradTop, gradMid, highlightIdx) => {
         if (!pts.length) return;
+        // Only draw up to todayIdx
+        const drawPts = pts.filter(p => !p.isFuture);
+        if (!drawPts.length) return;
+
         const pathLines = (fill) => {
           ctx.beginPath();
-          if (pts.length === 0) return;
-          ctx.moveTo(pts[0].x, pts[0].y);
-          if (pts.length < 3) {
-            pts.forEach((p, i) => { if (i > 0) ctx.lineTo(p.x, p.y); });
+          ctx.moveTo(drawPts[0].x, drawPts[0].y);
+          if (drawPts.length < 3) {
+            drawPts.forEach((p, i) => { if (i > 0) ctx.lineTo(p.x, p.y); });
           } else {
-            for (let i = 0; i < pts.length - 1; i++) {
-              const p0 = i > 0 ? pts[i - 1] : pts[0];
-              const p1 = pts[i];
-              const p2 = pts[i + 1];
-              const p3 = i !== pts.length - 2 ? pts[i + 2] : p2;
+            for (let i = 0; i < drawPts.length - 1; i++) {
+              const p0 = i > 0 ? drawPts[i - 1] : drawPts[0];
+              const p1 = drawPts[i];
+              const p2 = drawPts[i + 1];
+              const p3 = i !== drawPts.length - 2 ? drawPts[i + 2] : p2;
 
               const tension = 0.2;
               let cp1x = p1.x + (p2.x - p0.x) * tension;
@@ -11775,10 +11809,8 @@
               let cp2x = p2.x - (p3.x - p1.x) * tension;
               let cp2y = p2.y - (p3.y - p1.y) * tension;
 
-              // Clamp control points to prevent any wave/overshoot (Monotone curve)
               const minX = Math.min(p1.x, p2.x), maxX = Math.max(p1.x, p2.x);
               const minY = Math.min(p1.y, p2.y), maxY = Math.max(p1.y, p2.y);
-
               cp1x = Math.max(minX, Math.min(maxX, cp1x));
               cp1y = Math.max(minY, Math.min(maxY, cp1y));
               cp2x = Math.max(minX, Math.min(maxX, cp2x));
@@ -11788,13 +11820,13 @@
             }
           }
           if (fill) {
-            ctx.lineTo(pts[pts.length - 1].x, pyT + gH);
-            ctx.lineTo(pts[0].x, pyT + gH);
+            ctx.lineTo(drawPts[drawPts.length - 1].x, pyT + gH);
+            ctx.lineTo(drawPts[0].x, pyT + gH);
             ctx.closePath();
           }
         };
 
-        if (pts.length > 1) {
+        if (drawPts.length > 1) {
           // Area fill
           pathLines(true);
           const grad = ctx.createLinearGradient(0, pyT, 0, h - pyB);
@@ -11809,21 +11841,23 @@
           // Main line
           pathLines(false);
           ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
-          ctx.globalAlpha = 1; // always reset after stroke
-        } else if (pts.length === 1) {
-          ctx.beginPath(); ctx.moveTo(px, pts[0].y); ctx.lineTo(w - px, pts[0].y);
+          ctx.globalAlpha = 1;
+        } else if (drawPts.length === 1) {
+          ctx.beginPath(); ctx.moveTo(px, drawPts[0].y); ctx.lineTo(w - px, drawPts[0].y);
           ctx.strokeStyle = color; ctx.lineWidth = 2.5;
           ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
         }
 
-        // Dots
-        pts.forEach((p, i) => {
+        // Dots — only for non-future points with values, or highlighted
+        const allPtsForDots = pts;
+        allPtsForDots.forEach((p, i) => {
+          if (p.isFuture) return;
           const isHL = (highlightIdx === i); const hasVal = p.val > 0;
           if (hasVal || isHL) {
             const r = isHL ? 5 : 3; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 2 * Math.PI);
             ctx.fillStyle = isHL ? color : (theme === 'dark' ? glowColor : color);
             ctx.fill();
-            if (isHL || pts.length <= 12) { ctx.lineWidth = 2; ctx.strokeStyle = theme === 'dark' ? '#13161e' : '#fff'; ctx.stroke(); }
+            if (isHL || pts.filter(pp => !pp.isFuture).length <= 12) { ctx.lineWidth = 2; ctx.strokeStyle = theme === 'dark' ? '#13161e' : '#fff'; ctx.stroke(); }
           }
         });
       };
@@ -11894,6 +11928,77 @@
       };
 
       drawBase();
+
+      // ── Pulsing "You Are Here" dot ──────────────────────────────────────────
+      // Only animate if there are future dates beyond today (i.e. chart is mid-period)
+      const hasFuture = keys.some(k => k > todayStr);
+      if (hasFuture) {
+        // Find the last non-future point for each active series
+        const pulseTargets = [];
+        if (showExp && ePts.length > 0) {
+          const lastExpPt = [...ePts].reverse().find(p => !p.isFuture);
+          if (lastExpPt) pulseTargets.push({ pt: lastExpPt, color: expColor });
+        }
+        if (showInc && iPts.length > 0) {
+          const lastIncPt = [...iPts].reverse().find(p => !p.isFuture);
+          if (lastIncPt) pulseTargets.push({ pt: lastIncPt, color: incColor });
+        }
+
+        if (pulseTargets.length > 0) {
+          let pulseRaf;
+          const startT = performance.now();
+          const pulseDuration = 2200; // ms per full cycle
+
+          const drawPulse = (now) => {
+            // Stop if the canvas has been replaced (tab switch / re-render)
+            if (!cv.isConnected) return;
+            const elapsed = (now - startT) % pulseDuration;
+            const phase = elapsed / pulseDuration; // 0..1
+            // sin wave: peaks at 0.5 cycle (alpha 0→1→0)
+            const alpha = Math.sin(phase * Math.PI);
+            const outerR = 8 + alpha * 6;  // 8–14px outer glow ring
+            const innerR = 4;               // solid core dot
+
+            // Redraw base without highlight to keep canvas clean
+            drawBase();
+
+            pulseTargets.forEach(({ pt, color }) => {
+              // Parse color to use with alpha
+              const isRed = color === expColor;
+              const rgbCore = isRed ? '224,112,112' : '93,186,138';
+
+              // Outer pulsing ring
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, outerR, 0, 2 * Math.PI);
+              ctx.fillStyle = `rgba(${rgbCore}, ${0.18 * alpha})`;
+              ctx.fill();
+
+              // Mid ring
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, innerR + 2 + alpha * 2, 0, 2 * Math.PI);
+              ctx.fillStyle = `rgba(${rgbCore}, ${0.35 * alpha})`;
+              ctx.fill();
+
+              // Core solid dot
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, innerR, 0, 2 * Math.PI);
+              ctx.fillStyle = color;
+              ctx.fill();
+              ctx.lineWidth = 2;
+              ctx.strokeStyle = theme === 'dark' ? '#13161e' : '#ffffff';
+              ctx.stroke();
+            });
+
+            pulseRaf = requestAnimationFrame(drawPulse);
+          };
+
+          pulseRaf = requestAnimationFrame(drawPulse);
+
+          // Clean up animation when the AbortController fires (tab switch, re-render)
+          signal.addEventListener('abort', () => { cancelAnimationFrame(pulseRaf); });
+        }
+      }
+      // ── End pulsing dot ────────────────────────────────────────────────────
 
       const refPts = ePts.length ? ePts : iPts;
       if (refPts.length > 0) {
