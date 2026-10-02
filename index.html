@@ -11889,13 +11889,40 @@
           theme === 'dark' ? 'rgba(93,186,138,0.08)' : 'rgba(40,140,90,0.06)',
           highlightIdx);
 
-        // Crosshair
-        const refPts = ePts.length ? ePts : iPts;
-        if (highlightIdx !== undefined && highlightIdx >= 0 && refPts[highlightIdx]) {
-          const hp = refPts[highlightIdx];
+        // Crosshair on hover
+        const refPtsInner = ePts.length ? ePts : iPts;
+        if (highlightIdx !== undefined && highlightIdx >= 0 && refPtsInner[highlightIdx]) {
+          const hp = refPtsInner[highlightIdx];
           ctx.beginPath(); ctx.moveTo(hp.x, pyT); ctx.lineTo(hp.x, pyT + gH);
           ctx.strokeStyle = theme === 'dark' ? 'rgba(200,169,110,0.15)' : 'rgba(100,80,40,0.1)';
           ctx.lineWidth = 1; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.setLineDash([]);
+        }
+
+        // TODAY vertical marker — only when chart spans into the future
+        if (keys.some(k => k > todayStr) && refPtsInner[todayIdx]) {
+          const tx = refPtsInner[todayIdx].x;
+          // Soft glow behind
+          ctx.save();
+          ctx.globalAlpha = theme === 'dark' ? 0.12 : 0.08;
+          ctx.beginPath(); ctx.moveTo(tx, pyT); ctx.lineTo(tx, pyT + gH);
+          ctx.strokeStyle = theme === 'dark' ? '#c8a96e' : '#8a6c2e';
+          ctx.lineWidth = 4; ctx.setLineDash([]); ctx.stroke();
+          ctx.restore();
+          // Sharp dashed line
+          ctx.save();
+          ctx.globalAlpha = theme === 'dark' ? 0.45 : 0.35;
+          ctx.beginPath(); ctx.moveTo(tx, pyT); ctx.lineTo(tx, pyT + gH);
+          ctx.strokeStyle = theme === 'dark' ? '#c8a96e' : '#8a6c2e';
+          ctx.lineWidth = 1; ctx.setLineDash([3, 4]); ctx.stroke(); ctx.setLineDash([]);
+          ctx.restore();
+          // "TODAY" micro-label inside chart, just above baseline
+          ctx.save();
+          ctx.globalAlpha = theme === 'dark' ? 0.55 : 0.45;
+          ctx.font = 'bold 9px DM Mono';
+          ctx.fillStyle = theme === 'dark' ? '#c8a96e' : '#8a6c2e';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+          ctx.fillText('TODAY', tx, pyT + gH - 4);
+          ctx.restore();
         }
 
         // Legend in both mode
@@ -11907,7 +11934,7 @@
         }
 
         // X-axis labels
-        const refP = refPts.length ? refPts : [];
+        const refP = refPtsInner.length ? refPtsInner : [];
         if (refP.length === 0) return;
         ctx.fillStyle = theme === 'dark' ? '#7a8099' : '#6d7283'; ctx.textBaseline = 'top'; ctx.font = '11px DM Mono';
 
@@ -12020,17 +12047,24 @@
           drawBase(closestIdx);
 
           // Build tooltip with both values when in both mode
+          const isFutureHover = refPts[closestIdx].isFuture;
           let tipHTML = `<div>${refPts[closestIdx].label}</div>`;
-          if (showExp && ePts[closestIdx]) tipHTML += `<div class="val" style="color:${expColor}">Exp: ${fmt(ePts[closestIdx].val)}</div>`;
-          if (showInc && iPts[closestIdx]) tipHTML += `<div class="val" style="color:${incColor}">Inc: ${fmt(iPts[closestIdx].val)}</div>`;
+          if (isFutureHover) {
+            tipHTML += `<div class="val" style="color:var(--mu);font-size:10px;letter-spacing:.3px">Upcoming</div>`;
+          } else {
+            if (showExp && ePts[closestIdx]) tipHTML += `<div class="val" style="color:${expColor}">Exp: ${fmt(ePts[closestIdx].val)}</div>`;
+            if (showInc && iPts[closestIdx]) tipHTML += `<div class="val" style="color:${incColor}">Inc: ${fmt(iPts[closestIdx].val)}</div>`;
+          }
           tip.innerHTML = tipHTML;
           const ptX = currentRect.left + refPts[closestIdx].x;
-          let displayY = currentRect.top + refPts[closestIdx].y - 10;
+          // For future points anchor to chart midpoint instead of the zero baseline
+          const ptY = isFutureHover ? pyT + gH / 2 : refPts[closestIdx].y;
+          let displayY = currentRect.top + ptY - 10;
           tip.style.left = '0px'; tip.style.top = '0px'; tip.classList.add('sh');
           const tipRect = tip.getBoundingClientRect();
           const tipW = tipRect.width, tipH = tipRect.height;
           let displayX = Math.max(tipW / 2 + 8, Math.min(ptX, window.innerWidth - tipW / 2 - 8));
-          if (displayY - tipH < 8) displayY = currentRect.top + refPts[closestIdx].y + tipH + 14;
+          if (displayY - tipH < 8) displayY = currentRect.top + ptY + tipH + 14;
           tip.style.left = displayX + 'px'; tip.style.top = displayY + 'px';
         };
 
