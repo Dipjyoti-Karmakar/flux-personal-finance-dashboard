@@ -4750,10 +4750,7 @@
     .sub-archived-banner-text { flex: 1; line-height: 1.5; }
     .sub-archived-banner strong { color: var(--tx); }
 
-    @keyframes slideDown {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+    /* slideDown keyframe — defined once above */
 
     /* ── Mobile-specific archived improvements ── */
     @media (max-width: 480px) {
@@ -5353,9 +5350,9 @@
       align-items: center;
       gap: 5px;
       padding: 6px 13px;
-      border: 1.5px solid var(--ex);
-      background: var(--ex);
-      color: #fff;
+      border: 1.5px solid color-mix(in srgb, var(--ex) 50%, transparent);
+      background: transparent;
+      color: var(--ex);
       font-family: 'DM Mono', monospace;
       font-size: 10px;
       letter-spacing: .5px;
@@ -5369,8 +5366,9 @@
     }
 
     .log-clear-btn:hover {
-      background: color-mix(in srgb, var(--ex) 85%, #000);
-      border-color: color-mix(in srgb, var(--ex) 85%, #000);
+      background: var(--ex);
+      border-color: var(--ex);
+      color: #fff;
       transform: translateY(-1px);
       box-shadow: 0 4px 12px color-mix(in srgb, var(--ex) 30%, transparent);
     }
@@ -6561,7 +6559,7 @@
         width: 48px;
         height: 48px;
         border-radius: 16px;
-        background: #1e1e28;
+        background: var(--s2);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -7063,6 +7061,11 @@
       align-items: center;
       gap: 8px;
     }
+
+    /* Theme label: show correct state via CSS — no JS needed */
+    .thlbl-light { display: none; }
+    [data-theme="light"] .thlbl-dark  { display: none; }
+    [data-theme="light"] .thlbl-light { display: inline; }
 
     @media (max-width: 520px) {
       .theme-toggle-desktop { display: none !important; }
@@ -7914,8 +7917,12 @@
         </div>
         <!-- Desktop and Mobile Theme Toggle -->
         <div class="theme-toggle-desktop">
-          <span class="thlbl">Dark</span>
-          <button class="thtog" id="thtog_desktop"></button>
+          <span class="thlbl thlbl-dark" aria-hidden="true">Dark</span>
+          <span class="thlbl thlbl-light" aria-hidden="true">Light</span>
+          <button class="thtog" id="thtog_desktop"
+            role="switch"
+            aria-label="Toggle light/dark theme"
+            aria-checked="false"></button>
         </div>
       </div>
       <div class="hr">
@@ -8049,7 +8056,7 @@
       <!-- 2-Column Main Dashboard Grid -->
       <div class="mg">
         <!-- Top Row -->
-        <div class="pn" id="txPanel">
+        <div class="pn" id="txFormPanel">
           <div class="ph"><span class="pt">New Transaction</span></div>
           <div class="fb2">
             <div class="fr">
@@ -8419,7 +8426,7 @@
           <line x1="8" y1="18" x2="13" y2="18" stroke="url(#subGrad)" stroke-width="2" stroke-linecap="round" />
         </svg>
       </span>
-      <span class="mob-nav-label">Subscription</span>
+      <span class="mob-nav-label">Subscriptions</span>
     </button>
     <button class="mob-nav-center" id="mnAdd" aria-label="Add Transaction" onclick="scrollToForm()">＋</button>
     <button class="mob-nav-item" id="mnYearly" onclick="switchTab('yearly')" style="--nav-col: #A074FF;">
