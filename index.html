@@ -11843,9 +11843,10 @@
           ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.globalAlpha = 1; ctx.stroke();
           ctx.globalAlpha = 1;
         } else if (drawPts.length === 1) {
-          ctx.beginPath(); ctx.moveTo(px, drawPts[0].y); ctx.lineTo(w - px, drawPts[0].y);
-          ctx.strokeStyle = color; ctx.lineWidth = 2.5;
-          ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
+          // Single point: draw a dot marker at its exact position, not a full-width line
+          ctx.beginPath(); ctx.arc(drawPts[0].x, drawPts[0].y, 4, 0, 2 * Math.PI);
+          ctx.fillStyle = color; ctx.fill();
+          ctx.lineWidth = 2; ctx.strokeStyle = theme === 'dark' ? '#13161e' : '#fff'; ctx.stroke();
         }
 
         // Dots — only for non-future points with values, or highlighted
