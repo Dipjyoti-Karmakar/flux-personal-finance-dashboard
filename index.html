@@ -13591,9 +13591,12 @@
     }
 
     function populateEventSelects() {
+      const evts = Object.values(events);
+      evts.sort((a, b) => (b.start || '').localeCompare(a.start || ''));
+
       // For custom selects (cs-wrap structure)
       let html = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-txEvent', '', '— No Event —')">— No Event —</button>`;
-      html += Object.values(events).map(e => {
+      html += evts.map(e => {
         const c = getLegibleColor(e.color);
         const icon = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};"></span>`;
         const iconEsc = icon.replace(/"/g, '&quot;');
@@ -13613,7 +13616,7 @@
       const csEEventMenu = document.getElementById('cs-eEvent-menu');
       if (csEEventMenu) {
          let htmlEdit = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-eEvent', '', '— No Event —')">— No Event —</button>`;
-         htmlEdit += Object.values(events).map(e => {
+         htmlEdit += evts.map(e => {
             const c = getLegibleColor(e.color);
             const icon = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};"></span>`;
             const iconEsc = icon.replace(/"/g, '&quot;');
@@ -13631,7 +13634,7 @@
       if (evtFilterSel) {
         const prev = cEventFilt;
         evtFilterSel.innerHTML = '<option value="all">All</option>' +
-          Object.values(events).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
+          evts.map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
         cEventFilt = (prev === 'all' || events[prev]) ? prev : 'all';
         evtFilterSel.value = cEventFilt;
       }
