@@ -8553,10 +8553,10 @@
               <label>Mode</label>
               <div class="cs-wrap" id="cs-eMo">
                 <input type="hidden" id="eMo" value="online">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-eMo')"><span class="cs-val"><span class="cs-opt-ico">🌐</span> Online</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-eMo')"><span class="cs-val">Online</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                 <div class="cs-menu">
-                  <button type="button" class="cs-opt" data-val="online" onclick="selCS('cs-eMo', 'online', 'Online', '🌐')"><span class="cs-opt-ico">🌐</span> Online</button>
-                  <button type="button" class="cs-opt" data-val="offline" onclick="selCS('cs-eMo', 'offline', 'Offline', '📵')"><span class="cs-opt-ico">📵</span> Offline</button>
+                  <button type="button" class="cs-opt" data-val="online" onclick="selCS('cs-eMo', 'online', 'Online', '')">Online</button>
+                  <button type="button" class="cs-opt" data-val="offline" onclick="selCS('cs-eMo', 'offline', 'Offline', '')">Offline</button>
                 </div>
               </div>
             </div>
@@ -8761,10 +8761,10 @@
               <label>Mode</label>
               <div class="cs-wrap" id="cs-recMo">
                 <input type="hidden" id="recMo" value="online" onchange="setRecMode(this.value)">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-recMo')"><span class="cs-val"><span class="cs-opt-ico">🌐</span> Online</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-recMo')"><span class="cs-val">Online</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
                 <div class="cs-menu">
-                  <button type="button" class="cs-opt" data-val="online" onclick="selCS('cs-recMo', 'online', 'Online', '🌐')"><span class="cs-opt-ico">🌐</span> Online</button>
-                  <button type="button" class="cs-opt" data-val="offline" onclick="selCS('cs-recMo', 'offline', 'Offline', '📵')"><span class="cs-opt-ico">📵</span> Offline</button>
+                  <button type="button" class="cs-opt" data-val="online" onclick="selCS('cs-recMo', 'online', 'Online', '')">Online</button>
+                  <button type="button" class="cs-opt" data-val="offline" onclick="selCS('cs-recMo', 'offline', 'Offline', '')">Offline</button>
                 </div>
               </div>
             </div>
@@ -11129,7 +11129,7 @@
         <div class="tn">${esc(tx.desc)}</div>
         <div class="tm">
           <span class="bg ct" data-cat="${catId}">${CICO[catId] || '✦'} ${catLabel}</span>
-          <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '🌐 Online' : '📵 Offline'}</span>
+          <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? 'Online' : 'Offline'}</span>
           ${tx._recurring ? '<span class="bg tx-badge-sub">Subscription</span>' : ''}
           ${evtBadge}
           ${tx._imp ? '<span class="bg ip">XLSX</span>' : ''}
@@ -11352,7 +11352,7 @@
       selCS('cs-eCat', tx.cat || 'other', catName, CICO[tx.cat] || '✦');
 
       const modeName = tx.mode === 'online' ? 'Online' : 'Offline';
-      const modeIco = tx.mode === 'online' ? '🌐' : '📵';
+      const modeIco = '';
       selCS('cs-eMo', tx.mode || 'offline', modeName, modeIco);
 
       document.getElementById('eDesc').value = tx.desc;
@@ -12280,7 +12280,7 @@
         <div class="ti">
           <div class="tn">${esc(tx.desc)}</div>
           <div class="tm">
-            <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '🌐 Online' : '📵 Offline'}</span>
+            <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? 'Online' : 'Offline'}</span>
             ${evtBadge}
             ${tx._imp ? '<span class="bg ip">XLSX</span>' : ''}
             <span>${fmtDt(tx.date)}</span>
@@ -13378,7 +13378,7 @@
             <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.desc)}</td>
             <td style="font-family:'DM Mono',monospace">${r.amount != null ? '₹' + r.amount.toLocaleString('en-IN') : '<span style="color:var(--ex)">' + esc(String(r._ra || 'Missing')) + '</span>'}</td>
             <td><span class="bdg ${r.type === 'income' ? 'bi' : 'be'}">${r.type}</span></td>
-            <td><span class="bdg ${r.mode === 'online' ? 'bo' : 'bf'}"><img src="emojis/${r.mode}.png" class="c-ico" style="width:12px;height:12px;" alt=""> ${r.mode}</span></td>
+            <td><span class="bdg ${r.mode === 'online' ? 'bo' : 'bf'}">${r.mode.charAt(0).toUpperCase() + r.mode.slice(1)}</span></td>
             <td>${CICO[r.cat] || '✦'} ${r.cat}</td>
             ${impFilt !== 'valid' ? `<td style="color:var(--ex);font-family:'DM Mono',monospace;font-size:10px">${r._err}</td>` : ''}
           </tr>
@@ -15355,7 +15355,7 @@
       selCS('cs-recTy', 'expense', 'Expense');
       selCS('cs-recCat', 'entertainment', 'Entertainment', CICO['entertainment'] || '✦');
       setRecFreq('monthly');
-      selCS('cs-recMo', 'online', 'Online', '🌐');
+      selCS('cs-recMo', 'online', 'Online', '');
       setRecAutoLog(true); // New subs default to auto-log ON
       // Alt amounts: clear and hide for new subscription
       _editingAltAmounts = [];
@@ -15385,7 +15385,7 @@
       const catName = rec.cat ? rec.cat.charAt(0).toUpperCase() + rec.cat.slice(1) : 'Other';
       selCS('cs-recCat', rec.cat || 'other', catName, CICO[rec.cat] || '✦');
       setRecFreq(currentRecFreq);
-      selCS('cs-recMo', currentRecMode, currentRecMode === 'online' ? 'Online' : 'Offline', currentRecMode === 'online' ? '🌐' : '📵');
+      selCS('cs-recMo', currentRecMode, currentRecMode === 'online' ? 'Online' : 'Offline', '');
       setRecAutoLog(rec.autoLog !== false); // Default to true if field absent (existing data)
       // Alt amounts: load from record and show section
       _editingAltAmounts = Array.isArray(rec.altAmounts) ? [...rec.altAmounts] : [];
