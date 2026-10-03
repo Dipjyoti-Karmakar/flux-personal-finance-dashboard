@@ -17724,7 +17724,7 @@
         if (t.desc && t.desc.trim()) {
           const lower = t.desc.trim().toLowerCase();
           if (!descCache.has(lower)) {
-            descCache.set(lower, { original: t.desc.trim(), cat: t.cat || 'other' });
+            descCache.set(lower, { original: t.desc.trim(), cat: t.cat || 'other', type: t.type });
           }
         }
       }
@@ -17768,6 +17768,8 @@
           const cache = getDescCache();
           const matches = [];
           for (const [key, data] of cache.entries()) {
+            if (formType === 'add' && window.cType && data.type !== window.cType) continue;
+            if (formType === 'edit' && window._editSnapshot && data.type !== window._editSnapshot.type) continue;
             if (!val || key.includes(val)) {
               matches.push(data);
               if (val && matches.length >= 5) break;
