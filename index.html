@@ -11342,7 +11342,9 @@
 
       populateEventSelects();
       if (tx.eventId && events[tx.eventId]) {
-        selCS('cs-eEvent', tx.eventId, esc(events[tx.eventId].name));
+        const evColor = getLegibleColor(events[tx.eventId].color);
+        const evIconHtml = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${evColor};"></span>`;
+        selCS('cs-eEvent', tx.eventId, esc(events[tx.eventId].name), evIconHtml);
       } else {
         selCS('cs-eEvent', '', '— No Event —');
       }
@@ -13592,7 +13594,11 @@
       // For custom selects (cs-wrap structure)
       let html = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-txEvent', '', '— No Event —')">— No Event —</button>`;
       html += Object.values(events).map(e => {
-        return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-txEvent', this.dataset.val, this.textContent)">${esc(e.name)}</button>`;
+        const c = getLegibleColor(e.color);
+        const icon = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};"></span>`;
+        const iconEsc = icon.replace(/"/g, '&quot;');
+        const safeName = esc(e.name).replace(/'/g, "\\'");
+        return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-txEvent', '${e.id}', '${safeName}', '${iconEsc}')">${icon} <span>${esc(e.name)}</span></button>`;
       }).join('');
       
       const csTxEventMenu = document.getElementById('cs-txEvent-menu');
@@ -13608,7 +13614,11 @@
       if (csEEventMenu) {
          let htmlEdit = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-eEvent', '', '— No Event —')">— No Event —</button>`;
          htmlEdit += Object.values(events).map(e => {
-            return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-eEvent', this.dataset.val, this.textContent)">${esc(e.name)}</button>`;
+            const c = getLegibleColor(e.color);
+            const icon = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};"></span>`;
+            const iconEsc = icon.replace(/"/g, '&quot;');
+            const safeName = esc(e.name).replace(/'/g, "\\'");
+            return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-eEvent', '${e.id}', '${safeName}', '${iconEsc}')">${icon} <span>${esc(e.name)}</span></button>`;
          }).join('');
          csEEventMenu.innerHTML = htmlEdit;
          const hidden = document.getElementById('eEvent');
