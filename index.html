@@ -11117,6 +11117,8 @@
         // malformed data from Firestore or imports from breaking the HTML structure.
         const safeType = (tx.type === 'income' || tx.type === 'expense') ? tx.type : 'expense';
         const safeMode = (tx.mode === 'online' || tx.mode === 'offline') ? tx.mode : 'offline';
+        const catId = tx.cat || 'other';
+        const catLabel = catId.charAt(0).toUpperCase() + catId.slice(1);
         return `
     <div class="txi-wrap" data-txid="${esc(tx.id)}">
       <div class="txi-actions act-left"><button class="txi-act" onclick="editTx(${esc(JSON.stringify(tx.id))})"><img src="emojis/edit.png" class="c-ico" alt=""> Edit</button></div>
@@ -11126,7 +11128,7 @@
       <div class="ti">
         <div class="tn">${esc(tx.desc)}</div>
         <div class="tm">
-          <span class="bg ct" data-cat="${tx.cat || 'other'}">${CICO[tx.cat] || '✦'} ${tx.cat || 'other'}</span>
+          <span class="bg ct" data-cat="${catId}">${CICO[catId] || '✦'} ${catLabel}</span>
           <span class="bg ${safeMode === 'online' ? 'on' : 'of'}">${safeMode === 'online' ? '🌐 online' : '📵 offline'}</span>
           ${tx._recurring ? '<span class="bg tx-badge-sub">subscription</span>' : ''}
           ${evtBadge}
