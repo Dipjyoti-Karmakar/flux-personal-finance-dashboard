@@ -8190,7 +8190,7 @@
             </div>
             <div id="eventTxFilterWrap">
               <label class="etf-label">Event</label>
-              <select id="eventTxFilterSel" onchange="setEventFilter(this.value)" style="height:auto;">
+              <select id="eventTxFilterSel" onchange="setEventFilter(this.value)" style="max-height:calc(4 * 2.2em);overflow-y:auto;size:1;">
                 <option value="all">All</option>
               </select>
             </div>
@@ -16834,6 +16834,8 @@
     });
     window.scrollToForm = scrollToForm;
     window.setEventFilter = setEventFilter;
+    window.setEvtColor = setEvtColor;
+    window.setEvtColorFromPicker = setEvtColorFromPicker;
     window.showCreateEvent = showCreateEvent;
     window.showEditEvent = showEditEvent;
     window.applyEventToTxs = applyEventToTxs;
