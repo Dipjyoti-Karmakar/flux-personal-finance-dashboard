@@ -7935,7 +7935,13 @@
 
       /* ── Receipt drop: slightly larger click target ── */
       .receipt-drop { min-height: 52px; }
-
+      /* ── Description Autocomplete ── */
+      .desc-sugg-wrap { position: relative; width: 100%; }
+      .desc-sugg-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--s2); border: 1.5px solid var(--bd); border-radius: 12px; padding: 4px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 12px 32px rgba(0,0,0,0.25); opacity: 0; visibility: hidden; transform: translateY(-4px); transition: all .2s cubic-bezier(0.16,1,0.3,1); z-index: 1000; max-height: 180px; overflow-y: auto; }
+      .desc-sugg-menu.open { opacity: 1; visibility: visible; transform: translateY(0); }
+      .desc-sugg-opt { flex-shrink: 0; display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px; background: transparent; border: none; border-radius: 8px; color: var(--tx); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; text-align: left; transition: background .15s; }
+      .desc-sugg-opt:hover { background: var(--sf); }
+      .desc-sugg-icon { font-size: 1.1em; line-height: 1; opacity: 0.8; }
     </style>
 
 
@@ -8101,8 +8107,13 @@
               </div>
             </div>
             <div class="fr">
-              <div class="fd full-mob"><label>Description</label><input type="text" id="txD"
-                  placeholder="e.g. Groceries" maxlength="50"></div>
+              <div class="fd full-mob">
+                <label>Description</label>
+                <div class="desc-sugg-wrap">
+                  <input type="text" id="txD" placeholder="e.g. Groceries" autocomplete="off" maxlength="50">
+                  <div class="desc-sugg-menu" id="txDSuggMenu"></div>
+                </div>
+              </div>
               <div class="fd full-mob"><label>Category</label>
                 <div class="custom-sel-wrapper" id="txC-wrapper">
                   <div class="custom-sel-trigger" id="txCTrigger" onclick="toggleCustomSelect()" tabindex="0"
@@ -8567,7 +8578,10 @@
           <div class="fr">
             <div class="fd">
               <label>Description</label>
-              <input type="text" id="eDesc" maxlength="50" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
+              <div class="desc-sugg-wrap">
+                <input type="text" id="eDesc" autocomplete="off" maxlength="50" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
+                <div class="desc-sugg-menu" id="eDescSuggMenu"></div>
+              </div>
             </div>
             <div class="fd">
               <label>Date</label>
@@ -17693,59 +17707,107 @@
     }, 200);
 
     // -- Autocomplete for Description Input --
-    function initAutocomplete() {
-      const input = document.getElementById('txD');
-      if (!input) return;
-      const wrap = input.parentElement;
-      wrap.style.position = 'relative';
-      const list = document.createElement('div');
-      list.className = 'ac-list';
-      list.id = 'acList';
-      wrap.appendChild(list);
-      let selIdx = -1;
-      function show() {
-        const val = input.value.trim().toLowerCase();
-        if (!val) { list.classList.remove('vis'); return; }
-        const descs = [...new Set(txs.map(t => t.desc))];
-        const matches = descs.filter(d => d.toLowerCase().includes(val)).slice(0, 8);
-        if (!matches.length) { list.classList.remove('vis'); return; }
-        selIdx = -1;
-        list.innerHTML = matches.map((m, i) => {
-          // Store the raw value in data-raw for retrieval; display the escaped version
-          return '<div class="ac-item" data-idx="' + i + '" data-raw="' + esc(m) + '">' + esc(m) + '</div>';
-        }).join('');
-        list.classList.add('vis');
-      }
-      input.addEventListener('input', show);
-      input.addEventListener('focus', show);
-      list.addEventListener('mousedown', (e) => {
-        const item = e.target.closest('.ac-item');
-        if (item) { input.value = item.dataset.raw || item.textContent; list.classList.remove('vis'); }
-      });
-      input.addEventListener('blur', () => setTimeout(() => list.classList.remove('vis'), 150));
-      input.addEventListener('keydown', (e) => {
-        const items = list.querySelectorAll('.ac-item');
-        if (!items.length || !list.classList.contains('vis')) return;
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          selIdx = Math.min(selIdx + 1, items.length - 1);
-          items.forEach((it, i) => it.classList.toggle('sel', i === selIdx));
-          items[selIdx].scrollIntoView({ block: 'nearest' });
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          if (selIdx > 0) {
-            selIdx = selIdx - 1;
-            items.forEach((it, i) => it.classList.toggle('sel', i === selIdx));
-            items[selIdx].scrollIntoView({ block: 'nearest' });
+    let descCache = null;
+    let descCacheTxCount = -1;
+
+    function getDescCache() {
+      if (descCache && descCacheTxCount === txs.length) return descCache;
+      descCache = new Map();
+      for (let i = 0; i < txs.length; i++) {
+        const t = txs[i];
+        if (t.desc && t.desc.trim()) {
+          const lower = t.desc.trim().toLowerCase();
+          if (!descCache.has(lower)) {
+            descCache.set(lower, { original: t.desc.trim(), cat: t.cat || 'other' });
           }
-        } else if (e.key === 'Enter' && selIdx >= 0) {
-          e.preventDefault();
-          input.value = items[selIdx].dataset.raw || items[selIdx].textContent;
-          list.classList.remove('vis');
-        } else if (e.key === 'Escape') {
-          list.classList.remove('vis');
         }
-      });
+      }
+      descCacheTxCount = txs.length;
+      return descCache;
+    }
+
+    window.applyDescSuggestion = function(desc, cat, formType) {
+      if (formType === 'add') {
+        const input = document.getElementById('txD');
+        if (input) { input.value = desc; input.dispatchEvent(new Event('input')); }
+        if (window.selectCustomOption) selectCustomOption(cat);
+        document.getElementById('txDSuggMenu').classList.remove('open');
+      } else if (formType === 'edit') {
+        const input = document.getElementById('eDesc');
+        if (input) { input.value = desc; input.dispatchEvent(new Event('input')); }
+        const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+        if (window.selCS) selCS('cs-eCat', cat, label);
+        document.getElementById('eDescSuggMenu').classList.remove('open');
+      }
+    };
+
+    function initAutocomplete() {
+      function setupMenu(inputId, menuId, formType) {
+        const input = document.getElementById(inputId);
+        const menu = document.getElementById(menuId);
+        if (!input || !menu) return;
+        
+        let selIdx = -1;
+
+        function show() {
+          const val = input.value.trim().toLowerCase();
+          const cache = getDescCache();
+          const matches = [];
+          for (const [key, data] of cache.entries()) {
+            if (!val || key.includes(val)) {
+              matches.push(data);
+              if (val && matches.length >= 5) break;
+            }
+          }
+          if (!val) matches.splice(5);
+
+          if (matches.length === 0) {
+            menu.classList.remove('open');
+            return;
+          }
+          
+          selIdx = -1;
+          menu.innerHTML = matches.map((m, i) => {
+            const icon = (typeof CICO !== 'undefined' && CICO[m.cat]) ? CICO[m.cat] : '✦';
+            const safeDesc = esc(m.original).replace(/'/g, "\\'");
+            return `<button type="button" class="desc-sugg-opt" data-idx="${i}" data-raw="${safeDesc}" data-cat="${m.cat}" onmousedown="applyDescSuggestion('${safeDesc}', '${m.cat}', '${formType}')">
+              <span class="desc-sugg-icon">${icon}</span>
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.original)}</span>
+            </button>`;
+          }).join('');
+          menu.classList.add('open');
+        }
+
+        input.addEventListener('input', show);
+        input.addEventListener('focus', show);
+        input.addEventListener('blur', () => setTimeout(() => menu.classList.remove('open'), 150));
+        input.addEventListener('keydown', (e) => {
+          const items = menu.querySelectorAll('.desc-sugg-opt');
+          if (!items.length || !menu.classList.contains('open')) return;
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selIdx = Math.min(selIdx + 1, items.length - 1);
+            items.forEach((it, i) => it.style.background = (i === selIdx ? 'var(--sf)' : 'transparent'));
+            items[selIdx].scrollIntoView({ block: 'nearest' });
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (selIdx > 0) {
+              selIdx = selIdx - 1;
+              items.forEach((it, i) => it.style.background = (i === selIdx ? 'var(--sf)' : 'transparent'));
+              items[selIdx].scrollIntoView({ block: 'nearest' });
+            }
+          } else if (e.key === 'Enter' && selIdx >= 0) {
+            e.preventDefault();
+            const btn = items[selIdx];
+            applyDescSuggestion(btn.dataset.raw, btn.dataset.cat, formType);
+          } else if (e.key === 'Escape') {
+            menu.classList.remove('open');
+          }
+        });
+      }
+
+      setupMenu('txD', 'txDSuggMenu', 'add');
+      setupMenu('eDesc', 'eDescSuggMenu', 'edit');
     }
 
   </script>
