@@ -17768,8 +17768,11 @@
           const cache = getDescCache();
           const matches = [];
           for (const [key, data] of cache.entries()) {
-            if (formType === 'add' && window.cType && data.type !== window.cType) continue;
-            if (formType === 'edit' && window._editSnapshot && data.type !== window._editSnapshot.type) continue;
+            if (formType === 'add' && typeof cType !== 'undefined' && data.type !== cType) continue;
+            if (formType === 'edit') {
+              const currentEditType = document.getElementById('eTy')?.value || (window._editSnapshot ? window._editSnapshot.type : null);
+              if (currentEditType && data.type !== currentEditType) continue;
+            }
             if (!val || key.includes(val)) {
               matches.push(data);
               if (val && matches.length >= 5) break;
