@@ -9403,6 +9403,7 @@
           const dDiff = new Date(b.date + 'T00:00:00').getTime() - new Date(a.date + 'T00:00:00').getTime();
           return dDiff !== 0 ? dDiff : ((b.createdAt || 0) - (a.createdAt || 0));
         });
+        descCache = null;
         // Merge any pending offline transactions from syncQueue that aren't in the snapshot yet
         syncQueue.forEach(q => {
           if (q.col === 'transactions' && (q.op === 'setDoc' || q.op === 'updateDoc') && q.data) {
@@ -9845,6 +9846,7 @@
         // and all other views reflect the new transaction without waiting for Firestore.
         const optimisticTx = { id: txId, ...newTx };
         txs.unshift(optimisticTx);
+        descCache = null;
         debouncedRender();
 
         const btn = document.querySelector('.fb2 .sbtn');
@@ -10381,6 +10383,7 @@
       _undoTxData = { id, data: undoData };
       // Remove from local array immediately for responsive feel
       txs = txs.filter(t => t.id !== id);
+      descCache = null;
       render();
       // Show undo toast with 5-second recovery window
       showUndoToast(id);
@@ -11534,6 +11537,7 @@
           }
           // Preserve subscription-related flags not touched by the edit form
           txs[localIdx] = { ...txs[localIdx], ...mergePayload };
+          descCache = null;
           if (removingEventId) delete txs[localIdx].eventId;
           if (nextReceipts.length === 0 && prevReceipts.length > 0) {
             delete txs[localIdx].receipts;
