@@ -17785,8 +17785,7 @@
           selIdx = -1;
           menu.innerHTML = matches.map((m, i) => {
             const icon = (typeof CICO !== 'undefined' && CICO[m.cat]) ? CICO[m.cat] : '✦';
-            const safeDesc = esc(m.original).replace(/'/g, "\\'");
-            return `<button type="button" class="desc-sugg-opt" data-idx="${i}" data-raw="${safeDesc}" data-cat="${m.cat}" onmousedown="applyDescSuggestion('${safeDesc}', '${m.cat}', '${formType}')">
+            return `<button type="button" class="desc-sugg-opt" data-idx="${i}" data-raw="${esc(m.original)}" data-cat="${m.cat}">
               <span class="desc-sugg-icon">${icon}</span>
               <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(m.original)}</span>
             </button>`;
@@ -17818,6 +17817,14 @@
             applyDescSuggestion(btn.dataset.raw, btn.dataset.cat, formType);
           } else if (e.key === 'Escape') {
             menu.classList.remove('open');
+          }
+        });
+
+        menu.addEventListener('mousedown', (e) => {
+          const btn = e.target.closest('.desc-sugg-opt');
+          if (btn) {
+            e.preventDefault(); // Prevent input blur so we can process the click
+            applyDescSuggestion(btn.dataset.raw, btn.dataset.cat, formType);
           }
         });
       }
