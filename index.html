@@ -17739,7 +17739,15 @@
       } else if (formType === 'edit') {
         const input = document.getElementById('eDesc');
         if (input) { input.value = desc; input.dispatchEvent(new Event('input')); }
-        const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+        let label = cat.charAt(0).toUpperCase() + cat.slice(1);
+        const menu = document.getElementById('cs-eCat-menu');
+        if (menu) {
+          const opt = menu.querySelector(`[data-val="${cat}"]`);
+          if (opt) {
+            const span = opt.querySelector('span > span');
+            if (span) label = span.textContent.trim();
+          }
+        }
         if (window.selCS) selCS('cs-eCat', cat, label);
         document.getElementById('eDescSuggMenu').classList.remove('open');
       }
