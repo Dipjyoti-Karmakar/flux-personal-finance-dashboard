@@ -14126,10 +14126,10 @@
             const nv = parseInt(newV) || 0;
             const diff = nv - ov;
             if (diff > 0) {
-              return `<div class="diff-row"><span class="diff-label">RECPT</span><div class="diff-values"><span class="diff-new">+${diff} receipt${diff > 1 ? 's' : ''} added</span></div></div>`;
+              return `<div class="diff-row"><span class="diff-label">RECPT</span><div class="diff-values"><span class="diff-new">+${diff} Receipt${diff > 1 ? 's' : ''} added</span></div></div>`;
             } else if (diff < 0) {
               const absDiff = -diff;
-              return `<div class="diff-row"><span class="diff-label">RECPT</span><div class="diff-values"><span style="color:var(--ex);font-size:11px;font-family:'DM Mono',monospace;font-weight:600;background:color-mix(in srgb, var(--ex) 10%, transparent);padding:1px 6px;border-radius:4px;">-${absDiff} receipt${absDiff > 1 ? 's' : ''} deleted</span></div></div>`;
+              return `<div class="diff-row"><span class="diff-label">RECPT</span><div class="diff-values"><span style="color:var(--ex);font-size:11px;font-family:'DM Mono',monospace;font-weight:600;background:color-mix(in srgb, var(--ex) 10%, transparent);padding:1px 6px;border-radius:4px;">-${absDiff} Receipt${absDiff > 1 ? 's' : ''} deleted</span></div></div>`;
             }
           }
           const displayLabel = labelMap[label] || label.toUpperCase();
@@ -14330,7 +14330,7 @@
 
         let receiptPill = '';
         if (parsedData.receipts) {
-          receiptPill = `<span style="${pSty}background:transparent;color:var(--ac);border:1px solid var(--ac);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${parsedData.receipts} ${parsedData.receipts > 1 ? 'receipts' : 'receipt'}</span>`;
+          receiptPill = `<span style="${pSty}background:transparent;color:var(--ac);border:1px solid var(--ac);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${parsedData.receipts} ${parsedData.receipts > 1 ? 'Receipts' : 'Receipt'}</span>`;
         }
 
         const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
