@@ -14162,8 +14162,7 @@
           let extraHtml = dRange ? `<span style="opacity:0.5;margin:0 4px;">•</span><span>${dRange}</span>` : '';
           return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span>Auto-recurring</span>${extraHtml}</div>`;
         }
-        let recHtml = p.receipts ? `<span style="opacity:0.5;margin:0 4px;">•</span><span style="font-size:10px;border:1px solid var(--ac);color:var(--ac);padding:1px 5px;border-radius:12px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:2px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${p.receipts} ${p.receipts > 1 ? 'receipts' : 'receipt'}</span>` : '';
-        return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat || 'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode}</span>${recHtml}</div>`;
+        return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat || 'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
       }
       if (action === 'EDIT') {
         if (p.isEventEdit) return `<div>${esc(p.desc)}</div><div class="log-meta">Event updated</div>`;
@@ -14386,6 +14385,11 @@
           eventPill = `<span style="${pSty}background:${eCol}22;color:${eCol};border:1px solid ${eCol}44;">${esc(events[parsedData.eventId].name)}</span>`;
         }
 
+        let receiptPill = '';
+        if (parsedData.receipts) {
+          receiptPill = `<span style="${pSty}background:transparent;color:var(--ac);border:1px solid var(--ac);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${parsedData.receipts} ${parsedData.receipts > 1 ? 'receipts' : 'receipt'}</span>`;
+        }
+
         const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
 
         const isSelected = logSelectionMode && selectedLogs.has(l.id);
@@ -14420,6 +14424,7 @@
           ${actionPill}
           ${typePill}
           ${eventPill}
+          ${receiptPill}
           ${timePill}
         </div>
       </div>
