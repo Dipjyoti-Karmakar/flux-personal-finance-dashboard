@@ -679,7 +679,7 @@
     .mg>.pn-fixed {
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .mg>.pn-fixed .txl {
@@ -688,15 +688,22 @@
       overflow-y: auto;
     }
 
+    /* Override .pn overflow:hidden so event filter dropdown is not clipped */
+    #txPanel {
+      overflow: visible;
+    }
+
     #txPanel,
     #catAreaWrap {
       max-height: 620px;
+      overflow: visible;
     }
 
     /* Desktop: expand tx panel when event filter is active */
     #txPanel.tx-event-expand,
     #catAreaWrap.tx-event-expand {
       max-height: 716px;
+      overflow: visible;
       transition: max-height .35s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
