@@ -7043,63 +7043,6 @@
       font-weight: 600;
     }
 
-    /* ── Custom event filter dropdown ── */
-    .etf-custom-sel {
-      position: relative;
-      width: 100%;
-    }
-    .etf-trigger {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 7px 10px;
-      background: var(--bg);
-      border: 1px solid var(--bd);
-      border-radius: 8px;
-      color: var(--tx);
-      font-size: 13px;
-      cursor: pointer;
-      box-sizing: border-box;
-      transition: border-color .2s ease;
-      user-select: none;
-    }
-    .etf-trigger:hover { border-color: var(--ac); }
-    .etf-trigger .etf-arrow {
-      font-size: 10px;
-      color: var(--mu);
-      transition: transform .2s ease;
-      flex-shrink: 0;
-    }
-    .etf-custom-sel.open .etf-arrow { transform: rotate(180deg); }
-    .etf-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      right: 0;
-      background: var(--sf);
-      border: 1px solid var(--bd);
-      border-radius: 8px;
-      overflow-y: auto;
-      max-height: calc(4 * 36px);
-      z-index: 999;
-      box-shadow: 0 8px 24px rgba(0,0,0,.18);
-    }
-    .etf-custom-sel.open .etf-dropdown { display: block; }
-    .etf-option {
-      padding: 8px 12px;
-      font-size: 13px;
-      color: var(--tx);
-      cursor: pointer;
-      transition: background .15s ease;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .etf-option:hover { background: var(--s2); }
-    .etf-option.sel { color: var(--ac); font-weight: 600; }
-
     /* ── Filter bar column layout (inside tx panel) ── */
     .fltr-col {
       padding: 0;
@@ -8276,13 +8219,9 @@
             </div>
             <div id="eventTxFilterWrap">
               <label class="etf-label">Event</label>
-              <div class="etf-custom-sel" id="etfCustomSel">
-                <div class="etf-trigger" id="etfTrigger" onclick="toggleEtfDropdown()">
-                  <span id="etfLabel">All</span>
-                  <span class="etf-arrow">▾</span>
-                </div>
-                <div class="etf-dropdown" id="etfDropdown"></div>
-              </div>
+              <select id="eventTxFilterSel" onchange="setEventFilter(this.value)" style="max-height:calc(4 * 2.2em);overflow-y:auto;size:1;">
+                <option value="all">All</option>
+              </select>
             </div>
           </div>
           <div class="tx-search-wrap">
@@ -9777,26 +9716,8 @@
     function setEventFilter(eventId) {
       cEventFilt = eventId || 'all';
       txVisibleCount = TX_PAGE_SIZE;
-      // Update custom dropdown label
-      const etfLabel = document.getElementById('etfLabel');
-      const dropdown = document.getElementById('etfDropdown');
-      if (etfLabel && dropdown) {
-        const opt = dropdown.querySelector(`.etf-option[data-value="${cEventFilt}"]`);
-        etfLabel.textContent = opt ? opt.textContent : 'All';
-        dropdown.querySelectorAll('.etf-option').forEach(o => o.classList.toggle('sel', o.dataset.value === cEventFilt));
-      }
       if (cModeFilt === 'event') renderTxList();
     }
-
-    function toggleEtfDropdown() {
-      const sel = document.getElementById('etfCustomSel');
-      if (sel) sel.classList.toggle('open');
-    }
-
-    document.addEventListener('click', (e) => {
-      const sel = document.getElementById('etfCustomSel');
-      if (sel && !sel.contains(e.target)) sel.classList.remove('open');
-    });
 
     const MAX_AMOUNT = 900000000000000; // 900 Trillion
     let _addTxBusy = false;
@@ -13700,20 +13621,13 @@
          }
       }
 
-      // Populate custom event filter dropdown
-      const etfDropdown = document.getElementById('etfDropdown');
-      const etfLabel = document.getElementById('etfLabel');
-      if (etfDropdown) {
+      const evtFilterSel = document.getElementById('eventTxFilterSel');
+      if (evtFilterSel) {
         const prev = cEventFilt;
+        evtFilterSel.innerHTML = '<option value="all">All</option>' +
+          Object.values(events).map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
         cEventFilt = (prev === 'all' || events[prev]) ? prev : 'all';
-        const evtList = Object.values(events);
-        etfDropdown.innerHTML = [{ id: 'all', name: 'All' }, ...evtList]
-          .map(e => `<div class="etf-option${e.id === cEventFilt ? ' sel' : ''}" data-value="${e.id}" onclick="setEventFilter('${e.id}');document.getElementById('etfCustomSel').classList.remove('open')">${esc(e.name)}</div>`)
-          .join('');
-        if (etfLabel) {
-          const cur = evtList.find(e => e.id === cEventFilt);
-          etfLabel.textContent = cur ? esc(cur.name) : 'All';
-        }
+        evtFilterSel.value = cEventFilt;
       }
     }
 
@@ -16956,7 +16870,6 @@
     window.setEventFilter = setEventFilter;
     window.setEvtColor = setEvtColor;
     window.setEvtColorFromPicker = setEvtColorFromPicker;
-    window.toggleEtfDropdown = toggleEtfDropdown;
     window.showCreateEvent = showCreateEvent;
     window.showEditEvent = showEditEvent;
     window.applyEventToTxs = applyEventToTxs;
