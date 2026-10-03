@@ -688,9 +688,8 @@
       overflow-y: auto;
     }
 
-    /* Override .pn overflow:hidden so event filter/form dropdowns are not clipped */
-    #txPanel,
-    #txFormPanel {
+    /* Override .pn overflow:hidden so event filter dropdown is not clipped */
+    #txPanel {
       overflow: visible;
     }
 
@@ -7453,6 +7452,28 @@
     /* ── Panel body (form area): consistent padding ── */
     .fb2 {
       padding: 22px 24px;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    /* ── Event dropdown inside form: in-flow (not absolute) so card scrolls to fit ── */
+    .fb2 .cs-menu {
+      position: relative;
+      top: auto; left: auto; right: auto;
+      margin-top: 8px;
+      display: none;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      z-index: auto;
+    }
+    .fb2 .cs-wrap.open .cs-menu {
+      display: flex;
+      animation: csMenuSlideIn .2s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes csMenuSlideIn {
+      from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+      to   { opacity: 1; transform: none; }
     }
 
     /* ── Custom select trigger refinement ── */
