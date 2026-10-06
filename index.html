@@ -5998,96 +5998,148 @@
       box-shadow: var(--sh-hov);
     }
 
-    /* ── Activity Log Cards ── */
-    .log-card {
-      padding: 14px 18px;
-      border: 1px solid var(--bd);
-      border-radius: var(--rs);
-      background: var(--sf);
-      margin-bottom: 8px;
-      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s;
-      animation: sIn .3s var(--ease-out-expo) both;
-      box-shadow: var(--sh-card);
+    /* ── Premium Activity Log Timeline ── */
+    .log-timeline {
+      position: relative;
+      padding-left: 20px;
+      margin-top: 16px;
     }
-    .log-card:hover {
-      transform: translateX(4px);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      border-color: var(--bs);
+    .log-timeline::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 25px; /* Center of the 10px dot */
+      width: 1.5px;
+      background: linear-gradient(to bottom, var(--bd) 0%, var(--bd) 90%, transparent 100%);
+      z-index: 0;
     }
-
-    .log-card-deleted {
-      padding: 14px 18px;
-      border: 1px solid color-mix(in srgb, var(--ex) 25%, var(--bd));
-      border-left: 3px solid var(--ex);
-      border-radius: var(--rs);
-      background: color-mix(in srgb, var(--ex) 4%, var(--sf));
-      opacity: 0.9;
-      margin-bottom: 8px;
-      animation: sIn .3s var(--ease-out-expo) both;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .log-card-deleted:hover {
-      transform: translateX(4px);
-    }
-
-    .log-card-skip {
-      padding: 14px 18px;
-      border: 1px solid color-mix(in srgb, var(--of) 25%, var(--bd));
-      border-left: 3px solid var(--of);
-      border-radius: var(--rs);
-      background: color-mix(in srgb, var(--of) 4%, var(--sf));
-      opacity: 0.95;
-      margin-bottom: 8px;
-      animation: sIn .3s var(--ease-out-expo) both;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .log-card-skip:hover {
-      transform: translateX(4px);
-    }
-
-    .log-card-new {
-      padding: 14px 18px;
-      border: 1px solid color-mix(in srgb, var(--ac) 25%, var(--bd));
-      border-left: 3px solid var(--ac);
-      border-radius: var(--rs);
-      background: color-mix(in srgb, var(--ac) 4%, var(--sf));
-      opacity: 0.95;
-      margin-bottom: 8px;
-      animation: sIn .3s var(--ease-out-expo) both;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .log-card-new:hover {
-      transform: translateX(4px);
-    }
-
-    .log-meta {
+    .log-date-header {
       font-family: 'DM Mono', monospace;
       font-size: 11px;
-      font-weight: 400;
       color: var(--mu);
-      margin-top: 4px;
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .log-msg {
-      white-space: normal;
-      overflow: visible;
-      line-height: 1.4;
-      margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-    }
-
-    .log-time {
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      margin: 24px 0 16px -4px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      gap: 12px;
     }
+    .log-date-header::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--bd);
+    }
+    .log-item {
+      position: relative;
+      display: flex;
+      gap: 16px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      background: var(--sf);
+      border: 1px solid var(--bd);
+      border-radius: var(--rs);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s, border-color 0.2s;
+      animation: sIn .3s var(--ease-out-expo) both;
+      z-index: 1;
+    }
+    .log-item:hover {
+      transform: translateX(4px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      border-color: var(--bs);
+    }
+    
+    /* Action-specific styling */
+    .log-item.log-item-add { border-left: 3px solid var(--in); }
+    .log-item.log-item-edit { border-left: 3px solid var(--ac); }
+    .log-item.log-item-delete { border-left: 3px solid var(--ex); background: color-mix(in srgb, var(--ex) 3%, var(--sf)); }
+    .log-item.log-item-import { border-left: 3px solid var(--on); }
+    
+    /* Auto/New Event styling */
+    .log-item.log-item-auto { border-left: 3px solid var(--of); background: color-mix(in srgb, var(--of) 3%, var(--sf)); }
+    .log-item.log-item-new-event { border-style: dashed; }
+    
+    .log-item-icon-wrap {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      position: absolute;
+      left: -25px; /* Offset to sit on the timeline */
+      top: 14px;
+      background: var(--bg);
+      border: 1.5px solid var(--bd);
+      z-index: 2;
+    }
+    .log-item-icon-wrap svg {
+      width: 12px;
+      height: 12px;
+    }
+    /* Icon colors matching actions */
+    .log-item-add .log-item-icon-wrap { color: var(--in); border-color: color-mix(in srgb, var(--in) 50%, var(--bd)); background: color-mix(in srgb, var(--in) 10%, var(--bg)); }
+    .log-item-edit .log-item-icon-wrap { color: var(--ac); border-color: color-mix(in srgb, var(--ac) 50%, var(--bd)); background: color-mix(in srgb, var(--ac) 10%, var(--bg)); }
+    .log-item-delete .log-item-icon-wrap { color: var(--ex); border-color: color-mix(in srgb, var(--ex) 50%, var(--bd)); background: color-mix(in srgb, var(--ex) 10%, var(--bg)); }
+    .log-item-import .log-item-icon-wrap { color: var(--on); border-color: color-mix(in srgb, var(--on) 50%, var(--bd)); background: color-mix(in srgb, var(--on) 10%, var(--bg)); }
+    .log-item-auto .log-item-icon-wrap { color: var(--of); border-color: color-mix(in srgb, var(--of) 50%, var(--bd)); background: color-mix(in srgb, var(--of) 10%, var(--bg)); }
+
+    .log-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .log-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+    .log-msg {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--tx);
+      line-height: 1.4;
+      word-break: break-word;
+      margin: 0;
+    }
+    .log-time {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--mu);
+      white-space: nowrap;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .log-meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .log-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      border: 1px solid var(--bd);
+      background: var(--s2);
+      color: var(--mu);
+    }
+    .log-pill-income { color: var(--in); background: color-mix(in srgb, var(--in) 8%, transparent); border-color: color-mix(in srgb, var(--in) 20%, transparent); }
+    .log-pill-expense { color: var(--ex); background: color-mix(in srgb, var(--ex) 8%, transparent); border-color: color-mix(in srgb, var(--ex) 20%, transparent); }
+    .log-pill-receipt { color: var(--ac); background: color-mix(in srgb, var(--ac) 8%, transparent); border-color: color-mix(in srgb, var(--ac) 20%, transparent); }
 
     .tx-deleted-text {
       text-decoration: line-through;
@@ -7395,13 +7447,21 @@
       padding: 12px 24px;
     }
 
-    /* ── Log cards: left-accent strip ── */
-    .log-card {
-      border-left: 3px solid var(--bd);
-      transition: border-left-color .2s ease, transform 0.2s, box-shadow 0.2s;
+    /* ── Mobile tap targets ── */
+    .log-timeline {
+      padding-left: 0;
     }
-    .log-card:hover {
-      border-left-color: var(--ac);
+    .log-timeline::before {
+      display: none;
+    }
+    .log-item {
+      padding: 14px 16px;
+    }
+    .log-item-icon-wrap {
+      position: static;
+      border: none;
+      background: transparent !important;
+      color: inherit;
     }
 
     /* ── Category tag: more refined hover state ── */
@@ -14490,14 +14550,14 @@
       let currentLogDate = null;
       function getOrd(n) { const s = ["th", "st", "nd", "rd"]; const v = n % 100; return s[(v - 20) % 10] || s[v] || s[0]; }
 
-      listEl.innerHTML = logs.map(l => {
+      const renderedLogs = logs.map(l => {
         const ts = l.ts || l.t;
         const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
         
-        const dateStr = `${d.getDate()}${getOrd(d.getDate())} ${d.toLocaleString('default', { month: 'short' })}, ${d.getFullYear().toString().slice(-2)}`;
+        const dateStr = `${d.getDate()}${getOrd(d.getDate())} ${d.toLocaleString('default', { month: 'short' })}, ${d.getFullYear()}`;
         let headerHtml = '';
         if (dateStr !== currentLogDate) {
-          headerHtml = `<div class="log-date-header" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--mu);margin:16px 0 8px 0;text-transform:uppercase;letter-spacing:1px;font-weight:600;padding-left:8px;">${dateStr}</div>`;
+          headerHtml = `<div class="log-date-header">${dateStr}</div>`;
           currentLogDate = dateStr;
         }
 
@@ -14507,8 +14567,7 @@
         const isNewRec = l.a === 'ADD' && (l.m || '').includes('isNewRec');
         const showTypePill = l.a === 'ADD' || l.a === 'DELETE';
         const txType = showTypePill ? inferTxType(l) : null;
-        const actionLabel = actLabels[l.a] || l.a;
-
+        
         let msgHtml = esc(l.m || '');
         let parsedData = {};
         const rawMsg = l.m || '';
@@ -14520,39 +14579,39 @@
         }
         const isNewEvent = l.a === 'ADD' && parsedData.isNewEvent;
 
-        const dotColorClass = txType === 'income' ? 'income' : (txType === 'expense' ? 'expense' : 'neutral');
-
-        const pSty = "padding:3px 8px;border-radius:12px;font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:4px;letter-spacing:0.3px;";
-
-        let actionPill = '';
-        if (l.a === 'EDIT') actionPill = `<span style="${pSty}background:var(--ag);color:var(--ac);border:1px solid var(--ac);">${svgEdit} Edited</span>`;
-        else if (l.a === 'IMPORT') actionPill = `<span style="${pSty}background:var(--ob);color:var(--on);border:1px solid var(--on);">${svgImport} Imported</span>`;
-        else if (l.a === 'DELETE') actionPill = '';
-        else if (l.a === 'ADD') {
-          if (isAuto) actionPill = `<span style="${pSty}background:var(--fb);color:var(--of);border:1px solid var(--of);">${svgAuto} Auto-recurring</span>`;
-          else actionPill = `<span style="${pSty}background:var(--ib);color:var(--in);border:1px solid var(--in);">${svgAdd} Added</span>`;
+        // Class assignments for the wrapper and icon
+        let extraClass = '';
+        let iconSvg = svgDef;
+        if (l.a === 'ADD') {
+          if (isAuto) { extraClass = 'log-item-auto'; iconSvg = svgAuto; }
+          else { extraClass = 'log-item-add'; iconSvg = svgAdd; }
+        } else if (l.a === 'EDIT') { extraClass = 'log-item-edit'; iconSvg = svgEdit; }
+        else if (l.a === 'DELETE') { extraClass = 'log-item-delete'; iconSvg = svgDel; }
+        else if (l.a === 'IMPORT') { extraClass = 'log-item-import'; iconSvg = svgImport; }
+        
+        let extraStyle = '';
+        if (isNewEvent) {
+          extraClass += ' log-item-new-event';
+          const c = (parsedData.eventId && events[parsedData.eventId]) ? getLegibleColor(events[parsedData.eventId].color) : 'var(--ac)';
+          extraStyle = `border-color: ${c} !important; border-left-color: ${c} !important;`;
         }
-        else actionPill = `<span style="${pSty}background:var(--s3);color:var(--tx);border:1px solid var(--bd);">${actIcons[l.a] || svgDef} ${actionLabel}</span>`;
 
-        let typePill = '';
-        if (txType === 'income') typePill = `<span style="${pSty}background:transparent;color:var(--in);border:1px dashed var(--in);">↑ Income</span>`;
-        else if (txType === 'expense') typePill = `<span style="${pSty}background:transparent;color:var(--ex);border:1px dashed var(--ex);">↓ Expense</span>`;
+        // Action/Type Pills
+        let pillsHtml = '';
+        if (txType === 'income') pillsHtml += `<span class="log-pill log-pill-income">↑ Income</span>`;
+        else if (txType === 'expense') pillsHtml += `<span class="log-pill log-pill-expense">↓ Expense</span>`;
 
-        let eventPill = '';
         if (parsedData.eventId && events[parsedData.eventId]) {
           const eCol = getLegibleColor(events[parsedData.eventId].color);
-          eventPill = `<span style="${pSty}background:${eCol}22;color:${eCol};border:1px solid ${eCol}44;">${esc(events[parsedData.eventId].name)}</span>`;
+          pillsHtml += `<span class="log-pill" style="background:${eCol}15;color:${eCol};border-color:${eCol}44;">${esc(events[parsedData.eventId].name)}</span>`;
         }
 
-        let receiptPill = '';
         if (parsedData.receipts) {
-          receiptPill = `<span style="${pSty}background:transparent;color:var(--ac);border:1px solid var(--ac);"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${parsedData.receipts} ${parsedData.receipts > 1 ? 'Receipts' : 'Receipt'}</span>`;
+          pillsHtml += `<span class="log-pill log-pill-receipt"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${parsedData.receipts} ${parsedData.receipts > 1 ? 'Receipts' : 'Receipt'}</span>`;
         }
-
-        const timePill = `<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--mu);">${timeStr}</span>`;
 
         const isSelected = logSelectionMode && selectedLogs.has(l.id);
-        const selStyle = isSelected ? 'border:2px solid var(--ex);background:color-mix(in srgb,var(--ex) 12%,var(--sf));' : '';
+        const selStyle = isSelected ? 'border:2px solid var(--ex);background:color-mix(in srgb,var(--ex) 8%,var(--sf));' : '';
         const safeLogId = esc(l.id);
         const clickHandler = logSelectionMode ? `onclick="toggleLogSelection(${esc(JSON.stringify(l.id))})"` : '';
         const cursorSty = logSelectionMode ? 'cursor:pointer;' : 'cursor:default;';
@@ -14563,32 +14622,22 @@
           ? `tabindex="0" role="button" aria-pressed="${isSelected}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleLogSelection(${esc(JSON.stringify(l.id))})}"`
           : '';
 
-        let extraStyle = '';
-        let extraClass = 'log-card';
-        if (l.a === 'DELETE') {
-          extraClass = 'log-card-deleted';
-        } else if (isNewRec) {
-          extraClass = 'log-card-skip';
-        } else if (isNewEvent) {
-          const c = (parsedData.eventId && events[parsedData.eventId]) ? getLegibleColor(events[parsedData.eventId].color) : 'var(--ac)';
-          extraStyle = `border:1px dashed ${c} !important;background:color-mix(in srgb,${c} 5%,transparent);`;
-          extraClass = 'log-card-new';
-        }
-
-        return `${headerHtml}<div class="${animClass} ${extraClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}${extraStyle}${selStyle}">
-      <div class="dot ${dotColorClass}" ${dotColorClass === 'neutral' ? 'style="background:var(--mu);box-shadow:0 0 8px var(--mu)"' : ''}></div>
-      <div class="ti">
-        <div class="tn log-msg">${msgHtml}</div>
-        <div class="tm log-time">
-          ${actionPill}
-          ${typePill}
-          ${eventPill}
-          ${receiptPill}
-          ${timePill}
-        </div>
-      </div>
-    </div>`;
+        return `${headerHtml}
+        <div class="log-item ${extraClass} ${animClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}${extraStyle}${selStyle}">
+          <div class="log-item-icon-wrap">
+            ${iconSvg}
+          </div>
+          <div class="log-content">
+            <div class="log-header-row">
+              <div class="log-msg">${msgHtml}</div>
+              <div class="log-time">${timeStr}</div>
+            </div>
+            ${pillsHtml ? `<div class="log-meta-pills">${pillsHtml}</div>` : ''}
+          </div>
+        </div>`;
       }).join('');
+      
+      listEl.innerHTML = `<div class="log-timeline">${renderedLogs}</div>`;
       if (typeof twemoji !== 'undefined') twemoji.parse(listEl);
     }
 
