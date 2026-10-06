@@ -6001,6 +6001,7 @@
     /* ── Premium Activity Log Timeline ── */
     .log-timeline {
       position: relative;
+      padding-left: 44px;
       margin-top: 16px;
     }
     .log-timeline::before {
@@ -6008,7 +6009,7 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      left: 30px;
+      left: 19px;
       width: 2px;
       background: linear-gradient(to bottom, var(--bd) 0%, var(--bd) 90%, transparent 100%);
       z-index: 0;
@@ -6039,6 +6040,8 @@
       margin-bottom: 12px;
       background: var(--sf);
       border: 1px solid var(--bd);
+      border-left-width: 3px;
+      border-left-color: var(--bd);
       border-radius: var(--rs);
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s, border-color 0.2s;
@@ -6070,7 +6073,7 @@
       justify-content: center;
       flex-shrink: 0;
       position: absolute;
-      left: -25px; /* Offset to sit on the timeline */
+      left: -42px; /* Offset to sit perfectly on the 19px timeline line */
       top: 14px;
       background: var(--bg);
       border: 1.5px solid var(--bd);
@@ -7455,6 +7458,9 @@
     }
     .log-item {
       padding: 14px 16px;
+    }
+    .log-item-icon-wrap {
+      position: static;
     }
 
     /* ── Category tag: more refined hover state ── */
