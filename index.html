@@ -13858,10 +13858,21 @@
       document.getElementById('evtName').value = '';
       document.getElementById('evtStart').value = '';
       document.getElementById('evtEnd').value = '';
-      // Auto-pick an available color (first palette color not already taken)
+      // Auto-pick an available color (first palette color not already taken).
+      // If every preset is taken, leave the picker empty and prompt the user
+      // to choose a custom color — never silently reuse a taken color.
       const used = getUsedEventColors();
-      const autoColor = EVT_PALETTE_COLORS.find(c => !used.has(c.toLowerCase())) || '#c8a96e';
-      syncEvtColorSwatch(autoColor);
+      const autoColor = EVT_PALETTE_COLORS.find(c => !used.has(c.toLowerCase())) || null;
+      if (autoColor) {
+        syncEvtColorSwatch(autoColor);
+      } else {
+        // All presets taken — reset picker to a neutral state
+        buildEvtColorPalette();
+        refreshEvtColorPaletteState();
+        document.getElementById('evtColor').value = '#c8a96e';
+        document.getElementById('evtColorHex').textContent = 'Pick a custom color';
+        document.querySelectorAll('.evt-color-swatch').forEach(b => b.classList.remove('active'));
+      }
       const lbl = document.getElementById('evtColorAssignedLabel');
       if (lbl) lbl.style.display = 'none';
       document.getElementById('eventMod').classList.add('op');
@@ -13918,13 +13929,13 @@
         // Rebuild tooltip with event name
         const takenByEvt = Object.values(events).find(ev => ev.id !== editingEventId && ev.color && ev.color.toLowerCase() === color);
         const tip = wrap.querySelector('.evt-color-swatch-tooltip');
-        if (tip) tip.textContent = takenByEvt ? `Used: "${takenByEvt.name}"` : 'Used by another event';
+        if (tip && isTaken) tip.textContent = takenByEvt ? `Used: "${takenByEvt.name}"` : 'Used by another event';
         // If current color is now taken (for custom colors), show warning
         if (isTaken && color === currentColor) hasTakenWarning = true;
       });
-      // Show taken warning for custom color field if needed
+      // Show taken warning: covers both preset swatches AND custom hex values
       const warning = document.getElementById('evtColorTakenWarning');
-      if (warning) warning.classList.toggle('visible', hasTakenWarning);
+      if (warning) warning.classList.toggle('visible', used.has(currentColor));
     }
 
     function setEvtColor(color, btnEl) {
