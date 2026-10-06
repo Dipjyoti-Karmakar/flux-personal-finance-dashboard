@@ -6802,35 +6802,126 @@
     }
 
     /* ── Event Color Swatch Picker ── */
+    .evt-color-section {
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-radius: var(--rs);
+      padding: 14px;
+    }
     .evt-color-palette {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
       align-items: center;
     }
+    .evt-color-swatch-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .evt-color-swatch {
-      width: 28px;
-      height: 28px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+      border: 2.5px solid transparent;
+      transition: transform 0.18s var(--ease-spring), border-color 0.18s, box-shadow 0.18s, opacity 0.18s;
       flex-shrink: 0;
+      position: relative;
+      outline: none;
     }
-    .evt-color-swatch:hover {
+    .evt-color-swatch::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      transition: border-color 0.18s, box-shadow 0.18s;
+      pointer-events: none;
+    }
+    .evt-color-swatch:hover:not(.taken) {
       transform: scale(1.18);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    }
+    .evt-color-swatch:hover:not(.taken)::after {
+      border-color: rgba(255,255,255,0.4);
     }
     .evt-color-swatch.active {
-      border-color: var(--tx) !important;
       transform: scale(1.22);
-      box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ac);
+      box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 5px var(--ac), 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .evt-color-swatch.active::after {
+      border-color: rgba(255,255,255,0.25);
+    }
+    /* ── Taken / used-by-another-event state ── */
+    .evt-color-swatch.taken {
+      opacity: 0.28;
+      cursor: not-allowed;
+      filter: grayscale(0.4);
+    }
+    .evt-color-swatch.taken:hover {
+      transform: none;
+      box-shadow: none;
+    }
+    .evt-color-swatch-taken-icon {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--s3);
+      border: 1.5px solid var(--bd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0;
+      transform: scale(0.6);
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .evt-color-swatch-wrap.is-taken .evt-color-swatch-taken-icon {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .evt-color-swatch-taken-icon svg {
+      display: block;
+    }
+    .evt-color-swatch-tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) scale(0.85);
+      background: var(--s3);
+      border: 1px solid var(--bs);
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--mu);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s, transform 0.18s;
+      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+    .evt-color-swatch-wrap:hover .evt-color-swatch-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+    .evt-color-divider {
+      height: 1px;
+      background: var(--bd);
+      margin: 12px 0;
     }
     .evt-color-custom-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-top: 4px;
+      gap: 10px;
+      margin-top: 0;
     }
     .evt-color-custom-label {
       font-family: 'DM Mono', monospace;
@@ -6839,16 +6930,35 @@
       letter-spacing: 1px;
       text-transform: uppercase;
       font-weight: 600;
+      flex-shrink: 0;
     }
     .evt-color-hex-pill {
       font-family: 'DM Mono', monospace;
       font-size: 11px;
       color: var(--tx);
-      background: var(--s2);
+      background: var(--bg);
       border: 1px solid var(--bd);
       border-radius: 20px;
       padding: 3px 10px;
       font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    .evt-color-taken-warning {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(224,112,112,0.1);
+      border: 1px solid rgba(224,112,112,0.25);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      color: var(--ex);
+      letter-spacing: 0.5px;
+    }
+    .evt-color-taken-warning.visible {
+      display: flex;
     }
 
     /* ══════════════════════════════════════════════════════
@@ -7504,8 +7614,8 @@
 
     /* ── Event color swatch: consistent sizing ── */
     .evt-color-swatch {
-      width: 26px;
-      height: 26px;
+      width: 30px;
+      height: 30px;
     }
 
     /* ── Diff container: more readable ── */
@@ -8675,25 +8785,23 @@
           </div>
           <div class="fd full-mob" style="margin-bottom:14px;">
             <label
-              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Color</label>
-            <div class="evt-color-palette" id="evtColorPalette">
-              <button type="button" class="evt-color-swatch active" data-color="#c8a96e" style="background:#c8a96e;" onclick="setEvtColor('#c8a96e', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#e07070" style="background:#e07070;" onclick="setEvtColor('#e07070', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#5dba8a" style="background:#5dba8a;" onclick="setEvtColor('#5dba8a', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#6e9dc8" style="background:#6e9dc8;" onclick="setEvtColor('#6e9dc8', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#9d7ac8" style="background:#9d7ac8;" onclick="setEvtColor('#9d7ac8', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#f59e0b" style="background:#f59e0b;" onclick="setEvtColor('#f59e0b', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#30cfd0" style="background:#30cfd0;" onclick="setEvtColor('#30cfd0', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#fb923c" style="background:#fb923c;" onclick="setEvtColor('#fb923c', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#e879f9" style="background:#e879f9;" onclick="setEvtColor('#e879f9', this)"></button>
-              <button type="button" class="evt-color-swatch" data-color="#34d399" style="background:#34d399;" onclick="setEvtColor('#34d399', this)"></button>
-            </div>
-            <div class="evt-color-custom-row" style="margin-top:10px;">
-              <span class="evt-color-custom-label">Custom</span>
-              <input type="color" id="evtColor" value="#c8a96e"
-                style="width:32px;height:28px;padding:2px;border:1px solid var(--bd);border-radius:8px;background:var(--s2);cursor:pointer;flex-shrink:0;"
-                onchange="setEvtColorFromPicker(this.value)">
-              <span class="evt-color-hex-pill" id="evtColorHex">#c8a96e</span>
+              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Event Color <span id="evtColorAssignedLabel" style="margin-left:6px;font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(93,186,138,0.12);color:var(--in);border:1px solid rgba(93,186,138,0.25);display:none;">assigned</span></label>
+            <div class="evt-color-section">
+              <div class="evt-color-palette" id="evtColorPalette">
+                <!-- Swatches injected by JS via buildEvtColorPalette() -->
+              </div>
+              <div class="evt-color-divider"></div>
+              <div class="evt-color-custom-row">
+                <span class="evt-color-custom-label">Custom</span>
+                <input type="color" id="evtColor" value="#c8a96e"
+                  style="width:34px;height:30px;padding:2px;border:1px solid var(--bd);border-radius:8px;background:var(--s2);cursor:pointer;flex-shrink:0;"
+                  onchange="setEvtColorFromPicker(this.value)">
+                <span class="evt-color-hex-pill" id="evtColorHex">#c8a96e</span>
+              </div>
+              <div class="evt-color-taken-warning" id="evtColorTakenWarning">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                This color is already used by another event
+              </div>
             </div>
           </div>
         </div>
@@ -13750,7 +13858,12 @@
       document.getElementById('evtName').value = '';
       document.getElementById('evtStart').value = '';
       document.getElementById('evtEnd').value = '';
-      syncEvtColorSwatch('#c8a96e');
+      // Auto-pick an available color (first palette color not already taken)
+      const used = getUsedEventColors();
+      const autoColor = EVT_PALETTE_COLORS.find(c => !used.has(c.toLowerCase())) || '#c8a96e';
+      syncEvtColorSwatch(autoColor);
+      const lbl = document.getElementById('evtColorAssignedLabel');
+      if (lbl) lbl.style.display = 'none';
       document.getElementById('eventMod').classList.add('op');
     }
 
@@ -13760,27 +13873,109 @@
     }
 
     // ── Event Color Swatch Picker helpers ──
+
+    const EVT_PALETTE_COLORS = [
+      '#c8a96e','#e07070','#5dba8a','#6e9dc8','#9d7ac8',
+      '#f59e0b','#30cfd0','#fb923c','#e879f9','#34d399'
+    ];
+
+    /** Returns a Set of hex colors already claimed by other events (excluding the one being edited). */
+    function getUsedEventColors() {
+      const used = new Set();
+      Object.values(events).forEach(evt => {
+        if (evt.id === editingEventId) return; // allow keeping own color
+        if (evt.color) used.add(evt.color.toLowerCase());
+      });
+      return used;
+    }
+
+    /** Builds the swatch palette grid from scratch (call once when modal opens). */
+    function buildEvtColorPalette() {
+      const palette = document.getElementById('evtColorPalette');
+      if (!palette) return;
+      palette.innerHTML = EVT_PALETTE_COLORS.map(color => {
+        return `<div class="evt-color-swatch-wrap" data-color="${color}">
+          <button type="button" class="evt-color-swatch" data-color="${color}" style="background:${color};" aria-label="Color ${color}" onclick="setEvtColor('${color}', this)"></button>
+          <div class="evt-color-swatch-taken-icon">
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div class="evt-color-swatch-tooltip" id="tip-${color.replace('#','')}">Used by another event</div>
+        </div>`;
+      }).join('');
+    }
+
+    /** Refreshes swatch taken/available states based on current events data. */
+    function refreshEvtColorPaletteState() {
+      const used = getUsedEventColors();
+      const currentColor = (document.getElementById('evtColor').value || '#c8a96e').toLowerCase();
+      let hasTakenWarning = false;
+      document.querySelectorAll('#evtColorPalette .evt-color-swatch-wrap').forEach(wrap => {
+        const color = wrap.dataset.color.toLowerCase();
+        const swatch = wrap.querySelector('.evt-color-swatch');
+        const isTaken = used.has(color);
+        swatch.classList.toggle('taken', isTaken);
+        wrap.classList.toggle('is-taken', isTaken);
+        // Rebuild tooltip with event name
+        const takenByEvt = Object.values(events).find(ev => ev.id !== editingEventId && ev.color && ev.color.toLowerCase() === color);
+        const tip = wrap.querySelector('.evt-color-swatch-tooltip');
+        if (tip) tip.textContent = takenByEvt ? `Used: "${takenByEvt.name}"` : 'Used by another event';
+        // If current color is now taken (for custom colors), show warning
+        if (isTaken && color === currentColor) hasTakenWarning = true;
+      });
+      // Show taken warning for custom color field if needed
+      const warning = document.getElementById('evtColorTakenWarning');
+      if (warning) warning.classList.toggle('visible', hasTakenWarning);
+    }
+
     function setEvtColor(color, btnEl) {
+      const used = getUsedEventColors();
+      if (used.has(color.toLowerCase())) {
+        // Block – color is taken; shake the swatch and show toast
+        if (btnEl) {
+          btnEl.style.transition = 'transform 0.08s';
+          let shakeCount = 0;
+          const shakeAnim = setInterval(() => {
+            btnEl.style.transform = shakeCount % 2 === 0 ? 'translateX(4px) scale(1.05)' : 'translateX(-4px) scale(1.05)';
+            if (++shakeCount >= 6) { clearInterval(shakeAnim); btnEl.style.transform = ''; }
+          }, 60);
+        }
+        showToast('This color is already used by another event', 'er');
+        return;
+      }
       // Update hidden color input + hex pill
       document.getElementById('evtColor').value = color;
       document.getElementById('evtColorHex').textContent = color;
       // Update active swatch
       document.querySelectorAll('.evt-color-swatch').forEach(b => b.classList.remove('active'));
       if (btnEl) btnEl.classList.add('active');
+      // Hide taken warning
+      const warning = document.getElementById('evtColorTakenWarning');
+      if (warning) warning.classList.remove('visible');
     }
+
     function setEvtColorFromPicker(color) {
+      const used = getUsedEventColors();
+      const isTaken = used.has(color.toLowerCase());
       document.getElementById('evtColorHex').textContent = color;
+      // Show or hide warning
+      const warning = document.getElementById('evtColorTakenWarning');
+      if (warning) warning.classList.toggle('visible', isTaken);
       // Deselect preset swatches (custom color chosen)
       document.querySelectorAll('.evt-color-swatch').forEach(b => {
         b.classList.toggle('active', b.dataset.color === color);
       });
     }
+
     function syncEvtColorSwatch(color) {
+      document.getElementById('evtColor').value = color;
+      document.getElementById('evtColorHex').textContent = color;
+      // Rebuild palette and mark taken states
+      buildEvtColorPalette();
+      refreshEvtColorPaletteState();
+      // Mark the active swatch
       document.querySelectorAll('.evt-color-swatch').forEach(b => {
         b.classList.toggle('active', b.dataset.color === color);
       });
-      document.getElementById('evtColor').value = color;
-      document.getElementById('evtColorHex').textContent = color;
     }
 
     document.getElementById('evtColor').addEventListener('input', (e) => {
@@ -13858,6 +14053,8 @@
       document.getElementById('evtStart').value = evt.start || '';
       document.getElementById('evtEnd').value = evt.end || '';
       syncEvtColorSwatch(evt.color || '#c8a96e');
+      const lbl = document.getElementById('evtColorAssignedLabel');
+      if (lbl) lbl.style.display = 'inline-flex';
       document.getElementById('eventMod').classList.add('op');
     }
 
@@ -13878,6 +14075,14 @@
         // FIXED: Shake the end-date field visually as well as showing a toast, so the
         // user knows exactly which field is wrong (previously only a toast appeared).
         if (start > end) { shake('evtEnd'); showToast('Start date must be before end date', 'er'); return; }
+        // Color uniqueness guard: each color may only be used by one event
+        const _usedColors = getUsedEventColors();
+        if (_usedColors.has(color.toLowerCase())) {
+          const warning = document.getElementById('evtColorTakenWarning');
+          if (warning) { warning.classList.add('visible'); warning.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+          showToast('Please choose a unique color — this one is already used by another event', 'er');
+          return;
+        }
         const evtId = editingEventId;
         closeEventMod();
         if (evtId) {
