@@ -6109,6 +6109,10 @@
       word-break: break-word;
       margin: 0;
     }
+    .log-msg-desc {
+      color: var(--mu);
+      font-weight: 500;
+    }
     .log-time {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
@@ -14355,13 +14359,13 @@
 
     function renderParsedLog(action, p) {
       if (action === 'ADD' || action === 'DELETE') {
-        const descCls = action === 'DELETE' ? 'tx-deleted-text' : '';
+        const descCls = action === 'DELETE' ? 'tx-deleted-text log-msg-desc' : 'log-msg-desc';
         if (p.isNewRec) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">New recurring subscription</div>`;
         if (p.isDelRec) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Deleted recurring subscription</div>`;
         if (p.isDelRecPermanent) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Subscription permanently deleted — transactions remain tagged</div>`;
-        if (p.isNewEvent) return `<div>${esc(p.desc)}</div><div class="log-meta">New event created</div>`;
+        if (p.isNewEvent) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">New event created</div>`;
         if (p.isDelEvent) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta">Deleted event</div>`;
-        if (p.isRestore) return `<div>${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600">${fmt(p.amt)}</span><span> </span><span>Restored transaction</span></div>`;
+        if (p.isRestore) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600">${fmt(p.amt)}</span><span> </span><span>Restored transaction</span></div>`;
         if (p.isManualPay) return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span>Manual subscription payment</span></div>`;
         if (p.isAuto) {
           let dRange = p.dateRange;
@@ -14383,9 +14387,9 @@
         return `<div class="${descCls}">${esc(p.desc)}</div><div class="log-meta"><span style="color:var(--${p.type === 'income' ? 'in' : 'ex'});font-weight:600;" class="${descCls}">${fmt(p.amt)}</span><span> </span><span style="text-transform:capitalize">${p.cat || 'other'}</span><span style="opacity:0.5;margin:0 4px;">•</span><span>${fmtDt(p.date)}</span><span style="opacity:0.5;margin:0 4px;">•</span><span style="text-transform:capitalize">${p.mode}</span></div>`;
       }
       if (action === 'EDIT') {
-        if (p.isEventEdit) return `<div>${esc(p.desc)}</div><div class="log-meta">Event updated</div>`;
-        if (p.isRecEdit) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription updated</div>`;
-        if (!p.diffs) return `<div>${esc(p.desc)}</div>`;
+        if (p.isEventEdit) return `<div class="log-msg-desc">${esc(p.desc)}</div><div class="log-meta">Event updated</div>`;
+        if (p.isRecEdit) return `<div class="log-msg-desc">${esc(p.desc)}</div><div class="log-meta">Subscription updated</div>`;
+        if (!p.diffs) return `<div class="log-msg-desc">${esc(p.desc)}</div>`;
 
         let metaHtml = '';
         if (p.amt !== undefined && p.date) {
@@ -14411,18 +14415,18 @@
           return `<div class="diff-row"><span class="diff-label">${displayLabel}</span><div class="diff-values"><span class="diff-old">${esc(htmlDec(oldV))}</span><span class="diff-arrow"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span class="diff-new">${esc(htmlDec(newV))}</span></div></div>`;
         };
         const diffHtml = p.diffs.map(d => dfn(d.label, d.oldV, d.newV)).join('');
-        return `<div>${esc(p.desc)}</div>${metaHtml}<div class="diff-container">${diffHtml}</div>`;
+        return `<div class="log-msg-desc">${esc(p.desc)}</div>${metaHtml}<div class="diff-container">${diffHtml}</div>`;
       }
       if (action === 'IMPORT') {
-        return `<div>Imported ${p.count} transaction${p.count !== 1 ? 's' : ''}</div><div class="log-meta">Mode: <strong style="text-transform:uppercase">${p.mode}</strong></div>`;
+        return `<div class="log-msg-desc">Imported ${p.count} transaction${p.count !== 1 ? 's' : ''}</div><div class="log-meta">Mode: <strong style="text-transform:uppercase">${p.mode}</strong></div>`;
       }
       if (action === 'UPDATE') {
-        if (p.isRecPauseToggle) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription ${p.active ? 'resumed' : 'paused'}</div>`;
-        if (p.isRecArchive) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription archived</div>`;
-        if (p.isRecRestore) return `<div>${esc(p.desc)}</div><div class="log-meta">Subscription restored</div>`;
-        if (p.isEventBulk) return `<div>${esc(p.desc)}</div><div class="log-meta">Bulk updated event tags</div>`;
-        if (p.isEarlyPay) return `<div>${esc(p.desc)}</div><div class="log-meta">Early payment detected — due date advanced${p.newNextDue ? ' to ' + fmtDt(p.newNextDue) : ''}.</div>`;
-        if (p.isSkip) return `<div>${esc(p.desc)}</div><div class="log-meta">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`;
+        if (p.isRecPauseToggle) return `<div class="log-msg-desc">${esc(p.desc)}</div><div class="log-meta">Subscription ${p.active ? 'resumed' : 'paused'}</div>`;
+        if (p.isRecArchive) return `<div class="log-msg-desc">${esc(p.desc)}</div><div class="log-meta">Subscription archived</div>`;
+        if (p.isRecRestore) return `<div class="log-msg-desc">${esc(p.desc)}</div><div class="log-meta">Subscription restored</div>`;
+        if (p.isEventBulk) return `<div class="log-msg-desc">${esc(p.desc)}</div><div class="log-meta">Bulk updated event tags</div>`;
+        if (p.isEarlyPay) return `<div class="log-msg-desc">${esc(p.desc)}</div><div class="log-meta">Early payment detected — due date advanced${p.newNextDue ? ' to ' + fmtDt(p.newNextDue) : ''}.</div>`;
+        if (p.isSkip) return `<div class="log-msg-desc">${esc(p.desc)}</div><div class="log-meta">Skipped duplicate auto-add (already manually paid early). Advanced due date.</div>`;
       }
       return `<div>${esc(p.desc || '')}</div>`;
     }
@@ -14599,6 +14603,13 @@
         let pillsHtml = '';
         if (txType === 'income') pillsHtml += `<span class="log-pill log-pill-income">↑ Income</span>`;
         else if (txType === 'expense') pillsHtml += `<span class="log-pill log-pill-expense">↓ Expense</span>`;
+
+        if (parsedData.mode === 'online') {
+          pillsHtml += `<span class="log-pill" style="color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);border-color:color-mix(in srgb,var(--ac) 30%,transparent)">Online</span>`;
+        } else if (parsedData.mode === 'offline') {
+          const purp = '#a855f7';
+          pillsHtml += `<span class="log-pill" style="color:${purp};background:color-mix(in srgb,${purp} 15%,transparent);border-color:color-mix(in srgb,${purp} 30%,transparent)">Offline</span>`;
+        }
 
         if (parsedData.eventId && events[parsedData.eventId]) {
           const eCol = getLegibleColor(events[parsedData.eventId].color);
