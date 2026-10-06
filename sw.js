@@ -1,10 +1,10 @@
 // Flux Service Worker - Offline-first caching strategy
-// V46: Bumped to v35 - forced CDN cache bust via ?v=35 on core assets + strict Cropper check
-const CACHE_NAME = 'flux-v35';
+// V46: Bumped to v36 - forced CDN cache bust via ?v=36 on core assets + strict Cropper check
+const CACHE_NAME = 'flux-v36';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './?v=35',
-  './index.html?v=35',
+  './?v=36',
+  './index.html?v=36',
   './manifest.json?v=2',
   './icon-192.png?v=2',
   './icon-512.png?v=2',
