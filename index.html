@@ -5476,21 +5476,85 @@
     }
     .log-fpill:hover svg { opacity: 1; }
 
-    .log-fpill.act {
-      background: var(--sf);
-      color: var(--tx);
-    }
+    .log-fpill.act { background: var(--sf); color: var(--tx); }
     .log-fpill.act svg { opacity: 1; color: var(--ac); }
 
-    /* colour-coded active states per filter in dropdown */
-    .log-fpill.act-add svg    { color: var(--in); }
-    .log-fpill.act-edit svg   { color: var(--ac); }
-    .log-fpill.act-del svg    { color: var(--ex); }
-    .log-fpill.act-import svg { color: var(--on); }
-    .log-fpill.act-sub svg    { color: #a78bfa; }
-    .log-fpill.act-evt svg    { color: #fb923c; }
-    .log-fpill.act-inc svg    { color: var(--in); }
-    .log-fpill.act-exp svg    { color: var(--ex); }
+    /* colour-coded active states — icon AND text change color */
+    .log-fpill.act-add  { color: var(--in); }  .log-fpill.act-add  svg { color: var(--in); }
+    .log-fpill.act-edit { color: var(--ac); }  .log-fpill.act-edit svg { color: var(--ac); }
+    .log-fpill.act-del  { color: var(--ex); }  .log-fpill.act-del  svg { color: var(--ex); }
+    .log-fpill.act-import { color: var(--on); } .log-fpill.act-import svg { color: var(--on); }
+    .log-fpill.act-sub  { color: #a78bfa; }  .log-fpill.act-sub  svg { color: #a78bfa; }
+    .log-fpill.act-evt  { color: #fb923c; }  .log-fpill.act-evt  svg { color: #fb923c; }
+    .log-fpill.act-inc  { color: var(--in); }  .log-fpill.act-inc  svg { color: var(--in); }
+    .log-fpill.act-exp  { color: var(--ex); }  .log-fpill.act-exp  svg { color: var(--ex); }
+    .log-fpill.act-onl  { color: var(--on); }  .log-fpill.act-onl  svg { color: var(--on); }
+    .log-fpill.act-ofl  { color: var(--of); }  .log-fpill.act-ofl  svg { color: var(--of); }
+
+    /* Main filter button: inherit color of active filter */
+    .log-filter-btn.flt-add    { color: var(--in); border-color: color-mix(in srgb, var(--in) 30%, var(--bd)); background: color-mix(in srgb, var(--in) 8%, var(--s2)); }
+    .log-filter-btn.flt-edit   { color: var(--ac); border-color: color-mix(in srgb, var(--ac) 30%, var(--bd)); background: color-mix(in srgb, var(--ac) 8%, var(--s2)); }
+    .log-filter-btn.flt-del    { color: var(--ex); border-color: color-mix(in srgb, var(--ex) 30%, var(--bd)); background: color-mix(in srgb, var(--ex) 8%, var(--s2)); }
+    .log-filter-btn.flt-import { color: var(--on); border-color: color-mix(in srgb, var(--on) 30%, var(--bd)); background: color-mix(in srgb, var(--on) 8%, var(--s2)); }
+    .log-filter-btn.flt-sub    { color: #a78bfa;   border-color: color-mix(in srgb, #a78bfa 30%, var(--bd)); background: color-mix(in srgb, #a78bfa 8%, var(--s2)); }
+    .log-filter-btn.flt-evt    { color: #fb923c;   border-color: color-mix(in srgb, #fb923c 30%, var(--bd)); background: color-mix(in srgb, #fb923c 8%, var(--s2)); }
+    .log-filter-btn.flt-inc    { color: var(--in); border-color: color-mix(in srgb, var(--in) 30%, var(--bd)); background: color-mix(in srgb, var(--in) 8%, var(--s2)); }
+    .log-filter-btn.flt-exp    { color: var(--ex); border-color: color-mix(in srgb, var(--ex) 30%, var(--bd)); background: color-mix(in srgb, var(--ex) 8%, var(--s2)); }
+    .log-filter-btn.flt-onl    { color: var(--on); border-color: color-mix(in srgb, var(--on) 30%, var(--bd)); background: color-mix(in srgb, var(--on) 8%, var(--s2)); }
+    .log-filter-btn.flt-ofl    { color: var(--of); border-color: color-mix(in srgb, var(--of) 30%, var(--bd)); background: color-mix(in srgb, var(--of) 8%, var(--s2)); }
+
+    /* Date range row in filter menu */
+    .log-filter-date-row {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 8px 12px 6px;
+      border-top: 1px solid var(--bd);
+      margin-top: 4px;
+    }
+    .log-filter-date-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--mu);
+      font-weight: 700;
+    }
+    .log-filter-date-inputs {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .log-filter-date-inputs input[type="date"] {
+      flex: 1;
+      background: var(--sf);
+      border: 1px solid var(--bd);
+      border-radius: 7px;
+      color: var(--tx);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      padding: 5px 8px;
+      outline: none;
+      min-width: 0;
+      transition: border-color .2s;
+    }
+    .log-filter-date-inputs input[type="date"]:focus { border-color: var(--ac); }
+    .log-filter-date-sep { color: var(--mu); font-size: 11px; flex-shrink: 0; }
+    .log-filter-date-clear {
+      background: none;
+      border: none;
+      color: var(--mu);
+      cursor: pointer;
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color .2s;
+      white-space: nowrap;
+    }
+    .log-filter-date-clear:hover { color: var(--ex); }
+    /* Active date indicator on main button */
+    .log-filter-btn.flt-date { color: var(--ac); border-color: color-mix(in srgb, var(--ac) 30%, var(--bd)); background: color-mix(in srgb, var(--ac) 8%, var(--s2)); }
 
     .log-msg {
       font-family: 'DM Sans', sans-serif;
@@ -8669,6 +8733,24 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
                 Expense
               </button>
+              <button class="log-fpill" data-fval="online" data-flabel="Online" onclick="setLogFilter('online')" role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                Online
+              </button>
+              <button class="log-fpill" data-fval="offline" data-flabel="Offline" onclick="setLogFilter('offline')" role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+                Offline
+              </button>
+              <!-- Date range filter -->
+              <div class="log-filter-date-row">
+                <div class="log-filter-date-label">Date Range</div>
+                <div class="log-filter-date-inputs">
+                  <input type="date" id="logDateFrom" onchange="setLogDateFilter()" title="From date">
+                  <span class="log-filter-date-sep">–</span>
+                  <input type="date" id="logDateTo" onchange="setLogDateFilter()" title="To date">
+                  <button class="log-filter-date-clear" onclick="clearLogDateFilter()" title="Clear dates">Clear</button>
+                </div>
+              </div>
             </div>
           </div>
           <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()" title="Select logs to delete">
@@ -9332,6 +9414,8 @@
     let cEventFilt = 'all';
     let cTxSearch = '';
     let cLogSearch = '';
+    let cLogDateFrom = '';
+    let cLogDateTo = '';
     let lastCatList = null;
 
     let rawImportRows = [];
@@ -14601,7 +14685,16 @@
         return null;
       }
 
-      if (filter !== 'all') {
+      if (filter === 'online' || filter === 'offline') {
+        logs = logs.filter(l => {
+          let parsedData = {};
+          const rawMsg = l.m || '';
+          if (rawMsg.startsWith('{') || rawMsg.startsWith('[')) {
+            try { parsedData = JSON.parse(rawMsg); } catch (e) { }
+          }
+          return parsedData.mode === filter;
+        });
+      } else if (filter !== 'all') {
         logs = logs.filter(l => {
           if (['ADD', 'EDIT', 'DELETE', 'IMPORT'].includes(filter)) {
             return l.a === filter;
@@ -14633,6 +14726,19 @@
       }
       if (cLogSearch) {
         logs = logs.filter(l => (l.m || '').toLowerCase().includes(cLogSearch));
+      }
+      // Date range filter
+      if (cLogDateFrom || cLogDateTo) {
+        const from = cLogDateFrom ? new Date(cLogDateFrom + 'T00:00:00') : null;
+        const to   = cLogDateTo   ? new Date(cLogDateTo   + 'T23:59:59') : null;
+        logs = logs.filter(l => {
+          const ts = l.ts || l.t;
+          const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
+          if (!d) return true;
+          if (from && d < from) return false;
+          if (to   && d > to)   return false;
+          return true;
+        });
       }
 
       const svgEmpty = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
@@ -17255,20 +17361,24 @@
       let selectedSvg = '';
 
       const activeMap = {
-        'all':          'act',
-        'ADD':          'act act-add',
-        'EDIT':         'act act-edit',
-        'DELETE':       'act act-del',
-        'IMPORT':       'act act-import',
-        'subscription': 'act act-sub',
-        'event':        'act act-evt',
-        'income':       'act act-inc',
-        'expense':      'act act-exp',
+        'all':          { cls: 'act',        btn: '' },
+        'ADD':          { cls: 'act act-add',    btn: 'flt-add' },
+        'EDIT':         { cls: 'act act-edit',   btn: 'flt-edit' },
+        'DELETE':       { cls: 'act act-del',    btn: 'flt-del' },
+        'IMPORT':       { cls: 'act act-import', btn: 'flt-import' },
+        'subscription': { cls: 'act act-sub',    btn: 'flt-sub' },
+        'event':        { cls: 'act act-evt',    btn: 'flt-evt' },
+        'income':       { cls: 'act act-inc',    btn: 'flt-inc' },
+        'expense':      { cls: 'act act-exp',    btn: 'flt-exp' },
+        'online':       { cls: 'act act-onl',    btn: 'flt-onl' },
+        'offline':      { cls: 'act act-ofl',    btn: 'flt-ofl' },
       };
 
-      document.querySelectorAll('#logFilterMenu .log-fpill').forEach(btn => {
+      // Filter for online/offline happens in renderLogs via the filter value
+      document.querySelectorAll('#logFilterMenu .log-fpill[data-fval]').forEach(btn => {
         const isActive = btn.dataset.fval === val;
-        btn.className = 'log-fpill' + (isActive ? ' ' + (activeMap[val] || 'act') : '');
+        const entry = activeMap[val] || { cls: 'act', btn: '' };
+        btn.className = 'log-fpill' + (isActive ? ' ' + entry.cls : '');
         btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         if (isActive) {
           selectedLabel = btn.dataset.flabel;
@@ -17279,7 +17389,8 @@
       const mainBtn = document.getElementById('logFilterMainBtn');
       if (mainBtn) {
         mainBtn.innerHTML = `${selectedSvg}<span>${selectedLabel}</span>`;
-        // Close menu
+        const btnCls = (activeMap[val] || {}).btn || '';
+        mainBtn.className = 'log-filter-btn' + (btnCls ? ' ' + btnCls : '');
         document.getElementById('logFilterMenu').classList.remove('show');
       }
 
@@ -17289,6 +17400,30 @@
     window.toggleLogFilterMenu = function() {
       const menu = document.getElementById('logFilterMenu');
       if (menu) menu.classList.toggle('show');
+    };
+
+    window.setLogDateFilter = function() {
+      cLogDateFrom = (document.getElementById('logDateFrom') || {}).value || '';
+      cLogDateTo   = (document.getElementById('logDateTo')   || {}).value || '';
+      // Mark main btn with date indicator if either is set
+      const mainBtn = document.getElementById('logFilterMainBtn');
+      if (mainBtn && (cLogDateFrom || cLogDateTo)) {
+        const current = document.getElementById('logFilter').value;
+        if (current === 'all') mainBtn.classList.add('flt-date');
+      }
+      renderLogs();
+    };
+
+    window.clearLogDateFilter = function() {
+      cLogDateFrom = '';
+      cLogDateTo = '';
+      const f = document.getElementById('logDateFrom');
+      const t = document.getElementById('logDateTo');
+      if (f) f.value = '';
+      if (t) t.value = '';
+      const mainBtn = document.getElementById('logFilterMainBtn');
+      if (mainBtn) mainBtn.classList.remove('flt-date');
+      renderLogs();
     };
 
     // Close menu when clicking outside
