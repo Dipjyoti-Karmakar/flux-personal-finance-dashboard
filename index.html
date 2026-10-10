@@ -7751,14 +7751,19 @@
       to   { opacity: 1; transform: none; }
     }
 
-    /* ── Log filter menu: prevent horizontal clip on mobile ── */
+    /* ── Log filter menu: center align on mobile so it doesn't clip ── */
     @media (max-width: 520px) {
       .log-filter-menu {
-        left: auto;
-        right: 0;
+        left: 50% !important;
+        right: auto !important;
+        transform: translate(-50%, -10px) scale(0.95) !important;
+        transform-origin: top center !important;
         max-width: calc(100vw - 16px);
-        min-width: min(180px, calc(100vw - 16px));
+        width: 220px;
         overflow-x: hidden;
+      }
+      .log-filter-menu.show {
+        transform: translate(-50%, 0) scale(1) !important;
       }
     }
 
