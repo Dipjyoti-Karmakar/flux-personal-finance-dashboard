@@ -7770,11 +7770,15 @@
         bottom: 0;
         left: 0;
         right: 0;
+        /* Override base opacity/visibility — use transform + pointer-events instead */
+        opacity: 1 !important;
+        visibility: visible !important;
         border-radius: 18px 18px 0 0;
         max-height: 70vh;
         overflow-y: auto;
         transform-origin: bottom center;
         padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 12px);
+        transition: transform .3s cubic-bezier(0.16,1,0.3,1), pointer-events 0s !important;
       }
       .log-filter-menu::before {
         content: '';
@@ -7785,11 +7789,15 @@
         background: var(--bd);
         margin: 0 auto 8px;
       }
+      /* Hidden state: slide off bottom, block pointer interaction */
       .log-filter-menu:not(.show) {
         transform: translateY(100%) !important;
+        pointer-events: none;
       }
+      /* Visible state: slide in */
       .log-filter-menu.show {
         transform: translateY(0) !important;
+        pointer-events: auto;
       }
     }
 
