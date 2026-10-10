@@ -14689,7 +14689,9 @@
           }
         }
       });
-      logs.sort((a, b) => (b.ts || b.t || 0) - (a.ts || a.t || 0));
+      // Normalize Firestore Timestamps (objects) to ms numbers before sorting
+      const toMs = (ts) => ts ? (ts.toMillis ? ts.toMillis() : ts.toDate ? ts.toDate().getTime() : +ts) : 0;
+      logs.sort((a, b) => toMs(b.ts || b.t) - toMs(a.ts || a.t));
 
       // Helper: try to infer tx type from legacy log messages that don't have 'tp' field
       function inferTxType(l) {
@@ -14900,7 +14902,8 @@
       }).join('');
       
       listEl.innerHTML = `<div class="log-timeline">${renderedLogs}</div>`;
-      if (typeof twemoji !== 'undefined') twemoji.parse(listEl);
+      // Defer twemoji parse to next frame — avoids forced reflow immediately after innerHTML write
+      if (typeof twemoji !== 'undefined') requestAnimationFrame(() => twemoji.parse(listEl));
     }
 
 
@@ -17199,8 +17202,9 @@
         renderCats();
         renderSplit();
       }
-      if (tab === 'log') renderLogs();
-      if (tab === 'subscriptions') renderRecurring();
+      // Defer heavy renders to next frame so click handler completes fast
+      if (tab === 'log') requestAnimationFrame(() => renderLogs());
+      if (tab === 'subscriptions') requestAnimationFrame(() => renderRecurring());
 
       window.scrollTo(0, 0);
     }
