@@ -6001,95 +6001,131 @@
     /* ── Premium Activity Log Timeline ── */
     .log-timeline {
       position: relative;
-      padding-left: 44px;
+      padding-left: 0;
       margin-top: 16px;
     }
-    .log-timeline::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 19px;
-      width: 2px;
-      background: linear-gradient(to bottom, var(--bd) 0%, var(--bd) 90%, transparent 100%);
-      z-index: 0;
-    }
+    .log-timeline::before { display: none; }
+
     .log-date-header {
       font-family: 'DM Mono', monospace;
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--mu);
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.8px;
       font-weight: 700;
-      margin: 24px 0 16px -4px;
+      margin: 28px 0 12px 0;
       display: flex;
       align-items: center;
       gap: 12px;
+    }
+    .log-date-header::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ac);
+      flex-shrink: 0;
+      opacity: 0.6;
     }
     .log-date-header::after {
       content: '';
       flex: 1;
       height: 1px;
-      background: var(--bd);
+      background: linear-gradient(to right, var(--bd), transparent);
     }
+
+    /* ── Log Card ── */
     .log-item {
       position: relative;
       display: flex;
-      gap: 16px;
-      padding: 12px 16px;
-      margin-bottom: 12px;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 14px 16px 14px 14px;
+      margin-bottom: 8px;
       background: var(--sf);
       border: 1px solid var(--bd);
-      border-left-width: 3px;
-      border-left-color: var(--bd);
-      border-radius: var(--rs);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s, border-color 0.2s;
-      animation: sIn .3s var(--ease-out-expo) both;
-      z-index: 1;
+      border-radius: 14px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s, border-color 0.2s, background 0.2s;
+      animation: sIn .35s var(--ease-out-expo) both;
+      overflow: hidden;
+    }
+    /* Glowing left accent stripe */
+    .log-item::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 14px 0 0 14px;
+      background: var(--bd);
+      transition: background 0.2s;
     }
     .log-item:hover {
-      transform: translateX(4px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
       border-color: var(--bs);
     }
-    
-    /* Action-specific styling */
-    .log-item.log-item-add { border-left: 3px solid var(--in); }
-    .log-item.log-item-edit { border-left: 3px solid var(--ac); }
-    .log-item.log-item-delete { border-left: 3px solid var(--ex); background: color-mix(in srgb, var(--ex) 3%, var(--sf)); }
-    .log-item.log-item-import { border-left: 3px solid var(--on); }
-    
-    /* Auto/New Event styling */
-    .log-item.log-item-auto { border-left: 3px solid var(--of); background: color-mix(in srgb, var(--of) 3%, var(--sf)); }
+
+    /* Action accent stripes */
+    .log-item.log-item-add::before    { background: var(--in); }
+    .log-item.log-item-edit::before   { background: var(--ac); }
+    .log-item.log-item-delete::before { background: var(--ex); }
+    .log-item.log-item-import::before { background: var(--on); }
+    .log-item.log-item-auto::before   { background: var(--of); }
+    .log-item.log-item-update::before { background: #a78bfa; }
+
+    /* Subtle card tints on action type */
+    .log-item.log-item-delete { background: color-mix(in srgb, var(--ex) 4%, var(--sf)); }
+    .log-item.log-item-auto   { background: color-mix(in srgb, var(--of) 4%, var(--sf)); }
     .log-item.log-item-new-event { border-style: dashed; }
-    
-    .log-item-icon-wrap {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
+
+    /* ── Category Emoji Icon ── */
+    .log-cat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      font-size: 20px;
+      line-height: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    .log-cat-icon .c-ico {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+      display: block;
+    }
+    /* Action badge on top-right of icon */
+    .log-action-badge {
       position: absolute;
-      left: -42px; /* Offset to sit perfectly on the 19px timeline line */
-      top: 14px;
-      background: var(--bg);
-      border: 1.5px solid var(--bd);
+      bottom: -2px;
+      right: -2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1.5px solid var(--sf);
       z-index: 2;
     }
-    .log-item-icon-wrap svg {
-      width: 12px;
-      height: 12px;
-    }
-    /* Icon colors matching actions */
-    .log-item-add .log-item-icon-wrap { color: var(--in); border-color: color-mix(in srgb, var(--in) 50%, var(--bd)); background: color-mix(in srgb, var(--in) 10%, var(--bg)); }
-    .log-item-edit .log-item-icon-wrap { color: var(--ac); border-color: color-mix(in srgb, var(--ac) 50%, var(--bd)); background: color-mix(in srgb, var(--ac) 10%, var(--bg)); }
-    .log-item-delete .log-item-icon-wrap { color: var(--ex); border-color: color-mix(in srgb, var(--ex) 50%, var(--bd)); background: color-mix(in srgb, var(--ex) 10%, var(--bg)); }
-    .log-item-import .log-item-icon-wrap { color: var(--on); border-color: color-mix(in srgb, var(--on) 50%, var(--bd)); background: color-mix(in srgb, var(--on) 10%, var(--bg)); }
-    .log-item-auto .log-item-icon-wrap { color: var(--of); border-color: color-mix(in srgb, var(--of) 50%, var(--bd)); background: color-mix(in srgb, var(--of) 10%, var(--bg)); }
+    .log-action-badge svg { width: 8px; height: 8px; }
+    .log-badge-add    { background: var(--in); color: #fff; }
+    .log-badge-edit   { background: var(--ac); color: #fff; }
+    .log-badge-delete { background: var(--ex); color: #fff; }
+    .log-badge-import { background: var(--on); color: #fff; }
+    .log-badge-auto   { background: var(--of); color: #fff; }
+    .log-badge-update { background: #a78bfa; color: #fff; }
 
+    /* ── Log Content ── */
     .log-content {
       flex: 1;
       min-width: 0;
@@ -6098,9 +6134,28 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 6px;
+      gap: 10px;
+      margin-bottom: 3px;
     }
+    .log-title-wrap {
+      flex: 1;
+      min-width: 0;
+    }
+    .log-action-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      opacity: 0.7;
+    }
+    .log-item-add    .log-action-label { color: var(--in); }
+    .log-item-edit   .log-action-label { color: var(--ac); }
+    .log-item-delete .log-action-label { color: var(--ex); }
+    .log-item-import .log-action-label { color: var(--on); }
+    .log-item-auto   .log-action-label { color: var(--of); }
+    .log-item-update .log-action-label { color: #a78bfa; }
     .log-msg {
       font-size: 13.5px;
       font-weight: 600;
@@ -6112,28 +6167,51 @@
     .log-msg-desc {
       color: var(--mu);
       font-weight: 500;
+      font-size: 12.5px;
+    }
+    .log-meta {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11.5px;
+      color: var(--mu);
+      margin-top: 3px;
+      line-height: 1.5;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 3px;
+    }
+    .log-time-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      flex-shrink: 0;
+      gap: 2px;
     }
     .log-time {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
       color: var(--mu);
       white-space: nowrap;
-      flex-shrink: 0;
+      letter-spacing: 0.2px;
+    }
+    .log-meta-row {
       display: flex;
       align-items: center;
-      gap: 4px;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
     }
     .log-meta-pills {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 8px;
+      margin-top: 6px;
     }
     .log-pill {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      padding: 3px 8px;
+      padding: 2px 8px;
       border-radius: 6px;
       font-family: 'DM Mono', monospace;
       font-size: 9.5px;
@@ -6146,10 +6224,16 @@
     .log-pill-income { color: var(--in); background: color-mix(in srgb, var(--in) 8%, transparent); border-color: color-mix(in srgb, var(--in) 20%, transparent); }
     .log-pill-expense { color: var(--ex); background: color-mix(in srgb, var(--ex) 8%, transparent); border-color: color-mix(in srgb, var(--ex) 20%, transparent); }
     .log-pill-receipt { color: var(--ac); background: color-mix(in srgb, var(--ac) 8%, transparent); border-color: color-mix(in srgb, var(--ac) 20%, transparent); }
+    .log-pill-amt     { font-size: 10px; font-weight: 700; }
+    .log-pill-income.log-pill-amt { color: var(--in); }
+    .log-pill-expense.log-pill-amt { color: var(--ex); }
+
+    /* ── legacy compat ── */
+    .log-item-icon-wrap { display: none; }
 
     .tx-deleted-text {
       text-decoration: line-through;
-      opacity: 0.8;
+      opacity: 0.7;
       overflow-wrap: anywhere;
       word-break: break-all;
     }
@@ -7453,19 +7537,12 @@
       padding: 12px 24px;
     }
 
-    /* ── Mobile tap targets ── */
-    .log-timeline {
-      padding-left: 0;
-    }
-    .log-timeline::before {
-      display: none;
-    }
-    .log-item {
-      padding: 14px 16px;
-    }
-    .log-item-icon-wrap {
-      position: static;
-    }
+    /* ── Mobile log cards ── */
+    .log-item { padding: 12px 13px 12px 13px; gap: 11px; }
+    .log-cat-icon { width: 36px; height: 36px; border-radius: 10px; }
+    .log-cat-icon .c-ico { width: 22px; height: 22px; }
+    .log-msg { font-size: 12.5px; }
+    .log-action-label { font-size: 8.5px; }
 
     /* ── Category tag: more refined hover state ── */
     .cat-tag:hover {
@@ -14584,44 +14661,60 @@
 
         // Class assignments for the wrapper and icon
         let extraClass = '';
-        let iconSvg = svgDef;
+        let badgeClass = 'log-badge-add';
+        let actionLabel = 'Added';
+        const svgBadgeAdd = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+        const svgBadgeEdit = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>`;
+        const svgBadgeDel = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>`;
+        const svgBadgeImport = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+        const svgBadgeAuto = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>`;
+        const svgBadgeUpdate = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>`;
+        let badgeSvg = svgBadgeAdd;
         if (l.a === 'ADD') {
-          if (isAuto) { extraClass = 'log-item-auto'; iconSvg = svgAuto; }
-          else { extraClass = 'log-item-add'; iconSvg = svgAdd; }
-        } else if (l.a === 'EDIT') { extraClass = 'log-item-edit'; iconSvg = svgEdit; }
-        else if (l.a === 'DELETE') { extraClass = 'log-item-delete'; iconSvg = svgDel; }
-        else if (l.a === 'IMPORT') { extraClass = 'log-item-import'; iconSvg = svgImport; }
-        
+          if (isAuto) { extraClass = 'log-item-auto'; badgeClass = 'log-badge-auto'; actionLabel = 'Auto'; badgeSvg = svgBadgeAuto; }
+          else { extraClass = 'log-item-add'; badgeClass = 'log-badge-add'; actionLabel = 'Added'; badgeSvg = svgBadgeAdd; }
+        } else if (l.a === 'EDIT') { extraClass = 'log-item-edit'; badgeClass = 'log-badge-edit'; actionLabel = 'Edited'; badgeSvg = svgBadgeEdit; }
+        else if (l.a === 'DELETE') { extraClass = 'log-item-delete'; badgeClass = 'log-badge-delete'; actionLabel = 'Deleted'; badgeSvg = svgBadgeDel; }
+        else if (l.a === 'IMPORT') { extraClass = 'log-item-import'; badgeClass = 'log-badge-import'; actionLabel = 'Imported'; badgeSvg = svgBadgeImport; }
+        else if (l.a === 'UPDATE') { extraClass = 'log-item-update'; badgeClass = 'log-badge-update'; actionLabel = 'Updated'; badgeSvg = svgBadgeUpdate; }
+
+        // Category emoji icon (from CICO map)
+        const cat = (parsedData.cat || l.cat || '').toLowerCase();
+        const catIconHtml = CICO[cat] || CICO['other'];
+
         let extraStyle = '';
         if (isNewEvent) {
           extraClass += ' log-item-new-event';
           const c = (parsedData.eventId && events[parsedData.eventId]) ? getLegibleColor(events[parsedData.eventId].color) : 'var(--ac)';
-          extraStyle = `border-color: ${c} !important; border-left-color: ${c} !important;`;
+          extraStyle = `--item-accent:${c};`;
         }
 
-        // Action/Type Pills
+        // Pills: amount first, then type, then mode, event, receipts
         let pillsHtml = '';
-        if (txType === 'income') pillsHtml += `<span class="log-pill log-pill-income">↑ Income</span>`;
-        else if (txType === 'expense') pillsHtml += `<span class="log-pill log-pill-expense">↓ Expense</span>`;
-
+        if (parsedData.amt !== undefined && l.a !== 'EDIT') {
+          const amtCls = parsedData.type === 'income' ? 'log-pill-income log-pill-amt' : 'log-pill-expense log-pill-amt';
+          const amtSign = parsedData.type === 'income' ? '+' : '−';
+          pillsHtml += `<span class="log-pill ${amtCls}">${amtSign}${fmt(parsedData.amt)}</span>`;
+        }
+        if (parsedData.cat && l.a !== 'EDIT') {
+          pillsHtml += `<span class="log-pill">${esc(parsedData.cat.charAt(0).toUpperCase() + parsedData.cat.slice(1))}</span>`;
+        }
         if (parsedData.mode === 'online') {
-          pillsHtml += `<span class="log-pill" style="color:var(--ac);background:color-mix(in srgb,var(--ac) 15%,transparent);border-color:color-mix(in srgb,var(--ac) 30%,transparent)">Online</span>`;
+          pillsHtml += `<span class="log-pill" style="color:var(--ac);background:color-mix(in srgb,var(--ac) 10%,transparent);border-color:color-mix(in srgb,var(--ac) 25%,transparent)">Online</span>`;
         } else if (parsedData.mode === 'offline') {
           const purp = '#a855f7';
-          pillsHtml += `<span class="log-pill" style="color:${purp};background:color-mix(in srgb,${purp} 15%,transparent);border-color:color-mix(in srgb,${purp} 30%,transparent)">Offline</span>`;
+          pillsHtml += `<span class="log-pill" style="color:${purp};background:color-mix(in srgb,${purp} 10%,transparent);border-color:color-mix(in srgb,${purp} 25%,transparent)">Offline</span>`;
         }
-
         if (parsedData.eventId && events[parsedData.eventId]) {
           const eCol = getLegibleColor(events[parsedData.eventId].color);
-          pillsHtml += `<span class="log-pill" style="background:${eCol}15;color:${eCol};border-color:${eCol}44;">${esc(events[parsedData.eventId].name)}</span>`;
+          pillsHtml += `<span class="log-pill" style="background:${eCol}18;color:${eCol};border-color:${eCol}44;">🗂 ${esc(events[parsedData.eventId].name)}</span>`;
         }
-
         if (parsedData.receipts) {
-          pillsHtml += `<span class="log-pill log-pill-receipt"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> ${parsedData.receipts} ${parsedData.receipts > 1 ? 'Receipts' : 'Receipt'}</span>`;
+          pillsHtml += `<span class="log-pill log-pill-receipt">📎 ${parsedData.receipts} ${parsedData.receipts > 1 ? 'Receipts' : 'Receipt'}</span>`;
         }
 
         const isSelected = logSelectionMode && selectedLogs.has(l.id);
-        const selStyle = isSelected ? 'border:2px solid var(--ex);background:color-mix(in srgb,var(--ex) 8%,var(--sf));' : '';
+        const selStyle = isSelected ? 'outline:2px solid var(--ex);background:color-mix(in srgb,var(--ex) 8%,var(--sf));' : '';
         const safeLogId = esc(l.id);
         const clickHandler = logSelectionMode ? `onclick="toggleLogSelection(${esc(JSON.stringify(l.id))})"` : '';
         const cursorSty = logSelectionMode ? 'cursor:pointer;' : 'cursor:default;';
@@ -14634,13 +14727,19 @@
 
         return `${headerHtml}
         <div class="log-item ${extraClass} ${animClass}" ${logIdAttr} ${clickHandler} ${a11y} style="${cursorSty}${extraStyle}${selStyle}">
-          <div class="log-item-icon-wrap">
-            ${iconSvg}
+          <div class="log-cat-icon">
+            ${catIconHtml}
+            <span class="log-action-badge ${badgeClass}">${badgeSvg}</span>
           </div>
           <div class="log-content">
             <div class="log-header-row">
-              <div class="log-msg">${msgHtml}</div>
-              <div class="log-time">${timeStr}</div>
+              <div class="log-title-wrap">
+                <div class="log-action-label">${actionLabel}</div>
+                <div class="log-msg">${msgHtml}</div>
+              </div>
+              <div class="log-time-wrap">
+                <div class="log-time">${timeStr}</div>
+              </div>
             </div>
             ${pillsHtml ? `<div class="log-meta-pills">${pillsHtml}</div>` : ''}
           </div>
