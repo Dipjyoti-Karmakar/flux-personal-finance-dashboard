@@ -14714,6 +14714,7 @@
                    parsedData.isRecPauseToggle || parsedData.isDelRec || 
                    parsedData.isRecArchive || parsedData.isRecRestore || 
                    parsedData.isDelRecPermanent || parsedData.isEarlyPay ||
+                   parsedData.isManualPay || parsedData.isSkip ||
                    rawMsg.includes('isAuto') || rawMsg.includes('isNewRec');
           }
           if (filter === 'event') {
@@ -14825,8 +14826,8 @@
         let pillsHtml = '';
         // Category pill with gradient (no pill for sub/event)
         if (parsedData.cat && l.a !== 'EDIT' && !isSub && !isEvt) {
-          const catKey = parsedData.cat.toLowerCase();
-          const catLabel = catKey.charAt(0).toUpperCase() + catKey.slice(1);
+          const catKey = parsedData.cat.toLowerCase().replace(/[^a-z0-9-]/g, '');
+          const catLabel = esc(parsedData.cat.charAt(0).toUpperCase() + parsedData.cat.slice(1));
           pillsHtml += `<span class="log-pill log-pill-cat-${catKey}">${catLabel}</span>`;
         }
         // Sub/Event type badges
