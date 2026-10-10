@@ -5449,16 +5449,6 @@
       transform: translateY(0) scale(1);
     }
 
-    /* Backdrop for mobile bottom sheet */
-    .log-filter-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 999;
-    }
-    .log-filter-backdrop.show { display: block; }
-
     .log-fpill {
       display: inline-flex;
       align-items: center;
@@ -7761,44 +7751,13 @@
       to   { opacity: 1; transform: none; }
     }
 
-    /* ── Custom select trigger refinement ── */
-    /* ── Log filter menu: mobile-friendly bottom sheet ── */
+    /* ── Log filter menu: prevent horizontal clip on mobile ── */
     @media (max-width: 520px) {
       .log-filter-menu {
-        position: fixed !important;
-        top: auto !important;
-        /* Sit above the mobile bottom nav bar */
-        bottom: 64px;
+        right: auto;
         left: 0;
-        right: 0;
-        /* Override base opacity/visibility — use transform + pointer-events instead */
-        opacity: 1 !important;
-        visibility: visible !important;
-        border-radius: 18px 18px 0 0;
-        max-height: 60vh;
-        overflow-y: auto;
-        transform-origin: bottom center;
-        padding: 12px 12px 16px;
-        transition: transform .3s cubic-bezier(0.16,1,0.3,1) !important;
-      }
-      .log-filter-menu::before {
-        content: '';
-        display: block;
-        width: 36px;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--bd);
-        margin: 0 auto 8px;
-      }
-      /* Hidden state: push completely off the bottom of the viewport */
-      .log-filter-menu:not(.show) {
-        transform: translateY(calc(100% + 80px)) !important;
-        pointer-events: none;
-      }
-      /* Visible state: slide in */
-      .log-filter-menu.show {
-        transform: translateY(0) !important;
-        pointer-events: auto;
+        max-width: calc(100vw - 16px);
+        min-width: 180px;
       }
     }
 
@@ -8802,7 +8761,6 @@
                 </div>
               </div>
             </div>
-            <div class="log-filter-backdrop" id="logFilterBackdrop" onclick="toggleLogFilterMenu()"></div>
           </div>
           <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()" title="Select logs to delete">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
@@ -17448,8 +17406,6 @@
         const dateCls = (val === 'all' && hasDateRange) ? ' flt-date' : '';
         mainBtn.className = 'log-filter-btn' + (btnCls ? ' ' + btnCls : '') + dateCls;
         document.getElementById('logFilterMenu').classList.remove('show');
-        const bd = document.getElementById('logFilterBackdrop');
-        if (bd) bd.classList.remove('show');
       }
 
       renderLogs();
@@ -17457,11 +17413,7 @@
 
     window.toggleLogFilterMenu = function() {
       const menu = document.getElementById('logFilterMenu');
-      const bd = document.getElementById('logFilterBackdrop');
-      if (menu) {
-        menu.classList.toggle('show');
-        if (bd) bd.classList.toggle('show', menu.classList.contains('show'));
-      }
+      if (menu) menu.classList.toggle('show');
     };
 
     window.setLogDateFilter = function() {
@@ -17498,8 +17450,6 @@
       const menu = document.getElementById('logFilterMenu');
       if (wrapper && menu && !wrapper.contains(e.target)) {
         menu.classList.remove('show');
-        const bd = document.getElementById('logFilterBackdrop');
-        if (bd) bd.classList.remove('show');
       }
     });
     window.scrollToForm = scrollToForm;
