@@ -14730,13 +14730,14 @@
       // Date range filter
       if (cLogDateFrom || cLogDateTo) {
         const from = cLogDateFrom ? new Date(cLogDateFrom + 'T00:00:00') : null;
-        const to   = cLogDateTo   ? new Date(cLogDateTo   + 'T23:59:59') : null;
+        // Exclusive upper bound: start of next day, so all timestamps on the To date are included
+        const to   = cLogDateTo ? (() => { const d = new Date(cLogDateTo + 'T00:00:00'); d.setDate(d.getDate() + 1); return d; })() : null;
         logs = logs.filter(l => {
           const ts = l.ts || l.t;
           const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
-          if (!d) return true;
+          if (!d) return false; // No timestamp — exclude from date-filtered results
           if (from && d < from) return false;
-          if (to   && d > to)   return false;
+          if (to   && d >= to)  return false;
           return true;
         });
       }
@@ -17390,7 +17391,10 @@
       if (mainBtn) {
         mainBtn.innerHTML = `${selectedSvg}<span>${selectedLabel}</span>`;
         const btnCls = (activeMap[val] || {}).btn || '';
-        mainBtn.className = 'log-filter-btn' + (btnCls ? ' ' + btnCls : '');
+        // Preserve flt-date when switching to All with an active date range
+        const hasDateRange = !!(cLogDateFrom || cLogDateTo);
+        const dateCls = (val === 'all' && hasDateRange) ? ' flt-date' : '';
+        mainBtn.className = 'log-filter-btn' + (btnCls ? ' ' + btnCls : '') + dateCls;
         document.getElementById('logFilterMenu').classList.remove('show');
       }
 
@@ -17405,11 +17409,15 @@
     window.setLogDateFilter = function() {
       cLogDateFrom = (document.getElementById('logDateFrom') || {}).value || '';
       cLogDateTo   = (document.getElementById('logDateTo')   || {}).value || '';
-      // Mark main btn with date indicator if either is set
       const mainBtn = document.getElementById('logFilterMainBtn');
-      if (mainBtn && (cLogDateFrom || cLogDateTo)) {
+      if (mainBtn) {
         const current = document.getElementById('logFilter').value;
-        if (current === 'all') mainBtn.classList.add('flt-date');
+        // Toggle flt-date on the main button: add when dates are set + filter is All, remove otherwise
+        if (current === 'all' && (cLogDateFrom || cLogDateTo)) {
+          mainBtn.classList.add('flt-date');
+        } else {
+          mainBtn.classList.remove('flt-date');
+        }
       }
       renderLogs();
     };
