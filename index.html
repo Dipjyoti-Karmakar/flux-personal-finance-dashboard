@@ -6233,6 +6233,7 @@
     .log-pill-offline { color: var(--of); background: var(--fb); border-color: color-mix(in srgb, var(--of) 30%, transparent); }
     .log-pill-sub     { color: #a78bfa; background: color-mix(in srgb, #a78bfa 10%, transparent); border-color: color-mix(in srgb, #a78bfa 25%, transparent); }
     .log-pill-evt     { color: var(--ac); background: color-mix(in srgb, var(--ac) 8%, transparent); border-color: color-mix(in srgb, var(--ac) 20%, transparent); }
+    .log-pill-manual  { color: var(--mu); background: color-mix(in srgb, var(--mu) 8%, transparent); border-color: color-mix(in srgb, var(--mu) 20%, transparent); letter-spacing: 0.5px; }
     /* Category pills — gradient backgrounds matching new-tx category card buttons */
     .log-pill[class*="log-pill-cat-"] { color: #fff; border: none; padding: 2px 9px; }
     .log-pill-cat-food          { background: linear-gradient(135deg, #FF7E5F, #FEB47B); }
@@ -14699,6 +14700,8 @@
         // Overlay sub/event distinct classes (don't tag auto as sub — auto has its own identity)
         if (isSub && !isAuto) { extraClass += ' log-item-sub'; }
         if (isEvt) { extraClass += ' log-item-evt'; }
+        // Manual sub: entries that are subscription-related but not auto-generated
+        const isManualSub = isSub && !isAuto;
 
         // Category emoji icon (from CICO map)
         const cat = (parsedData.cat || l.cat || '').toLowerCase();
@@ -14721,7 +14724,10 @@
         }
         // Sub/Event type badges
         if (isSub) pillsHtml += `<span class="log-pill log-pill-sub">Subscription</span>`;
+        if (isManualSub) pillsHtml += `<span class="log-pill log-pill-manual">Manual</span>`;
         if (isEvt) pillsHtml += `<span class="log-pill log-pill-evt">Event</span>`;
+        // Auto badge for auto-pay entries
+        if (isAuto && isSub) pillsHtml += `<span class="log-pill" style="color:var(--of);background:color-mix(in srgb,var(--of) 10%,transparent);border-color:color-mix(in srgb,var(--of) 25%,transparent)">Auto</span>`;
         // Online / Offline with correct brand colors
         if (parsedData.mode === 'online') {
           pillsHtml += `<span class="log-pill log-pill-online">Online</span>`;
