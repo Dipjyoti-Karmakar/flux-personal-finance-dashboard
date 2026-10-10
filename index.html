@@ -6235,23 +6235,21 @@
     .log-pill-offline { color: var(--of); background: var(--fb); border-color: color-mix(in srgb, var(--of) 30%, transparent); }
     .log-pill-sub     { color: #a78bfa; background: color-mix(in srgb, #a78bfa 10%, transparent); border-color: color-mix(in srgb, #a78bfa 25%, transparent); }
     .log-pill-evt     { color: var(--ac); background: color-mix(in srgb, var(--ac) 8%, transparent); border-color: color-mix(in srgb, var(--ac) 20%, transparent); }
-    .log-pill-amt     { font-size: 10px; font-weight: 700; }
-    .log-pill-income.log-pill-amt { color: var(--in); }
-    .log-pill-expense.log-pill-amt { color: var(--ex); }
-    /* Category-specific pill colors */
-    .log-pill-cat-food          { color: #c8876e; background: rgba(200,135,110,0.10); border-color: rgba(200,135,110,0.22); }
-    .log-pill-cat-transport     { color: #6e9dc8; background: rgba(110,157,200,0.10); border-color: rgba(110,157,200,0.22); }
-    .log-pill-cat-housing       { color: #8dc86e; background: rgba(141,200,110,0.10); border-color: rgba(141,200,110,0.22); }
-    .log-pill-cat-entertainment { color: #c86e9d; background: rgba(200,110,157,0.10); border-color: rgba(200,110,157,0.22); }
-    .log-pill-cat-health        { color: #6ec8b8; background: rgba(110,200,184,0.10); border-color: rgba(110,200,184,0.22); }
-    .log-pill-cat-shopping      { color: #c8a96e; background: rgba(200,169,110,0.10); border-color: rgba(200,169,110,0.22); }
-    .log-pill-cat-utilities     { color: #d4a820; background: rgba(212,168,32,0.10);  border-color: rgba(212,168,32,0.22); }
-    .log-pill-cat-occasions     { color: #9d6ec8; background: rgba(157,110,200,0.10); border-color: rgba(157,110,200,0.22); }
-    .log-pill-cat-salary        { color: #5dba8a; background: rgba(93,186,138,0.10);  border-color: rgba(93,186,138,0.22); }
-    .log-pill-cat-freelance     { color: #30cfd0; background: rgba(48,207,208,0.10);  border-color: rgba(48,207,208,0.22); }
-    .log-pill-cat-investment    { color: #b490ca; background: rgba(180,144,202,0.10); border-color: rgba(180,144,202,0.22); }
-    .log-pill-cat-stationery    { color: #8fa828; background: rgba(143,168,40,0.10);  border-color: rgba(143,168,40,0.22); }
-    .log-pill-cat-other         { color: #7a8099; background: rgba(122,128,153,0.10); border-color: rgba(122,128,153,0.22); }
+    /* Category pills — gradient backgrounds matching new-tx category card buttons */
+    .log-pill[class*="log-pill-cat-"] { color: #fff; border: none; padding: 2px 9px; }
+    .log-pill-cat-food          { background: linear-gradient(135deg, #FF7E5F, #FEB47B); }
+    .log-pill-cat-transport     { background: linear-gradient(135deg, #654ea3, #eaafc8); }
+    .log-pill-cat-housing       { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #0d0f14; }
+    .log-pill-cat-entertainment { background: linear-gradient(135deg, #f83600, #f9d423); }
+    .log-pill-cat-health        { background: linear-gradient(135deg, #4facfe, #00f2fe); color: #0d0f14; }
+    .log-pill-cat-shopping      { background: linear-gradient(135deg, #ff0844, #ffb199); }
+    .log-pill-cat-utilities     { background: linear-gradient(135deg, #f6d365, #fda085); color: #0d0f14; }
+    .log-pill-cat-occasions     { background: linear-gradient(135deg, #d4fc79, #96e6a1); color: #0d0f14; }
+    .log-pill-cat-salary        { background: linear-gradient(135deg, #5EE7DF, #B490CA); color: #0d0f14; }
+    .log-pill-cat-freelance     { background: linear-gradient(135deg, #30cfd0, #330867); }
+    .log-pill-cat-investment    { background: linear-gradient(135deg, #b224ef, #7579ff); }
+    .log-pill-cat-stationery    { background: linear-gradient(135deg, #FFE000, #799F0C); color: #0d0f14; }
+    .log-pill-cat-other         { background: linear-gradient(135deg, #89f7fe, #66a6ff); color: #0d0f14; }
 
     /* ── legacy compat ── */
     .log-item-icon-wrap { display: none; }
@@ -14730,12 +14728,7 @@
 
         // Pills
         let pillsHtml = '';
-        if (parsedData.amt !== undefined && l.a !== 'EDIT') {
-          const amtCls = parsedData.type === 'income' ? 'log-pill-income log-pill-amt' : 'log-pill-expense log-pill-amt';
-          const amtSign = parsedData.type === 'income' ? '+' : '−';
-          pillsHtml += `<span class="log-pill ${amtCls}">${amtSign}${fmt(parsedData.amt)}</span>`;
-        }
-        // Category pill with color palette (no text if sub/event)
+        // Category pill with gradient (no pill for sub/event)
         if (parsedData.cat && l.a !== 'EDIT' && !isSub && !isEvt) {
           const catKey = parsedData.cat.toLowerCase();
           const catLabel = catKey.charAt(0).toUpperCase() + catKey.slice(1);
