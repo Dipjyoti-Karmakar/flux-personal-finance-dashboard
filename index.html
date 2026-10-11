@@ -1055,142 +1055,15 @@
       border-color: var(--ac);
       color: var(--ac);
       transform: translateY(0);
-      box-shadow: inset 0 1px 4px rgba(200, 169, 110, 0.15), 0 0 10px color-mix(in srgb, var(--ac) 20%, transparent);
+      box-shadow: inset 0 1px 4px rgba(200, 169, 110, 0.15);
     }
-
-    /* ── Distinct Filter Button Color Themes ── */
-    /* Type: Income (Green) */
-    .ft.ty-flt-inc {
-      color: var(--in);
-      border-color: color-mix(in srgb, var(--in) 28%, var(--bd));
-      background: color-mix(in srgb, var(--in) 6%, transparent);
-    }
-    .ft.ty-flt-inc:hover:not(.act) {
-      color: var(--in);
-      border-color: color-mix(in srgb, var(--in) 60%, transparent);
-      background: color-mix(in srgb, var(--in) 12%, transparent);
-      box-shadow: 0 2px 10px color-mix(in srgb, var(--in) 20%, transparent);
-    }
-    .ft.ty-flt-inc.act {
-      background: var(--ib);
-      border-color: var(--in);
-      color: var(--in);
-      box-shadow: inset 0 1px 4px var(--ib), 0 0 12px color-mix(in srgb, var(--in) 25%, transparent);
-    }
-
-    /* Type: Expense (Coral / Red) */
-    .ft.ty-flt-exp {
-      color: var(--ex);
-      border-color: color-mix(in srgb, var(--ex) 28%, var(--bd));
-      background: color-mix(in srgb, var(--ex) 6%, transparent);
-    }
-    .ft.ty-flt-exp:hover:not(.act) {
-      color: var(--ex);
-      border-color: color-mix(in srgb, var(--ex) 60%, transparent);
-      background: color-mix(in srgb, var(--ex) 12%, transparent);
-      box-shadow: 0 2px 10px color-mix(in srgb, var(--ex) 20%, transparent);
-    }
-    .ft.ty-flt-exp.act {
-      background: var(--eb);
-      border-color: var(--ex);
-      color: var(--ex);
-      box-shadow: inset 0 1px 4px var(--eb), 0 0 12px color-mix(in srgb, var(--ex) 25%, transparent);
-    }
-
-    /* Mode: Online (Blue) */
-    .ft.mode-flt-on {
-      color: var(--on);
-      border-color: color-mix(in srgb, var(--on) 28%, var(--bd));
-      background: color-mix(in srgb, var(--on) 6%, transparent);
-    }
-    .ft.mode-flt-on:hover:not(.act) {
-      color: var(--on);
-      border-color: color-mix(in srgb, var(--on) 60%, transparent);
-      background: color-mix(in srgb, var(--on) 12%, transparent);
-      box-shadow: 0 2px 10px color-mix(in srgb, var(--on) 20%, transparent);
-    }
-    .ft.mode-flt-on.act {
-      background: var(--ob);
-      border-color: var(--on);
-      color: var(--on);
-      box-shadow: inset 0 1px 4px var(--ob), 0 0 12px color-mix(in srgb, var(--on) 25%, transparent);
-    }
-
-    /* Mode: Offline (Purple) */
-    .ft.mode-flt-of {
-      color: var(--of);
-      border-color: color-mix(in srgb, var(--of) 28%, var(--bd));
-      background: color-mix(in srgb, var(--of) 6%, transparent);
-    }
-    .ft.mode-flt-of:hover:not(.act) {
-      color: var(--of);
-      border-color: color-mix(in srgb, var(--of) 60%, transparent);
-      background: color-mix(in srgb, var(--of) 12%, transparent);
-      box-shadow: 0 2px 10px color-mix(in srgb, var(--of) 20%, transparent);
-    }
-    .ft.mode-flt-of.act {
-      background: var(--fb);
-      border-color: var(--of);
-      color: var(--of);
-      box-shadow: inset 0 1px 4px var(--fb), 0 0 12px color-mix(in srgb, var(--of) 25%, transparent);
-    }
-
-    /* Mode: Event (Orange / Amber) */
-    .ft.mode-flt-ev {
-      color: var(--ev);
-      border-color: color-mix(in srgb, var(--ev) 28%, var(--bd));
-      background: color-mix(in srgb, var(--ev) 6%, transparent);
-    }
-    .ft.mode-flt-ev:hover:not(.act) {
-      color: var(--ev);
-      border-color: color-mix(in srgb, var(--ev) 60%, transparent);
-      background: var(--ev-hov);
-      box-shadow: 0 2px 10px color-mix(in srgb, var(--ev) 20%, transparent);
-    }
-    .ft.mode-flt-ev.act {
-      background: var(--ev-bg);
-      border-color: var(--ev);
-      color: var(--ev);
-      box-shadow: inset 0 1px 4px var(--ev-bg), 0 0 12px color-mix(in srgb, var(--ev) 25%, transparent);
-    }
-
-    /* Mode: Subscription (Violet) */
-    .ft.mode-flt-sub {
-      color: var(--sub);
-      border-color: color-mix(in srgb, var(--sub) 28%, var(--bd));
-      background: color-mix(in srgb, var(--sub) 6%, transparent);
-    }
-    .ft.mode-flt-sub:hover:not(.act) {
-      color: var(--sub);
-      border-color: color-mix(in srgb, var(--sub) 60%, transparent);
-      background: var(--sub-hov);
-      box-shadow: 0 2px 10px color-mix(in srgb, var(--sub) 20%, transparent);
-    }
-    .ft.mode-flt-sub.act {
-      background: var(--sub-bg);
-      border-color: var(--sub);
-      color: var(--sub);
-      box-shadow: inset 0 1px 4px var(--sub-bg), 0 0 12px color-mix(in srgb, var(--sub) 25%, transparent);
-    }
-
-    /* Mode: Receipt (Teal) */
-    .ft.mode-flt-rc {
-      color: var(--rc);
-      border-color: color-mix(in srgb, var(--rc) 28%, var(--bd));
-      background: color-mix(in srgb, var(--rc) 6%, transparent);
-    }
-    .ft.mode-flt-rc:hover:not(.act) {
-      color: var(--rc);
-      border-color: var(--rc-bd);
-      background: var(--rc-hov);
-      box-shadow: 0 2px 10px color-mix(in srgb, var(--rc) 20%, transparent);
-    }
-    .ft.mode-flt-rc.act {
-      background: var(--rc-bg);
-      border-color: var(--rc);
-      color: var(--rc);
-      box-shadow: inset 0 1px 4px var(--rc-bg), 0 0 12px color-mix(in srgb, var(--rc) 25%, transparent);
-    }
+    .ft.ty-flt-inc.act  { border-color: var(--in);  color: var(--in);  background: var(--ib);     box-shadow: inset 0 1px 4px var(--ib); }
+    .ft.ty-flt-exp.act  { border-color: var(--ex);  color: var(--ex);  background: var(--eb);     box-shadow: inset 0 1px 4px var(--eb); }
+    .ft.mode-flt-on.act { border-color: var(--on);  color: var(--on);  background: var(--ob);     box-shadow: inset 0 1px 4px var(--ob); }
+    .ft.mode-flt-of.act { border-color: var(--of);  color: var(--of);  background: var(--fb);     box-shadow: inset 0 1px 4px var(--fb); }
+    .ft.mode-flt-ev.act { border-color: var(--ev);  color: var(--ev);  background: var(--ev-bg);  box-shadow: inset 0 1px 4px var(--ev-bg); }
+    .ft.mode-flt-sub.act{ border-color: var(--sub); color: var(--sub); background: var(--sub-bg); box-shadow: inset 0 1px 4px var(--sub-bg); }
+    .ft.mode-flt-rc.act { border-color: var(--rc);  color: var(--rc);  background: var(--rc-bg);  box-shadow: inset 0 1px 4px var(--rc-bg); }
 
     .txl {
       flex: 1;
