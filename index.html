@@ -61,6 +61,14 @@
       --rc-bg: rgba(45, 212, 191, 0.12);
       --rc-bd: rgba(45, 212, 191, 0.28);
       --rc-hov: rgba(45, 212, 191, 0.22);
+      --sub: #a78bfa;
+      --sub-bg: rgba(167, 139, 250, 0.12);
+      --sub-bd: rgba(167, 139, 250, 0.28);
+      --sub-hov: rgba(167, 139, 250, 0.22);
+      --ev: #fb923c;
+      --ev-bg: rgba(251, 146, 60, 0.12);
+      --ev-bd: rgba(251, 146, 60, 0.28);
+      --ev-hov: rgba(251, 146, 60, 0.22);
       --r: 18px;
       --rs: 12px;
       --sh-hov: 0 16px 40px rgba(0, 0, 0, 0.4);
@@ -97,6 +105,14 @@
       --rc-bg: hsla(174, 85%, 30%, 0.10);
       --rc-bd: hsla(174, 85%, 30%, 0.25);
       --rc-hov: hsla(174, 85%, 30%, 0.18);
+      --sub: hsl(258, 80%, 55%);
+      --sub-bg: hsla(258, 80%, 55%, 0.10);
+      --sub-bd: hsla(258, 80%, 55%, 0.25);
+      --sub-hov: hsla(258, 80%, 55%, 0.18);
+      --ev: hsl(24, 95%, 45%);
+      --ev-bg: hsla(24, 95%, 45%, 0.10);
+      --ev-bd: hsla(24, 95%, 45%, 0.25);
+      --ev-hov: hsla(24, 95%, 45%, 0.18);
       --sh-hov: 0 20px 48px rgba(20, 30, 70, 0.10), 0 4px 12px rgba(20, 30, 70, 0.06);
       --sh-btn: 0 8px 24px hsla(38, 92%, 38%, 0.28);
       --sh-card: 0 2px 8px rgba(20, 30, 70, 0.06), 0 1px 2px rgba(20, 30, 70, 0.04);
@@ -1039,18 +1055,141 @@
       border-color: var(--ac);
       color: var(--ac);
       transform: translateY(0);
-      box-shadow: inset 0 1px 4px rgba(200, 169, 110, 0.15)
+      box-shadow: inset 0 1px 4px rgba(200, 169, 110, 0.15), 0 0 10px color-mix(in srgb, var(--ac) 20%, transparent);
     }
 
+    /* ── Distinct Filter Button Color Themes ── */
+    /* Type: Income (Green) */
+    .ft.ty-flt-inc {
+      color: var(--in);
+      border-color: color-mix(in srgb, var(--in) 28%, var(--bd));
+      background: color-mix(in srgb, var(--in) 6%, transparent);
+    }
+    .ft.ty-flt-inc:hover:not(.act) {
+      color: var(--in);
+      border-color: color-mix(in srgb, var(--in) 60%, transparent);
+      background: color-mix(in srgb, var(--in) 12%, transparent);
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--in) 20%, transparent);
+    }
+    .ft.ty-flt-inc.act {
+      background: var(--ib);
+      border-color: var(--in);
+      color: var(--in);
+      box-shadow: inset 0 1px 4px var(--ib), 0 0 12px color-mix(in srgb, var(--in) 25%, transparent);
+    }
+
+    /* Type: Expense (Coral / Red) */
+    .ft.ty-flt-exp {
+      color: var(--ex);
+      border-color: color-mix(in srgb, var(--ex) 28%, var(--bd));
+      background: color-mix(in srgb, var(--ex) 6%, transparent);
+    }
+    .ft.ty-flt-exp:hover:not(.act) {
+      color: var(--ex);
+      border-color: color-mix(in srgb, var(--ex) 60%, transparent);
+      background: color-mix(in srgb, var(--ex) 12%, transparent);
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--ex) 20%, transparent);
+    }
+    .ft.ty-flt-exp.act {
+      background: var(--eb);
+      border-color: var(--ex);
+      color: var(--ex);
+      box-shadow: inset 0 1px 4px var(--eb), 0 0 12px color-mix(in srgb, var(--ex) 25%, transparent);
+    }
+
+    /* Mode: Online (Blue) */
+    .ft.mode-flt-on {
+      color: var(--on);
+      border-color: color-mix(in srgb, var(--on) 28%, var(--bd));
+      background: color-mix(in srgb, var(--on) 6%, transparent);
+    }
+    .ft.mode-flt-on:hover:not(.act) {
+      color: var(--on);
+      border-color: color-mix(in srgb, var(--on) 60%, transparent);
+      background: color-mix(in srgb, var(--on) 12%, transparent);
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--on) 20%, transparent);
+    }
+    .ft.mode-flt-on.act {
+      background: var(--ob);
+      border-color: var(--on);
+      color: var(--on);
+      box-shadow: inset 0 1px 4px var(--ob), 0 0 12px color-mix(in srgb, var(--on) 25%, transparent);
+    }
+
+    /* Mode: Offline (Purple) */
+    .ft.mode-flt-of {
+      color: var(--of);
+      border-color: color-mix(in srgb, var(--of) 28%, var(--bd));
+      background: color-mix(in srgb, var(--of) 6%, transparent);
+    }
+    .ft.mode-flt-of:hover:not(.act) {
+      color: var(--of);
+      border-color: color-mix(in srgb, var(--of) 60%, transparent);
+      background: color-mix(in srgb, var(--of) 12%, transparent);
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--of) 20%, transparent);
+    }
+    .ft.mode-flt-of.act {
+      background: var(--fb);
+      border-color: var(--of);
+      color: var(--of);
+      box-shadow: inset 0 1px 4px var(--fb), 0 0 12px color-mix(in srgb, var(--of) 25%, transparent);
+    }
+
+    /* Mode: Event (Orange / Amber) */
+    .ft.mode-flt-ev {
+      color: var(--ev);
+      border-color: color-mix(in srgb, var(--ev) 28%, var(--bd));
+      background: color-mix(in srgb, var(--ev) 6%, transparent);
+    }
+    .ft.mode-flt-ev:hover:not(.act) {
+      color: var(--ev);
+      border-color: color-mix(in srgb, var(--ev) 60%, transparent);
+      background: var(--ev-hov);
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--ev) 20%, transparent);
+    }
+    .ft.mode-flt-ev.act {
+      background: var(--ev-bg);
+      border-color: var(--ev);
+      color: var(--ev);
+      box-shadow: inset 0 1px 4px var(--ev-bg), 0 0 12px color-mix(in srgb, var(--ev) 25%, transparent);
+    }
+
+    /* Mode: Subscription (Violet) */
+    .ft.mode-flt-sub {
+      color: var(--sub);
+      border-color: color-mix(in srgb, var(--sub) 28%, var(--bd));
+      background: color-mix(in srgb, var(--sub) 6%, transparent);
+    }
+    .ft.mode-flt-sub:hover:not(.act) {
+      color: var(--sub);
+      border-color: color-mix(in srgb, var(--sub) 60%, transparent);
+      background: var(--sub-hov);
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--sub) 20%, transparent);
+    }
+    .ft.mode-flt-sub.act {
+      background: var(--sub-bg);
+      border-color: var(--sub);
+      color: var(--sub);
+      box-shadow: inset 0 1px 4px var(--sub-bg), 0 0 12px color-mix(in srgb, var(--sub) 25%, transparent);
+    }
+
+    /* Mode: Receipt (Teal) */
+    .ft.mode-flt-rc {
+      color: var(--rc);
+      border-color: color-mix(in srgb, var(--rc) 28%, var(--bd));
+      background: color-mix(in srgb, var(--rc) 6%, transparent);
+    }
+    .ft.mode-flt-rc:hover:not(.act) {
+      color: var(--rc);
+      border-color: var(--rc-bd);
+      background: var(--rc-hov);
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--rc) 20%, transparent);
+    }
     .ft.mode-flt-rc.act {
       background: var(--rc-bg);
       border-color: var(--rc);
       color: var(--rc);
-      box-shadow: inset 0 1px 4px var(--rc-bg);
-    }
-    .ft.mode-flt-rc:hover:not(.act) {
-      border-color: var(--rc-bd);
-      color: var(--rc);
+      box-shadow: inset 0 1px 4px var(--rc-bg), 0 0 12px color-mix(in srgb, var(--rc) 25%, transparent);
     }
 
     .txl {
@@ -9723,19 +9862,19 @@
               <div class="fltr-row">
                 <span class="fltr-label">Type</span>
                 <div class="fltr-btns">
-                  <button class="ft ty-flt act" onclick="setF('all', this)">All</button>
-                  <button class="ft ty-flt" onclick="setF('income', this)">Income</button>
-                  <button class="ft ty-flt" onclick="setF('expense', this)">Expense</button>
+                  <button class="ft ty-flt ty-flt-all act" onclick="setF('all', this)">All</button>
+                  <button class="ft ty-flt ty-flt-inc" onclick="setF('income', this)">Income</button>
+                  <button class="ft ty-flt ty-flt-exp" onclick="setF('expense', this)">Expense</button>
                 </div>
               </div>
               <div class="fltr-row">
                 <span class="fltr-label">Mode</span>
                 <div class="fltr-btns">
-                  <button class="ft mode-flt act" onclick="setModeFilt('all', this)">All</button>
-                  <button class="ft mode-flt" onclick="setModeFilt('online', this)">Online</button>
-                  <button class="ft mode-flt" onclick="setModeFilt('offline', this)">Offline</button>
-                  <button class="ft mode-flt" onclick="setModeFilt('event', this)">Event</button>
-                  <button class="ft mode-flt" onclick="setModeFilt('subscription', this)">Subscription</button>
+                  <button class="ft mode-flt mode-flt-all act" onclick="setModeFilt('all', this)">All</button>
+                  <button class="ft mode-flt mode-flt-on" onclick="setModeFilt('online', this)">Online</button>
+                  <button class="ft mode-flt mode-flt-of" onclick="setModeFilt('offline', this)">Offline</button>
+                  <button class="ft mode-flt mode-flt-ev" onclick="setModeFilt('event', this)">Event</button>
+                  <button class="ft mode-flt mode-flt-sub" onclick="setModeFilt('subscription', this)">Subscription</button>
                   <button class="ft mode-flt mode-flt-rc" onclick="setModeFilt('receipt', this)">Receipt</button>
                 </div>
               </div>
@@ -15962,20 +16101,28 @@
     (function initFab() {
       const fab = document.getElementById('fab');
       if (!fab) return;
-      let ticking = false;
-      window.addEventListener('scroll', () => {
-        if (ticking) return;
-        ticking = true;
-        requestAnimationFrame(() => {
-          const form = document.querySelector('.fb2');
-          if (form) {
+      const form = document.querySelector('.fb2');
+      if (!form) return;
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            fab.classList.toggle('hide', entry.isIntersecting);
+          }
+        }, { rootMargin: '0px', threshold: 0 });
+        observer.observe(form);
+      } else {
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(() => {
             const rect = form.getBoundingClientRect();
             const visible = rect.top < window.innerHeight && rect.bottom > 0;
             fab.classList.toggle('hide', visible);
-          }
-          ticking = false;
-        });
-      }, { passive: true });
+            ticking = false;
+          });
+        }, { passive: true });
+      }
     })();
 
     function setTxSearch(val) {
@@ -19756,14 +19903,27 @@
         if (ticking) return;
         ticking = true;
         requestAnimationFrame(() => {
-          cards.forEach((card, i) => {
-            const rect = card.getBoundingClientRect();
-            if (rect.top < window.innerHeight && rect.bottom > 0) {
-              const offset = (rect.top - window.innerHeight / 2) * 0.03 * (1 + i * 0.12);
-              card.style.setProperty('--py', offset.toFixed(1) + 'px');
-              card.classList.add('parallax-active');
+          // If scrolled well past the top summary cards, skip layout measurement
+          if (window.scrollY > 600) {
+            ticking = false;
+            return;
+          }
+          const winH = window.innerHeight;
+          const halfH = winH / 2;
+          // Batch all layout reads first to avoid forced reflow / layout thrashing
+          const rects = [];
+          for (let i = 0; i < cards.length; i++) {
+            rects.push(cards[i].getBoundingClientRect());
+          }
+          // Batch all style mutations after reads
+          for (let i = 0; i < cards.length; i++) {
+            const rect = rects[i];
+            if (rect.top < winH && rect.bottom > 0) {
+              const offset = (rect.top - halfH) * 0.03 * (1 + i * 0.12);
+              cards[i].style.setProperty('--py', offset.toFixed(1) + 'px');
+              cards[i].classList.add('parallax-active');
             }
-          });
+          }
           ticking = false;
         });
       }, { passive: true });
