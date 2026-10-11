@@ -8200,6 +8200,225 @@
       background: var(--sf);
     }
 
+
+    /* ══════════════════════════════════════════════════════════
+       ██  SUBSCRIPTIONS TAB — PHASE 2: SEARCH / FILTER / SORT ██
+       ══════════════════════════════════════════════════════════ */
+
+    /* ── Toolbar container ── */
+    .sub-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--sf) 80%, var(--s2));
+      border: 1px solid var(--bd);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+      animation-delay: 0.15s;
+    }
+
+    /* ── Search wrap ── */
+    .sub-search-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .sub-search-icon {
+      position: absolute;
+      left: 10px;
+      width: 13px;
+      height: 13px;
+      stroke: var(--mu);
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+
+    .sub-search-input {
+      width: 100%;
+      padding: 8px 30px 8px 30px;
+      border-radius: 50px;
+      border: 1px solid var(--bd);
+      background: var(--s2);
+      color: var(--tx);
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s, background .2s;
+      box-sizing: border-box;
+    }
+
+    .sub-search-input::placeholder { color: var(--mu); }
+
+    .sub-search-input:focus {
+      border-color: color-mix(in srgb, var(--ac) 55%, var(--bd));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 12%, transparent);
+      background: var(--sf);
+    }
+
+    .sub-search-clear {
+      position: absolute;
+      right: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: none;
+      background: var(--s3);
+      color: var(--mu);
+      font-size: 10px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s, color .15s;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .sub-search-clear:hover { background: var(--eb); color: var(--ex); }
+
+    /* ── Frequency pills ── */
+    .sub-filter-pills {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    .sub-fpill {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 12px;
+      border-radius: 50px;
+      border: 1px solid var(--bd);
+      background: transparent;
+      color: var(--mu);
+      font-family: 'DM Mono', monospace;
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .18s cubic-bezier(0.16,1,0.3,1);
+      white-space: nowrap;
+    }
+
+    .sub-fpill:hover {
+      border-color: color-mix(in srgb, var(--ac) 45%, var(--bd));
+      color: var(--tx);
+      background: color-mix(in srgb, var(--ac) 7%, transparent);
+    }
+
+    .sub-fpill.act {
+      background: color-mix(in srgb, var(--ac) 15%, transparent);
+      border-color: color-mix(in srgb, var(--ac) 50%, transparent);
+      color: var(--ac);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--ac) 15%, transparent);
+    }
+
+    /* ── Sort wrap ── */
+    .sub-sort-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .sub-sort-icon {
+      position: absolute;
+      left: 10px;
+      width: 12px;
+      height: 12px;
+      stroke: var(--mu);
+      pointer-events: none;
+    }
+
+    .sub-sort-select {
+      appearance: none;
+      -webkit-appearance: none;
+      padding: 7px 32px 7px 28px;
+      border-radius: 50px;
+      border: 1px solid var(--bd);
+      background: var(--s2);
+      color: var(--tx);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s, background .18s;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%237a8099' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+    }
+
+    .sub-sort-select:hover, .sub-sort-select:focus {
+      border-color: color-mix(in srgb, var(--ac) 45%, var(--bd));
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 10%, transparent);
+      background-color: var(--sf);
+    }
+
+    /* ── "No results" state when search matches nothing ── */
+    .sub-no-results {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      text-align: center;
+      border-radius: 16px;
+      border: 1px dashed var(--bd);
+      background: var(--sf);
+      color: var(--mu);
+      gap: 10px;
+    }
+
+    .sub-no-results-icon { font-size: 32px; }
+
+    .sub-no-results-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--tx);
+      font-family: 'Playfair Display', serif;
+    }
+
+    .sub-no-results-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.2px;
+      max-width: 260px;
+      line-height: 1.6;
+    }
+
+    /* ── Light theme adapts ── */
+    [data-theme="light"] .sub-toolbar {
+      background: color-mix(in srgb, var(--sf) 90%, var(--s2));
+      box-shadow: 0 2px 10px rgba(20,30,70,0.06);
+    }
+
+    [data-theme="light"] .sub-search-input,
+    [data-theme="light"] .sub-sort-select {
+      background: #fff;
+    }
+
+    /* ── Mobile: stack pills under search/sort row ── */
+    @media (max-width: 600px) {
+      .sub-toolbar { gap: 8px; padding: 10px 10px; }
+      .sub-filter-pills { order: 3; width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+      .sub-filter-pills::-webkit-scrollbar { display: none; }
+      .sub-sort-wrap { flex-shrink: 0; }
+    }
+
     /* ══ END PHASE 1 SUBSCRIPTIONS REDESIGN ══ */
 
     /* ── Confirm modal: center proper on desktop ── */
@@ -9200,6 +9419,30 @@
           <div class="sub-summary-lbl">Active</div>
         </div>
       </div>
+      <!-- Phase 2: Search / Filter / Sort toolbar -->
+      <div class="sub-toolbar section-in" id="subToolbar">
+        <div class="sub-search-wrap">
+          <svg class="sub-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="subSearchInput" class="sub-search-input" placeholder="Search subscriptions…" oninput="applySubFilters()" autocomplete="off" spellcheck="false">
+          <button class="sub-search-clear" id="subSearchClear" onclick="clearSubSearch()" title="Clear" style="display:none">✕</button>
+        </div>
+        <div class="sub-filter-pills" id="subFreqPills">
+          <button class="sub-fpill act" data-freq="all"     onclick="setSubFreq(this,'all')"    >All</button>
+          <button class="sub-fpill"     data-freq="monthly" onclick="setSubFreq(this,'monthly')" >Monthly</button>
+          <button class="sub-fpill"     data-freq="yearly"  onclick="setSubFreq(this,'yearly')"  >Yearly</button>
+          <button class="sub-fpill"     data-freq="weekly"  onclick="setSubFreq(this,'weekly')"  >Weekly</button>
+          <button class="sub-fpill"     data-freq="daily"   onclick="setSubFreq(this,'daily')"   >Daily</button>
+        </div>
+        <div class="sub-sort-wrap">
+          <svg class="sub-sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+          <select id="subSortSelect" class="sub-sort-select" onchange="applySubFilters()">
+            <option value="due">Next Due</option>
+            <option value="amount_desc">Amount: High → Low</option>
+            <option value="amount_asc">Amount: Low → High</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </div>
+      </div>
       <div id="subList" class="sub-grid"></div>
     </div>
 
@@ -9960,6 +10203,41 @@
     let currentRecAutoLog = true; // Auto-log toggle state for recurring modal
     let _notifSessionFired = new Set(); // Sub IDs already notified this session
     let _showingArchivedSubs = false; // true = Archived view, false = Active view
+    let _recurringLastHtml = ''; // Cache to skip re-render when recurring data hasn't changed
+    const _openSubHistPanels = new Set(); // Track open history panels across DOM rebuilds
+    // Phase 2: toolbar state
+    let _subSearchQuery = '';
+    let _subFreqFilter  = 'all';  // 'all' | 'monthly' | 'yearly' | 'weekly' | 'daily'
+    let _subSortMode    = 'due';  // 'due' | 'amount_desc' | 'amount_asc' | 'name'
+
+    function setSubFreq(btn, freq) {
+      _subFreqFilter = freq;
+      document.querySelectorAll('.sub-fpill').forEach(b => b.classList.remove('act'));
+      btn.classList.add('act');
+      _recurringLastHtml = ''; // force re-render
+      renderRecurring();
+    }
+
+    function clearSubSearch() {
+      const inp = document.getElementById('subSearchInput');
+      if (inp) inp.value = '';
+      _subSearchQuery = '';
+      const clr = document.getElementById('subSearchClear');
+      if (clr) clr.style.display = 'none';
+      _recurringLastHtml = '';
+      renderRecurring();
+    }
+
+    function applySubFilters() {
+      const inp = document.getElementById('subSearchInput');
+      _subSearchQuery = inp ? inp.value.trim().toLowerCase() : '';
+      const clr = document.getElementById('subSearchClear');
+      if (clr) clr.style.display = _subSearchQuery ? 'flex' : 'none';
+      const sel = document.getElementById('subSortSelect');
+      _subSortMode = sel ? sel.value : 'due';
+      _recurringLastHtml = ''; // force re-render
+      renderRecurring();
+    }
     let reportPeriodMode = 'month';
     let trendAbort = null;
     let trendMode = 'expense'; // 'expense' | 'income' | 'both'
@@ -15905,8 +16183,6 @@
       }
     }
 
-    let _recurringLastHtml = ''; // Cache to skip re-render when recurring data hasn't changed
-    const _openSubHistPanels = new Set(); // Track open history panels across DOM rebuilds
     function renderRecurring() {
       const area = document.getElementById('subList');
       if (!area) return;
@@ -15955,10 +16231,37 @@
         toggleBtn.style.display = (archivedCount > 0 || _showingArchivedSubs) ? 'inline-flex' : 'none';
       }
 
-      // Pick list based on view mode
-      const displayList = _showingArchivedSubs
+      // Pick list based on view mode + Phase 2: search / freq / sort
+      let displayList = _showingArchivedSubs
         ? recurringList.filter(r => r.archived)
         : recurringList.filter(r => !r.archived);
+
+      // Freq filter (skip in archived view — archived cards can have any freq)
+      if (!_showingArchivedSubs && _subFreqFilter !== 'all') {
+        displayList = displayList.filter(r => r.freq === _subFreqFilter);
+      }
+
+      // Search filter — name, category, notes (case-insensitive)
+      if (_subSearchQuery) {
+        displayList = displayList.filter(r => {
+          const name  = (r.name  || '').toLowerCase();
+          const cat   = (r.cat   || '').toLowerCase();
+          const notes = (r.notes || '').toLowerCase();
+          return name.includes(_subSearchQuery) || cat.includes(_subSearchQuery) || notes.includes(_subSearchQuery);
+        });
+      }
+
+      // Sort
+      const sortSel = document.getElementById('subSortSelect');
+      const sortMode = sortSel ? sortSel.value : _subSortMode;
+      if (sortMode === 'amount_desc') {
+        displayList = [...displayList].sort((a, b) => Math.abs(b.amount || 0) - Math.abs(a.amount || 0));
+      } else if (sortMode === 'amount_asc') {
+        displayList = [...displayList].sort((a, b) => Math.abs(a.amount || 0) - Math.abs(b.amount || 0));
+      } else if (sortMode === 'name') {
+        displayList = [...displayList].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      }
+      // 'due' keeps the existing recurringList order (already sorted by nextDue in loadRecurring)
 
       // Manage archived-view banner above the grid
       const existingBanner = document.getElementById('subArchivedBanner');
@@ -15978,18 +16281,36 @@
         if (existingBanner) existingBanner.remove();
       }
 
+      // Base list (before search/freq filter) to distinguish 'empty db' vs 'no filter match'
+      const baseList = _showingArchivedSubs
+        ? recurringList.filter(r => r.archived)
+        : recurringList.filter(r => !r.archived);
+      const filtersActive = !_showingArchivedSubs && (_subSearchQuery || _subFreqFilter !== 'all');
+
       if (!displayList.length) {
-        const emptyHtml = _showingArchivedSubs
-          ? '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px dashed color-mix(in srgb, var(--di) 25%, var(--bd));border-radius:var(--r)">'
+        let emptyHtml;
+        if (filtersActive && baseList.length > 0) {
+          // Filters active but no match — show 'no results' state
+          emptyHtml = '<div class="sub-no-results">'
+            + '<div class="sub-no-results-icon">\ud83d\udd0d</div>'
+            + '<div class="sub-no-results-title">No subscriptions found</div>'
+            + '<div class="sub-no-results-sub">Try a different search term or cadence filter.</div>'
+            + '<button onclick="clearSubSearch();setSubFreq(document.querySelector(\'.sub-fpill[data-freq=\'all\'\']\'),\'all\')" '
+            + 'style="margin-top:8px;padding:7px 18px;border-radius:50px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;">Clear Filters</button>'
+            + '</div>';
+        } else if (_showingArchivedSubs) {
+          emptyHtml = '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px dashed color-mix(in srgb, var(--di) 25%, var(--bd));border-radius:var(--r)">'
             + '<div class="empty-icon" style="font-size:36px;margin-bottom:12px">\ud83d\udce6</div>'
             + '<div class="empty-title" style="color:var(--di)">No archived subscriptions</div>'
             + '<div class="empty-sub">When you archive a subscription, it appears here. Past transactions stay tagged.</div>'
-            + '</div>'
-          : '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)">'
+            + '</div>';
+        } else {
+          emptyHtml = '<div class="empty-state" style="padding:48px 24px;grid-column:1/-1;text-align:center;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r)">'
             + '<div class="empty-icon" style="font-size:36px;margin-bottom:12px">\ud83d\udd01</div>'
             + '<div class="empty-title">No subscriptions yet</div>'
             + '<div class="empty-sub">Add recurring transactions like rent, Netflix, or salary to auto-track them every month.</div>'
             + '</div>';
+        }
         if (area.innerHTML !== emptyHtml) { area.innerHTML = emptyHtml; _recurringLastHtml = ''; }
         return;
       }
@@ -16855,6 +17176,17 @@
     function toggleArchivedView() {
       _showingArchivedSubs = !_showingArchivedSubs;
       _recurringLastHtml = ''; // Force full re-render
+      // Hide toolbar in archived view; reset filters when returning to active view
+      const toolbar = document.getElementById('subToolbar');
+      if (toolbar) toolbar.style.display = _showingArchivedSubs ? 'none' : '';
+      if (!_showingArchivedSubs) {
+        // Reset all filters when returning to active view
+        _subSearchQuery = ''; _subFreqFilter = 'all';
+        const inp = document.getElementById('subSearchInput'); if (inp) inp.value = '';
+        const clr = document.getElementById('subSearchClear'); if (clr) clr.style.display = 'none';
+        document.querySelectorAll('.sub-fpill').forEach(b => b.classList.toggle('act', b.dataset.freq === 'all'));
+        const sel = document.getElementById('subSortSelect'); if (sel) sel.value = 'due';
+      }
       renderRecurring();
     }
 
@@ -18014,6 +18346,10 @@
     window.deletePermanently = deletePermanently;
     window.toggleArchivedView = toggleArchivedView;
     window.toggleSubHistory = toggleSubHistory;
+    // Phase 2 toolbar
+    window.setSubFreq    = setSubFreq;
+    window.applySubFilters = applySubFilters;
+    window.clearSubSearch  = clearSubSearch;
     window.addAltAmount = addAltAmount;
     window.removeAltAmount = removeAltAmount;
     // PDF
