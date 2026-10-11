@@ -4916,8 +4916,8 @@
     .sub-hist-stat {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 11px 14px;
+      gap: 3px;
+      padding: 8px 10px;
       background: var(--s2);
       align-items: center;
       text-align: center;
@@ -4925,8 +4925,8 @@
 
     .sub-hist-stat-lbl {
       font-family: 'DM Mono', monospace;
-      font-size: 8.5px;
-      letter-spacing: 1.5px;
+      font-size: 8px;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
       color: var(--mu);
       font-weight: 600;
@@ -4934,7 +4934,7 @@
 
     .sub-hist-stat-val {
       font-family: 'DM Mono', monospace;
-      font-size: 14px;
+      font-size: 11.5px;
       font-weight: 700;
       color: var(--tx);
       line-height: 1;
@@ -8040,39 +8040,41 @@
        dividers (grid bg shows through gap). Do NOT set gap:0 or background:transparent
        on the cells — it removes the dividers. We only override cosmetic properties. */
     .sub-hist-stats {
-      border-radius: 14px;
+      border-radius: 12px;
       /* gap:1px and background:var(--bd) are kept from original to preserve hairline dividers */
-      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-      margin-bottom: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 12px;
     }
 
     .sub-hist-stat {
-      padding: 13px 16px;
+      padding: 8px 10px;
+      gap: 3px;
       /* background kept from original (var(--s2)) — needed for hairline divider trick */
     }
 
     .sub-hist-stat-lbl {
-      font-size: 9px;
-      letter-spacing: 1.6px;
+      font-size: 8px;
+      letter-spacing: 1.2px;
     }
 
     .sub-hist-stat-val {
-      font-size: 15px;
-      font-weight: 800;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
     }
 
     /* ── History list: softer rounded container ── */
     .sub-hist-list {
-      border-radius: 14px;
+      border-radius: 12px;
       border: 1px solid var(--bd);
       background: var(--s2);
     }
 
-    /* ── TX rows: slightly taller, more readable ── */
+    /* ── TX rows: refined compact readability ── */
     .sub-tx-row {
-      height: 38px;
-      padding: 0 14px;
-      gap: 12px;
+      height: 32px;
+      padding: 0 12px;
+      gap: 10px;
     }
 
     .sub-tx-row:hover {
@@ -8080,17 +8082,17 @@
     }
 
     .sub-tx-date {
-      font-size: 10.5px;
-      width: 72px;
+      font-size: 9.5px;
+      width: 66px;
     }
 
     .sub-tx-desc {
-      font-size: 12.5px;
+      font-size: 11px;
     }
 
     .sub-tx-amt {
-      font-size: 12.5px;
-      font-weight: 800;
+      font-size: 11px;
+      font-weight: 700;
     }
 
     /* ── Mark-as-Paid button: more prominent ── */
@@ -8324,6 +8326,70 @@
       box-shadow: 0 2px 8px color-mix(in srgb, var(--ac) 15%, transparent);
     }
 
+    /* Type filter pills: custom expense & income tones */
+    .sub-fpill.sub-type-exp.act {
+      background: color-mix(in srgb, var(--ex) 14%, transparent);
+      border-color: color-mix(in srgb, var(--ex) 50%, transparent);
+      color: var(--ex);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--ex) 15%, transparent);
+    }
+    .sub-fpill.sub-type-exp:hover:not(.act) {
+      border-color: color-mix(in srgb, var(--ex) 45%, var(--bd));
+      color: var(--ex);
+      background: color-mix(in srgb, var(--ex) 7%, transparent);
+    }
+
+    .sub-fpill.sub-type-inc.act {
+      background: color-mix(in srgb, var(--in) 14%, transparent);
+      border-color: color-mix(in srgb, var(--in) 50%, transparent);
+      color: var(--in);
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--in) 15%, transparent);
+    }
+    .sub-fpill.sub-type-inc:hover:not(.act) {
+      border-color: color-mix(in srgb, var(--in) 45%, var(--bd));
+      color: var(--in);
+      background: color-mix(in srgb, var(--in) 7%, transparent);
+    }
+
+    /* ── Select wraps (Sort & Due Date) ── */
+    .sub-select-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .sub-select-icon {
+      position: absolute;
+      left: 10px;
+      width: 12px;
+      height: 12px;
+      stroke: var(--mu);
+      pointer-events: none;
+    }
+
+    .sub-due-date-input {
+      padding: 6px 12px;
+      border-radius: 50px;
+      border: 1px solid var(--bd);
+      background: var(--s2);
+      color: var(--tx);
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      outline: none;
+      transition: border-color .18s, box-shadow .18s;
+      margin-left: 6px;
+      color-scheme: dark;
+    }
+    [data-theme="light"] .sub-due-date-input {
+      background: #fff;
+      color-scheme: light;
+    }
+    .sub-due-date-input:focus {
+      border-color: var(--ac);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 10%, transparent);
+    }
+
     /* ── Sort wrap ── */
     .sub-sort-wrap {
       position: relative;
@@ -8414,9 +8480,9 @@
     /* ── Mobile: stack pills under search/sort row ── */
     @media (max-width: 600px) {
       .sub-toolbar { gap: 8px; padding: 10px 10px; }
-      .sub-filter-pills { order: 3; width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
+      .sub-filter-pills { order: 3; width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
       .sub-filter-pills::-webkit-scrollbar { display: none; }
-      .sub-sort-wrap { flex-shrink: 0; }
+      .sub-sort-wrap, .sub-select-wrap { flex-shrink: 0; }
     }
 
     /* ══ END PHASE 1 SUBSCRIPTIONS REDESIGN ══ */
@@ -9426,17 +9492,34 @@
           <input type="text" id="subSearchInput" class="sub-search-input" placeholder="Search subscriptions…" oninput="applySubFilters()" autocomplete="off" spellcheck="false">
           <button class="sub-search-clear" id="subSearchClear" onclick="clearSubSearch()" title="Clear" style="display:none">✕</button>
         </div>
-        <div class="sub-filter-pills" id="subFreqPills">
+        <div class="sub-filter-pills sub-type-pills" id="subTypePills" title="Filter by Type">
+          <button class="sub-fpill act" data-type="all"     onclick="setSubType(this,'all')"    >All Types</button>
+          <button class="sub-fpill sub-type-exp" data-type="expense" onclick="setSubType(this,'expense')" >Expense</button>
+          <button class="sub-fpill sub-type-inc" data-type="income"  onclick="setSubType(this,'income')"  >Income</button>
+        </div>
+        <div class="sub-filter-pills" id="subFreqPills" title="Filter by Cadence">
           <button class="sub-fpill act" data-freq="all"     onclick="setSubFreq(this,'all')"    >All</button>
           <button class="sub-fpill"     data-freq="monthly" onclick="setSubFreq(this,'monthly')" >Monthly</button>
           <button class="sub-fpill"     data-freq="yearly"  onclick="setSubFreq(this,'yearly')"  >Yearly</button>
           <button class="sub-fpill"     data-freq="weekly"  onclick="setSubFreq(this,'weekly')"  >Weekly</button>
           <button class="sub-fpill"     data-freq="daily"   onclick="setSubFreq(this,'daily')"   >Daily</button>
         </div>
+        <div class="sub-select-wrap sub-due-wrap" id="subDueWrap">
+          <svg class="sub-select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <select id="subDueSelect" class="sub-sort-select" onchange="onSubDueChange()" title="Filter by Due Date">
+            <option value="all">All Due Dates</option>
+            <option value="overdue">Overdue</option>
+            <option value="today">Due Today</option>
+            <option value="soon">Due Soon (7d)</option>
+            <option value="month">Due This Month</option>
+            <option value="custom">Exact Date…</option>
+          </select>
+          <input type="date" id="subDueDateInput" class="sub-due-date-input" style="display:none" onchange="applySubFilters()" title="Select due date">
+        </div>
         <div class="sub-sort-wrap">
           <svg class="sub-sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
           <select id="subSortSelect" class="sub-sort-select" onchange="applySubFilters()">
-            <option value="due">Next Due</option>
+            <option value="due">Sort: Next Due</option>
             <option value="amount_desc">Amount: High → Low</option>
             <option value="amount_asc">Amount: Low → High</option>
             <option value="name">Name A–Z</option>
@@ -10208,13 +10291,43 @@
     // Phase 2: toolbar state
     let _subSearchQuery = '';
     let _subFreqFilter  = 'all';  // 'all' | 'monthly' | 'yearly' | 'weekly' | 'daily'
+    let _subTypeFilter  = 'all';  // 'all' | 'expense' | 'income'
+    let _subDueFilter   = 'all';  // 'all' | 'overdue' | 'today' | 'soon' | 'month' | 'custom'
+    let _subDueDateVal  = '';     // YYYY-MM-DD
     let _subSortMode    = 'due';  // 'due' | 'amount_desc' | 'amount_asc' | 'name'
 
     function setSubFreq(btn, freq) {
       _subFreqFilter = freq;
-      document.querySelectorAll('.sub-fpill').forEach(b => b.classList.remove('act'));
-      btn.classList.add('act');
+      document.querySelectorAll('#subFreqPills .sub-fpill').forEach(b => b.classList.remove('act'));
+      if (btn) btn.classList.add('act');
       _recurringLastHtml = ''; // force re-render
+      renderRecurring();
+    }
+
+    function setSubType(btn, type) {
+      _subTypeFilter = type;
+      document.querySelectorAll('#subTypePills .sub-fpill').forEach(b => b.classList.remove('act'));
+      if (btn) btn.classList.add('act');
+      _recurringLastHtml = ''; // force re-render
+      renderRecurring();
+    }
+
+    function onSubDueChange() {
+      const sel = document.getElementById('subDueSelect');
+      const val = sel ? sel.value : 'all';
+      _subDueFilter = val;
+      const dateInp = document.getElementById('subDueDateInput');
+      if (dateInp) {
+        if (val === 'custom') {
+          dateInp.style.display = 'inline-block';
+          dateInp.focus();
+        } else {
+          dateInp.style.display = 'none';
+          dateInp.value = '';
+          _subDueDateVal = '';
+        }
+      }
+      _recurringLastHtml = '';
       renderRecurring();
     }
 
@@ -10228,11 +10341,34 @@
       renderRecurring();
     }
 
+    function clearSubFilters() {
+      clearSubSearch();
+      _subTypeFilter = 'all';
+      document.querySelectorAll('#subTypePills .sub-fpill').forEach(b => b.classList.toggle('act', b.dataset.type === 'all'));
+      _subFreqFilter = 'all';
+      document.querySelectorAll('#subFreqPills .sub-fpill').forEach(b => b.classList.toggle('act', b.dataset.freq === 'all'));
+      _subDueFilter = 'all';
+      _subDueDateVal = '';
+      const dueSel = document.getElementById('subDueSelect');
+      if (dueSel) dueSel.value = 'all';
+      const dateInp = document.getElementById('subDueDateInput');
+      if (dateInp) { dateInp.style.display = 'none'; dateInp.value = ''; }
+      const sortSel = document.getElementById('subSortSelect');
+      if (sortSel) sortSel.value = 'due';
+      _subSortMode = 'due';
+      _recurringLastHtml = '';
+      renderRecurring();
+    }
+
     function applySubFilters() {
       const inp = document.getElementById('subSearchInput');
       _subSearchQuery = inp ? inp.value.trim().toLowerCase() : '';
       const clr = document.getElementById('subSearchClear');
       if (clr) clr.style.display = _subSearchQuery ? 'flex' : 'none';
+      const dueSel = document.getElementById('subDueSelect');
+      if (dueSel) _subDueFilter = dueSel.value;
+      const dateInp = document.getElementById('subDueDateInput');
+      if (dateInp) _subDueDateVal = dateInp.value;
       const sel = document.getElementById('subSortSelect');
       _subSortMode = sel ? sel.value : 'due';
       _recurringLastHtml = ''; // force re-render
@@ -16231,18 +16367,40 @@
         toggleBtn.style.display = (archivedCount > 0 || _showingArchivedSubs) ? 'inline-flex' : 'none';
       }
 
-      // Pick list based on view mode + Phase 2: search / freq / sort
+      // Pick list based on view mode + Phase 2: search / freq / type / due / sort
       let displayList = _showingArchivedSubs
         ? recurringList.filter(r => r.archived)
         : recurringList.filter(r => !r.archived);
+
+      // Type filter: Expense / Income (skip in archived view)
+      if (!_showingArchivedSubs && _subTypeFilter !== 'all') {
+        displayList = displayList.filter(r => (r.type || 'expense') === _subTypeFilter);
+      }
 
       // Freq filter (skip in archived view — archived cards can have any freq)
       if (!_showingArchivedSubs && _subFreqFilter !== 'all') {
         displayList = displayList.filter(r => r.freq === _subFreqFilter);
       }
 
-      // Search filter — name, category, notes (case-insensitive)
-      if (_subSearchQuery) {
+      // Due Date filter (skip in archived view)
+      if (!_showingArchivedSubs && _subDueFilter !== 'all') {
+        const curMonth = today.slice(0, 7);
+        displayList = displayList.filter(r => {
+          if (!r.nextDue) return false;
+          if (_subDueFilter === 'overdue') return r.nextDue < today;
+          if (_subDueFilter === 'today') return r.nextDue === today;
+          if (_subDueFilter === 'soon') {
+            const dUntil = Math.ceil((new Date(r.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+            return dUntil >= 0 && dUntil <= 7;
+          }
+          if (_subDueFilter === 'month') return r.nextDue.slice(0, 7) === curMonth;
+          if (_subDueFilter === 'custom' && _subDueDateVal) return r.nextDue === _subDueDateVal;
+          return true;
+        });
+      }
+
+      // Search filter — name, category, notes (case-insensitive) (skip in archived view)
+      if (!_showingArchivedSubs && _subSearchQuery) {
         displayList = displayList.filter(r => {
           const name  = (r.name  || '').toLowerCase();
           const cat   = (r.cat   || '').toLowerCase();
@@ -16270,9 +16428,9 @@
           const banner = document.createElement('div');
           banner.id = 'subArchivedBanner';
           banner.className = 'sub-archived-banner';
-          banner.innerHTML = '<span class="sub-archived-banner-icon">\ud83d\udce6</span>'
+          banner.innerHTML = '<span class="sub-archived-banner-icon">📦</span>'
             + '<span class="sub-archived-banner-text">'
-            + '<strong>Archived Subscriptions</strong> \u2014 these have ended. '
+            + '<strong>Archived Subscriptions</strong> — these have ended. '
             + 'Past transactions remain tagged. Restore to reactivate or delete permanently.'
             + '</span>';
           area.parentNode.insertBefore(banner, area);
@@ -16281,21 +16439,27 @@
         if (existingBanner) existingBanner.remove();
       }
 
-      // Base list (before search/freq filter) to distinguish 'empty db' vs 'no filter match'
+      // Base list (before search/freq/type/due filter) to distinguish 'empty db' vs 'no filter match'
       const baseList = _showingArchivedSubs
         ? recurringList.filter(r => r.archived)
         : recurringList.filter(r => !r.archived);
-      const filtersActive = !_showingArchivedSubs && (_subSearchQuery || _subFreqFilter !== 'all');
+      const filtersActive = !_showingArchivedSubs && (
+        _subSearchQuery ||
+        _subFreqFilter !== 'all' ||
+        _subTypeFilter !== 'all' ||
+        _subDueFilter !== 'all' ||
+        _subDueDateVal !== ''
+      );
 
       if (!displayList.length) {
         let emptyHtml;
         if (filtersActive && baseList.length > 0) {
           // Filters active but no match — show 'no results' state
           emptyHtml = '<div class="sub-no-results">'
-            + '<div class="sub-no-results-icon">\ud83d\udd0d</div>'
+            + '<div class="sub-no-results-icon">🔍</div>'
             + '<div class="sub-no-results-title">No subscriptions found</div>'
-            + '<div class="sub-no-results-sub">Try a different search term or cadence filter.</div>'
-            + '<button onclick="clearSubSearch();setSubFreq(document.querySelector(\'.sub-fpill[data-freq=\'all\'\']\'),\'all\')" '
+            + '<div class="sub-no-results-sub">Try adjusting your search term, type, cadence, or due date filter.</div>'
+            + '<button onclick="clearSubFilters()" '
             + 'style="margin-top:8px;padding:7px 18px;border-radius:50px;border:1px solid var(--bd);background:var(--s2);color:var(--tx);font-family:\'DM Mono\',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;">Clear Filters</button>'
             + '</div>';
         } else if (_showingArchivedSubs) {
@@ -17181,10 +17345,13 @@
       if (toolbar) toolbar.style.display = _showingArchivedSubs ? 'none' : '';
       if (!_showingArchivedSubs) {
         // Reset all filters when returning to active view
-        _subSearchQuery = ''; _subFreqFilter = 'all';
+        _subSearchQuery = ''; _subFreqFilter = 'all'; _subTypeFilter = 'all'; _subDueFilter = 'all'; _subDueDateVal = '';
         const inp = document.getElementById('subSearchInput'); if (inp) inp.value = '';
         const clr = document.getElementById('subSearchClear'); if (clr) clr.style.display = 'none';
-        document.querySelectorAll('.sub-fpill').forEach(b => b.classList.toggle('act', b.dataset.freq === 'all'));
+        document.querySelectorAll('#subTypePills .sub-fpill').forEach(b => b.classList.toggle('act', b.dataset.type === 'all'));
+        document.querySelectorAll('#subFreqPills .sub-fpill').forEach(b => b.classList.toggle('act', b.dataset.freq === 'all'));
+        const dueSel = document.getElementById('subDueSelect'); if (dueSel) dueSel.value = 'all';
+        const dateInp = document.getElementById('subDueDateInput'); if (dateInp) { dateInp.style.display = 'none'; dateInp.value = ''; }
         const sel = document.getElementById('subSortSelect'); if (sel) sel.value = 'due';
       }
       renderRecurring();
@@ -18347,9 +18514,12 @@
     window.toggleArchivedView = toggleArchivedView;
     window.toggleSubHistory = toggleSubHistory;
     // Phase 2 toolbar
-    window.setSubFreq    = setSubFreq;
+    window.setSubFreq      = setSubFreq;
+    window.setSubType      = setSubType;
+    window.onSubDueChange  = onSubDueChange;
     window.applySubFilters = applySubFilters;
     window.clearSubSearch  = clearSubSearch;
+    window.clearSubFilters = clearSubFilters;
     window.addAltAmount = addAltAmount;
     window.removeAltAmount = removeAltAmount;
     // PDF
