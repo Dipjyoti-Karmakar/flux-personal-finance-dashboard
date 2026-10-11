@@ -7700,6 +7700,508 @@
       font-size: 10px;
     }
 
+    /* ══════════════════════════════════════════════════════════
+       ██  SUBSCRIPTIONS TAB — PHASE 1 PREMIUM REDESIGN  ██
+       CSS-only. Zero HTML / JS changes. Safe to add / remove.
+       ══════════════════════════════════════════════════════════ */
+
+    /* ── Sub view: tighter padding, max-width bump ── */
+    #subView {
+      max-width: 1040px;
+      padding: 28px 0 0;
+    }
+
+    /* ── Sub header: Playfair title gets gradient shimmer ── */
+    .sub-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(120deg, var(--tx) 35%, var(--ac) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Add-Subscription button: larger, more presence ── */
+    .sub-add-btn {
+      padding: 10px 20px;
+      font-size: 10.5px;
+      letter-spacing: 1.1px;
+      box-shadow: 0 4px 18px color-mix(in srgb, var(--ac) 35%, transparent),
+                  0 0 0 1px color-mix(in srgb, var(--ac) 20%, transparent);
+    }
+
+    .sub-add-btn svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    /* ── Summary Bar: floating card with radial glow ── */
+    .sub-summary-bar {
+      border-radius: 20px;
+      border: 1px solid color-mix(in srgb, var(--ac) 18%, var(--bd));
+      background: linear-gradient(145deg,
+        color-mix(in srgb, var(--ac) 6%, var(--s2)) 0%,
+        var(--s2) 45%,
+        color-mix(in srgb, var(--on) 4%, var(--s2)) 100%
+      );
+      box-shadow:
+        0 1px 0 color-mix(in srgb, var(--ac) 10%, transparent) inset,
+        0 8px 32px rgba(0,0,0,0.18);
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle inner radial glow for dark mode */
+    .sub-summary-bar::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 15% 50%, color-mix(in srgb, var(--ac) 8%, transparent) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .sub-summary-item {
+      padding: 20px 24px;
+      gap: 7px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .sub-summary-item + .sub-summary-item {
+      border-left: 1px solid color-mix(in srgb, var(--bd) 70%, transparent);
+    }
+
+    .sub-summary-val {
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.5px;
+      /* Gradient text handled by existing rule, this just bumps size/weight */
+    }
+
+    .sub-summary-lbl {
+      font-size: 9px;
+      letter-spacing: 1.8px;
+    }
+
+    /* ── Summary item: subtle hover lift ── */
+    .sub-summary-item:hover {
+      background: color-mix(in srgb, var(--ac) 4%, transparent);
+      transition: background 0.2s;
+    }
+
+    /* ── Cards Grid: slightly larger gap ── */
+    .sub-grid {
+      gap: 18px;
+    }
+
+    /* ── Subscription Card: premium layered treatment ── */
+    .sub-card {
+      border-radius: 20px;
+      padding: 20px;
+      border: 1px solid var(--bd);
+      background: linear-gradient(160deg,
+        color-mix(in srgb, var(--sf) 97%, var(--ac)) 0%,
+        var(--sf) 55%
+      );
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10), 0 1px 0 color-mix(in srgb, #fff 4%, transparent) inset;
+      transition: border-color .28s cubic-bezier(0.16,1,0.3,1),
+                  box-shadow .28s cubic-bezier(0.16,1,0.3,1),
+                  transform .28s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    /* Top-edge light line (simulates glass top highlight) — not for archived (uses left-stripe ::before) */
+    .sub-card:not(.sub-archived)::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 16px; right: 16px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, #fff 12%, transparent), transparent);
+      pointer-events: none;
+    }
+
+    .sub-card:hover {
+      border-color: color-mix(in srgb, var(--ac) 30%, var(--bd));
+      box-shadow:
+        0 12px 36px rgba(0,0,0,0.22),
+        0 0 0 1px color-mix(in srgb, var(--ac) 10%, transparent),
+        0 1px 0 color-mix(in srgb, #fff 6%, transparent) inset;
+      transform: translateY(-3px);
+    }
+
+    /* Re-assert: suppress lift when history panel is open (original :has() rule wins
+       at lower cascade; re-declare here to ensure our stronger hover is also suppressed) */
+    .sub-card:has(.sub-hist-panel.open),
+    .sub-card:has(.sub-hist-panel.open):hover {
+      transform: none !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10), 0 1px 0 color-mix(in srgb, #fff 4%, transparent) inset;
+      border-color: var(--bd);
+    }
+
+    /* ── Paused card: muted glass ── */
+    .sub-card.sub-paused {
+      opacity: 0.5;
+      filter: saturate(0.35) brightness(0.92);
+    }
+
+    /* ── Overdue card: red ambient halo ── */
+    .sub-card.sub-overdue {
+      border-color: color-mix(in srgb, var(--ex) 55%, var(--bd));
+      background: linear-gradient(160deg,
+        color-mix(in srgb, var(--ex) 5%, var(--sf)) 0%,
+        var(--sf) 50%
+      );
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--ex) 22%, transparent),
+        0 6px 24px color-mix(in srgb, var(--ex) 12%, transparent);
+    }
+
+    /* ── Card top row: more breathing room ── */
+    .sub-card-top {
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    /* ── Icon: elevated floating tile with ambient shadow ── */
+    .sub-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      font-size: 22px;
+      background: linear-gradient(145deg, var(--s3), var(--s2));
+      border: 1px solid var(--bd);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18), 0 1px 0 color-mix(in srgb, #fff 8%, transparent) inset;
+      transition: transform .2s cubic-bezier(0.16,1,0.3,1), box-shadow .2s;
+    }
+
+    .sub-card:hover .sub-card-icon {
+      transform: scale(1.06) rotate(-2deg);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25), 0 1px 0 color-mix(in srgb, #fff 10%, transparent) inset;
+    }
+
+    /* ── Card name: slightly larger, sharper ── */
+    .sub-card-name {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      margin-bottom: 5px;
+    }
+
+    /* ── Plan sub-label: refined ── */
+    .sub-card-plan {
+      font-size: 10px;
+      letter-spacing: 0.4px;
+      margin-bottom: 5px;
+    }
+
+    /* ── Renewal date: slightly warmer color ── */
+    .sub-card-renewal {
+      font-size: 10px;
+      letter-spacing: 0.2px;
+    }
+
+    /* ── Amount: bolder, larger ── */
+    .sub-card-amt {
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    /* ── Status Badges: rounder, more refined ── */
+    .sub-badge {
+      border-radius: 10px;
+      height: 20px;
+      padding: 0 9px;
+      font-size: 9.5px;
+      letter-spacing: 0.5px;
+    }
+
+    /* Active badge: clean green glow */
+    .sub-badge.badge-active {
+      box-shadow: 0 0 8px color-mix(in srgb, var(--in) 18%, transparent);
+    }
+
+    /* Due badge: golden amber glow */
+    .sub-badge.badge-due {
+      box-shadow: 0 0 10px color-mix(in srgb, var(--ac) 25%, transparent);
+    }
+
+    /* Overdue badge: red glow */
+    .sub-badge.badge-overdue {
+      box-shadow: 0 0 10px color-mix(in srgb, var(--ex) 28%, transparent);
+    }
+
+    /* Soon badge: warm amber */
+    .sub-badge.badge-soon {
+      box-shadow: 0 0 8px color-mix(in srgb, #f59e0b 20%, transparent);
+    }
+
+    /* ── Actions row: premium button strip ── */
+    .sub-card-actions {
+      padding-top: 14px;
+      border-top: 1px solid var(--bd);
+      gap: 8px;
+    }
+
+    /* ── Action buttons: rounder, cleaner ── */
+    .sub-action-btn {
+      padding: 9px 6px;
+      border-radius: 12px;
+      font-size: 10px;
+      letter-spacing: 0.4px;
+      gap: 5px;
+      background: color-mix(in srgb, var(--s3) 60%, transparent);
+      border: 1px solid var(--bd);
+      color: var(--mu);
+      transition: all .22s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    .sub-action-btn:hover {
+      transform: translateY(-1px);
+      background: var(--sf);
+      color: var(--tx);
+      border-color: var(--bs);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+
+    /* Pause: warm amber */
+    .sub-action-btn.pause-btn:hover {
+      background: color-mix(in srgb, #f59e0b 13%, transparent);
+      color: #f59e0b;
+      border-color: color-mix(in srgb, #f59e0b 40%, transparent);
+      box-shadow: 0 4px 14px color-mix(in srgb, #f59e0b 15%, transparent);
+    }
+
+    /* Edit: cool blue */
+    .sub-action-btn.edit-btn:hover {
+      background: color-mix(in srgb, #3b82f6 13%, transparent);
+      color: #3b82f6;
+      border-color: color-mix(in srgb, #3b82f6 40%, transparent);
+      box-shadow: 0 4px 14px color-mix(in srgb, #3b82f6 15%, transparent);
+    }
+
+    /* Delete/Archive: red */
+    .sub-action-btn.del-btn:hover {
+      background: color-mix(in srgb, var(--ex) 13%, transparent);
+      color: var(--ex);
+      border-color: color-mix(in srgb, var(--ex) 40%, transparent);
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--ex) 15%, transparent);
+    }
+
+    /* History: gold accent */
+    .sub-action-btn.hist-btn:hover,
+    .sub-action-btn.hist-btn.act {
+      background: color-mix(in srgb, var(--ac) 13%, transparent);
+      color: var(--ac);
+      border-color: color-mix(in srgb, var(--ac) 40%, transparent);
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--ac) 15%, transparent);
+    }
+
+    /* Restore: green */
+    .sub-action-btn.restore-btn:hover {
+      background: color-mix(in srgb, var(--in) 13%, transparent);
+      color: var(--in);
+      border-color: color-mix(in srgb, var(--in) 40%, transparent);
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--in) 15%, transparent);
+    }
+
+    /* Perm-delete: deep red */
+    .sub-action-btn.perm-del-btn:hover {
+      background: color-mix(in srgb, var(--ex) 15%, transparent);
+      color: var(--ex);
+      border-color: color-mix(in srgb, var(--ex) 45%, transparent);
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--ex) 18%, transparent);
+    }
+
+    /* ── History Panel: smoother reveal ── */
+    .sub-hist-panel {
+      transition: max-height .42s cubic-bezier(0.16, 1, 0.3, 1), opacity .3s ease;
+      opacity: 0;
+    }
+
+    .sub-hist-panel.open {
+      opacity: 1;
+      transition: max-height .42s cubic-bezier(0.16, 1, 0.3, 1), opacity .3s ease .05s;
+    }
+
+    .sub-hist-inner {
+      margin-top: 16px;
+      border-top: 1px solid var(--bd);
+      padding-top: 16px;
+    }
+
+    /* ── History stats bar: softer, rounder ── */
+    /* NOTE: gap:1px + background on the grid container creates the hairline cell
+       dividers (grid bg shows through gap). Do NOT set gap:0 or background:transparent
+       on the cells — it removes the dividers. We only override cosmetic properties. */
+    .sub-hist-stats {
+      border-radius: 14px;
+      /* gap:1px and background:var(--bd) are kept from original to preserve hairline dividers */
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      margin-bottom: 14px;
+    }
+
+    .sub-hist-stat {
+      padding: 13px 16px;
+      /* background kept from original (var(--s2)) — needed for hairline divider trick */
+    }
+
+    .sub-hist-stat-lbl {
+      font-size: 9px;
+      letter-spacing: 1.6px;
+    }
+
+    .sub-hist-stat-val {
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    /* ── History list: softer rounded container ── */
+    .sub-hist-list {
+      border-radius: 14px;
+      border: 1px solid var(--bd);
+      background: var(--s2);
+    }
+
+    /* ── TX rows: slightly taller, more readable ── */
+    .sub-tx-row {
+      height: 38px;
+      padding: 0 14px;
+      gap: 12px;
+    }
+
+    .sub-tx-row:hover {
+      background: color-mix(in srgb, var(--ac) 4%, var(--s3));
+    }
+
+    .sub-tx-date {
+      font-size: 10.5px;
+      width: 72px;
+    }
+
+    .sub-tx-desc {
+      font-size: 12.5px;
+    }
+
+    .sub-tx-amt {
+      font-size: 12.5px;
+      font-weight: 800;
+    }
+
+    /* ── Mark-as-Paid button: more prominent ── */
+    .mark-paid-btn {
+      border-radius: 12px !important;
+      font-size: 12.5px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.3px !important;
+      box-shadow: 0 4px 14px color-mix(in srgb, var(--in) 18%, transparent) !important;
+      transition: all .22s cubic-bezier(0.16,1,0.3,1) !important;
+    }
+
+    .mark-paid-btn:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 6px 20px color-mix(in srgb, var(--in) 28%, transparent) !important;
+      background: color-mix(in srgb, var(--in) 22%, transparent) !important;
+    }
+
+    /* ── Log-pay pill: cleaner ── */
+    .log-pay-pill {
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 9.5px;
+      letter-spacing: 0.5px;
+      font-weight: 800;
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--in) 20%, transparent);
+    }
+
+    /* ── Archived card: slightly more elegant muting ── */
+    .sub-card.sub-archived {
+      opacity: 0.72;
+      filter: saturate(0.45) brightness(0.95);
+    }
+
+    .sub-card.sub-archived:hover {
+      opacity: 0.90;
+      filter: saturate(0.75) brightness(0.98);
+    }
+
+    /* ── Archived archived-banner: softer text ── */
+    .sub-archived-banner {
+      border-radius: 14px;
+      font-size: 10.5px;
+    }
+
+    /* ── Due-soon banner: left bar accent, refined typography ── */
+    #dueSoonBanner {
+      border-radius: 14px;
+    }
+
+    .dsb-header {
+      font-size: 10.5px;
+      letter-spacing: 0.8px;
+    }
+
+    .dsb-item {
+      font-size: 11.5px;
+      border-radius: 50px;
+      padding: 5px 12px;
+    }
+
+    /* ── Empty state refinement ── */
+    #subList .empty-state {
+      border-radius: 20px !important;
+    }
+
+    /* ── Light theme: ensure gradients use light-appropriate stops ── */
+    [data-theme="light"] .sub-card {
+      background: linear-gradient(160deg,
+        color-mix(in srgb, var(--sf) 96%, var(--ac)) 0%,
+        var(--sf) 60%
+      );
+      box-shadow: 0 2px 10px rgba(20,30,70,0.07), 0 1px 0 rgba(255,255,255,0.9) inset;
+    }
+
+    [data-theme="light"] .sub-card:hover {
+      box-shadow:
+        0 10px 32px rgba(20,30,70,0.12),
+        0 0 0 1px color-mix(in srgb, var(--ac) 15%, transparent),
+        0 1px 0 rgba(255,255,255,0.9) inset;
+    }
+
+    [data-theme="light"] .sub-summary-bar {
+      background: linear-gradient(145deg,
+        color-mix(in srgb, var(--ac) 5%, var(--sf)) 0%,
+        var(--sf) 50%,
+        color-mix(in srgb, var(--on) 3%, var(--sf)) 100%
+      );
+      box-shadow: 0 2px 16px rgba(20,30,70,0.08), 0 1px 0 rgba(255,255,255,0.8) inset;
+      border-color: color-mix(in srgb, var(--ac) 14%, var(--bd));
+    }
+
+    [data-theme="light"] .sub-card-icon {
+      background: linear-gradient(145deg, var(--s2), var(--sf));
+      box-shadow: 0 3px 10px rgba(20,30,70,0.10), 0 1px 0 rgba(255,255,255,0.8) inset;
+    }
+
+    [data-theme="light"] .sub-action-btn {
+      background: color-mix(in srgb, var(--s2) 60%, transparent);
+    }
+
+    [data-theme="light"] .sub-hist-stats {
+      background: linear-gradient(160deg, var(--s2) 0%, var(--sf) 100%);
+    }
+
+    [data-theme="light"] .sub-hist-list {
+      background: var(--sf);
+    }
+
+    /* ══ END PHASE 1 SUBSCRIPTIONS REDESIGN ══ */
+
     /* ── Confirm modal: center proper on desktop ── */
     @media (min-width: 521px) {
       #confirmMod {
