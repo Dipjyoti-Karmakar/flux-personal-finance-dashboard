@@ -10660,6 +10660,8 @@
     const TX_TODAY_SIZE = 5;
     let txVisibleCount = 5;
     let txs = [];
+    let descCache = null;
+    let descCacheTxCount = -1;
     let events = {};
     let logEnabled = true;
     let cType = 'income', cMode = 'online';
@@ -10701,6 +10703,9 @@
     let currentRecMode = 'online';
     let currentRecAutoLog = true; // Auto-log toggle state for recurring modal
     let _notifSessionFired = new Set(); // Sub IDs already notified this session
+    let _billReminderEnabled = false;
+    let _notifNudgeShown = false;
+    let _dsbDismissedSession = false;
     let _showingArchivedSubs = false; // true = Archived view, false = Active view
     let _recurringLastHtml = ''; // Cache to skip re-render when recurring data hasn't changed
     const _openSubHistPanels = new Set(); // Track open history panels across DOM rebuilds
@@ -10886,6 +10891,20 @@
 
     function closeSubHistoryDrawer() {
       // Safe no-op retained for backwards compatibility
+    }
+
+    // ── Phase 5: Preset Quick-Fill ───────────────────────────────────────────
+    function applyRecPreset(name, cat, freq, amt) {
+      const nameEl = document.getElementById('recName');
+      const amtEl  = document.getElementById('recAmount');
+      if (nameEl) nameEl.value = name;
+      if (amtEl)  amtEl.value = amt;
+      if (typeof selCS === 'function') {
+        const catName = cat.charAt(0).toUpperCase() + cat.slice(1);
+        const catIcon = (typeof CICO !== 'undefined' && CICO[cat]) || '✦';
+        selCS('cs-recCat', cat, catName, catIcon);
+      }
+      if (typeof setRecFreq === 'function') setRecFreq(freq);
     }
 
     let reportPeriodMode = 'month';
@@ -19281,10 +19300,6 @@
     // Feature 3: Smart Bill Reminders — Notifications + Banner
     // ══════════════════════════════════════════════════════
 
-    let _billReminderEnabled = false;
-    let _notifNudgeShown = false;
-    let _dsbDismissedSession = false;
-
     function requestBillNotifications() {
       if (!('Notification' in window)) return;
       // B2 FIX: If permission was already granted in a previous session, enable reminders
@@ -19833,9 +19848,6 @@
     }, 200);
 
     // -- Autocomplete for Description Input --
-    let descCache = null;
-    let descCacheTxCount = -1;
-
     function getDescCache() {
       if (descCache && descCacheTxCount === txs.length) return descCache;
       descCache = new Map();
