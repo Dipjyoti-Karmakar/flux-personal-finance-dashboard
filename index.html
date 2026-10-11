@@ -9836,7 +9836,7 @@
         <div class="sub-title">Subscriptions</div>
         <div class="sub-header-actions">
           <button id="subArchivedToggle" class="sub-archived-toggle" onclick="toggleArchivedView()" style="display:none">Archived (0)</button>
-          <button id="subFilterToggleBtn" class="sub-filter-toggle-btn" onclick="toggleSubFilters()" title="Filter Subscriptions">
+          <button id="subFilterToggleBtn" class="sub-filter-toggle-btn" onclick="toggleSubFilters()" title="Filter Subscriptions" aria-controls="subFilterBox" aria-expanded="false">
             <svg class="sub-filter-btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
             </svg>
@@ -9887,7 +9887,7 @@
             </svg>
           </div>
         </button>
-        <div class="sub-toolbar" id="subToolbar">
+        <div class="sub-toolbar" id="subToolbar" inert>
           <div class="sub-search-wrap">
             <svg class="sub-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="subSearchInput" class="sub-search-input" placeholder="Search subscriptions…" oninput="applySubFilters()" autocomplete="off" spellcheck="false">
@@ -10719,9 +10719,14 @@
       const box = document.getElementById('subFilterBox');
       const dBtn = document.getElementById('subFilterToggleBtn');
       const mTrigger = document.getElementById('subFilterMobileTrigger');
+      const toolbar = document.getElementById('subToolbar');
       if (box) box.classList.toggle('open', _subFilterBoxOpen);
-      if (dBtn) dBtn.classList.toggle('act', _subFilterBoxOpen);
+      if (dBtn) {
+        dBtn.classList.toggle('act', _subFilterBoxOpen);
+        dBtn.setAttribute('aria-expanded', _subFilterBoxOpen ? 'true' : 'false');
+      }
       if (mTrigger) mTrigger.setAttribute('aria-expanded', _subFilterBoxOpen ? 'true' : 'false');
+      if (toolbar) toolbar.inert = !_subFilterBoxOpen;
     }
 
     function updateSubFilterBadges() {
