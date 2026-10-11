@@ -9926,21 +9926,6 @@
       </div>
       <div id="subList" class="sub-grid"></div>
 
-      <!-- Phase 4: History Slide-Over Drawer -->
-      <div class="sub-drawer-backdrop" id="subHistoryBackdrop" onclick="closeSubHistoryDrawer()"></div>
-      <div class="sub-drawer" id="subHistoryDrawer" role="dialog" aria-modal="true" aria-labelledby="subDrawerTitle">
-        <div class="sub-drawer-header">
-          <div class="sub-drawer-sub-info">
-            <div class="sub-drawer-sub-icon" id="subDrawerIcon"></div>
-            <div>
-              <div class="sub-drawer-sub-title" id="subDrawerTitle">Subscription History</div>
-              <div class="sub-drawer-sub-plan" id="subDrawerPlan"></div>
-            </div>
-          </div>
-          <button class="sub-drawer-close" onclick="closeSubHistoryDrawer()" title="Close history" aria-label="Close">✕</button>
-        </div>
-        <div class="sub-drawer-body" id="subDrawerBody"></div>
-      </div>
     </div>
 
     <div id="logView" style="display:none">
@@ -10832,28 +10817,13 @@
       return { cycleDays, elapsed: Math.max(0, elapsed), pct, daysLeft, overdue, soon };
     }
 
-    // ── Phase 4: History Slide-Over Drawer ───────────────────────────────────
+    // ── History Inline Panel helpers ──────────────────────────────────────────
     let _activeHistSubId = null;
 
     function openSubHistory(recId) {
-      _activeHistSubId = recId;
-      const drawer = document.getElementById('subHistoryDrawer');
-      if (!drawer) {
-        const panel = document.getElementById('hist-panel-' + recId);
-        if (panel) {
-          const isOpen = panel.classList.contains('open');
-          panel.classList.toggle('open', !isOpen);
-          const btn = document.getElementById('hist-btn-' + recId);
-          if (btn) btn.classList.toggle('act', !isOpen);
-          if (!isOpen) renderSubHistInner(recId);
-        }
-        return;
-      }
-      renderSubHistoryDrawer(recId);
-      const backdrop = document.getElementById('subHistoryBackdrop');
-      if (backdrop) backdrop.classList.add('open');
-      drawer.classList.add('open');
-      document.body.style.overflow = 'hidden';
+      // Alias — just delegates to toggleSubHistory so callers still work
+      const btn = document.getElementById('hist-btn-' + recId);
+      toggleSubHistory(btn, recId);
     }
 
     function closeSubHistoryDrawer() {
@@ -17222,12 +17192,7 @@
 
 
     function toggleSubHistory(btn, recId) {
-      // Phase 4: Bridge to slide-over drawer — preferred over inline accordion.
-      // Falls back to inline panel if the drawer DOM isn't present.
-      if (document.getElementById('subHistoryDrawer')) {
-        openSubHistory(recId);
-        return;
-      }
+      // Always use inline expanding panel — no popup drawer.
       const panel = document.getElementById('hist-panel-' + recId);
       const inner = document.getElementById('hist-inner-' + recId);
       if (!panel || !inner) return;
@@ -17235,7 +17200,9 @@
       const isOpen = panel.classList.contains('open');
       panel.classList.toggle('open', !isOpen);
       if (btn) btn.classList.toggle('act', !isOpen);
-      if (btn) btn.innerHTML = isOpen ? '<img src="emojis/history.png" class="c-ico" alt=""> History' : '<img src="emojis/history.png" class="c-ico" alt=""> Close';
+      if (btn) btn.innerHTML = isOpen
+        ? '<img src="emojis/history.png" class="c-ico" alt=""> History'
+        : '<img src="emojis/history.png" class="c-ico" alt=""> Close';
 
       // Track in persistent Set so renderRecurring can restore across DOM rebuilds
       if (isOpen) {
@@ -17245,7 +17212,7 @@
       }
 
       if (isOpen) return;
-      // Always re-render on open so new transactions (sync, auto-match) appear immediately
+      // Always re-render on open so new transactions appear immediately
       renderSubHistInner(recId);
     }
 
