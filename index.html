@@ -8927,6 +8927,25 @@
       to   { opacity: 1; transform: none; }
     }
 
+    /* ── Edit Transaction dropdowns (Type, Online/Mode, Category): open downwards ── */
+    #editMod #cs-eTy .cs-menu,
+    #editMod #cs-eMo .cs-menu,
+    #editMod #cs-eCat .cs-menu {
+      top: calc(100% + 8px);
+      bottom: auto;
+      max-height: 240px;
+      transform-origin: top;
+    }
+    #editMod #cs-eTy.open .cs-menu,
+    #editMod #cs-eMo.open .cs-menu,
+    #editMod #cs-eCat.open .cs-menu {
+      animation: csMenuSlideDown .2s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes csMenuSlideDown {
+      from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     /* ── Log filter menu: center align on mobile so it doesn't clip ── */
     @media (max-width: 520px) {
       .log-filter-menu {
@@ -9435,6 +9454,7 @@
       .fd input[type="text"], .fd input[type="number"], .fd input[type="date"] { padding: 0 14px !important; height: 46px !important; box-sizing: border-box !important; }
       .cs-btn:focus, .cs-btn:hover { border-color: var(--ac); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 18%, transparent); outline:none; }
       .cs-btn svg { width: 16px; height: 16px; color: var(--mu); transition: transform .2s; flex-shrink: 0; }
+      .cs-wrap.open { z-index: 1010; }
       .cs-wrap.open .cs-btn svg { transform: rotate(180deg); }
       .cs-menu { position: absolute; top: calc(100% + 8px); left: 0; right: 0; background: var(--s2); border: 1.5px solid var(--bd); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 12px 32px rgba(0,0,0,0.25); opacity: 0; visibility: hidden; transform: translateY(-10px) scale(0.98); transform-origin: top; transition: all .2s cubic-bezier(0.16,1,0.3,1); z-index: 1000; max-height: 240px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
       .cs-wrap.open .cs-menu { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
