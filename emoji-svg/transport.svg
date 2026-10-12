@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Car Shadow -->
+    <filter id="carShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#001850" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000000" flood-opacity="0.2" />
+    </filter>
+
+    <filter id="pinShadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#550010" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+
+    <!-- Pin Gradient -->
+    <radialGradient id="pinGrad" cx="38%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#FF5A65" />
+      <stop offset="35%" stop-color="#F43F5E" />
+      <stop offset="70%" stop-color="#E11D48" />
+      <stop offset="90%" stop-color="#BE123C" />
+      <stop offset="100%" stop-color="#880522" />
+    </radialGradient>
+
+    <!-- Car Blue Gradient -->
+    <radialGradient id="carBodyGrad" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#3B82F6" />
+      <stop offset="45%" stop-color="#2563EB" />
+      <stop offset="80%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#0F389A" />
+    </radialGradient>
+
+    <!-- Windshield Glass -->
+    <linearGradient id="glassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#E0F2FE" />
+      <stop offset="100%" stop-color="#BAE6FD" />
+    </linearGradient>
+
+    <!-- Tire Gradient -->
+    <linearGradient id="tireGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="45%" stop-color="#334155" />
+      <stop offset="80%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+
+    <!-- Wheel Hubcap -->
+    <radialGradient id="hubcapGrad" cx="40%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#94A3B8" />
+      <stop offset="100%" stop-color="#475569" />
+    </radialGradient>
+  </defs>
+
+  <!-- Car Group with Shadow -->
+  <g filter="url(#carShadow)">
+    <!-- TWO PROMINENT WHEELS AT THE BOTTOM -->
+    <!-- Left Wheel / Tire -->
+    <g>
+      <rect x="120" y="380" width="56" height="74" rx="20" fill="url(#tireGrad)" />
+      <!-- Left Hubcap / Rim peeking -->
+      <ellipse cx="148" cy="425" rx="14" ry="18" fill="url(#hubcapGrad)" />
+    </g>
+
+    <!-- Right Wheel / Tire -->
+    <g>
+      <rect x="336" y="380" width="56" height="74" rx="20" fill="url(#tireGrad)" />
+      <!-- Right Hubcap / Rim peeking -->
+      <ellipse cx="364" cy="425" rx="14" ry="18" fill="url(#hubcapGrad)" />
+    </g>
+
+    <!-- Arched Underbody Chassis between wheels -->
+    <path d="M 165 418 C 210 405, 302 405, 347 418 L 347 430 L 165 430 Z" fill="#0A183D" />
+
+    <!-- Side Mirrors -->
+    <ellipse cx="114" cy="305" rx="18" ry="14" fill="#1D4ED8" />
+    <ellipse cx="398" cy="305" rx="18" ry="14" fill="#1D4ED8" />
+
+    <!-- Upper Cabin / Roof -->
+    <path d="M 172 225 C 185 225, 205 225, 256 225 C 307 225, 327 225, 340 225 C 362 225, 376 265, 390 305 L 122 305 C 136 265, 150 225, 172 225 Z" fill="url(#carBodyGrad)" />
+
+    <!-- Windshield -->
+    <path d="M 180 234 L 332 234 C 348 234, 358 264, 368 298 L 144 298 C 154 264, 164 234, 180 234 Z" fill="url(#glassGrad)" />
+
+    <!-- Lower Car Body / Hood / Bumper -->
+    <rect x="106" y="298" width="300" height="114" rx="42" fill="url(#carBodyGrad)" />
+
+    <!-- Headlights -->
+    <circle cx="158" cy="355" r="24" fill="#FFFFFF" />
+    <circle cx="158" cy="355" r="18" fill="#F0F9FF" />
+
+    <circle cx="354" cy="355" r="24" fill="#FFFFFF" />
+    <circle cx="354" cy="355" r="18" fill="#F0F9FF" />
+
+    <!-- Bumper Pill / Front Plate in Center -->
+    <rect x="216" y="352" width="80" height="18" rx="9" fill="#FFFFFF" />
+  </g>
+
+  <!-- Big Red-Pink Location Pin on Top -->
+  <g filter="url(#pinShadow)">
+    <path d="M 256 248 C 248 235, 182 170, 182 122 C 182 80, 215 48, 256 48 C 297 48, 330 80, 330 122 C 330 170, 264 235, 256 248 Z" fill="url(#pinGrad)" />
+    <!-- Pin Center Hole -->
+    <circle cx="256" cy="122" r="32" fill="#FFFFFF" />
+  </g>
+</svg>

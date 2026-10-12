@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Shadow -->
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="130%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#36066B" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#1D023D" flood-opacity="0.22" />
+    </filter>
+
+    <!-- Pen Shadow onto Purple Button -->
+    <filter id="penShadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="-6" dy="12" stdDeviation="10" flood-color="#320563" flood-opacity="0.45" />
+      <feDropShadow dx="-2" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.2" />
+    </filter>
+
+    <!-- Round Disc Gradient -->
+    <radialGradient id="discGrad" cx="38%" cy="32%" r="65%" fx="35%" fy="28%">
+      <stop offset="0%" stop-color="#A86AFF" />
+      <stop offset="35%" stop-color="#843FFB" />
+      <stop offset="70%" stop-color="#6C24E8" />
+      <stop offset="90%" stop-color="#5514C8" />
+      <stop offset="100%" stop-color="#3F099E" />
+    </radialGradient>
+
+    <!-- 3D Bevel Edge -->
+    <linearGradient id="bevelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#CA9EFF" stop-opacity="0.85" />
+      <stop offset="50%" stop-color="#7C3AED" stop-opacity="0" />
+      <stop offset="100%" stop-color="#24045C" stop-opacity="0.85" />
+    </linearGradient>
+
+    <!-- Top Specular Crescent -->
+    <linearGradient id="specularGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Pen Cylindrical Gradients -->
+    <linearGradient id="barrelGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="40%" stop-color="#FFFFFF" />
+      <stop offset="75%" stop-color="#F1F5F9" />
+      <stop offset="100%" stop-color="#CBD5E1" />
+    </linearGradient>
+
+    <linearGradient id="eraserGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="50%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#D1D5DB" />
+    </linearGradient>
+
+    <linearGradient id="grooveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E2E8F0" />
+      <stop offset="50%" stop-color="#CBD5E1" />
+      <stop offset="100%" stop-color="#94A3B8" />
+    </linearGradient>
+
+    <linearGradient id="coneGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="45%" stop-color="#F8FAFC" />
+      <stop offset="85%" stop-color="#E2E8F0" />
+      <stop offset="100%" stop-color="#CBD5E1" />
+    </linearGradient>
+
+    <!-- Underline Bar 3D Gradient -->
+    <linearGradient id="underlineGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="65%" stop-color="#F8FAFC" />
+      <stop offset="100%" stop-color="#D9E2EC" />
+    </linearGradient>
+  </defs>
+
+  <!-- Round 3D Disc Base -->
+  <circle cx="256" cy="256" r="206" fill="url(#discGrad)" filter="url(#shadow)" />
+  <circle cx="256" cy="256" r="204" fill="none" stroke="url(#bevelGrad)" stroke-width="7" />
+
+  <!-- Top Specular Highlight Arc -->
+  <path d="M 100 210 C 130 110, 230 70, 360 84 C 330 72, 210 66, 120 150 C 95 174, 92 195, 100 210 Z" fill="url(#specularGlow)" />
+
+  <!-- White 3D Pen and Underline Group -->
+  <g filter="url(#penShadow)">
+    <!-- Beautiful 3D Pen Angled at 45° with Tip Hovering Just 3px Above the White Line -->
+    <!-- The line is at y=370, tip is at (175, 365) -->
+    <g transform="translate(262, 238) rotate(45)">
+      <!-- Eraser Cap (Top-Right) -->
+      <path d="M -32 -135 C -32 -162, 32 -162, 32 -135 L 32 -105 L -32 -105 Z" fill="url(#eraserGrad)" />
+      <!-- Subtle Groove / Indentation Seam -->
+      <rect x="-32" y="-105" width="64" height="6" rx="2" fill="url(#grooveGrad)" />
+
+      <!-- Main Pen Barrel (Chunky Cylinder with Specular Sheen) -->
+      <rect x="-32" y="-99" width="64" height="150" rx="4" fill="url(#barrelGrad)" />
+      <!-- Specular Highlight Strip along Left Edge -->
+      <path d="M -26 -99 L -26 51" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.9" />
+
+      <!-- Smooth Tapered Cone Tip -->
+      <path d="M -32 51 L -6 122 C -4 126, 4 126, 6 122 L 32 51 Z" fill="url(#coneGrad)" />
+      <!-- Rounded Pen Nib Point -->
+      <circle cx="0" cy="122" r="5" fill="#F1F5F9" />
+    </g>
+
+    <!-- White Rounded Capsule Underline at Bottom -->
+    <rect x="150" y="370" width="185" height="32" rx="16" fill="url(#underlineGrad)" />
+    <!-- Top Highlight on Underline -->
+    <path d="M 166 374 L 319 374" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" opacity="0.95" />
+  </g>
+</svg>

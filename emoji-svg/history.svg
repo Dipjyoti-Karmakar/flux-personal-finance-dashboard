@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Shadow -->
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="130%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#002D80" flood-opacity="0.32" />
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#001850" flood-opacity="0.2" />
+    </filter>
+
+    <!-- Icon Shadow onto Button -->
+    <filter id="iconShadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#073B98" flood-opacity="0.4" />
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.18" />
+    </filter>
+
+    <!-- Disc Gradient -->
+    <radialGradient id="discGrad" cx="38%" cy="32%" r="65%" fx="35%" fy="28%">
+      <stop offset="0%" stop-color="#4F93FE" />
+      <stop offset="35%" stop-color="#2D7DF8" />
+      <stop offset="70%" stop-color="#1B68EC" />
+      <stop offset="90%" stop-color="#1057DC" />
+      <stop offset="100%" stop-color="#0B46BD" />
+    </radialGradient>
+
+    <!-- 3D Bevel Edge -->
+    <linearGradient id="bevelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8BB8FF" stop-opacity="0.85" />
+      <stop offset="50%" stop-color="#2563EB" stop-opacity="0" />
+      <stop offset="100%" stop-color="#062E80" stop-opacity="0.85" />
+    </linearGradient>
+
+    <!-- Top Specular Highlight Arc -->
+    <linearGradient id="specularGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- White Icon 3D Gradient -->
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="65%" stop-color="#F4F6F9" />
+      <stop offset="100%" stop-color="#D9E0E8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base 3D Disc -->
+  <circle cx="256" cy="256" r="206" fill="url(#discGrad)" filter="url(#shadow)" />
+  <circle cx="256" cy="256" r="204" fill="none" stroke="url(#bevelGrad)" stroke-width="7" />
+
+  <!-- Top Specular Highlight Arc -->
+  <path d="M 100 210 C 130 110, 230 70, 360 84 C 330 72, 210 66, 120 150 C 95 174, 92 195, 100 210 Z" fill="url(#specularGlow)" />
+
+  <!-- History Icon: Arc + Arrow pointing DOWN at left + Clock Hands -->
+  <g filter="url(#iconShadow)">
+    <!-- Circular Arc: Starts at bottom (205, 385), goes clockwise around to top (256, 126) and down to (130, 215) -->
+    <path d="M 195 378 A 130 130 0 1 0 130 215" fill="none" stroke="url(#iconGrad)" stroke-width="26" stroke-linecap="round" />
+
+    <!-- Arrowhead at ~9 o'clock pointing DOWNWARDS into the gap -->
+    <path d="M 96 200 C 92 200, 88 206, 92 212 L 130 268 C 134 274, 142 274, 146 268 L 184 212 C 188 206, 184 200, 180 200 L 152 200 L 152 195 L 124 195 L 124 200 Z" fill="url(#iconGrad)" stroke-linejoin="round" />
+
+    <!-- Clock Center Pivot & Hands -->
+    <!-- Vertical Hand (pointing to 12:00) and diagonal hand (pointing to ~4:30) -->
+    <path d="M 256 170 L 256 256 L 306 296" fill="none" stroke="url(#iconGrad)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="256" cy="256" r="6" fill="url(#iconGrad)" />
+  </g>
+</svg>

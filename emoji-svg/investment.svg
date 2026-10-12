@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Shadows -->
+    <filter id="mainShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#0F172A" flood-opacity="0.3" />
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+
+    <filter id="coinShadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#78350F" flood-opacity="0.38" />
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+
+    <!-- Bar Gradients -->
+    <linearGradient id="barGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#60A5FA" />
+      <stop offset="35%" stop-color="#3B82F6" />
+      <stop offset="85%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+
+    <!-- Green Trend Arrow -->
+    <linearGradient id="arrowGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4ADE80" />
+      <stop offset="50%" stop-color="#22C55E" />
+      <stop offset="100%" stop-color="#16A34A" />
+    </linearGradient>
+
+    <!-- Gold Coin Gradients -->
+    <radialGradient id="coinFace" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="40%" stop-color="#FBBF24" />
+      <stop offset="80%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </radialGradient>
+
+    <linearGradient id="coinRim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+
+    <!-- Soil Mound -->
+    <radialGradient id="soilGrad" cx="45%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#A16207" />
+      <stop offset="50%" stop-color="#78350F" />
+      <stop offset="100%" stop-color="#451A03" />
+    </radialGradient>
+
+    <!-- Plant Leaves -->
+    <linearGradient id="leafGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22C55E" />
+      <stop offset="60%" stop-color="#4ADE80" />
+      <stop offset="100%" stop-color="#86EFAC" />
+    </linearGradient>
+  </defs>
+
+  <!-- Bar Chart Columns -->
+  <g filter="url(#mainShadow)">
+    <!-- Bar 1 (Leftmost, Shortest) -->
+    <rect x="90" y="215" width="76" height="185" rx="20" fill="url(#barGrad)" />
+
+    <!-- Bar 2 (Medium-Low) -->
+    <rect x="175" y="175" width="76" height="225" rx="20" fill="url(#barGrad)" />
+
+    <!-- Bar 3 (Medium-High) -->
+    <rect x="260" y="125" width="76" height="275" rx="20" fill="url(#barGrad)" />
+
+    <!-- Bar 4 (Tallest) -->
+    <rect x="345" y="65" width="76" height="335" rx="20" fill="url(#barGrad)" />
+  </g>
+
+  <!-- Green Trend Arrow Swooping Up -->
+  <g filter="url(#mainShadow)">
+    <path d="M 125 170 Q 240 130, 345 60 L 320 60 C 330 45, 345 50, 345 60 Z" fill="none" />
+    <!-- Curved Growth Ribbon -->
+    <path d="M 125 175 C 200 155, 260 120, 345 65" fill="none" stroke="url(#arrowGrad)" stroke-width="26" stroke-linecap="round" />
+    <!-- Arrowhead at top-right -->
+    <path d="M 330 45 L 368 62 L 340 86 Z" fill="url(#arrowGrad)" stroke-linejoin="round" />
+  </g>
+
+  <!-- Gold Coins on Left -->
+  <g filter="url(#coinShadow)">
+    <!-- Stack of Coins Behind -->
+    <!-- Coin 1 -->
+    <ellipse cx="120" cy="275" rx="55" ry="20" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="3" />
+    <path d="M 65 275 L 65 290 C 65 301, 90 310, 120 310 C 150 310, 175 301, 175 290 L 175 275 Z" fill="url(#coinRim)" />
+
+    <!-- Coin 2 -->
+    <ellipse cx="120" cy="305" rx="55" ry="20" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="3" />
+    <path d="M 65 305 L 65 320 C 65 331, 90 340, 120 340 C 150 340, 175 331, 175 320 L 175 305 Z" fill="url(#coinRim)" />
+
+    <!-- Coin 3 -->
+    <ellipse cx="120" cy="335" rx="55" ry="20" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="3" />
+    <path d="M 65 335 L 65 350 C 65 361, 90 370, 120 370 C 150 370, 175 361, 175 350 L 175 335 Z" fill="url(#coinRim)" />
+
+    <!-- Coin 4 -->
+    <ellipse cx="120" cy="365" rx="55" ry="20" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="3" />
+    <path d="M 65 365 L 65 380 C 65 391, 90 400, 120 400 C 150 400, 175 391, 175 380 L 175 365 Z" fill="url(#coinRim)" />
+
+    <!-- Big Front Coin with Rupee Symbol -->
+    <circle cx="185" cy="355" r="58" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="7" />
+    <circle cx="185" cy="355" r="48" fill="none" stroke="#D97706" stroke-width="2" stroke-dasharray="6 4" />
+    <text x="185" y="378" font-family="system-ui, -apple-system, sans-serif" font-size="68" font-weight="900" fill="#FFFFFF" text-anchor="middle" filter="drop-shadow(0 2px 2px rgba(180,83,9,0.5))">₹</text>
+  </g>
+
+  <!-- Growing Seedling on Bottom-Right -->
+  <g filter="url(#mainShadow)">
+    <!-- Soil Mound -->
+    <path d="M 285 415 C 285 365, 335 345, 375 345 C 415 345, 465 365, 465 415 Z" fill="url(#soilGrad)" />
+
+    <!-- Seedling Stem -->
+    <path d="M 375 355 L 375 290" stroke="#16A34A" stroke-width="12" stroke-linecap="round" />
+
+    <!-- Left Leaf -->
+    <path d="M 375 315 C 340 310, 310 270, 310 235 C 345 235, 375 275, 375 315 Z" fill="url(#leafGrad)" />
+
+    <!-- Right Leaf -->
+    <path d="M 375 295 C 410 290, 440 250, 440 215 C 405 215, 375 255, 375 295 Z" fill="url(#leafGrad)" />
+  </g>
+</svg>

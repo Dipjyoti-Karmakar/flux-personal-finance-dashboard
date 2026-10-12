@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Shadow -->
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="130%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#803D00" flood-opacity="0.32" />
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#552200" flood-opacity="0.2" />
+    </filter>
+
+    <!-- Bar Shadow onto Button -->
+    <filter id="barShadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#8B4800" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+
+    <!-- Disc Gradients -->
+    <radialGradient id="discGrad" cx="38%" cy="32%" r="65%" fx="35%" fy="28%">
+      <stop offset="0%" stop-color="#FFDE3B" />
+      <stop offset="35%" stop-color="#FFBC05" />
+      <stop offset="70%" stop-color="#F59E00" />
+      <stop offset="90%" stop-color="#E88300" />
+      <stop offset="100%" stop-color="#D06E00" />
+    </radialGradient>
+
+    <!-- 3D Bevel Edge -->
+    <linearGradient id="bevelGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFE875" stop-opacity="0.8" />
+      <stop offset="50%" stop-color="#FFA800" stop-opacity="0" />
+      <stop offset="100%" stop-color="#B25300" stop-opacity="0.85" />
+    </linearGradient>
+
+    <!-- Top Specular Crescent -->
+    <linearGradient id="specularGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Bar Gradients -->
+    <linearGradient id="barGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="60%" stop-color="#F6F7F9" />
+      <stop offset="100%" stop-color="#E1E5EB" />
+    </linearGradient>
+
+    <linearGradient id="barHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9" />
+      <stop offset="40%" stop-color="#FFFFFF" stop-opacity="0.3" />
+      <stop offset="100%" stop-color="#CBD5E1" stop-opacity="0.4" />
+    </linearGradient>
+  </defs>
+
+  <!-- Base 3D Sphere / Disc with Drop Shadow -->
+  <circle cx="256" cy="256" r="206" fill="url(#discGrad)" filter="url(#shadow)" />
+
+  <!-- Bevel Ring / Rim -->
+  <circle cx="256" cy="256" r="204" fill="none" stroke="url(#bevelGrad)" stroke-width="7" />
+
+  <!-- Soft Top Specular Highlight Arc -->
+  <path d="M 100 210 C 130 110, 230 70, 360 84 C 330 72, 210 66, 120 150 C 95 174, 92 195, 100 210 Z" fill="url(#specularGlow)" />
+
+  <!-- Pause Bars -->
+  <!-- Left Bar -->
+  <g filter="url(#barShadow)">
+    <rect x="182" y="160" width="46" height="192" rx="23" fill="url(#barGrad)" />
+    <rect x="184" y="162" width="42" height="188" rx="21" fill="none" stroke="url(#barHighlight)" stroke-width="3" />
+  </g>
+
+  <!-- Right Bar -->
+  <g filter="url(#barShadow)">
+    <rect x="284" y="160" width="46" height="192" rx="23" fill="url(#barGrad)" />
+    <rect x="286" y="162" width="42" height="188" rx="21" fill="none" stroke="url(#barHighlight)" stroke-width="3" />
+  </g>
+</svg>

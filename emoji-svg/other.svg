@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Soft Drop Shadows -->
+    <filter id="shadowPurple" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#4C1D95" flood-opacity="0.3" />
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+    <filter id="shadowBlue" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#1E3A8A" flood-opacity="0.3" />
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+    <filter id="shadowTeal" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#064E3B" flood-opacity="0.3" />
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+    <filter id="shadowYellow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="12" flood-color="#78350F" flood-opacity="0.3" />
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+
+    <!-- Gradients -->
+    <!-- Purple Diamond -->
+    <radialGradient id="gradPurple" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#9A6BFF" />
+      <stop offset="40%" stop-color="#7C3AED" />
+      <stop offset="80%" stop-color="#6218D6" />
+      <stop offset="100%" stop-color="#4C0DB8" />
+    </radialGradient>
+
+    <!-- Blue Diamond -->
+    <radialGradient id="gradBlue" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#60A5FA" />
+      <stop offset="40%" stop-color="#2563EB" />
+      <stop offset="80%" stop-color="#1D4ED8" />
+      <stop offset="100%" stop-color="#173AA3" />
+    </radialGradient>
+
+    <!-- Teal Diamond -->
+    <radialGradient id="gradTeal" cx="35%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#2DD4BF" />
+      <stop offset="40%" stop-color="#0D9488" />
+      <stop offset="80%" stop-color="#057A6F" />
+      <stop offset="100%" stop-color="#04564E" />
+    </radialGradient>
+
+    <!-- Yellow Sphere -->
+    <radialGradient id="gradYellow" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="35%" stop-color="#FBBF24" />
+      <stop offset="75%" stop-color="#F59E0B" />
+      <stop offset="95%" stop-color="#D97706" />
+      <stop offset="100%" stop-color="#B45309" />
+    </radialGradient>
+
+    <!-- Specular Highlight for Diamonds -->
+    <linearGradient id="diamondShine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.55" />
+      <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Spherical Highlight for Yellow -->
+    <radialGradient id="sphereShine" cx="30%" cy="25%" r="35%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.75" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Top: Purple Diamond -->
+  <g transform="translate(262, 140) rotate(45)" filter="url(#shadowPurple)">
+    <rect x="-65" y="-65" width="130" height="130" rx="34" fill="url(#gradPurple)" />
+    <rect x="-65" y="-65" width="130" height="130" rx="34" fill="url(#diamondShine)" />
+  </g>
+
+  <!-- Left: Blue Diamond -->
+  <g transform="translate(156, 272) rotate(45)" filter="url(#shadowBlue)">
+    <rect x="-65" y="-65" width="130" height="130" rx="34" fill="url(#gradBlue)" />
+    <rect x="-65" y="-65" width="130" height="130" rx="34" fill="url(#diamondShine)" />
+  </g>
+
+  <!-- Bottom: Teal Diamond -->
+  <g transform="translate(262, 388) rotate(45)" filter="url(#shadowTeal)">
+    <rect x="-65" y="-65" width="130" height="130" rx="34" fill="url(#gradTeal)" />
+    <rect x="-65" y="-65" width="130" height="130" rx="34" fill="url(#diamondShine)" />
+  </g>
+
+  <!-- Right: Yellow Sphere / Circle -->
+  <g filter="url(#shadowYellow)">
+    <circle cx="372" cy="276" r="62" fill="url(#gradYellow)" />
+    <circle cx="372" cy="276" r="62" fill="url(#sphereShine)" />
+  </g>
+</svg>

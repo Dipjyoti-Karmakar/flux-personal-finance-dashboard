@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Wallet Shadow -->
+    <filter id="walletShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#2D065C" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000000" flood-opacity="0.18" />
+    </filter>
+
+    <filter id="coinShadow" x="-30%" y="-20%" width="160%" height="150%">
+      <feDropShadow dx="0" dy="10" stdDeviation="8" flood-color="#5B2900" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+
+    <!-- Wallet Gradients -->
+    <radialGradient id="walletGrad" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#9A52FF" />
+      <stop offset="40%" stop-color="#7C30F8" />
+      <stop offset="80%" stop-color="#6018E0" />
+      <stop offset="100%" stop-color="#460BB8" />
+    </radialGradient>
+
+    <!-- Banknote Gradients -->
+    <linearGradient id="noteGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6EE7B7" />
+      <stop offset="50%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+
+    <linearGradient id="noteGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="60%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#065F46" />
+    </linearGradient>
+
+    <!-- Gold Coin Gradients -->
+    <radialGradient id="coinFace" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="40%" stop-color="#FBBF24" />
+      <stop offset="80%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </radialGradient>
+
+    <linearGradient id="coinRim" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+
+    <!-- Snap Button -->
+    <radialGradient id="snapGrad" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#FEF08A" />
+      <stop offset="50%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#D97706" />
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#walletShadow)">
+    <!-- Back Note 1 (tilted left) -->
+    <g transform="translate(245, 120) rotate(-14)">
+      <rect x="-85" y="-55" width="170" height="110" rx="16" fill="url(#noteGrad2)" stroke="#A7F3D0" stroke-width="4" />
+      <circle cx="0" cy="0" r="26" fill="#047857" opacity="0.4" />
+    </g>
+
+    <!-- Front Note 2 (tilted right) -->
+    <g transform="translate(305, 145) rotate(10)">
+      <rect x="-95" y="-60" width="190" height="120" rx="18" fill="url(#noteGrad1)" stroke="#ECFDF5" stroke-width="4" />
+      <circle cx="0" cy="0" r="32" fill="#047857" opacity="0.35" />
+      <!-- Rupee Symbol on Front Note -->
+      <text x="0" y="14" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" fill="#FFFFFF" text-anchor="middle">₹</text>
+    </g>
+
+    <!-- Wallet Body -->
+    <path d="M 140 185 
+             C 140 170, 155 160, 175 160 
+             L 395 185 
+             C 415 188, 430 205, 430 225 
+             L 420 375 
+             C 418 398, 400 415, 378 415 
+             L 170 415 
+             C 145 415, 125 395, 125 370 
+             L 140 185 Z" fill="url(#walletGrad)" />
+
+    <!-- Wallet Fold Trim / Rim -->
+    <path d="M 130 185 C 130 170, 150 160, 175 160 L 400 185" fill="none" stroke="#B07BFF" stroke-width="8" stroke-linecap="round" />
+
+    <!-- White Running Stitching along edges -->
+    <path d="M 145 195 L 140 370 C 140 385, 155 398, 170 398 L 375 398 C 390 398, 402 385, 405 370 L 412 225" fill="none" stroke="#E2E8F0" stroke-width="4" stroke-dasharray="10 8" stroke-linecap="round" />
+
+    <!-- Wallet Clasp Strap from right -->
+    <path d="M 425 285 L 345 285 C 325 285, 310 302, 310 322 C 310 342, 325 358, 345 358 L 418 358 Z" fill="url(#walletGrad)" stroke="#6018E0" stroke-width="3" />
+
+    <!-- Clasp Snap Button -->
+    <circle cx="350" cy="322" r="18" fill="url(#snapGrad)" stroke="#B45309" stroke-width="3" />
+  </g>
+
+  <!-- Stack of Gold Coins on Left -->
+  <g filter="url(#coinShadow)">
+    <!-- Back Coin 1 -->
+    <ellipse cx="140" cy="305" rx="55" ry="22" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="3" />
+    <path d="M 85 305 L 85 320 C 85 332, 110 342, 140 342 C 170 342, 195 332, 195 320 L 195 305 Z" fill="url(#coinRim)" />
+
+    <!-- Coin 2 -->
+    <ellipse cx="140" cy="335" rx="55" ry="22" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="3" />
+    <path d="M 85 335 L 85 350 C 85 362, 110 372, 140 372 C 170 372, 195 362, 195 350 L 195 335 Z" fill="url(#coinRim)" />
+
+    <!-- Coin 3 -->
+    <ellipse cx="140" cy="365" rx="55" ry="22" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="3" />
+    <path d="M 85 365 L 85 380 C 85 392, 110 402, 140 402 C 170 402, 195 392, 195 380 L 195 365 Z" fill="url(#coinRim)" />
+
+    <!-- Large Front Coin with Rupee Symbol -->
+    <circle cx="205" cy="360" r="58" fill="url(#coinFace)" stroke="url(#coinRim)" stroke-width="7" />
+    <circle cx="205" cy="360" r="48" fill="none" stroke="#D97706" stroke-width="2" stroke-dasharray="6 4" />
+    <text x="205" y="384" font-family="system-ui, -apple-system, sans-serif" font-size="68" font-weight="900" fill="#FFFFFF" text-anchor="middle" filter="drop-shadow(0 2px 2px rgba(180,83,9,0.5))">₹</text>
+  </g>
+</svg>

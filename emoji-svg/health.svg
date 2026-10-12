@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Heart Shadow -->
+    <filter id="heartShadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#7A0020" flood-opacity="0.35" />
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.18" />
+    </filter>
+
+    <!-- Badge Shadow -->
+    <filter id="badgeShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.3" />
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000000" flood-opacity="0.15" />
+    </filter>
+
+    <!-- Heart 3D Radial Gradient -->
+    <radialGradient id="heartGrad" cx="38%" cy="28%" r="72%">
+      <stop offset="0%" stop-color="#FF5A7E" />
+      <stop offset="30%" stop-color="#F43F5E" />
+      <stop offset="65%" stop-color="#E11D48" />
+      <stop offset="85%" stop-color="#BE123C" />
+      <stop offset="100%" stop-color="#880522" />
+    </radialGradient>
+
+    <!-- Heart Left Specular Arc -->
+    <linearGradient id="heartShine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Pulse Line Gradient -->
+    <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4" />
+      <stop offset="25%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#FFFFFF" />
+    </linearGradient>
+
+    <!-- Badge Gradients -->
+    <radialGradient id="badgeGrad" cx="38%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#4F93FE" />
+      <stop offset="35%" stop-color="#2D7DF8" />
+      <stop offset="70%" stop-color="#1B68EC" />
+      <stop offset="100%" stop-color="#0B46BD" />
+    </radialGradient>
+
+    <linearGradient id="badgeBevel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8BB8FF" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#062E80" stop-opacity="0.8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Heart Body with Shadow -->
+  <g filter="url(#heartShadow)">
+    <path d="M 235 432 C 165 372, 85 292, 85 195 C 85 125, 140 85, 205 85 C 235 85, 260 100, 275 120 C 290 100, 315 85, 345 85 C 410 85, 465 125, 465 195 C 465 292, 385 372, 315 432 C 285 458, 265 458, 235 432 Z" fill="url(#heartGrad)" />
+
+    <!-- Left Lobe Soft Specular Glow -->
+    <ellipse cx="180" cy="145" rx="55" ry="32" transform="rotate(-30 180 145)" fill="url(#heartShine)" />
+
+    <!-- ECG Heartbeat Pulse Line -->
+    <!-- Fading Tail on Far Left -->
+    <path d="M 88 250 L 160 250" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="18" stroke-linecap="round" />
+    <!-- Sharp Heartbeat Wave -->
+    <path d="M 155 250 L 202 250 L 222 170 L 248 312 L 275 210 L 295 250 L 370 250" fill="none" stroke="#FFFFFF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Blue Plus Badge -->
+  <g filter="url(#badgeShadow)">
+    <circle cx="366" cy="342" r="76" fill="url(#badgeGrad)" />
+    <circle cx="366" cy="342" r="74" fill="none" stroke="url(#badgeBevel)" stroke-width="5" />
+
+    <!-- Plus Cross -->
+    <!-- Horizontal Bar -->
+    <rect x="326" y="331" width="80" height="22" rx="11" fill="#FFFFFF" />
+    <!-- Vertical Bar -->
+    <rect x="355" y="302" width="22" height="80" rx="11" fill="#FFFFFF" />
+  </g>
+</svg>
