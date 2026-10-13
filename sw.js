@@ -1,10 +1,10 @@
 // Flux Service Worker - Offline-first caching strategy
-// V47: Added style.css to pre-cache + bumped cache to flux-v39
-const CACHE_NAME = 'flux-v39';
+// V48: Bumped cache to flux-v40 with immediate counter sync on startup
+const CACHE_NAME = 'flux-v40';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './?v=36',
-  './index.html?v=36',
+  './?v=37',
+  './index.html?v=37',
   './style.css?v=1',
   './manifest.json?v=2',
   './icon-192.png?v=2',

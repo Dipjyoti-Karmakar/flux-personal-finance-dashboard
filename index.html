@@ -3351,13 +3351,68 @@
 
     // ─── Animated number counter ────────────────────────────────────────────────
     // Counts from the current displayed value to the new target.
-    // Uses page-load-relative timing so the counter always starts exactly when the
-    // last .card-in card becomes fully visible to the user (~4000ms after load).
-    // Per-element cancellation prevents overlapping rAF loops when re-renders fire
-    // in rapid succession (e.g. Firestore batch imports, fast filter switching).
-    const _pageLoadTime = performance.now();
-    // App entrance animation: starts at 3380ms. Start counting numbers right as they appear.
-    const CARDS_VISIBLE_AT_MS = 3240;
+    // Synchronized to start immediately after the startup splash animation ends.
+    // If the splash animation has already finished (or for all subsequent updates),
+    // animations run with zero delay.
+    let _splashDone = false;
+    const _splashCallbacks = [];
+
+    function onSplashEnd(fn) {
+      if (_splashDone) {
+        fn();
+      } else {
+        _splashCallbacks.push(fn);
+      }
+    }
+
+    function markSplashDone() {
+      if (_splashDone) return;
+      _splashDone = true;
+      const splash = document.getElementById('splash-screen');
+      if (splash) splash.style.display = 'none';
+      while (_splashCallbacks.length > 0) {
+        const fn = _splashCallbacks.shift();
+        try { fn(); } catch (e) { console.error('Splash callback error:', e); }
+      }
+    }
+
+    // Attach listener for the exit animation of the splash screen
+    (function initSplashSync() {
+      const splash = document.getElementById('splash-screen');
+      if (!splash) {
+        markSplashDone();
+        return;
+      }
+
+      // If user prefers reduced motion, finish immediately
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        markSplashDone();
+        return;
+      }
+
+      // Check if splash has already ended/hidden
+      const computed = window.getComputedStyle(splash);
+      if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
+        markSplashDone();
+        return;
+      }
+
+      // Listen for the sp-exit animation ending
+      splash.addEventListener('animationend', (e) => {
+        if (e.target === splash && e.animationName === 'sp-exit') {
+          markSplashDone();
+        }
+      });
+      splash.addEventListener('animationcancel', markSplashDone);
+
+      // Precise fallback timeout:
+      // Desktop: 2.5s delay + 0.42s exit = 2920ms
+      // Mobile: 2.3s delay + 0.42s exit = 2720ms
+      const splashDuration = window.innerWidth <= 520 ? 2750 : 2950;
+      const navElapsed = performance.now();
+      const fallbackDelay = Math.max(0, splashDuration - navElapsed);
+      setTimeout(markSplashDone, fallbackDelay);
+    })();
 
     function animateVal(el, target, formatter, duration) {
       if (!el) return;
@@ -3374,12 +3429,7 @@
       const cancelFn = () => { cancelled = true; };
       el._animCancel = cancelFn;
 
-      // Compute how long to wait before starting the count-up.
-      // If data arrives before the cards are visible we wait; if after, we start immediately.
-      const elapsed = performance.now() - _pageLoadTime;
-      const delay = Math.max(0, CARDS_VISIBLE_AT_MS - elapsed);
-
-      setTimeout(() => {
+      const startAnimation = () => {
         if (cancelled) return;
         const start = performance.now();
         const diff = target - cur;
@@ -3400,7 +3450,15 @@
           else if (el._animCancel === cancelFn) el._animCancel = null; // done — clean up
         }
         requestAnimationFrame(tick);
-      }, delay);
+      };
+
+      // If the startup animation has already finished, start immediately.
+      // Otherwise, queue it to run the exact millisecond the startup animation ends.
+      if (_splashDone) {
+        startAnimation();
+      } else {
+        onSplashEnd(startAnimation);
+      }
     }
 
 
@@ -9775,7 +9833,7 @@
     let _deferredPrompt = null;
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=36').then((reg) => {
+      navigator.serviceWorker.register('./sw.js?v=37').then((reg) => {
       }).catch((err) => {
         console.warn('[PWA] SW registration failed:', err);
       });
