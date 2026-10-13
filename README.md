@@ -19,7 +19,7 @@
 
 ## Overview
 
-Flux is a production-grade personal finance application contained entirely within a single `index.html` file (~19,900+ lines). It leverages **Firebase Authentication** and **Cloud Firestore** for secure, real-time data synchronization. Built with an offline-first PWA architecture, it guarantees full functionality with or without an active internet connection.
+Flux is a production-grade personal finance application contained entirely within a single `index.html` file (~20,000+ lines). It leverages **Firebase Authentication** and **Cloud Firestore** for secure, real-time data synchronization. Built with an offline-first PWA architecture, it guarantees full functionality with or without an active internet connection.
 
 The application is localized for India (`en-IN`), formatting all currencies in **INR (₹)**.
 
@@ -28,16 +28,18 @@ The application is localized for India (`en-IN`), formatting all currencies in *
 ## Key Features
 
 - **Transaction Management:** Comprehensive CRUD operations for income and expenses with full-text search, category tagging, payment mode filters (Online/Offline/Receipts), and undo action support.
-- **Receipt Management:** Serverless Cloudinary-backed receipt storage supporting images and PDFs. Includes uniform receipt tags throughout the app, an inline modal viewer, and direct file downloads.
+- **Receipt Management:** Serverless Cloudinary-backed receipt storage supporting images and PDFs. Includes interactive image cropping (via Cropper.js), uniform receipt tags throughout the app, an inline modal viewer, and direct file downloads.
 - **Subscription Management:** Automated recurring bills with flexible cadences (daily, weekly, monthly, yearly, custom). Features:
   - **Collapsible Filter Box:** Compact full-width trigger on mobile and dedicated header action on desktop.
   - **Multi-Filter Support:** Filter by cadence, type (Expense/Income), due dates (Overdue, Due Today, Due Soon, Month, Exact Date), and search query.
   - **Inline Payment History:** Expandable card panels displaying matched payment logs, totals, and annualized cost projections.
   - **Billing Radar & Lifecycle:** Real-time billing cycle progress bars, early payment detection, pause/resume, and multi-tier pricing support.
-- **Analytics & Insights:** Interactive Canvas 2D trend charts, dynamic category breakdowns, and automated spending insights.
-- **Reporting & Data Export:** One-click monthly A4 PDF report generation (via jsPDF) and styled Excel exports (`.xlsx` via SheetJS) with clickable receipt links. Bulk CSV transaction import with duplicate checking.
+- **Event Tracking & Budgets:** Special event grouping for transactions (e.g., vacations, weddings, renovations) with custom date windows, dedicated event filters, and inline budget tracking.
+- **Analytics & Yearly Insights:** Interactive Canvas 2D trend charts, dynamic category breakdowns, multi-period filtering, and annual spending summaries.
+- **Activity Log & Audit Trail:** Real-time system activity log tracking additions, edits, deletions, updates, and CSV imports with automated log pruning.
+- **Reporting & Data Export:** One-click monthly A4 PDF report generation (via jsPDF & jsPDF-AutoTable) and styled Excel exports (`.xlsx` via SheetJS) with clickable receipt links. Bulk CSV transaction import with duplicate checking.
 - **Offline Resilience:** Dual-layer offline support combining Firestore's `persistentLocalCache()` with a custom `localStorage` queue that automatically syncs pending writes upon reconnection.
-- **Design & UI/UX:** Dark and light themes with smooth glassmorphism, responsive desktop and mobile views, animated counters, skeleton loaders, and custom 3D emoji iconography.
+- **Design & UI/UX:** Dark and light themes with smooth glassmorphism, responsive desktop and mobile views (including a dedicated bottom navigation bar on mobile), animated counters, skeleton loaders, and custom 3D emoji iconography.
 - **Security:** Hardened with Content Security Policy (CSP), Subresource Integrity (SRI), and comprehensive Firestore security rules.
 
 ---
@@ -46,7 +48,7 @@ The application is localized for India (`en-IN`), formatting all currencies in *
 
 - **Frontend:** HTML5, CSS3, Vanilla JavaScript (ES2020)
 - **Backend & Auth:** Firebase Authentication, Cloud Firestore (v11.6.1)
-- **Utilities:** jsPDF & pdfmake (PDF generation), SheetJS (Excel/CSV operations), Cloudinary (Receipt storage)
+- **Utilities:** Cropper.js (Receipt image crop), jsPDF & jsPDF-AutoTable (PDF generation), SheetJS (Excel/CSV operations), Cloudinary (Receipt storage)
 - **Architecture:** Progressive Web App (PWA) with Service Worker offline caching
 
 ---
@@ -57,7 +59,7 @@ Flux operates without an intermediate application server, interfacing directly w
 
 ```text
 users/{uid}/
-  ├── transactions/{txId}   # Income/expense records (amount, date, desc, category, receipts, subId)
+  ├── transactions/{txId}   # Income/expense records (amount, date, desc, category, receipts, subId, eventId)
   ├── events/{eventId}      # Special events for transaction grouping
   ├── recurring/{recId}     # Automated subscription and recurring bill definitions
   └── activities/{actId}    # System activity log (auto-pruned to 300 entries)
@@ -91,13 +93,13 @@ By default, Flux connects to a pre-configured Firebase instance. To connect your
 2. Enable **Google Authentication** (Build > Authentication).
 3. Create a **Firestore Database** and deploy the rules from `firestore.rules`.
 4. Register a Web App in Project Settings to obtain your `firebaseConfig`.
-5. Update the `firebaseConfig` object in `index.html` (around line ~11000).
+5. Update the `firebaseConfig` object in `index.html` (around line ~11050).
 
 ### 3. Configure Cloudinary for Receipts (Optional)
 
 1. Create a free [Cloudinary](https://cloudinary.com/) account.
 2. Under **Settings > Upload**, create a new **Unsigned** upload preset.
-3. Update the credentials in `index.html` (around line ~10615):
+3. Update the credentials in `index.html` (around line ~10650):
 
    ```js
    const CLOUDINARY_CLOUD = 'your_cloud_name';
