@@ -132,12 +132,137 @@
     })();
   </script>
 
+  <!-- Desktop Left Sidebar Navigation (Unified 4-Tab Architecture + Hero Add Button) -->
+  <aside class="desktop-sidebar" id="desktopSidebar" aria-label="Main navigation">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">Flu<span>x</span></div>
+      <div class="sidebar-sub">Personal Finance</div>
+    </div>
+
+    <!-- Quick Add Transaction Hero Button -->
+    <button class="sidebar-add-btn" id="sideAddBtn" onclick="scrollToForm()" aria-label="Add New Transaction">
+      <span class="sidebar-add-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </span>
+      <span class="sidebar-add-label">New Transaction</span>
+    </button>
+
+    <!-- Navigation Items matching Mobile's 4 Tabs -->
+    <nav class="sidebar-nav">
+      <button class="sidebar-nav-item act" id="snDash" onclick="switchTab('dashboard')" style="--nav-col: #FFC55A;">
+        <span class="sidebar-nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sideDashGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFD572" />
+                <stop offset="100%" stop-color="#FFB020" />
+              </linearGradient>
+            </defs>
+            <rect x="4" y="4" width="8" height="9" rx="2" fill="url(#sideDashGrad)" />
+            <rect x="4" y="15" width="8" height="5" rx="1.5" fill="url(#sideDashGrad)" />
+            <rect x="14" y="4" width="8" height="5" rx="1.5" fill="url(#sideDashGrad)" />
+            <rect x="14" y="11" width="8" height="9" rx="2" fill="url(#sideDashGrad)" />
+          </svg>
+        </span>
+        <span class="sidebar-nav-label">Dashboard</span>
+        <span class="sidebar-nav-indicator"></span>
+      </button>
+
+      <button class="sidebar-nav-item" id="snSub" onclick="switchTab('subscriptions')" style="--nav-col: #A2D2FF;">
+        <span class="sidebar-nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sideSubGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#A2D2FF" />
+                <stop offset="100%" stop-color="#5B8DEF" />
+              </linearGradient>
+            </defs>
+            <rect x="4" y="2" width="16" height="20" rx="3" stroke="url(#sideSubGrad)" stroke-width="2" />
+            <path
+              d="M12 6V12M9.5 7.5C9.5 6.5 11 6 12 6C13 6 14.5 6.5 14.5 7.5C14.5 8.5 9.5 9.5 9.5 10.5C9.5 11.5 11 12 12 12C13 12 14.5 11.5 14.5 10.5"
+              stroke="url(#sideSubGrad)" stroke-width="1.5" stroke-linecap="round" />
+            <line x1="8" y1="15" x2="16" y2="15" stroke="url(#sideSubGrad)" stroke-width="2" stroke-linecap="round" />
+            <line x1="8" y1="18" x2="13" y2="18" stroke="url(#sideSubGrad)" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span class="sidebar-nav-label">Subscriptions</span>
+        <span class="sidebar-nav-indicator"></span>
+      </button>
+
+      <button class="sidebar-nav-item" id="snYearly" onclick="switchTab('yearly')" style="--nav-col: #A074FF;">
+        <span class="sidebar-nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sideAnaGrad" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#00c6ff" />
+                <stop offset="40%" stop-color="#0072ff" />
+                <stop offset="70%" stop-color="#8a2be2" />
+                <stop offset="100%" stop-color="#ff69b4" />
+              </linearGradient>
+            </defs>
+            <rect x="2" y="14" width="4" height="8" rx="1" fill="url(#sideAnaGrad)" />
+            <rect x="8" y="9" width="4" height="13" rx="1" fill="url(#sideAnaGrad)" />
+            <rect x="14" y="12" width="4" height="10" rx="1" fill="url(#sideAnaGrad)" />
+            <rect x="20" y="5" width="4" height="17" rx="1" fill="url(#sideAnaGrad)" />
+            <path d="M4 11 L10 5 L16 8 L22 2" stroke="url(#sideAnaGrad)" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round" />
+            <circle cx="4" cy="11" r="1.5" fill="url(#sideAnaGrad)" />
+            <circle cx="10" cy="5" r="1.5" fill="url(#sideAnaGrad)" />
+            <circle cx="16" cy="8" r="1.5" fill="url(#sideAnaGrad)" />
+            <circle cx="22" cy="2" r="1.5" fill="url(#sideAnaGrad)" />
+          </svg>
+        </span>
+        <span class="sidebar-nav-label">Analytics</span>
+        <span class="sidebar-nav-indicator"></span>
+      </button>
+
+      <button class="sidebar-nav-item" id="snLog" onclick="switchTab('log')" style="--nav-col: #5CE1E6;">
+        <span class="sidebar-nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sideActGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#00F2FE" />
+                <stop offset="100%" stop-color="#4FACFE" />
+              </linearGradient>
+            </defs>
+            <rect x="5" y="4" width="14" height="18" rx="3" stroke="url(#sideActGrad)" stroke-width="2" />
+            <path d="M9 4V3C9 2.44772 9.44772 2 10 2H14C14.5523 2 15 2.44772 15 3V4H9Z" fill="url(#sideActGrad)" />
+            <circle cx="12" cy="4" r="1" fill="#111" />
+            <line x1="8" y1="9" x2="16" y2="9" stroke="url(#sideActGrad)" stroke-width="2" stroke-linecap="round" />
+            <line x1="8" y1="13" x2="16" y2="13" stroke="url(#sideActGrad)" stroke-width="2" stroke-linecap="round" />
+            <line x1="8" y1="17" x2="11" y2="17" stroke="url(#sideActGrad)" stroke-width="2" stroke-linecap="round" />
+            <path d="M13 17L15 19L19 14" stroke="url(#sideActGrad)" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+        </span>
+        <span class="sidebar-nav-label">Activity Log</span>
+        <span class="sidebar-nav-indicator"></span>
+      </button>
+    </nav>
+
+    <!-- Sidebar Footer with Realtime Sync Status -->
+    <div class="sidebar-footer">
+      <div class="sidebar-sync-chip" id="sidebarCloudChip">
+        <span class="sync-dot offline" id="sidebarCloudDot"></span>
+        <span class="sidebar-sync-txt" id="sidebarCloudText">Offline</span>
+      </div>
+      <div class="sidebar-version">Flux v2.4</div>
+    </div>
+  </aside>
+
   <div class="app">
     <header>
       <div class="header-top">
-        <div>
+        <div class="header-brand-wrap">
           <div class="logo">Flu<span>x</span></div>
           <div class="logo-sub">Personal Finance</div>
+        </div>
+        <div class="desktop-header-title-wrap">
+          <h1 class="desktop-view-title" id="desktopViewTitle">Dashboard</h1>
+          <span class="desktop-view-sub" id="desktopViewSub">Overview & Quick Transactions</span>
         </div>
         <!-- Desktop and Mobile Theme Toggle -->
         <div class="theme-toggle-desktop">
@@ -193,13 +318,6 @@
         <input type="file" id="xlIn" accept=".xlsx,.xls,.csv" onchange="doImport(event)">
       </div>
     </header>
-
-    <!-- App Tab Navigation -->
-    <div class="app-tabs">
-      <button class="app-tab act" id="tabDash" onclick="switchTab('dashboard')">Dashboard</button>
-      <button class="app-tab" id="tabSub" onclick="switchTab('subscriptions')">Subscriptions</button>
-      <button class="app-tab" id="tabLog" onclick="switchTab('log')">Activity Log</button>
-    </div>
 
     <!-- Dashboard View -->
     <div id="dashboardView">
@@ -1199,7 +1317,6 @@
     </div>
   </div>
 
-  <button class="fab" id="fab" onclick="scrollToForm()" aria-label="Add new transaction">＋</button>
   <button class="scroll-top" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})"
     aria-label="Scroll to top">↑</button>
 
@@ -1729,6 +1846,27 @@
       initSwipeActions();
       initParallax();
       initAutocomplete();
+
+      // Sync status mirror for Desktop Sidebar
+      const mainCloudDot = document.getElementById('cloudDot');
+      const mainCloudText = document.getElementById('cloudText');
+      const sideCloudDot = document.getElementById('sidebarCloudDot');
+      const sideCloudText = document.getElementById('sidebarCloudText');
+      if (mainCloudDot && sideCloudDot) {
+        new MutationObserver(() => {
+          sideCloudDot.className = mainCloudDot.className;
+        }).observe(mainCloudDot, { attributes: true, attributeFilter: ['class'] });
+      }
+      if (mainCloudText && sideCloudText) {
+        const syncTextObserver = () => {
+          sideCloudText.textContent = (mainCloudText.textContent || '').replace(/^Sync:\s*/i, '');
+          sideCloudText.style.color = mainCloudText.style.color || 'var(--mu)';
+        };
+        syncTextObserver();
+        new MutationObserver(syncTextObserver).observe(mainCloudText, {
+          childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['style']
+        });
+      }
     });
 
     function showConfirm(title, msg, actionFn, isDestructive = true) {
@@ -6680,41 +6818,20 @@
       renderTxList();
     }
 
-    // FAB: scroll to New Transaction form & auto-hide when form is visible
+    // Sidebar & Mobile Nav: scroll to New Transaction form & auto-focus description input
     function scrollToForm() {
       if (typeof switchTab === 'function') switchTab('dashboard');
       setTimeout(() => {
         const form = document.querySelector('.fb2');
-        if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 50);
-    }
-    (function initFab() {
-      const fab = document.getElementById('fab');
-      if (!fab) return;
-      const form = document.querySelector('.fb2');
-      if (!form) return;
-      if ('IntersectionObserver' in window) {
-        const observer = new IntersectionObserver((entries) => {
-          for (const entry of entries) {
-            fab.classList.toggle('hide', entry.isIntersecting);
+        if (form) {
+          form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const descInput = document.getElementById('txD');
+          if (descInput) {
+            setTimeout(() => descInput.focus(), 250);
           }
-        }, { rootMargin: '0px', threshold: 0 });
-        observer.observe(form);
-      } else {
-        let ticking = false;
-        window.addEventListener('scroll', () => {
-          if (ticking) return;
-          ticking = true;
-          requestAnimationFrame(() => {
-            const rect = form.getBoundingClientRect();
-            const visible = rect.top < window.innerHeight && rect.bottom > 0;
-            fab.classList.toggle('hide', visible);
-            ticking = false;
-          });
-        }, { passive: true });
-      }
-    })();
-
+        }
+      }, 60);
+    }
     function setTxSearch(val) {
       cTxSearch = val;
       txVisibleCount = (cDtFilt === 'today' && cModeFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
@@ -9460,10 +9577,6 @@
     document.getElementById('reportMod').addEventListener('click', function (e) { if (e.target === this) closeReportMod(); });
 
     function switchTab(tab) {
-      document.getElementById('tabDash').classList.toggle('act', tab === 'dashboard' || tab === 'yearly');
-      document.getElementById('tabSub').classList.toggle('act', tab === 'subscriptions');
-      document.getElementById('tabLog').classList.toggle('act', tab === 'log');
-
       // Update Mobile Bottom Nav Active States
       const mnDash = document.getElementById('mnDash');
       if (mnDash) mnDash.classList.toggle('act', tab === 'dashboard');
@@ -9473,6 +9586,35 @@
       if (mnYearly) mnYearly.classList.toggle('act', tab === 'yearly');
       const mnLog = document.getElementById('mnLog');
       if (mnLog) mnLog.classList.toggle('act', tab === 'log');
+
+      // Update Desktop Sidebar Nav Active States
+      const snDash = document.getElementById('snDash');
+      if (snDash) snDash.classList.toggle('act', tab === 'dashboard');
+      const snSub = document.getElementById('snSub');
+      if (snSub) snSub.classList.toggle('act', tab === 'subscriptions');
+      const snYearly = document.getElementById('snYearly');
+      if (snYearly) snYearly.classList.toggle('act', tab === 'yearly');
+      const snLog = document.getElementById('snLog');
+      if (snLog) snLog.classList.toggle('act', tab === 'log');
+
+      // Update Desktop View Title Header
+      const desktopViewTitle = document.getElementById('desktopViewTitle');
+      const desktopViewSub = document.getElementById('desktopViewSub');
+      if (desktopViewTitle) {
+        if (tab === 'dashboard') {
+          desktopViewTitle.textContent = 'Dashboard';
+          if (desktopViewSub) desktopViewSub.textContent = 'Overview & Quick Transactions';
+        } else if (tab === 'subscriptions') {
+          desktopViewTitle.textContent = 'Subscriptions';
+          if (desktopViewSub) desktopViewSub.textContent = 'Recurring Bills & Active Plans';
+        } else if (tab === 'yearly') {
+          desktopViewTitle.textContent = 'Analytics';
+          if (desktopViewSub) desktopViewSub.textContent = 'Spending Trends & Category Breakdown';
+        } else if (tab === 'log') {
+          desktopViewTitle.textContent = 'Activity Log';
+          if (desktopViewSub) desktopViewSub.textContent = 'Audit Trail & Transaction History';
+        }
+      }
 
       document.getElementById('dashboardView').style.display = (tab === 'dashboard' || tab === 'yearly') ? 'block' : 'none';
       document.getElementById('subView').style.display = tab === 'subscriptions' ? 'block' : 'none';
@@ -9488,9 +9630,6 @@
         document.body.classList.remove('mob-yearly-active');
         document.body.classList.add('mob-non-dash');
       }
-
-      const fab = document.getElementById('fab');
-      if (fab) fab.style.display = (tab === 'dashboard' || tab === 'yearly') ? '' : 'none';
 
       if (tab === 'dashboard' || tab === 'yearly') {
         renderTrend();
