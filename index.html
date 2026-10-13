@@ -152,7 +152,7 @@
 
     <!-- Navigation Items matching Mobile's 4 Tabs -->
     <nav class="sidebar-nav">
-      <button class="sidebar-nav-item act" id="snDash" onclick="switchTab('dashboard')" style="--nav-col: #FFC55A;">
+      <button class="sidebar-nav-item act" id="snDash" onclick="switchTab('dashboard')" style="--nav-col: #FFC55A;" aria-current="page">
         <span class="sidebar-nav-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -3507,7 +3507,16 @@
       if (_splashDone) return;
       _splashDone = true;
       const splash = document.getElementById('splash-screen');
-      if (splash) splash.style.display = 'none';
+      if (splash) {
+        // If not already faded out, transition smoothly rather than snapping
+        splash.style.transition = 'opacity 0.3s ease, visibility 0.3s ease';
+        splash.style.opacity = '0';
+        splash.style.visibility = 'hidden';
+        splash.style.pointerEvents = 'none';
+        setTimeout(() => {
+          splash.style.display = 'none';
+        }, 320);
+      }
       while (_splashCallbacks.length > 0) {
         const fn = _splashCallbacks.shift();
         try { fn(); } catch (e) { console.error('Splash callback error:', e); }
@@ -3528,14 +3537,7 @@
         return;
       }
 
-      // Check if splash has already ended/hidden
-      const computed = window.getComputedStyle(splash);
-      if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
-        markSplashDone();
-        return;
-      }
-
-      // Listen for the sp-exit animation ending
+      // Listen for the sp-exit animation ending gracefully
       splash.addEventListener('animationend', (e) => {
         if (e.target === splash && e.animationName === 'sp-exit') {
           markSplashDone();
@@ -3543,13 +3545,9 @@
       });
       splash.addEventListener('animationcancel', markSplashDone);
 
-      // Precise fallback timeout:
-      // Desktop: 2.5s delay + 0.42s exit = 2920ms
-      // Mobile: 2.3s delay + 0.42s exit = 2720ms
-      const splashDuration = window.innerWidth <= 520 ? 2750 : 2950;
-      const navElapsed = performance.now();
-      const fallbackDelay = Math.max(0, splashDuration - navElapsed);
-      setTimeout(markSplashDone, fallbackDelay);
+      // Generous safety fallback in case animationend is suppressed (e.g. background tab)
+      // Never cuts off animation early: CSS exit finishes naturally at 1.9s
+      setTimeout(markSplashDone, 2600);
     })();
 
     function animateVal(el, target, formatter, duration) {
@@ -9587,15 +9585,31 @@
       const mnLog = document.getElementById('mnLog');
       if (mnLog) mnLog.classList.toggle('act', tab === 'log');
 
-      // Update Desktop Sidebar Nav Active States
+      // Update Desktop Sidebar Nav Active States & Accessibility
       const snDash = document.getElementById('snDash');
-      if (snDash) snDash.classList.toggle('act', tab === 'dashboard');
+      if (snDash) {
+        const isAct = tab === 'dashboard';
+        snDash.classList.toggle('act', isAct);
+        if (isAct) snDash.setAttribute('aria-current', 'page'); else snDash.removeAttribute('aria-current');
+      }
       const snSub = document.getElementById('snSub');
-      if (snSub) snSub.classList.toggle('act', tab === 'subscriptions');
+      if (snSub) {
+        const isAct = tab === 'subscriptions';
+        snSub.classList.toggle('act', isAct);
+        if (isAct) snSub.setAttribute('aria-current', 'page'); else snSub.removeAttribute('aria-current');
+      }
       const snYearly = document.getElementById('snYearly');
-      if (snYearly) snYearly.classList.toggle('act', tab === 'yearly');
+      if (snYearly) {
+        const isAct = tab === 'yearly';
+        snYearly.classList.toggle('act', isAct);
+        if (isAct) snYearly.setAttribute('aria-current', 'page'); else snYearly.removeAttribute('aria-current');
+      }
       const snLog = document.getElementById('snLog');
-      if (snLog) snLog.classList.toggle('act', tab === 'log');
+      if (snLog) {
+        const isAct = tab === 'log';
+        snLog.classList.toggle('act', isAct);
+        if (isAct) snLog.setAttribute('aria-current', 'page'); else snLog.removeAttribute('aria-current');
+      }
 
       // Update Desktop View Title Header
       const desktopViewTitle = document.getElementById('desktopViewTitle');

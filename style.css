@@ -5552,9 +5552,8 @@
     }
 
     /* ── Startup Animation ─────────────────────────
-   Total: 2.5s visible + 0.42s exit
-   App entrance: 2.68s (overlaps exit for continuity)
-   All transitions: GPU-accelerated properties only
+   Total: 1.5s reveal + 0.4s seamless dissolve
+   Unified across desktop & mobile
    ──────────────────────────────────────────────── */
 
     #splash-screen {
@@ -5566,9 +5565,9 @@
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      pointer-events: none;
+      pointer-events: auto;
       will-change: opacity;
-      animation: sp-exit 0.42s cubic-bezier(0.4, 0, 1, 1) 2.5s forwards;
+      animation: sp-exit 0.4s cubic-bezier(0.4, 0, 1, 1) 1.5s forwards;
     }
 
     /* Radial vignette: focuses attention to center without any glow */
@@ -5808,8 +5807,8 @@
       transform: scaleX(0);
       transform-origin: left center;
       will-change: transform;
-      /* ease-out: fast start, decelerates to meet the exit */
-      animation: sp-fill-run 2.44s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.06s forwards;
+      /* ease-out: fast start, decelerates to meet the exit at 1.5s */
+      animation: sp-fill-run 1.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.05s forwards;
     }
 
     @keyframes sp-fill-run {
@@ -5821,33 +5820,15 @@
     /* ── Exit ─────────────────────────────────────── */
 
     @keyframes sp-exit {
-      from {
+      0% {
         opacity: 1;
+        pointer-events: auto;
       }
 
-      to {
+      100% {
         opacity: 0;
         visibility: hidden;
-      }
-    }
-
-    /* ── App Entrance ─────────────────────────────── */
-
-    .app {
-      opacity: 0;
-      will-change: opacity, transform;
-      animation: sp-app-in 0.58s cubic-bezier(0.16, 1, 0.3, 1) 2.66s forwards;
-    }
-
-    @keyframes sp-app-in {
-      from {
-        opacity: 0;
-        transform: translateY(7px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
+        pointer-events: none;
       }
     }
 
@@ -5895,15 +5876,6 @@
       .sp-tag {
         font-size: 9px;
         letter-spacing: 4px;
-      }
-
-      #splash-screen {
-        animation-delay: 2.3s;
-      }
-
-      .app {
-        animation-delay: 2.48s;
-        animation-duration: 0.48s;
       }
     }
 
