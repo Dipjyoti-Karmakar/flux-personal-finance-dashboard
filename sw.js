@@ -1,10 +1,11 @@
 // Flux Service Worker - Offline-first caching strategy
-// V46: Bumped to v36 - forced CDN cache bust via ?v=36 on core assets + strict Cropper check
-const CACHE_NAME = 'flux-v38';
+// V47: Added style.css to pre-cache + bumped cache to flux-v39
+const CACHE_NAME = 'flux-v39';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './?v=36',
   './index.html?v=36',
+  './style.css?v=1',
   './manifest.json?v=2',
   './icon-192.png?v=2',
   './icon-512.png?v=2',
@@ -22,7 +23,7 @@ self.addEventListener('install', (event) => {
         // If any CDN asset fails to cache during install, continue gracefully
         console.warn('[SW] Pre-cache partial failure:', err);
         // At minimum, cache the local files
-        return cache.addAll(['./', './index.html', './manifest.json']);
+        return cache.addAll(['./', './index.html', './style.css?v=1', './manifest.json']);
       });
     })
   );

@@ -3,7 +3,7 @@
 
 # Flux: Personal Finance Dashboard
 
-> A comprehensive, single-file personal finance dashboard built with vanilla JavaScript, Firebase, and a PWA-first architecture. No build tools. No frameworks. No backend.
+> A comprehensive personal finance dashboard built with vanilla JavaScript, Firebase, and a PWA-first architecture. No build tools. No frameworks. No backend.
 
 ![HTML5](https://img.shields.io/badge/HTML5-Frontend-orange?style=for-the-badge&logo=html5)
 ![JavaScript](https://img.shields.io/badge/JavaScript-ES2020-yellow?style=for-the-badge&logo=javascript)
@@ -19,7 +19,7 @@
 
 ## Overview
 
-Flux is a production-grade personal finance application contained entirely within a single `index.html` file (~20,000+ lines). It leverages **Firebase Authentication** and **Cloud Firestore** for secure, real-time data synchronization. Built with an offline-first PWA architecture, it guarantees full functionality with or without an active internet connection.
+Flux is a production-grade personal finance application built with clean, modular vanilla web technologies, pairing a streamlined `index.html` (~10,600 lines) with a dedicated stylesheet (`style.css`). It leverages **Firebase Authentication** and **Cloud Firestore** for secure, real-time data synchronization. Built with an offline-first PWA architecture, it guarantees full functionality with or without an active internet connection.
 
 The application is localized for India (`en-IN`), formatting all currencies in **INR (₹)**.
 
@@ -93,13 +93,13 @@ By default, Flux connects to a pre-configured Firebase instance. To connect your
 2. Enable **Google Authentication** (Build > Authentication).
 3. Create a **Firestore Database** and deploy the rules from `firestore.rules`.
 4. Register a Web App in Project Settings to obtain your `firebaseConfig`.
-5. Update the `firebaseConfig` object in `index.html` (around line ~11050).
+5. Update the `firebaseConfig` object in `index.html` (around line ~1690).
 
 ### 3. Configure Cloudinary for Receipts (Optional)
 
 1. Create a free [Cloudinary](https://cloudinary.com/) account.
 2. Under **Settings > Upload**, create a new **Unsigned** upload preset.
-3. Update the credentials in `index.html` (around line ~10650):
+3. Update the credentials in `index.html` (around line ~1285):
 
    ```js
    const CLOUDINARY_CLOUD = 'your_cloud_name';
