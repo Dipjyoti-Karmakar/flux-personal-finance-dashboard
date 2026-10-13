@@ -4122,9 +4122,9 @@
 
     /* ── Subscriptions Tab ── */
     #subView {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 24px 0 0;
+      width: 100%;
+      margin: 0;
+      padding: 0;
     }
 
     .sub-header {
@@ -4138,10 +4138,14 @@
 
     .sub-title {
       font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--tx);
-      letter-spacing: -0.3px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(120deg, var(--tx) 35%, var(--ac) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
     }
 
     .sub-header-actions {
@@ -5254,9 +5258,9 @@
 
     /* ── Activity Log ── */
     #logView {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 24px 0 0;
+      width: 100%;
+      margin: 0;
+      padding: 0;
     }
 
     .log-header {
@@ -5270,9 +5274,14 @@
 
     .log-title {
       font-family: 'Playfair Display', serif;
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--tx);
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(120deg, var(--tx) 35%, var(--ac) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
     }
 
     .log-clear-btn {
@@ -5546,9 +5555,7 @@
         flex-wrap: nowrap;
       }
 
-      .log-title {
-        font-size: 18px;
-      }
+      /* .log-title retains 26px golden gradient shimmer */
     }
 
     /* ── Startup Animation ─────────────────────────
@@ -7489,10 +7496,12 @@
        CSS-only. Zero HTML / JS changes. Safe to add / remove.
        ══════════════════════════════════════════════════════════ */
 
-    /* ── Sub view: tighter padding, max-width bump ── */
+    /* ── Sub view: full width matching dashboard ── */
     #subView {
-      max-width: 1040px;
-      padding: 28px 0 0;
+      width: 100%;
+      max-width: none;
+      padding: 0;
+      margin: 0;
     }
 
     /* ── Sub header: Playfair title gets gradient shimmer ── */
@@ -8814,7 +8823,7 @@
     /* ── Dashboard section sticky header ── */
     .dash-section-header {
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
       flex-wrap: wrap;
@@ -8827,13 +8836,19 @@
       padding-bottom: 12px;
     }
 
-    /* ── Section title (Playfair serif headings in dashboard) ── */
-    .section-title {
+    /* ── Section title (Playfair serif headings in dashboard & analytics) ── */
+    .section-title,
+    .sub-title,
+    .log-title {
       font-family: 'Playfair Display', serif;
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--tx);
-      letter-spacing: -.2px;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(120deg, var(--tx) 35%, var(--ac) 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
     }
 
     /* ── Split events body: proper padding ── */
@@ -9437,10 +9452,14 @@ body.mob-yearly-active #dashboardView > .ys {
   .desktop-view-title {
     font-family: 'Playfair Display', serif;
     font-size: 26px;
-    font-weight: 600;
-    color: var(--tx);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(120deg, var(--tx) 35%, var(--ac) 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     margin: 0;
-    line-height: 1.1;
+    line-height: 1.2;
   }
 
   .desktop-view-sub {
@@ -9461,6 +9480,16 @@ body.mob-yearly-active #dashboardView > .ys {
   body.mob-non-dash header .hr,
   body.mob-yearly-active header .hr {
     display: flex !important;
+  }
+
+  /* All main tabs have the exact same side margin and full width as Summary/Dashboard */
+  #dashboardView,
+  #subView,
+  #logView {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding-top: 0 !important;
   }
 }
 
