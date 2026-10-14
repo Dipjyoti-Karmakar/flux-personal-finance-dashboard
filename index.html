@@ -340,7 +340,7 @@
 
       <div id="analysisHeader" class="dash-section-header" style="display:none;">
         <div class="section-title">Analytics</div>
-        <div class="fltr" style="padding:0; border:none; margin:0;">
+        <div class="analysis-pill-bar">
           <button class="ft dt-flt-analysis" id="aM_today" onclick="setAnalysisMode('today')">Today</button>
           <button class="ft dt-flt-analysis act" id="aM_month" onclick="setAnalysisMode('month')">This Month</button>
           <button class="ft dt-flt-analysis" id="aM_year" onclick="setAnalysisMode('year')">This Year</button>
@@ -348,11 +348,40 @@
           <button class="ft dt-flt-analysis" id="aM_custom" onclick="setAnalysisMode('custom')">Custom</button>
         </div>
       </div>
-      <div class="stats-custom-dt" id="analysisCustomDt" style="display:none; margin-bottom:12px;">
+      <div class="stats-custom-dt analysis-custom-dt-box" id="analysisCustomDt" style="display:none;">
+        <span class="cdt-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
         <input type="date" id="analysisFrom" onchange="updAnalysisDt()">
-        <span style="color:var(--mu);font-size:11px">to</span>
+        <span class="cdt-sep">→</span>
         <input type="date" id="analysisTo" onchange="updAnalysisDt()">
-        <span class="dt-clear" onclick="clearAnalysisDt()">clear</span>
+        <button class="cdt-clear-chip" onclick="clearAnalysisDt()">Clear</button>
+      </div>
+
+      <!-- Period Summary KPI Strip (Analytics Tab) -->
+      <div id="analysisPeriodKpi" class="analysis-kpi-strip" style="display:none;">
+        <div class="apk-card apk-exp">
+          <div class="apk-label">
+            <span>Period Expenses</span>
+            <span class="apk-icon-glyph">↓</span>
+          </div>
+          <div class="apk-val" id="apkExp">₹0.00</div>
+          <div class="apk-sub"><span id="apkExpTx">0 txns</span> &bull; <span id="apkAvg">₹0/day</span></div>
+        </div>
+        <div class="apk-card apk-inc">
+          <div class="apk-label">
+            <span>Period Income</span>
+            <span class="apk-icon-glyph">↑</span>
+          </div>
+          <div class="apk-val" id="apkInc">₹0.00</div>
+          <div class="apk-sub"><span id="apkIncTx">0 txns</span></div>
+        </div>
+        <div class="apk-card apk-net">
+          <div class="apk-label">
+            <span>Net Savings</span>
+            <span class="apk-rate-badge" id="apkRateBadge">+0%</span>
+          </div>
+          <div class="apk-val" id="apkNet">₹0.00</div>
+          <div class="apk-sub" id="apkSub">Savings rate: 0%</div>
+        </div>
       </div>
 
 
@@ -2178,11 +2207,60 @@
       }
     }
 
+    function renderAnalysisPeriodKpi(passedTxs) {
+      const el = document.getElementById('analysisPeriodKpi');
+      if (!el) return;
+      const aTxs = passedTxs || getAnalysisTxs();
+      const exp = aTxs.filter(t => t.type === 'expense');
+      const inc = aTxs.filter(t => t.type === 'income');
+      const totExp = exp.reduce((s, t) => s + t.amount, 0);
+      const totInc = inc.reduce((s, t) => s + t.amount, 0);
+      const net = totInc - totExp;
+      const savRate = totInc > 0 ? Math.round((net / totInc) * 100) : (totExp > 0 ? -100 : 0);
+
+      const expDays = Math.max(1, new Set(exp.map(t => t.date)).size);
+      const avgDay = totExp > 0 ? Math.round(totExp / expDays) : 0;
+
+      const expEl = document.getElementById('apkExp');
+      const incEl = document.getElementById('apkInc');
+      const netEl = document.getElementById('apkNet');
+      const expTxEl = document.getElementById('apkExpTx');
+      const incTxEl = document.getElementById('apkIncTx');
+      const avgEl = document.getElementById('apkAvg');
+      const rateBadge = document.getElementById('apkRateBadge');
+      const subEl = document.getElementById('apkSub');
+
+      if (expEl) expEl.textContent = fmt(totExp);
+      if (incEl) incEl.textContent = fmt(totInc);
+      if (netEl) {
+        netEl.textContent = (net < 0 ? '-' : '') + fmt(Math.abs(net));
+        netEl.style.color = net >= 0 ? 'var(--in)' : 'var(--ex)';
+      }
+      if (expTxEl) expTxEl.textContent = `${exp.length} txns`;
+      if (incTxEl) incTxEl.textContent = `${inc.length} txns`;
+      if (avgEl) avgEl.textContent = `${fmtS(avgDay)}/day`;
+
+      if (rateBadge) {
+        rateBadge.textContent = `${savRate > 0 ? '+' : ''}${savRate}%`;
+        rateBadge.className = `apk-rate-badge ${savRate >= 0 ? 'pos' : 'neg'}`;
+      }
+      if (subEl) {
+        if (totInc > 0) {
+          subEl.textContent = `${savRate >= 0 ? 'Saved' : 'Overspent'} ${Math.abs(savRate)}% of period income`;
+        } else if (totExp > 0) {
+          subEl.textContent = 'No income recorded this period';
+        } else {
+          subEl.textContent = 'No transactions recorded';
+        }
+      }
+    }
+
     function updAnalysisDt() {
       if (analysisMode === 'custom') {
         activeCatFilter = null;
         catTxVisibleCount = CAT_TX_PAGE_SIZE;
         _catLastHtml = '';
+        renderAnalysisPeriodKpi();
         renderTrend();
         renderCats();
         renderSplit();
@@ -2207,6 +2285,7 @@
         if (m === 'custom') cdw.style.display = 'flex';
         else cdw.style.display = 'none';
       }
+      renderAnalysisPeriodKpi();
       renderTrend();
       renderCats();
       renderSplit();
@@ -3164,6 +3243,7 @@
       renderYearly();
       renderEvents();
       renderInsights();
+      renderAnalysisPeriodKpi();
       if (typeof twemoji !== 'undefined') {
         // Only re-parse dynamic content areas — never the entire body (too expensive)
         ['txList', 'ctArea', 'spArea', 'insightList', 'yrArea', 'subList', 'logList', 'eventList'].forEach(id => {
@@ -4469,7 +4549,25 @@
       }
       area.setAttribute('aria-label', ariaDesc || 'Trend chart with data');
 
-      area.innerHTML = '<div style="position:relative; width:100%; height:100%; flex:1;"><canvas id="trendC" style="position:absolute; inset:0; width:100%; height:100%; touch-action:none;"></canvas></div>';
+      // Compute peak, daily average, and active total for the stat strip
+      let peakVal = 0, peakDateKey = '';
+      keys.forEach((k, idx) => {
+        const ev = showExp ? (expVals[idx] || 0) : 0;
+        const iv = showInc ? (incVals[idx] || 0) : 0;
+        const dayTot = (trendMode === 'both') ? (ev + iv) : (trendMode === 'income' ? iv : ev);
+        if (dayTot > peakVal) { peakVal = dayTot; peakDateKey = k; }
+      });
+      const totActiveVol = (showExp ? expVals.reduce((a, b) => a + b, 0) : 0) + (showInc ? incVals.reduce((a, b) => a + b, 0) : 0);
+      const activePtsCount = keys.filter((k, i) => (showExp && expVals[i] > 0) || (showInc && incVals[i] > 0)).length || 1;
+      const dailyAvgVol = Math.round(totActiveVol / activePtsCount);
+      const peakFmtDate = peakDateKey ? fmtL(peakDateKey) : '—';
+
+      area.innerHTML = '<div style="position:relative; width:100%; height:100%; flex:1; min-height:180px;"><canvas id="trendC" style="position:absolute; inset:0; width:100%; height:100%; touch-action:none;"></canvas></div>' +
+        `<div class="trend-stat-strip" id="trendStatStrip">` +
+        `<div class="tss-item"><span class="tss-lbl">Peak:</span> <span class="tss-val" style="color:var(--ac);">${fmtS(peakVal)}</span> <span class="tss-sub">(${peakFmtDate})</span></div>` +
+        `<div class="tss-item"><span class="tss-lbl">Active Avg:</span> <span class="tss-val">${fmtS(dailyAvgVol)}</span></div>` +
+        `<div class="tss-item"><span class="tss-lbl">Period Total:</span> <span class="tss-val" style="color:${trendMode === 'income' ? 'var(--in)' : (trendMode === 'both' ? 'var(--tx)' : 'var(--ex)')};">${fmtS(totActiveVol)}</span></div>` +
+        `</div>`;
       const cv = document.getElementById('trendC');
       const tip = document.getElementById('trendTip');
 
@@ -4783,12 +4881,16 @@
 
           // Build tooltip with both values when in both mode
           const isFutureHover = refPts[closestIdx].isFuture;
-          let tipHTML = `<div>${refPts[closestIdx].label}</div>`;
+          let tipHTML = `<div class="trend-tip-hdr"><span class="trend-tip-dt">${refPts[closestIdx].label}</span></div>`;
           if (isFutureHover) {
-            tipHTML += `<div class="val" style="color:var(--mu);font-size:10px;letter-spacing:.3px">Upcoming</div>`;
+            tipHTML += `<div style="color:var(--mu);font-size:10px;padding-top:4px;">Upcoming Period</div>`;
           } else {
-            if (showExp && ePts[closestIdx]) tipHTML += `<div class="val" style="color:${expColor}">Exp: ${fmt(ePts[closestIdx].val)}</div>`;
-            if (showInc && iPts[closestIdx]) tipHTML += `<div class="val" style="color:${incColor}">Inc: ${fmt(iPts[closestIdx].val)}</div>`;
+            if (showExp && ePts[closestIdx]) {
+              tipHTML += `<div class="trend-tip-row exp"><span class="trend-tip-dot"></span><span class="trend-tip-lbl">Expense</span><span class="trend-tip-val">${fmt(ePts[closestIdx].val)}</span></div>`;
+            }
+            if (showInc && iPts[closestIdx]) {
+              tipHTML += `<div class="trend-tip-row inc"><span class="trend-tip-dot"></span><span class="trend-tip-lbl">Income</span><span class="trend-tip-val">${fmt(iPts[closestIdx].val)}</span></div>`;
+            }
           }
           tip.innerHTML = tipHTML;
           const ptX = currentRect.left + refPts[closestIdx].x;
@@ -4888,7 +4990,7 @@
       cats.forEach(([cat, val], i) => {
         const pct = Math.round((val / totalExp) * 100);
         const isActive = activeCatFilter === cat;
-        detHtml += `<div class="cat-tag${isActive ? ' cat-tag-active' : ''}" onclick="toggleCatFilter(${esc(JSON.stringify(cat))})"><div class="cat-icon-wrap" style="color:${getCatColor(cat)}">${CICO[cat] || '🏷️'}</div><span class="cat-tag-name">${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><span class="cat-arrow">▶</span></div>`;
+        detHtml += `<div class="cat-tag${isActive ? ' cat-tag-active' : ''}" style="--cat-pct:${pct}%;" onclick="toggleCatFilter(${esc(JSON.stringify(cat))})" role="button" tabindex="0"><div class="cat-icon-wrap" style="color:${getCatColor(cat)}">${CICO[cat] || '🏷️'}</div><span class="cat-tag-name">${cat}</span><span class="cat-tag-amt">${fmtS(val)}</span><span class="cat-tag-pct">${pct}%</span><svg class="cat-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>`;
       });
       detHtml += '</div>';
 
@@ -4995,6 +5097,10 @@
 
       panel.innerHTML = `<div class="cat-tx-inner">
     <div class="cat-tx-hdr">
+      <button class="cat-back-btn" onclick="closeCatPanel()" title="Back to all categories">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        <span>All</span>
+      </button>
       <div class="cat-tx-hdr-info">
         <span class="cat-tx-hdr-name">${CICO[activeCatFilter] || '✦'} ${activeCatFilter}</span>
         <div class="cat-tx-hdr-stats">
@@ -5034,7 +5140,7 @@
       // FIXED: Use Set size with a minimum of 1 to prevent division by zero / Infinity avg/day
       const onlDays = Math.max(1, new Set(onl.map(t => t.date)).size);
       const oflDays = Math.max(1, new Set(ofl.map(t => t.date)).size);
-      const newHtml = `<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)"></div><div class="sps" style="width:${fp}%;background:var(--of)"></div></div><div class="spl"><span class="splb" style="color:var(--on)">Online ${op}%</span><span class="splb" style="color:var(--of)">Offline ${fp}%</span></div></div><div class="spcs"><div class="spc"><div class="spcl" style="color:var(--on)">Online</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transactions</div><div class="spcs2">${onl.length > 0 ? fmtS(oA / onlDays) + ' avg/day' : '—'}</div></div><div class="spc"><div class="spcl" style="color:var(--of)">Offline</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transactions</div><div class="spcs2">${ofl.length > 0 ? fmtS(fA / oflDays) + ' avg/day' : '—'}</div></div></div>`;
+      const newHtml = `<div class="spw"><div class="spb"><div class="sps" style="width:${op}%;background:var(--on)" title="Online: ${op}%"></div><div class="sps" style="width:${fp}%;background:var(--of)" title="Offline: ${fp}%"></div></div><div class="spl"><span class="splb" style="color:var(--on)"><span class="sp-dot" style="background:var(--on);"></span>Online ${op}%</span><span class="splb" style="color:var(--of)"><span class="sp-dot" style="background:var(--of);"></span>Offline ${fp}%</span></div></div><div class="spcs"><div class="spc spc-onl"><div class="spc-icon">💳</div><div class="spcl" style="color:var(--on)">Online Spending</div><div class="spcv" style="color:var(--on)">${fmt(oA)}</div><div class="spcs2">${onl.length} transaction${onl.length !== 1 ? 's' : ''}</div><div class="spcs2 spc-sub-pill">${onl.length > 0 ? fmtS(oA / onlDays) + '/day' : '—'}</div></div><div class="spc spc-ofl"><div class="spc-icon">🏪</div><div class="spcl" style="color:var(--of)">Offline Spending</div><div class="spcv" style="color:var(--of)">${fmt(fA)}</div><div class="spcs2">${ofl.length} transaction${ofl.length !== 1 ? 's' : ''}</div><div class="spcs2 spc-sub-pill">${ofl.length > 0 ? fmtS(fA / oflDays) + '/day' : '—'}</div></div></div>`;
       if (newHtml === _splitLastHtml) return;
       _splitLastHtml = newHtml;
       area.innerHTML = newHtml;
@@ -5433,8 +5539,8 @@
       const sparks = mT.slice(0, lastM + 1).map((v, m) => { const h = Math.max(3, Math.round((v / mMax) * 28)); return `<div class="spk${isCur && m === cM ? ' cm' : ''}" style="height:${h}px" data-tip="${MN[m]}: ${fmtS(v)}"></div>`; }).join('');
       const mnHTML = Array.from({ length: 12 }, (_, m) => mkMnCard(m, yr, yrMonths, isCur, cM, cD, todayISO, mMax, yrTot, cY, yrAvg, adaptiveMultiplier, lastCompletedYearActualTotal)).join('');
       const netClr = yrNet >= 0 ? 'var(--in)' : 'var(--ex)';
-      const savRateHtml = yrSavRate !== null ? `<div class="ysi"><span class="ysl">Savings Rate</span><span class="ysv" style="color:${yrSavRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${yrSavRate > 0 ? '+' : ''}${yrSavRate}%</span></div>` : '';
-      return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div style="display:flex;flex-direction:column;align-items:stretch;gap:4px;flex-shrink:0;"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}<div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active Days</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div><div class="yspk">${sparks}</div><span class="ych">▼</span></div><div class="mng">${mnHTML}</div></div>`;
+      const savRateHtml = yrSavRate !== null ? `<div class="ysi"><span class="ysl">Savings</span><span class="ysv" style="color:${yrSavRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${yrSavRate > 0 ? '+' : ''}${yrSavRate}%</span></div>` : '';
+      return `<div class="yb${isCur ? ' cy' : ''}" id="yb${yr}"><div class="yh" onclick="togYr('yb${yr}')"><div class="yl-wrap"><span class="yl" style="text-align:center;">${yr}</span>${isCur ? '<span class="ytag">Current</span>' : ''}</div><div class="yrsum"><div class="yrsum-group yrsum-primary"><div class="ysi"><span class="ysl">Expenses</span><span class="ysv n">${fmtW(yrTot)}</span></div><div class="ysi"><span class="ysl">Income</span><span class="ysv p">${fmtW(yrTotInc)}</span></div><div class="ysi"><span class="ysl">Net</span><span class="ysv" style="color:${netClr}">${fmtW(Math.abs(yrNet))}</span></div>${savRateHtml}</div><div class="yrsum-group yrsum-secondary"><div class="ysi"><span class="ysl">Avg/Day</span><span class="ysv u">${fmtS(yrAvg)}</span></div><div class="ysi"><span class="ysl">Active</span><span class="ysv" style="color:var(--mu)">${yrD}d</span></div><div class="ysi"><span class="ysl">Online</span><span class="ysv" style="color:var(--on)">${fmtW(yrO)}</span></div><div class="ysi"><span class="ysl">Offline</span><span class="ysv" style="color:var(--of)">${fmtW(yrF)}</span></div></div></div><div class="yspk">${sparks}</div><span class="ych"><svg class="yr-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></span></div><div class="mng">${mnHTML}</div></div>`;
     }
 
     function mkMnCard(m, yr, yrMonths, isCurYr, cM, cD, todayISO, mMax, yrTot, cY, yrAvg, adaptiveMultiplier, lastCompletedYearActualTotal) {
@@ -5526,7 +5632,7 @@
       ${isExtreme ? `<span class="extreme-warn">⚠️ EXTREME</span> &bull; ` : ''}
       ${truePercent.toFixed(1)}% of Yearly Spend
     </div>
-    <div class="mc-hint"><span class="mc-hint-show">▼ View ${mTxCount} Txs</span><span class="mc-hint-hide">▲ Hide ${mTxCount} Txs</span></div>
+    <div class="mc-hint"><span class="mc-hint-show"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><polyline points="6 9 12 15 18 9"></polyline></svg>View ${mTxCount} Txs</span><span class="mc-hint-hide"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><polyline points="18 15 12 9 6 15"></polyline></svg>Hide ${mTxCount} Txs</span></div>
   </div>`;
     }
 
@@ -9655,6 +9761,7 @@
 
       if (tab === 'dashboard' || tab === 'yearly') {
         _catLastHtml = '';
+        renderAnalysisPeriodKpi();
         renderTrend();
         renderCats();
         renderSplit();
