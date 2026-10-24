@@ -371,15 +371,16 @@
         <div class="sc gl card-in" id="balCard">
           <div class="sl">Net Balance</div>
           <div class="sv big neu" id="sBal">₹0.00</div>
-          <div class="ss" id="sBalSub">—</div>
+          <div class="ss"><span id="sBalSub">—</span><span id="sBalBadge" class="mob-hero-badge"
+              style="display:none;"></span></div>
         </div>
         <div class="sc card-in">
-          <div class="sl">Total Income</div>
+          <div class="sl">Total Inflow</div>
           <div class="sv med pos" id="sInc">₹0.00</div>
           <div class="ss" id="sIncS">0 txns</div>
         </div>
         <div class="sc card-in">
-          <div class="sl">Total Expenses</div>
+          <div class="sl">Total Spent</div>
           <div class="sv med neg" id="sExp">₹0.00</div>
           <div class="ss"><span id="sExpS">0 txns</span><span id="sExpBadge" class="mob-hero-badge"
               style="display:none;"></span></div>
@@ -452,7 +453,7 @@
             <div class="fd full-mob">
               <label>Receipt <span style="color:var(--mu);font-weight:400">(Optional — JPG, PNG, PDF, max 10 MB)</span></label>
               <label class="receipt-drop" id="receiptAddDrop" for="receiptAddFile">
-                <span id="receiptAddLabel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Click or drag to attach receipt</span>
+                <span id="receiptAddLabel">Click or drag to attach receipt</span>
                 <input type="file" id="receiptAddFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="if(window.previewReceipt)window.previewReceipt('add',this)">
               </label>
               <div class="receipt-prog-container" id="receiptAddProgContainer" style="display:none">
@@ -3667,11 +3668,31 @@
         }
       }
 
+      const balBadge = document.getElementById('sBalBadge');
+      if (balBadge) {
+        if (tI > 0) {
+          const savRate = Math.round((bal / tI) * 100);
+          if (savRate > 0) {
+            balBadge.className = 'mob-hero-badge pos';
+            balBadge.innerHTML = '↑ ' + savRate + '%';
+          } else if (savRate < 0) {
+            balBadge.className = 'mob-hero-badge neg';
+            balBadge.innerHTML = '↓ ' + Math.abs(savRate) + '%';
+          } else {
+            balBadge.className = 'mob-hero-badge';
+            balBadge.innerHTML = '= 0%';
+          }
+          balBadge.style.display = 'inline-flex';
+        } else {
+          balBadge.style.display = 'none';
+        }
+      }
+
       // Calculate true elapsed days based on the current date filter
       let elapsedDays = 1;
       const now = new Date();
       const todayStr = getTodayStr();
-      const todayDate = new Date(todayStr + 'T00:00:00');
+      const _utcDay = d => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
 
       let avgNumerator = tE;
 
@@ -3679,11 +3700,11 @@
         elapsedDays = Math.max(1, now.getDate());
       } else if (statsMode === 'year') {
         const startOfYear = new Date(now.getFullYear(), 0, 1);
-        elapsedDays = Math.max(1, Math.floor((todayDate - startOfYear) / 86400000) + 1);
+        elapsedDays = Math.max(1, Math.round((_utcDay(now) - _utcDay(startOfYear)) / 86400000) + 1);
       } else if (statsMode === 'all' && sTxs.length > 0) {
         const dates = sTxs.map(t => t.date).sort();
         const firstDt = new Date(dates[0] + 'T00:00:00');
-        elapsedDays = Math.max(1, Math.floor((todayDate - firstDt) / 86400000) + 1);
+        elapsedDays = Math.max(1, Math.round((_utcDay(now) - _utcDay(firstDt)) / 86400000) + 1);
       } else if (statsMode === 'custom' && sTxs.length > 0) {
         const from = document.getElementById('statsFrom').value;
         const to = document.getElementById('statsTo').value;
@@ -3691,7 +3712,7 @@
         const firstDt = new Date((from || dates[0]) + 'T00:00:00');
         // If 'to' is not provided, use today's date or the last transaction date, whichever is smaller, to prevent future txs from inflating elapsed days
         const lastDt = new Date((to || (dates[dates.length - 1] > todayStr ? todayStr : dates[dates.length - 1])) + 'T00:00:00');
-        elapsedDays = Math.max(1, Math.floor((lastDt - firstDt) / 86400000) + 1);
+        elapsedDays = Math.max(1, Math.round((_utcDay(lastDt) - _utcDay(firstDt)) / 86400000) + 1);
       }
 
       animateVal(document.getElementById('sAvg'), elapsedDays > 0 ? avgNumerator / elapsedDays : 0, fmtRound);
@@ -4874,17 +4895,17 @@
       // Elapsed calendar days – mirrors dashboard renderStats() logic
       const _now = new Date();
       const _todayStr = new Date(_now.getTime() - (_now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
-      const _todayDate = new Date(_todayStr + 'T00:00:00');
+      const _utcDay = d => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
       let elapsedDays = 1;
       if (analysisMode === 'month') {
         elapsedDays = Math.max(1, _now.getDate());
       } else if (analysisMode === 'year') {
         const _startOfYear = new Date(_now.getFullYear(), 0, 1);
-        elapsedDays = Math.max(1, Math.floor((_todayDate - _startOfYear) / 86400000) + 1);
+        elapsedDays = Math.max(1, Math.round((_utcDay(_now) - _utcDay(_startOfYear)) / 86400000) + 1);
       } else if (analysisMode === 'all' && aTxs.length > 0) {
         const _dates = aTxs.map(t => t.date).sort();
         const _firstDt = new Date(_dates[0] + 'T00:00:00');
-        elapsedDays = Math.max(1, Math.floor((_todayDate - _firstDt) / 86400000) + 1);
+        elapsedDays = Math.max(1, Math.round((_utcDay(_now) - _utcDay(_firstDt)) / 86400000) + 1);
       } else if (analysisMode === 'custom' && aTxs.length > 0) {
         const _from = document.getElementById('analysisFrom').value;
         const _to = document.getElementById('analysisTo').value;
@@ -4892,7 +4913,7 @@
         const _firstDt = new Date((_from || _dates[0]) + 'T00:00:00');
         const _lastRaw = _to || (_dates[_dates.length - 1] > _todayStr ? _todayStr : _dates[_dates.length - 1]);
         const _lastDt = new Date(_lastRaw + 'T00:00:00');
-        elapsedDays = Math.max(1, Math.floor((_lastDt - _firstDt) / 86400000) + 1);
+        elapsedDays = Math.max(1, Math.round((_utcDay(_lastDt) - _utcDay(_firstDt)) / 86400000) + 1);
       }
       const avgDay = totalExp / elapsedDays;
       const netClr = net >= 0 ? 'var(--in)' : 'var(--ex)';

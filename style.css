@@ -6546,6 +6546,16 @@
       background: color-mix(in srgb, var(--in) 15%, transparent);
     }
 
+    .mob-hero-badge.pos {
+      color: var(--in);
+      background: color-mix(in srgb, var(--in) 15%, transparent);
+    }
+
+    .mob-hero-badge.neg {
+      color: var(--ex);
+      background: color-mix(in srgb, var(--ex) 15%, transparent);
+    }
+
     @media (max-width: 520px) {
       header {
         margin-bottom: 8px;
