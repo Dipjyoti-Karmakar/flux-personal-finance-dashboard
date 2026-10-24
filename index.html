@@ -4871,8 +4871,30 @@
       const totalInc = inc.reduce((s, t) => s + t.amount, 0);
       const net = totalInc - totalExp;
       const savRate = totalInc > 0 ? Math.round((net / totalInc) * 100) : null;
-      const days = new Set(aTxs.map(t => t.date)).size || 1;
-      const avgDay = totalExp / days;
+      // Elapsed calendar days – mirrors dashboard renderStats() logic
+      const _now = new Date();
+      const _todayStr = new Date(_now.getTime() - (_now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10);
+      const _todayDate = new Date(_todayStr + 'T00:00:00');
+      let elapsedDays = 1;
+      if (analysisMode === 'month') {
+        elapsedDays = Math.max(1, _now.getDate());
+      } else if (analysisMode === 'year') {
+        const _startOfYear = new Date(_now.getFullYear(), 0, 1);
+        elapsedDays = Math.max(1, Math.floor((_todayDate - _startOfYear) / 86400000) + 1);
+      } else if (analysisMode === 'all' && aTxs.length > 0) {
+        const _dates = aTxs.map(t => t.date).sort();
+        const _firstDt = new Date(_dates[0] + 'T00:00:00');
+        elapsedDays = Math.max(1, Math.floor((_todayDate - _firstDt) / 86400000) + 1);
+      } else if (analysisMode === 'custom' && aTxs.length > 0) {
+        const _from = document.getElementById('analysisFrom').value;
+        const _to = document.getElementById('analysisTo').value;
+        const _dates = aTxs.map(t => t.date).sort();
+        const _firstDt = new Date((_from || _dates[0]) + 'T00:00:00');
+        const _lastRaw = _to || (_dates[_dates.length - 1] > _todayStr ? _todayStr : _dates[_dates.length - 1]);
+        const _lastDt = new Date(_lastRaw + 'T00:00:00');
+        elapsedDays = Math.max(1, Math.floor((_lastDt - _firstDt) / 86400000) + 1);
+      }
+      const avgDay = totalExp / elapsedDays;
       const netClr = net >= 0 ? 'var(--in)' : 'var(--ex)';
       const savHtml = savRate !== null ? `<div class="apulse-chip"><span class="apulse-lbl">Savings</span><span class="apulse-val" style="color:${savRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${savRate > 0 ? '+' : ''}${savRate}%</span></div>` : '';
       el.innerHTML = `<div class="apulse-chip"><span class="apulse-lbl">Spent</span><span class="apulse-val" style="color:var(--ex)">${fmt(totalExp)}</span></div><div class="apulse-divider"></div><div class="apulse-chip"><span class="apulse-lbl">Inflow</span><span class="apulse-val" style="color:var(--in)">${fmt(totalInc)}</span></div><div class="apulse-divider"></div>${savHtml}${savHtml ? '<div class="apulse-divider"></div>' : ''}<div class="apulse-chip"><span class="apulse-lbl">Avg/Day</span><span class="apulse-val" style="color:var(--ac)">${fmtS(avgDay)}</span></div>`;

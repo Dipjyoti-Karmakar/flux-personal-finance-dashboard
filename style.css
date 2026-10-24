@@ -9896,3 +9896,52 @@ body.mob-yearly-active #analysisPulse {
   padding: 0;
   margin: 0;
 }
+
+/* ── Analytics Desktop: fixed equal-height cards so trend canvas fills properly ── */
+@media (min-width: 640px) {
+  /* Both cards locked to same height — stops the .mg stretch from creating blank space */
+  body.mob-yearly-active #dashboardView .mg > .pn:nth-child(2),
+  body.mob-yearly-active #dashboardView .mg > #catAreaWrap {
+    height: 480px !important;
+    max-height: 480px !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Trend card: flex-col so canvas area fills the remaining height below the header */
+  body.mob-yearly-active #dashboardView .mg > .pn:nth-child(2) {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  body.mob-yearly-active #dashboardView .mg > .pn:nth-child(2) .trend-area-body {
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+
+  /* Category card: flex-col so inner body can scroll within the fixed height */
+  body.mob-yearly-active #dashboardView .mg > #catAreaWrap {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Category body: scrollable — height stays intact even when a cat tx panel opens */
+  body.mob-yearly-active #dashboardView .mg > #catAreaWrap .ca.cat-area-body {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bd) transparent;
+  }
+
+  body.mob-yearly-active #dashboardView .mg > #catAreaWrap .ca.cat-area-body::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  body.mob-yearly-active #dashboardView .mg > #catAreaWrap .ca.cat-area-body::-webkit-scrollbar-thumb {
+    background: var(--bd);
+    border-radius: 4px;
+  }
+}
+
