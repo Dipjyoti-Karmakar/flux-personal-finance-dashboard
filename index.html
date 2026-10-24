@@ -338,22 +338,24 @@
         <span class="dt-clear" onclick="clearStatsDt()">clear</span>
       </div>
 
-      <div id="analysisHeader" class="dash-section-header" style="display:none;">
-        <div class="section-title">Analytics</div>
-        <div class="fltr" style="padding:0; border:none; margin:0;">
-          <button class="ft dt-flt-analysis" id="aM_today" onclick="setAnalysisMode('today')">Today</button>
+      <div id="analysisHeader" class="dash-section-header analysis-header-bar" style="display:none;">
+        <div class="section-title analysis-title-hide">Analytics</div>
+        <div class="analysis-filter-wrap">
           <button class="ft dt-flt-analysis act" id="aM_month" onclick="setAnalysisMode('month')">This Month</button>
           <button class="ft dt-flt-analysis" id="aM_year" onclick="setAnalysisMode('year')">This Year</button>
           <button class="ft dt-flt-analysis" id="aM_all" onclick="setAnalysisMode('all')">All</button>
           <button class="ft dt-flt-analysis" id="aM_custom" onclick="setAnalysisMode('custom')">Custom</button>
         </div>
       </div>
-      <div class="stats-custom-dt" id="analysisCustomDt" style="display:none; margin-bottom:12px;">
-        <input type="date" id="analysisFrom" onchange="updAnalysisDt()">
-        <span style="color:var(--mu);font-size:11px">to</span>
-        <input type="date" id="analysisTo" onchange="updAnalysisDt()">
-        <span class="dt-clear" onclick="clearAnalysisDt()">clear</span>
+      <div class="analysis-custom-dt" id="analysisCustomDt" style="display:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <input type="date" id="analysisFrom" onchange="updAnalysisDt()" class="analysis-date-input">
+        <span class="analysis-date-sep">→</span>
+        <input type="date" id="analysisTo" onchange="updAnalysisDt()" class="analysis-date-input">
+        <button class="analysis-date-clear" onclick="clearAnalysisDt()">✕ Clear</button>
       </div>
+      <!-- Analytics Period Pulse Strip -->
+      <div class="analysis-pulse" id="analysisPulse" style="display:none;"></div>
 
 
       <!-- ⚡ Due-Soon Bill Reminder Banner -->
@@ -471,11 +473,13 @@
         </div>
 
         <div class="pn section-in-down" style="animation-delay:.1s;">
-          <div class="ph"><span class="pt">Expense / Income Trend</span>
-            <div class="trend-toggle"><button class="tt-btn act" id="ttExp"
-                onclick="setTrendMode('expense')">Expense</button><button class="tt-btn" id="ttInc"
-                onclick="setTrendMode('income')">Income</button><button class="tt-btn" id="ttBoth"
-                onclick="setTrendMode('both')">Both</button></div>
+          <div class="ph">
+            <span class="pt">Spending Trend</span>
+            <div class="trend-seg-ctrl">
+              <button class="tsc-btn act" id="ttExp" onclick="setTrendMode('expense')">Expense</button>
+              <button class="tsc-btn" id="ttInc" onclick="setTrendMode('income')">Income</button>
+              <button class="tsc-btn" id="ttBoth" onclick="setTrendMode('both')">Both</button>
+            </div>
           </div>
           <div class="ca trend-area-body" id="trendArea" role="img" aria-label="Spending trend chart">
             <div class="empty-state">
@@ -2186,6 +2190,7 @@
         renderTrend();
         renderCats();
         renderSplit();
+        renderAnalysisPulse();
       }
     }
     function clearAnalysisDt() {
@@ -2210,6 +2215,7 @@
       renderTrend();
       renderCats();
       renderSplit();
+      renderAnalysisPulse();
     }
 
     function setType(t) {
@@ -4340,9 +4346,10 @@
 
     function setTrendMode(m) {
       trendMode = m;
-      document.getElementById('ttExp').classList.toggle('act', m === 'expense');
-      document.getElementById('ttInc').classList.toggle('act', m === 'income');
-      document.getElementById('ttBoth').classList.toggle('act', m === 'both');
+      ['ttExp', 'ttInc', 'ttBoth'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('act', (id === 'ttExp' && m === 'expense') || (id === 'ttInc' && m === 'income') || (id === 'ttBoth' && m === 'both'));
+      });
       renderTrend();
     }
 
@@ -4832,10 +4839,6 @@
       const now = new Date();
       const localISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString();
 
-      if (mode === 'today' || mode === 'day') {
-        const todayPrefix = localISO.slice(0, 10);
-        return txs.filter(t => t.date === todayPrefix);
-      }
       if (mode === 'month') {
         const prefix = localISO.slice(0, 7);
         return txs.filter(t => t.date.startsWith(prefix));
@@ -4853,6 +4856,27 @@
         return list;
       }
       return txs; // 'all'
+    }
+
+    function renderAnalysisPulse() {
+      const el = document.getElementById('analysisPulse');
+      if (!el) return;
+      const isActive = document.body.classList.contains('mob-yearly-active');
+      if (!isActive) { el.style.display = 'none'; return; }
+      const aTxs = getAnalysisTxs();
+      if (!aTxs.length) { el.style.display = 'none'; return; }
+      const exp = aTxs.filter(t => t.type === 'expense');
+      const inc = aTxs.filter(t => t.type === 'income');
+      const totalExp = exp.reduce((s, t) => s + t.amount, 0);
+      const totalInc = inc.reduce((s, t) => s + t.amount, 0);
+      const net = totalInc - totalExp;
+      const savRate = totalInc > 0 ? Math.round((net / totalInc) * 100) : null;
+      const days = new Set(aTxs.map(t => t.date)).size || 1;
+      const avgDay = totalExp / days;
+      const netClr = net >= 0 ? 'var(--in)' : 'var(--ex)';
+      const savHtml = savRate !== null ? `<div class="apulse-chip"><span class="apulse-lbl">Savings</span><span class="apulse-val" style="color:${savRate >= 0 ? 'var(--in)' : 'var(--ex)'}">${savRate > 0 ? '+' : ''}${savRate}%</span></div>` : '';
+      el.innerHTML = `<div class="apulse-chip"><span class="apulse-lbl">Spent</span><span class="apulse-val" style="color:var(--ex)">${fmt(totalExp)}</span></div><div class="apulse-divider"></div><div class="apulse-chip"><span class="apulse-lbl">Inflow</span><span class="apulse-val" style="color:var(--in)">${fmt(totalInc)}</span></div><div class="apulse-divider"></div>${savHtml}${savHtml ? '<div class="apulse-divider"></div>' : ''}<div class="apulse-chip"><span class="apulse-lbl">Avg/Day</span><span class="apulse-val" style="color:var(--ac)">${fmtS(avgDay)}</span></div>`;
+      el.style.display = 'flex';
     }
 
     function renderCats(passedTxs) {
@@ -9658,6 +9682,7 @@
         renderTrend();
         renderCats();
         renderSplit();
+        if (tab === 'yearly') renderAnalysisPulse();
       }
       // Defer heavy renders to next frame so click handler completes fast
       if (tab === 'log') requestAnimationFrame(() => renderLogs());
@@ -9808,6 +9833,7 @@
     window.setAnalysisMode = setAnalysisMode;
     window.updAnalysisDt = updAnalysisDt;
     window.clearAnalysisDt = clearAnalysisDt;
+    window.renderAnalysisPulse = renderAnalysisPulse;
     window.setTrendMode = setTrendMode;
     window.undoDelete = undoDelete;
     window.setType = setType;

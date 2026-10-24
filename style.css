@@ -9165,7 +9165,8 @@ body:not(.mob-yearly-active) #dashboardView .mg > #catAreaWrap,
 body:not(.mob-yearly-active) #dashboardView > #splitEventCard,
 body:not(.mob-yearly-active) #dashboardView > .ys,
 body:not(.mob-yearly-active) #analysisHeader,
-body:not(.mob-yearly-active) #analysisCustomDt {
+body:not(.mob-yearly-active) #analysisCustomDt,
+body:not(.mob-yearly-active) #analysisPulse {
   display: none !important;
 }
 
@@ -9518,3 +9519,380 @@ body.mob-yearly-active #dashboardView > .ys {
   }
 }
 
+/* ==========================================================================
+   Analytics Tab — Design Refresh
+   Scope: All selectors here are additive overrides using existing tokens.
+   ========================================================================== */
+
+/* ── Analysis Header Bar: Filter-only, title suppressed on desktop ── */
+.analysis-header-bar {
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Hide the duplicate "Analytics" title — the main desktop header already shows it */
+@media (min-width: 640px) {
+  .analysis-title-hide {
+    display: none !important;
+  }
+
+  .analysis-header-bar {
+    justify-content: flex-end;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 639px) {
+  .analysis-header-bar {
+    justify-content: space-between;
+  }
+}
+
+/* ── Analysis Filter Pill Group ── */
+.analysis-filter-wrap {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+@media (max-width: 479px) {
+  .analysis-filter-wrap {
+    gap: 4px;
+  }
+
+  .analysis-filter-wrap .ft {
+    padding: 6px 10px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* ── Custom Date Row ── */
+.analysis-custom-dt {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 8px 14px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  flex-wrap: wrap;
+  color: var(--di);
+}
+
+.analysis-custom-dt svg {
+  flex-shrink: 0;
+  color: var(--mu);
+}
+
+.analysis-date-input {
+  flex: 1;
+  min-width: 120px;
+  max-width: 160px;
+  padding: 5px 10px !important;
+  height: auto !important;
+  font-size: 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--bd) !important;
+  background: var(--s2) !important;
+  color: var(--tx) !important;
+  font-family: 'DM Mono', monospace;
+  transition: border-color .2s;
+}
+
+.analysis-date-input:focus {
+  outline: none;
+  border-color: var(--ac) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 15%, transparent);
+}
+
+.analysis-date-sep {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--mu);
+  flex-shrink: 0;
+}
+
+.analysis-date-clear {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--bd);
+  background: transparent;
+  color: var(--mu);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.analysis-date-clear:hover {
+  border-color: var(--ex);
+  color: var(--ex);
+  background: color-mix(in srgb, var(--ex) 8%, transparent);
+}
+
+/* ── Analytics Period Pulse Strip ── */
+.analysis-pulse {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-bottom: 18px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 14px;
+  overflow: hidden;
+  padding: 0 2px;
+  min-height: 58px;
+}
+
+.apulse-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 18px;
+  flex: 1;
+  min-width: 70px;
+  text-align: center;
+  transition: background .18s;
+}
+
+.apulse-chip:hover {
+  background: var(--s2);
+  border-radius: 12px;
+}
+
+.apulse-lbl {
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--di);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.apulse-val {
+  font-family: 'DM Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.apulse-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--bd);
+  flex-shrink: 0;
+}
+
+
+@media (max-width: 479px) {
+  .analysis-pulse {
+    flex-wrap: wrap;
+    padding: 4px;
+    border-radius: 12px;
+    min-height: auto;
+  }
+
+  .apulse-chip {
+    flex: 1 1 calc(50% - 2px);
+    padding: 10px 8px;
+    min-width: 0;
+  }
+
+  .apulse-val {
+    font-size: 13px;
+  }
+
+  /* Hide vertical dividers on small screens — wrap handles spacing */
+  .apulse-divider {
+    display: none;
+  }
+}
+
+
+/* ── Spending Trend: Modern Segmented Control ── */
+.trend-seg-ctrl {
+  display: flex;
+  background: var(--s2);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.tsc-btn {
+  padding: 5px 12px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--mu);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  min-height: 30px;
+}
+
+.tsc-btn:hover {
+  color: var(--tx);
+  background: color-mix(in srgb, var(--tx) 8%, transparent);
+}
+
+#ttExp.tsc-btn.act {
+  background: color-mix(in srgb, var(--ex) 16%, var(--sf));
+  color: var(--ex);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+#ttInc.tsc-btn.act {
+  background: color-mix(in srgb, var(--in) 16%, var(--sf));
+  color: var(--in);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+#ttBoth.tsc-btn.act {
+  background: color-mix(in srgb, var(--ac) 14%, var(--sf));
+  color: var(--ac);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+@media (max-width: 479px) {
+  .trend-seg-ctrl {
+    border-radius: 8px;
+    padding: 2px;
+  }
+
+  .tsc-btn {
+    padding: 5px 9px;
+    font-size: 9px;
+    min-height: 28px;
+  }
+}
+
+/* ── Yearly Overview Section Heading ── */
+.yst {
+  font-size: 11px;
+  letter-spacing: 2.5px;
+}
+
+/* ── Yearly Block Header — Wrap stats neatly on mobile ── */
+@media (max-width: 639px) {
+  .yh {
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .yrsum {
+    gap: 8px 14px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ysi {
+    min-width: 54px;
+  }
+
+  .yspk {
+    align-self: flex-end;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .ych {
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+}
+
+/* ── Month Cards Grid — single column on phone ── */
+@media (max-width: 479px) {
+  .mng {
+    grid-template-columns: 1fr;
+    padding: 0 12px 14px;
+    gap: 8px;
+  }
+
+  .mc {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .mcv {
+    font-size: 15px;
+  }
+
+  .mcs {
+    gap: 8px 12px;
+    margin-bottom: 8px;
+  }
+
+  .mc-hint {
+    font-size: 9px;
+  }
+}
+
+/* ── Online/Offline Split Bar Capsule ── */
+.spb {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* ── Desktop: Trend chart + Category side-by-side ── */
+/* (These are handled by the existing .mg grid, but ensure the analytics-only layout
+   keeps the trend chart and category at equal height) */
+body.mob-yearly-active #dashboardView .mg > .pn:nth-child(2) {
+  display: block !important;
+}
+
+/* Remove display: none from category wrap on analytics tab (it already exists via mob-yearly-active rules) */
+
+/* ── Light theme harmonisation for analytics pieces ── */
+[data-theme="light"] .analysis-pulse {
+  background: rgba(255,255,255,0.9);
+  border-color: rgba(0,0,0,0.08);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+[data-theme="light"] .analysis-custom-dt {
+  background: rgba(255,255,255,0.9);
+  border-color: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .trend-seg-ctrl {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .tsc-btn.act {
+  background: #fff;
+}
+
+/* ── Mobile: sticky pulse strip doesn't require any height; just keep visible ── */
+body.mob-yearly-active #analysisPulse {
+  display: flex;
+}
+
+/* ── Ensure analytics header filter pills don't add extra bottom border ── */
+#analysisHeader .analysis-filter-wrap {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
