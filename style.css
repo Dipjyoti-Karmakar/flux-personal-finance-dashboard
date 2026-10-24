@@ -9550,6 +9550,13 @@ body.mob-yearly-active #dashboardView > .ys {
   .analysis-header-bar {
     justify-content: flex-end;
     margin-bottom: 16px;
+    /* Cancel the inherited dash-section-header sticky on desktop — category cards would be
+       hidden behind it when the user scrolls down to the By Category panel */
+    position: static !important;
+    z-index: auto !important;
+    background: transparent !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 }
 
