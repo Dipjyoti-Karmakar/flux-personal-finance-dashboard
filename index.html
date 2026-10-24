@@ -4966,6 +4966,8 @@
       if (newHtml === _catLastHtml) return;
       _catLastHtml = newHtml;
       area.innerHTML = newHtml;
+      // Reset scroll so first category is always visible after re-render
+      area.scrollTop = 0;
       if (activeCatFilter) renderCatTxList(aTxs);
 
       // Handle the View All text & mob-cat-many class

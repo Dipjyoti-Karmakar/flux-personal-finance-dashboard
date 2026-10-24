@@ -9820,6 +9820,12 @@ body.mob-yearly-active #dashboardView > .ys {
     min-width: 54px;
   }
 
+  /* Online & Offline always share one row at the bottom of the yearly card preview */
+  .yb:not(.op) .yrsum .ysi:nth-last-child(1),
+  .yb:not(.op) .yrsum .ysi:nth-last-child(2) {
+    flex-basis: calc(50% - 7px);
+  }
+
   .yspk {
     align-self: flex-end;
     margin-left: 0;
@@ -9905,6 +9911,13 @@ body.mob-yearly-active #analysisPulse {
   border: none;
   padding: 0;
   margin: 0;
+}
+
+/* ── Mobile analytics: offset sticky #analysisHeader so first category isn't hidden ── */
+@media (max-width: 639px) {
+  body.mob-yearly-active #dashboardView .mg > #catAreaWrap {
+    scroll-margin-top: 60px;
+  }
 }
 
 /* ── Analytics Desktop: fixed equal-height cards so trend canvas fills properly ── */
