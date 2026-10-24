@@ -9975,3 +9975,15 @@ body.mob-yearly-active #analysisPulse {
   }
 }
 
+/* ── Belt-and-suspenders: #analysisHeader must NEVER be sticky on analytics ── */
+body.mob-yearly-active #analysisHeader {
+  position: static !important;
+  z-index: auto !important;
+}
+
+/* ── Ensure .ph inside category card never overlaps the scrollable category list ── */
+body.mob-yearly-active #catAreaWrap .ph {
+  position: static !important;
+  flex-shrink: 0;
+}
+

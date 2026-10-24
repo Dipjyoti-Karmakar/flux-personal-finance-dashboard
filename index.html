@@ -2217,6 +2217,8 @@
       renderCats();
       renderSplit();
       renderAnalysisPulse();
+      // Scroll page to top so category card is fully visible after filter change
+      window.scrollTo(0, 0);
     }
 
     function setType(t) {
@@ -4968,6 +4970,10 @@
       area.innerHTML = newHtml;
       // Reset scroll so first category is always visible after re-render
       area.scrollTop = 0;
+      const catWrap = document.getElementById('catAreaWrap');
+      if (catWrap) catWrap.scrollTop = 0;
+      // Belt-and-suspenders: also reset after layout completes
+      requestAnimationFrame(() => { area.scrollTop = 0; if (catWrap) catWrap.scrollTop = 0; });
       if (activeCatFilter) renderCatTxList(aTxs);
 
       // Handle the View All text & mob-cat-many class
