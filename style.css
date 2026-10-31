@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    Flux: Personal Finance Dashboard - Core Stylesheet
    ========================================================================== */
 
@@ -3480,6 +3480,7 @@
       transition: max-height .36s cubic-bezier(0.16, 1, 0.3, 1), opacity .25s ease, border-top-width .2s ease;
     }
     .insight-filter-box.open {
+      overflow: visible;
       max-height: 600px;
       opacity: 1;
       pointer-events: auto;
@@ -3504,25 +3505,44 @@
     .insight-filter-toolbar > .sub-filter-pills:not(.insight-dt-pills) { order: 3; }
     .insight-event-wrap { order: 4; }
 
-    /* Custom date row */
+    /* Custom date row — matches dashboard transaction filter style */
     .insight-custom-dt-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      display: none;
+      gap: 8px;
       width: 100%;
+      padding: 10px 0 4px 0;
+      align-items: flex-end;
       flex-wrap: wrap;
+      box-sizing: border-box;
+    }
+    .insight-custom-dt-wrap.vis { display: flex; }
+    .insight-cdt-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1 1 110px;
+      min-width: 0;
+    }
+    .insight-cdt-label {
+      font-size: 9px;
+      color: var(--mu);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
     }
     .insight-dt-input {
-      height: 30px;
-      padding: 0 10px;
-      border-radius: 50px;
+      padding: 8px 10px;
+      font-size: 12px;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 10px;
       border: 1px solid var(--bd);
       background: var(--s2);
       color: var(--tx);
       font-family: 'DM Mono', monospace;
-      font-size: 10px;
       outline: none;
-      box-sizing: border-box;
       transition: border-color .18s, box-shadow .18s;
       color-scheme: dark;
     }
@@ -3531,17 +3551,22 @@
       border-color: var(--ac);
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 10%, transparent);
     }
-    .insight-dt-sep { color: var(--mu); font-size: 12px; }
     .insight-dt-clear {
-      width: 22px; height: 22px;
-      border-radius: 50%; border: none;
-      background: var(--s3); color: var(--mu);
-      font-size: 9px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: background .15s, color .15s;
-      flex-shrink: 0;
+      padding: 8px 12px;
+      height: 35px;
+      flex: 0 0 auto;
+      border-radius: 10px;
+      border: 1px solid var(--bd);
+      background: var(--s3);
+      color: var(--mu);
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      cursor: pointer;
+      align-self: flex-end;
+      transition: background .15s, color .15s, border-color .15s;
+      white-space: nowrap;
     }
-    .insight-dt-clear:hover { background: var(--eb); color: var(--ex); }
+    .insight-dt-clear:hover { background: var(--eb); color: var(--ex); border-color: var(--ex); }
 
     /* Event cs-wrap in insight filter */
     .insight-event-wrap {
@@ -3549,6 +3574,10 @@
       align-items: center;
       gap: 6px;
       flex-shrink: 0;
+      position: relative;
+    }
+    .insight-evt-cs {
+      position: static;
     }
     .insight-evt-cs .cs-btn {
       height: 28px;
@@ -3558,6 +3587,20 @@
       white-space: nowrap;
     }
     .insight-evt-cs .cs-btn svg { width: 10px; height: 10px; }
+    .insight-evt-cs .cs-menu {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      top: auto;
+      left: 0;
+      right: auto;
+      min-width: 180px;
+      max-height: 220px;
+      z-index: 9999;
+      transform-origin: bottom left;
+    }
+    .insight-evt-cs.open .cs-menu {
+      animation: csMenuSlideUp .2s cubic-bezier(0.16,1,0.3,1);
+    }
 
     /* etf cs-wrap in transaction panel */
     .etf-cs-wrap .cs-btn {

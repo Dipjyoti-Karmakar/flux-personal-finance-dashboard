@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 
 <head>
@@ -643,11 +643,16 @@
               <button class="sub-fpill" data-idt="custom" onclick="setInsightDate(this,'custom')">Custom</button>
             </div>
             <!-- Custom date range row -->
-            <div class="insight-custom-dt-wrap" id="insightCustomDtWrap" style="display:none;">
-              <input type="date" id="insightDtFrom" class="insight-dt-input" onchange="applyInsightFilters()" title="From date">
-              <span class="insight-dt-sep">&#8212;</span>
-              <input type="date" id="insightDtTo" class="insight-dt-input" onchange="applyInsightFilters()" title="To date">
-              <button class="insight-dt-clear" onclick="clearInsightCustomDt()" title="Clear dates">&#x2715;</button>
+            <div class="insight-custom-dt-wrap" id="insightCustomDtWrap">
+              <div class="insight-cdt-field">
+                <label class="insight-cdt-label">From Date</label>
+                <input type="date" id="insightDtFrom" class="insight-dt-input" onchange="applyInsightFilters()">
+              </div>
+              <div class="insight-cdt-field">
+                <label class="insight-cdt-label">To Date</label>
+                <input type="date" id="insightDtTo" class="insight-dt-input" onchange="applyInsightFilters()">
+              </div>
+              <button class="insight-dt-clear" onclick="clearInsightCustomDt()">Clear</button>
             </div>
             <!-- Type filter pills -->
             <div class="sub-filter-pills" title="Filter by Type">
@@ -5228,7 +5233,7 @@
       document.querySelectorAll('#insightFilterToolbar .sub-fpill[data-idt]').forEach(b => b.classList.remove('act'));
       if (btn) btn.classList.add('act');
       const customWrap = document.getElementById('insightCustomDtWrap');
-      if (customWrap) customWrap.style.display = period === 'custom' ? 'flex' : 'none';
+      if (customWrap) customWrap.classList.toggle('vis', period === 'custom');
       updateInsightFilterBadge();
       _insightsLastHtml = '';
       renderInsights();
@@ -5278,9 +5283,8 @@
       if (cModeFilt === 'event') renderTxList();
     };
 
-    // -- Monthly Insights Engine v3 -- Rich, dynamic, hierarchical --
+    // -- Monthly Insights Engine v4 -- Rich, dynamic, hierarchical, income-aware --
     // Priority tiers: 95-100 CRITICAL | 75-90 ALERT | 55-74 WARNING | 35-54 POSITIVE | 15-34 INFO
-    // 11 insight categories. Top 6 by priority render. No useless fillers.
     let _insightsLastHtml = '';
     function renderInsights() {
       const area = document.getElementById('insightList');
@@ -5291,15 +5295,15 @@
       const todayISO = getTodayStr();
 
       // ── Apply date filter to determine curTxs / prevTxs ──
-      let curTxs, prevTxs, curPrefix, prevPrefix, pM, daysInMonth, daysLeft, monthProgress;
-      let periodLabel = '';
+      let curTxs, prevTxs, pM, daysInMonth, daysLeft, monthProgress;
+      let periodLabel = '', isYearMode = false, isAllMode = false, isCustomMode = false;
       const df = _insightDateFilt || 'month';
 
       if (df === 'month') {
-        curPrefix = cY + '-' + String(cM + 1).padStart(2, '0');
+        const curPrefix = cY + '-' + String(cM + 1).padStart(2, '0');
         const pDate = new Date(cY, cM - 1, 1);
         const pY2 = pDate.getFullYear(); pM = pDate.getMonth();
-        prevPrefix = pY2 + '-' + String(pM + 1).padStart(2, '0');
+        const prevPrefix = pY2 + '-' + String(pM + 1).padStart(2, '0');
         daysInMonth = new Date(cY, cM + 1, 0).getDate();
         daysLeft = daysInMonth - cD;
         monthProgress = Math.round((cD / daysInMonth) * 100);
@@ -5307,32 +5311,43 @@
         prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevPrefix); });
         periodLabel = MF[cM] + ' ' + cY;
       } else if (df === 'year') {
+        isYearMode = true;
+        // YTD: current year up to today vs same period last year (Jan 1 – today-minus-1-year)
         const yearStr = String(cY);
         const prevYearStr = String(cY - 1);
-        curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(yearStr); });
-        prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevYearStr); });
-        daysInMonth = 365; daysLeft = 0; monthProgress = Math.round((new Date(cY, cM, cD) - new Date(cY, 0, 1)) / 86400000 / 3.65);
-        pM = 11;
-        periodLabel = 'Year ' + cY;
+        const todayLastYear = (cY - 1) + '-' + String(cM + 1).padStart(2, '0') + '-' + String(cD).padStart(2, '0');
+        const prevYearStart = prevYearStr + '-01-01';
+        curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(yearStr) && t.date <= todayISO; });
+        prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevYearStr) && t.date >= prevYearStart && t.date <= todayLastYear; });
+        // days into year for pacing
+        const startOfYear = new Date(cY, 0, 1);
+        const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
+        daysInMonth = 365; daysLeft = 365 - dayOfYear; monthProgress = Math.round((dayOfYear / 365) * 100);
+        pM = cM > 0 ? cM - 1 : 11;
+        periodLabel = 'YTD ' + cY + ' (vs ' + (cY-1) + ')';
       } else if (df === 'custom') {
+        isCustomMode = true;
         const fromDt = (document.getElementById('insightDtFrom') || {}).value || '';
         const toDt   = (document.getElementById('insightDtTo')   || {}).value || todayISO;
         curTxs  = txs.filter(function(t){ return (!fromDt || t.date >= fromDt) && (!toDt || t.date <= toDt); });
         prevTxs = [];
-        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM - 1 < 0 ? 11 : cM - 1;
-        periodLabel = (fromDt || '?') + ' — ' + (toDt || '?');
+        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
+        periodLabel = (fromDt || '?') + ' \u2014 ' + (toDt || '?');
       } else { // 'all'
+        isAllMode = true;
         curTxs  = txs.slice();
         prevTxs = [];
-        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM - 1 < 0 ? 11 : cM - 1;
+        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
         periodLabel = 'All Time';
       }
 
       // ── Apply type filter ──
-      if (_insightTypeFilt === 'expense') {
+      const incomeOnly = _insightTypeFilt === 'income';
+      const expenseOnly = _insightTypeFilt === 'expense';
+      if (expenseOnly) {
         curTxs  = curTxs.filter(function(t){ return t.type !== 'income'; });
         prevTxs = prevTxs.filter(function(t){ return t.type !== 'income'; });
-      } else if (_insightTypeFilt === 'income') {
+      } else if (incomeOnly) {
         curTxs  = curTxs.filter(function(t){ return t.type === 'income'; });
         prevTxs = prevTxs.filter(function(t){ return t.type === 'income'; });
       }
@@ -5342,22 +5357,34 @@
         curTxs  = curTxs.filter(function(t){ return t.eventId === _insightEventFilt; });
         prevTxs = prevTxs.filter(function(t){ return t.eventId === _insightEventFilt; });
         const ev = events[_insightEventFilt];
-        if (ev) periodLabel += ' · ' + esc(ev.name);
+        if (ev) periodLabel += ' \u00b7 ' + esc(ev.name);
       }
 
       if (periodEl) periodEl.textContent = periodLabel;
-      if (!curTxs.length && !prevTxs.length) { _insightsLastHtml = ''; area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>'; return; }
+      if (!curTxs.length && !prevTxs.length) {
+        _insightsLastHtml = '';
+        area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>';
+        return;
+      }
 
       const candidates = [];
 
-      // Pre-compute aggregates
+      // ── Pre-compute aggregates ──
       let curInc = 0, curExp = 0, prevInc = 0, prevExp = 0;
-      const curCats = {}, prevCats = {}, curDayExp = {}, descCount = {};
-      const curExpDays = new Set();
-      const expTxs = [];
+      const curCats = {}, prevCats = {}, curDayExp = {}, curDayInc = {}, descCount = {};
+      const curExpDays = new Set(), curIncDates = [];
+      const expTxs = [], incTxs = [];
+      const incSources = {}; // desc -> total for income sources
+
       curTxs.forEach(function(t) {
-        if (t.type === 'income') { curInc += t.amount; }
-        else {
+        if (t.type === 'income') {
+          curInc += t.amount;
+          incTxs.push(t);
+          curDayInc[t.date] = (curDayInc[t.date] || 0) + t.amount;
+          curIncDates.push(t.date);
+          const srcKey = (t.desc || 'Unknown').trim();
+          incSources[srcKey] = (incSources[srcKey] || 0) + t.amount;
+        } else {
           curExp += t.amount; expTxs.push(t);
           const c = t.cat || 'other';
           curCats[c] = (curCats[c] || 0) + t.amount;
@@ -5372,221 +5399,344 @@
         if (t.type === 'income') prevInc += t.amount;
         else { prevExp += t.amount; const c = t.cat || 'other'; prevCats[c] = (prevCats[c] || 0) + t.amount; }
       });
+
       const pastExp = expTxs.filter(function(t){ return t.date <= todayISO; }).reduce(function(s,t){ return s+t.amount; }, 0);
       const dailyBurn = pastExp > 0 && cD > 0 ? Math.round(pastExp / cD) : 0;
-      const projected = dailyBurn > 0 ? Math.round(dailyBurn * daysInMonth) : 0;
+      const projected = (!isYearMode && !isAllMode && !isCustomMode && dailyBurn > 0) ? Math.round(dailyBurn * daysInMonth) : 0;
       const buffer = curInc - curExp;
       const savRate = curInc > 0 ? Math.round((buffer / curInc) * 100) : null;
 
-      // A. Deficit / No-Income
-      if (curInc > 0 && savRate !== null && savRate < 0) {
-        const defPct = Math.abs(savRate);
-        const prio = Math.min(100, 85 + Math.round(Math.min(50, defPct) * 0.3));
-        const dayNote = daysLeft > 0 ? ' <span class="up">' + daysLeft + ' days remaining.</span>' : '';
-        candidates.push({ priority: prio, type: 'neg', icon: '&#x1F6A8;', text: '<strong>Deficit:</strong> Overspent by <strong style="color:var(--ex)">' + fmtS(Math.abs(buffer)) + ' (' + defPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent vs <strong>' + fmtS(curInc) + '</strong> income.' + dayNote });
-      }
-      if (curInc === 0 && curExp > 500) {
-        candidates.push({ priority: 90, type: 'neg', icon: '&#x1F6A8;', text: '<strong>No Income Logged:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent across <strong>' + curExpDays.size + ' days</strong> with zero income recorded -- depleting reserves.' });
-      }
+      // ══════════════════════════════════════════════════════════════════════
+      // INCOME-MODE INSIGHTS (when incomeOnly OR extended periods with income)
+      // ══════════════════════════════════════════════════════════════════════
+      if (incomeOnly || (curInc > 0 && (isAllMode || isYearMode || isCustomMode))) {
 
-      // B. Pacing & Projection (only after day 4)
-      if (projected > 0 && cD >= 4) {
-        if (curInc > 0 && projected > curInc) {
-          const overAmt = projected - curInc;
-          const overPct = Math.round((overAmt / curInc) * 100);
-          const prio = Math.min(98, 70 + Math.round(overPct * 0.56));
-          const safeBudget = daysLeft > 0 ? Math.round((curInc - pastExp) / daysLeft) : 0;
-          const tip = safeBudget > 0 ? ' Safe spend: <strong style="color:var(--in)">' + fmtS(safeBudget) + '/day</strong> for ' + daysLeft + 'd.' : ' ' + daysLeft + 'd left with no budget remaining.';
-          candidates.push({ priority: prio, type: 'neg', icon: '&#x26A0;&#xFE0F;', text: '<strong>Pacing Critical:</strong> At <strong>' + fmtS(dailyBurn) + '/day</strong>, projected to overshoot income by <strong style="color:var(--ex)">' + fmtS(overAmt) + ' (+' + overPct + '%)</strong>.' + tip });
-        } else if (prevExp > 0) {
-          const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
-          if (overPct > 20) {
-            const prio = Math.min(85, 72 + Math.round((overPct - 20) * 0.2));
-            candidates.push({ priority: prio, type: 'neg', icon: '&#x1F4C8;', text: '<strong>Spend Surge:</strong> On track for <strong style="color:var(--ex)">' + fmtS(projected) + '</strong> -- <span class="up">+' + overPct + '%</span> over last month\'s <strong>' + fmtS(prevExp) + '</strong>. At <strong>' + fmtS(dailyBurn) + '/day</strong> with ' + daysLeft + 'd left.' });
-          } else if (overPct < -15) {
-            candidates.push({ priority: 44, type: 'pos', icon: '&#x1F3AF;', text: '<strong>Excellent Pace:</strong> Projected <strong style="color:var(--in)">' + fmtS(projected) + '</strong> -- <span class="down">' + Math.abs(overPct) + '% under</span> last month. Saving an extra <strong style="color:var(--in)">' + fmtS(prevExp - projected) + '</strong> this month.' });
-          } else if (overPct < -5) {
-            candidates.push({ priority: 38, type: 'pos', icon: '&#x1F3AF;', text: '<strong>Great Pace:</strong> <strong>' + fmtS(dailyBurn) + '/day</strong> projected <strong style="color:var(--in)">' + fmtS(projected) + '</strong> (<span class="down">' + Math.abs(overPct) + '% under</span> last month). ' + daysLeft + 'd left.' });
+        // L1. Total income summary with comparison
+        if (curInc > 0) {
+          if (prevInc > 0) {
+            const incChg = Math.round(((curInc - prevInc) / prevInc) * 100);
+            const absDiff = Math.abs(curInc - prevInc);
+            if (incChg >= 20) {
+              candidates.push({ priority: 88, type: 'pos', icon: '&#x1F4B8;', text: '<strong>Income Surge:</strong> <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> earned -- <span class="down">+' + incChg + '% (+' + fmtS(absDiff) + ')</span> over the same period last year (<strong>' + fmtS(prevInc) + '</strong>). Strong upward trajectory.' });
+            } else if (incChg >= 5) {
+              candidates.push({ priority: 72, type: 'pos', icon: '&#x1F4B0;', text: '<strong>Income Growth:</strong> <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> -- <span class="down">+' + incChg + '%</span> vs same period last year (<strong>' + fmtS(prevInc) + '</strong>). Steady improvement.' });
+            } else if (incChg <= -20) {
+              candidates.push({ priority: 92, type: 'neg', icon: '&#x1F4B0;', text: '<strong>Income Drop:</strong> <strong style="color:var(--ex)">' + fmtS(curInc) + '</strong> vs <strong>' + fmtS(prevInc) + '</strong> same period last year -- <span class="up">-' + Math.abs(incChg) + '% (' + fmtS(absDiff) + ' less)</span>. Review income sources urgently.' });
+            } else if (incChg <= -5) {
+              candidates.push({ priority: 74, type: 'neg', icon: '&#x1F4B0;', text: '<strong>Income Decline:</strong> <strong style="color:var(--ex)">' + fmtS(curInc) + '</strong> vs <strong>' + fmtS(prevInc) + '</strong> same period last year -- <span class="up">-' + Math.abs(incChg) + '%</span>. Monitor for sustained decline.' });
+            } else {
+              candidates.push({ priority: 45, type: 'neu', icon: '&#x1F4B0;', text: '<strong>Income Stable:</strong> <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> -- flat vs same period last year (<strong>' + fmtS(prevInc) + '</strong>, ' + (incChg >= 0 ? '+' : '') + incChg + '%). Consistent but no growth.' });
+            }
+          } else if (incomeOnly) {
+            candidates.push({ priority: 55, type: 'pos', icon: '&#x1F4B0;', text: '<strong>Income Total:</strong> <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> from <strong>' + incTxs.length + ' income entr' + (incTxs.length === 1 ? 'y' : 'ies') + '</strong>. Avg: <strong>' + fmtS(Math.round(curInc / Math.max(1, incTxs.length))) + '/entry</strong>.' });
+          }
+        }
+
+        // L2. Income source diversification
+        const srcEntries = Object.entries(incSources).sort(function(a,b){ return b[1]-a[1]; });
+        if (srcEntries.length >= 2) {
+          const topSrc = srcEntries[0][0], topAmt = srcEntries[0][1];
+          const topPct = curInc > 0 ? Math.round((topAmt / curInc) * 100) : 100;
+          if (topPct >= 90) {
+            candidates.push({ priority: 65, type: 'neg', icon: '&#x26A0;&#xFE0F;', text: '<strong>Single-Source Risk:</strong> <strong>' + esc(topSrc) + '</strong> accounts for <strong style="color:var(--ex)">' + topPct + '%</strong> of income (<strong>' + fmtS(topAmt) + '</strong>). Diversifying income streams reduces financial vulnerability.' });
+          } else if (srcEntries.length >= 3) {
+            const secondSrc = srcEntries[1][0], thirdSrc = srcEntries[2][0];
+            candidates.push({ priority: 55, type: 'pos', icon: '&#x1F3AF;', text: '<strong>Diversified Income:</strong> <strong>' + srcEntries.length + ' sources</strong> -- <strong style="color:var(--in)">' + esc(topSrc) + '</strong> (' + topPct + '%), <strong>' + esc(secondSrc) + '</strong>, <strong>' + esc(thirdSrc) + '</strong>. Multi-stream income is a sign of financial resilience.' });
           } else {
-            candidates.push({ priority: 18, type: 'neu', icon: '&#x23F1;&#xFE0F;', text: '<strong>Steady Pace:</strong> <strong>' + fmtS(dailyBurn) + '/day</strong>, projected <strong>' + fmtS(projected) + '</strong> -- on par with last month\'s <strong>' + fmtS(prevExp) + '</strong>. ' + (curInc > 0 ? 'Projected savings: <strong style="color:var(--in)">' + fmtS(curInc - projected) + '</strong>. ' : '') + monthProgress + '% through ' + MF[cM] + '.' });
+            candidates.push({ priority: 40, type: 'neu', icon: '&#x1F4CA;', text: '<strong>Income Sources:</strong> <strong>' + esc(topSrc) + '</strong> (<strong style="color:var(--in)">' + fmtS(topAmt) + '</strong>, ' + topPct + '%) + <strong>' + esc(srcEntries[1][0]) + '</strong> (<strong>' + fmtS(srcEntries[1][1]) + '</strong>). Consider building a third stream.' });
           }
-        } else if (curInc > 0 && daysLeft > 0) {
-          const safeBudget = Math.round((curInc - pastExp) / daysLeft);
-          candidates.push({ priority: 18, type: 'neu', icon: '&#x23F1;&#xFE0F;', text: '<strong>Pace:</strong> Burning <strong>' + fmtS(dailyBurn) + '/day</strong>, projected <strong>' + fmtS(projected) + '</strong>. ' + (safeBudget > 0 ? 'Safe budget: <strong style="color:var(--in)">' + fmtS(safeBudget) + '/day</strong>' : '') + ' -- ' + daysLeft + 'd left.' });
+        } else if (srcEntries.length === 1 && curInc > 0) {
+          candidates.push({ priority: 42, type: 'neu', icon: '&#x1F4CB;', text: '<strong>Income Source:</strong> <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> from <strong>' + esc(srcEntries[0][0]) + '</strong>. Single income stream -- explore side income opportunities.' });
         }
-      }
 
-      // C. Savings Rate
-      if (curInc > 0 && curExp > 0) {
-        let vsPrev = '';
-        if (prevInc > 0) {
-          const prevSavRate = Math.round(((prevInc - prevExp) / prevInc) * 100);
-          const diff = savRate - prevSavRate;
-          if (diff > 2) vsPrev = ' <span class="down">+' + diff + 'pp vs ' + MN[pM] + '</span>';
-          else if (diff < -2) vsPrev = ' <span class="up">' + diff + 'pp vs ' + MN[pM] + '</span>';
-        }
-        if (savRate >= 50) {
-          candidates.push({ priority: 48, type: 'pos', icon: '&#x1F3C6;', text: '<strong>Exceptional Savings:</strong> <strong style="color:var(--in)">' + savRate + '%</strong> saved -- <strong style="color:var(--in)">' + fmtS(buffer) + '</strong> retained' + vsPrev + '. Well above the 20% benchmark.' });
-        } else if (savRate >= 20) {
-          candidates.push({ priority: 42, type: 'pos', icon: '&#x1F3C6;', text: '<strong>Healthy Savings:</strong> <strong style="color:var(--in)">' + savRate + '%</strong> saved -- <strong style="color:var(--in)">' + fmtS(buffer) + '</strong> retained' + vsPrev + '. Hitting the 50-30-20 target.' });
-        } else if (savRate >= 10) {
-          const needed = Math.round(curInc * 0.2) - buffer;
-          candidates.push({ priority: 28, type: 'neu', icon: '&#x1F6E1;&#xFE0F;', text: '<strong>Moderate Savings:</strong> <strong style="color:var(--in)">' + savRate + '%</strong> saved (<strong>' + fmtS(buffer) + '</strong> left)' + vsPrev + '. Need <strong>' + fmtS(needed) + '</strong> more to hit 20%.' });
-        } else if (savRate > 0) {
-          const safeDay = daysLeft > 0 ? Math.round(buffer / daysLeft) : 0;
-          candidates.push({ priority: 55, type: 'neg', icon: '&#x26A1;', text: '<strong>Thin Buffer:</strong> Only <strong style="color:var(--ex)">' + savRate + '%</strong> saved -- <strong>' + fmtS(buffer) + '</strong> left' + vsPrev + '. ' + (safeDay > 0 ? '~<strong>' + fmtS(safeDay) + '/day</strong> runway for ' + daysLeft + 'd.' : '') });
-        }
-      } else if (curInc > 0 && curExp === 0 && cD > 5) {
-        candidates.push({ priority: 30, type: 'pos', icon: '&#x1F6E1;&#xFE0F;', text: '<strong>Full Buffer:</strong> Entire <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> income untouched. <strong>' + fmtS(Math.round(curInc / Math.max(1, daysLeft))) + '/day</strong> available for ' + daysLeft + 'd.' });
-      }
-
-      // D. Income Trend vs Last Month
-      if (curInc > 0 && prevInc > 0) {
-        const incChg = Math.round(((curInc - prevInc) / prevInc) * 100);
-        if (incChg > 20) {
-          candidates.push({ priority: 46, type: 'pos', icon: '&#x1F4B0;', text: '<strong>Income Up:</strong> <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> this month -- <span class="down">+' + incChg + '% (+' + fmtS(curInc - prevInc) + ')</span> over ' + MN[pM] + '\'s <strong>' + fmtS(prevInc) + '</strong>.' });
-        } else if (incChg < -20) {
-          candidates.push({ priority: 68, type: 'neg', icon: '&#x1F4B0;', text: '<strong>Income Drop:</strong> <strong style="color:var(--ex)">' + fmtS(curInc) + '</strong> vs ' + MN[pM] + '\'s <strong>' + fmtS(prevInc) + '</strong> -- <span class="up">' + fmtS(prevInc - curInc) + ' less (' + Math.abs(incChg) + '%)</span>. Tighten discretionary spend.' });
-        }
-      }
-
-      // E. Category Concentration & Top Drain
-      const catEntries = Object.entries(curCats).sort(function(a,b){ return b[1]-a[1]; });
-      if (catEntries.length > 0) {
-        const topCat = catEntries[0][0], topAmt = catEntries[0][1];
-        const secAmt = catEntries.length > 1 ? catEntries[1][1] : 0;
-        const secCat = catEntries.length > 1 ? catEntries[1][0] : null;
-        const cn = topCat.charAt(0).toUpperCase() + topCat.slice(1);
-        const topPct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 100;
-        const prevTopAmt = prevCats[topCat] || 0;
-        let vsLast = '';
-        if (prevTopAmt > 0) {
-          const catChgPct = Math.round(((topAmt - prevTopAmt) / prevTopAmt) * 100);
-          if (catChgPct > 5) vsLast = ' <span class="up">+' + catChgPct + '% vs ' + MN[pM] + '</span>';
-          else if (catChgPct < -5) vsLast = ' <span class="down">' + Math.abs(catChgPct) + '% lower than ' + MN[pM] + '</span>';
-        }
-        const catIcon = (CICO[topCat] || '');
-        if (topPct >= 60) {
-          const prio = Math.min(78, 62 + Math.round((topPct - 60) * 0.4));
-          candidates.push({ priority: prio, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Concentration Risk:</strong> <strong>' + esc(cn) + '</strong> consumes <strong style="color:var(--ex)">' + topPct + '%</strong> of all spending (<strong style="color:var(--ex)">' + fmtS(topAmt) + '</strong>)' + vsLast + '. Diversify to reveal savings.' });
-        } else if (secAmt > 0 && topAmt > secAmt * 1.5) {
-          const scn = secCat ? secCat.charAt(0).toUpperCase() + secCat.slice(1) : 'next category';
-          candidates.push({ priority: 40, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Main Drain:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(topAmt - secAmt) + '</strong> more than ' + esc(scn) + vsLast + '.' });
-        } else {
-          candidates.push({ priority: 20, type: 'neu', icon: catIcon || '&#x2736;', text: '<strong>Top Category:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>' + vsLast + '.' });
-        }
-      }
-
-      // F. Notable Category Shift vs Last Month
-      if (prevTxs.length > 0 && curExp > 0) {
-        let bCat = null, bDiff = 0, bCur = 0, bPrev = 0, bPctChg = 0;
-        const allC = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
-        allC.forEach(function(cat) {
-          const cur = curCats[cat] || 0, prev = prevCats[cat] || 0;
-          const diff = cur - prev;
-          if (Math.abs(diff) > Math.abs(bDiff) && prev > 0) { bDiff = diff; bCat = cat; bCur = cur; bPrev = prev; bPctChg = Math.round((diff / prev) * 100); }
-        });
-        if (bCat && Math.abs(bDiff) > 100) {
-          const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1);
-          const absPct = Math.abs(bPctChg);
-          if (bDiff > 0) {
-            const prio = Math.min(88, 62 + Math.round(Math.min(100, absPct) * 0.26));
-            candidates.push({ priority: prio, type: 'neg', icon: '&#x1F53A;', text: '<strong>' + (absPct >= 100 ? 'Spending Explosion' : 'Creep Alert') + ':</strong> <strong>' + esc(cn) + '</strong> <span class="up">+' + absPct + '%</span> to <strong style="color:var(--ex)">' + fmtS(bCur) + '</strong> vs ' + MN[pM] + '\'s <strong>' + fmtS(bPrev) + '</strong> -- <strong style="color:var(--ex)">' + fmtS(bDiff) + '</strong> extra.' });
+        // L3. Income regularity / frequency (for all-time or year)
+        if ((isAllMode || isYearMode || isCustomMode) && incTxs.length >= 2) {
+          const sortedDates = curIncDates.slice().sort();
+          const firstDate = new Date(sortedDates[0] + 'T00:00:00');
+          const lastDate  = new Date(sortedDates[sortedDates.length - 1] + 'T00:00:00');
+          const spanDays = Math.max(1, Math.floor((lastDate - firstDate) / 86400000));
+          const avgDaysBetween = Math.round(spanDays / Math.max(1, incTxs.length - 1));
+          if (avgDaysBetween <= 7) {
+            candidates.push({ priority: 58, type: 'pos', icon: '&#x1F501;', text: '<strong>Frequent Income:</strong> <strong>' + incTxs.length + ' income entries</strong> over <strong>' + spanDays + ' days</strong> -- avg every <strong style="color:var(--in)">' + avgDaysBetween + ' days</strong>. Cash flow is healthy and regular.' });
+          } else if (avgDaysBetween <= 32) {
+            candidates.push({ priority: 44, type: 'neu', icon: '&#x1F501;', text: '<strong>Monthly Income Pattern:</strong> <strong>' + incTxs.length + ' payments</strong> over <strong>' + spanDays + ' days</strong> (~every <strong>' + avgDaysBetween + ' days</strong>). Typical salary/monthly pattern.' });
           } else {
-            const prio = Math.min(50, 32 + Math.round(Math.min(80, absPct) * 0.22));
-            candidates.push({ priority: prio, type: 'pos', icon: '&#x1F53B;', text: '<strong>Cost Cutting:</strong> <strong>' + esc(cn) + '</strong> <span class="down">-' + absPct + '%</span> to <strong style="color:var(--in)">' + fmtS(bCur) + '</strong> vs ' + MN[pM] + '\'s <strong>' + fmtS(bPrev) + '</strong>. Saved <strong style="color:var(--in)">' + fmtS(Math.abs(bDiff)) + '</strong>.' });
+            candidates.push({ priority: 38, type: 'neu', icon: '&#x23F1;&#xFE0F;', text: '<strong>Infrequent Income:</strong> <strong>' + incTxs.length + ' entries</strong> over <strong>' + spanDays + ' days</strong> -- avg every <strong style="color:var(--ex)">' + avgDaysBetween + ' days</strong>. Irregular income; consider building a larger buffer.' });
+          }
+        }
+
+        // L4. Month-by-month income trend (for year / all-time)
+        if ((isAllMode || isYearMode) && incTxs.length >= 2) {
+          const monthlyInc = {};
+          incTxs.forEach(function(t) {
+            const mKey = t.date.substring(0, 7);
+            monthlyInc[mKey] = (monthlyInc[mKey] || 0) + t.amount;
+          });
+          const mKeys = Object.keys(monthlyInc).sort();
+          if (mKeys.length >= 3) {
+            const lastM = monthlyInc[mKeys[mKeys.length-1]] || 0;
+            const prevM = monthlyInc[mKeys[mKeys.length-2]] || 0;
+            const first3Avg = (monthlyInc[mKeys[0]] + (monthlyInc[mKeys[1]] || 0) + (monthlyInc[mKeys[2]] || 0)) / 3;
+            const trendPct = first3Avg > 0 ? Math.round(((lastM - first3Avg) / first3Avg) * 100) : 0;
+            const best = mKeys.reduce(function(a,b){ return monthlyInc[a] > monthlyInc[b] ? a : b; });
+            const worst = mKeys.reduce(function(a,b){ return monthlyInc[a] < monthlyInc[b] ? a : b; });
+            if (trendPct >= 15) {
+              candidates.push({ priority: 72, type: 'pos', icon: '&#x1F4C8;', text: '<strong>Rising Income Trend:</strong> Last month <strong style="color:var(--in)">' + fmtS(lastM) + '</strong> vs first-3-month avg <strong>' + fmtS(Math.round(first3Avg)) + '</strong> -- <span class="down">+' + trendPct + '% growth</span> over the period. Excellent trajectory.' });
+            } else if (trendPct <= -15) {
+              candidates.push({ priority: 75, type: 'neg', icon: '&#x1F4C9;', text: '<strong>Declining Income Trend:</strong> Last month <strong style="color:var(--ex)">' + fmtS(lastM) + '</strong> vs first-3-month avg <strong>' + fmtS(Math.round(first3Avg)) + '</strong> -- <span class="up">' + trendPct + '%</span>. Income is eroding -- take action.' });
+            }
+            candidates.push({ priority: 35, type: 'neu', icon: '&#x1F4C5;', text: '<strong>Income Range:</strong> Peak <strong style="color:var(--in)">' + fmtS(monthlyInc[best]) + '</strong> (' + best + ') vs low <strong style="color:var(--ex)">' + fmtS(monthlyInc[worst]) + '</strong> (' + worst + ') -- spread of <strong>' + fmtS(monthlyInc[best] - monthlyInc[worst]) + '</strong> across <strong>' + mKeys.length + ' months</strong>.' });
+          }
+        }
+
+        // L5. Income vs Expenses health (even in income-only mode, show context)
+        if (!incomeOnly && curInc > 0 && curExp > 0) {
+          const ratio = (curExp / curInc * 100).toFixed(0);
+          if (parseInt(ratio) > 90) {
+            candidates.push({ priority: 82, type: 'neg', icon: '&#x1F6A8;', text: '<strong>Critical Ratio:</strong> Spending <strong style="color:var(--ex)">' + ratio + '%</strong> of income -- only <strong style="color:var(--ex)">' + fmtS(buffer) + '</strong> left. Cut expenses immediately.' });
+          } else if (parseInt(ratio) > 70) {
+            candidates.push({ priority: 56, type: 'neg', icon: '&#x26A1;', text: '<strong>High Expense Ratio:</strong> Spending <strong style="color:var(--ex)">' + ratio + '%</strong> of income (<strong>' + fmtS(curExp) + '</strong> vs <strong style="color:var(--in)">' + fmtS(curInc) + '</strong>). Aim below 70% to build meaningful savings.' });
+          } else if (parseInt(ratio) <= 50) {
+            candidates.push({ priority: 55, type: 'pos', icon: '&#x1F3C6;', text: '<strong>Excellent Ratio:</strong> Spending only <strong style="color:var(--in)">' + ratio + '%</strong> of income -- <strong style="color:var(--in)">' + fmtS(buffer) + '</strong> (' + (100 - parseInt(ratio)) + '%) retained. Exceptional financial discipline.' });
           }
         }
       }
 
-      // G. Largest Single Purchase
-      const sortedExpTxs = expTxs.filter(function(t){ return t.date <= todayISO; }).sort(function(a,b){ return b.amount-a.amount; });
-      if (sortedExpTxs.length > 0) {
-        const topTx = sortedExpTxs[0];
-        const pctTotal = curExp > 0 ? Math.round((topTx.amount / curExp) * 100) : 100;
-        const avgExp = pastExp / Math.max(1, sortedExpTxs.length);
-        const xAvg = avgExp > 0 ? (topTx.amount / avgExp).toFixed(1) : '--';
-        const catName = topTx.cat ? topTx.cat.charAt(0).toUpperCase() + topTx.cat.slice(1) : 'Other';
-        const descStr = topTx.desc ? ' "' + esc(topTx.desc) + '"' : '';
-        if (pctTotal >= 35) {
-          const prio = Math.min(85, 70 + Math.round((pctTotal - 35) * 0.33));
-          candidates.push({ priority: prio, type: 'neg', icon: '&#x1F4B3;', text: '<strong>Outsized Buy:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- <strong style="color:var(--ex)">' + pctTotal + '% of spend</strong>, ' + xAvg + 'x avg.' });
-        } else if (sortedExpTxs.length >= 3) {
-          candidates.push({ priority: 17, type: 'neu', icon: '&#x1F3F7;&#xFE0F;', text: '<strong>Top Purchase:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- ' + pctTotal + '% of spend, ' + xAvg + 'x avg.' });
+      // ══════════════════════════════════════════════════════════════════════
+      // STANDARD EXPENSE/BALANCE INSIGHTS (for all modes except income-only)
+      // ══════════════════════════════════════════════════════════════════════
+      if (!incomeOnly) {
+
+        // A. Deficit / No-Income
+        if (curInc > 0 && savRate !== null && savRate < 0) {
+          const defPct = Math.abs(savRate);
+          const prio = Math.min(100, 85 + Math.round(Math.min(50, defPct) * 0.3));
+          const dayNote = daysLeft > 0 ? ' <span class="up">' + daysLeft + ' days remaining.</span>' : '';
+          candidates.push({ priority: prio, type: 'neg', icon: '&#x1F6A8;', text: '<strong>Deficit:</strong> Overspent by <strong style="color:var(--ex)">' + fmtS(Math.abs(buffer)) + ' (' + defPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent vs <strong>' + fmtS(curInc) + '</strong> income.' + dayNote });
         }
-      }
+        if (curInc === 0 && curExp > 500) {
+          candidates.push({ priority: 90, type: 'neg', icon: '&#x1F6A8;', text: '<strong>No Income Logged:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent across <strong>' + curExpDays.size + ' days</strong> with zero income recorded -- depleting reserves.' });
+        }
 
-      // H. Repeat Payee
-      const descEntries = Object.entries(descCount).filter(function(e){ return e[1] >= 3; }).sort(function(a,b){ return b[1]-a[1]; });
-      if (descEntries.length > 0) {
-        const topDesc = descEntries[0][0], topCnt = descEntries[0][1];
-        const totalForDesc = expTxs.filter(function(t){ return t.desc && t.desc.trim().toLowerCase() === topDesc; }).reduce(function(s,t){ return s+t.amount; }, 0);
-        const disp = topDesc.charAt(0).toUpperCase() + topDesc.slice(1);
-        candidates.push({ priority: 35, type: 'neg', icon: '&#x1F501;', text: '<strong>Repeat Spend:</strong> <strong>' + esc(disp) + '</strong> -- <strong>' + topCnt + ' transactions</strong> totaling <strong style="color:var(--ex)">' + fmtS(totalForDesc) + '</strong> this month (~' + fmtS(Math.round(totalForDesc / topCnt)) + '/tx). Worth reviewing.' });
-      }
-
-      // I. Subscription Burn
-      if (typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
-        const activeSubs = recurringList.filter(function(r){ return r.active && !r.archived && r.type !== 'income'; });
-        if (activeSubs.length > 0) {
-          const monthlySubTotal = activeSubs.reduce(function(s, r) {
-            let mo = r.amount || 0;
-            if (r.freq === 'yearly') mo = mo / 12;
-            else if (r.freq === 'weekly') mo = mo * 4.33;
-            else if (r.freq === 'daily') mo = mo * 30;
-            else if (r.freq === 'custom' && r.customDays) mo = mo * (30 / r.customDays);
-            return s + mo;
-          }, 0);
-          if (monthlySubTotal > 200 && curExp > 0) {
-            const subPct = Math.round((monthlySubTotal / curExp) * 100);
-            const prio = subPct > 40 ? 60 : subPct > 20 ? 36 : 22;
-            candidates.push({ priority: prio, type: subPct > 40 ? 'neg' : 'neu', icon: '&#x1F504;', text: '<strong>Subscription Burn:</strong> <strong style="color:var(--ex)">' + fmtS(Math.round(monthlySubTotal)) + '/mo</strong> (<strong style="color:var(--ex)">' + fmtS(Math.round(monthlySubTotal * 12)) + '/yr</strong>) across <strong>' + activeSubs.length + ' active subs</strong> -- <strong>' + subPct + '%</strong> of this month\'s expenses.' });
+        // B. Pacing & Projection (only for month mode after day 4)
+        if (projected > 0 && cD >= 4 && !isYearMode && !isAllMode && !isCustomMode) {
+          if (curInc > 0 && projected > curInc) {
+            const overAmt = projected - curInc;
+            const overPct = Math.round((overAmt / curInc) * 100);
+            const prio = Math.min(98, 70 + Math.round(overPct * 0.56));
+            const safeBudget = daysLeft > 0 ? Math.round((curInc - pastExp) / daysLeft) : 0;
+            const tip = safeBudget > 0 ? ' Safe spend: <strong style="color:var(--in)">' + fmtS(safeBudget) + '/day</strong> for ' + daysLeft + 'd.' : ' ' + daysLeft + 'd left with no budget remaining.';
+            candidates.push({ priority: prio, type: 'neg', icon: '&#x26A0;&#xFE0F;', text: '<strong>Pacing Critical:</strong> At <strong>' + fmtS(dailyBurn) + '/day</strong>, projected to overshoot income by <strong style="color:var(--ex)">' + fmtS(overAmt) + ' (+' + overPct + '%)</strong>.' + tip });
+          } else if (prevExp > 0) {
+            const overPct = Math.round(((projected - prevExp) / prevExp) * 100);
+            if (overPct > 20) {
+              const prio = Math.min(85, 72 + Math.round((overPct - 20) * 0.2));
+              candidates.push({ priority: prio, type: 'neg', icon: '&#x1F4C8;', text: '<strong>Spend Surge:</strong> On track for <strong style="color:var(--ex)">' + fmtS(projected) + '</strong> -- <span class="up">+' + overPct + '%</span> over last month\'s <strong>' + fmtS(prevExp) + '</strong>. At <strong>' + fmtS(dailyBurn) + '/day</strong> with ' + daysLeft + 'd left.' });
+            } else if (overPct < -15) {
+              candidates.push({ priority: 44, type: 'pos', icon: '&#x1F3AF;', text: '<strong>Excellent Pace:</strong> Projected <strong style="color:var(--in)">' + fmtS(projected) + '</strong> -- <span class="down">' + Math.abs(overPct) + '% under</span> last month. Saving an extra <strong style="color:var(--in)">' + fmtS(prevExp - projected) + '</strong> this month.' });
+            } else if (overPct < -5) {
+              candidates.push({ priority: 38, type: 'pos', icon: '&#x1F3AF;', text: '<strong>Great Pace:</strong> <strong>' + fmtS(dailyBurn) + '/day</strong> projected <strong style="color:var(--in)">' + fmtS(projected) + '</strong> (<span class="down">' + Math.abs(overPct) + '% under</span> last month). ' + daysLeft + 'd left.' });
+            } else {
+              candidates.push({ priority: 18, type: 'neu', icon: '&#x23F1;&#xFE0F;', text: '<strong>Steady Pace:</strong> <strong>' + fmtS(dailyBurn) + '/day</strong>, projected <strong>' + fmtS(projected) + '</strong> -- on par with last month\'s <strong>' + fmtS(prevExp) + '</strong>. ' + (curInc > 0 ? 'Projected savings: <strong style="color:var(--in)">' + fmtS(curInc - projected) + '</strong>. ' : '') + monthProgress + '% through ' + MF[cM] + '.' });
+            }
+          } else if (curInc > 0 && daysLeft > 0) {
+            const safeBudget = Math.round((curInc - pastExp) / daysLeft);
+            candidates.push({ priority: 18, type: 'neu', icon: '&#x23F1;&#xFE0F;', text: '<strong>Pace:</strong> Burning <strong>' + fmtS(dailyBurn) + '/day</strong>, projected <strong>' + fmtS(projected) + '</strong>. ' + (safeBudget > 0 ? 'Safe budget: <strong style="color:var(--in)">' + fmtS(safeBudget) + '/day</strong>' : '') + ' -- ' + daysLeft + 'd left.' });
           }
         }
-      }
 
-      // J. Average Transaction Size vs Last Month
-      const prevExpTxList = prevTxs.filter(function(t){ return t.type !== 'income'; });
-      if (expTxs.length >= 5 && prevExpTxList.length >= 5) {
-        const avgCur = Math.round(curExp / expTxs.length);
-        const avgPrev = Math.round(prevExp / prevExpTxList.length);
-        const chgPct = Math.round(((avgCur - avgPrev) / avgPrev) * 100);
-        if (Math.abs(chgPct) > 20) {
-          const isUp = chgPct > 0;
-          candidates.push({ priority: isUp ? 33 : 25, type: isUp ? 'neg' : 'pos', icon: '&#x1F4CA;', text: '<strong>Avg Transaction:</strong> <strong style="color:' + (isUp ? 'var(--ex)' : 'var(--in)') + '">' + fmtS(avgCur) + '</strong> per expense (<span class="' + (isUp ? 'up' : 'down') + '">' + (isUp ? '+' : '') + chgPct + '%</span> vs ' + MN[pM] + '\'s <strong>' + fmtS(avgPrev) + '</strong>). ' + expTxs.length + ' txns vs ' + prevExpTxList.length + ' last.' });
-        }
-      }
-
-      // K. No-Spend Streak & Spike Day
-      const sortedExpDays = Array.from(curExpDays).filter(function(d){ return d <= todayISO; }).sort().reverse();
-      const zeroDays = cD - curExpDays.size;
-      if (sortedExpDays.length > 0) {
-        const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000);
-        const avgDay = pastExp / Math.max(1, cD);
-        if (gap >= 7) {
-          candidates.push({ priority: 52, type: 'pos', icon: '&#x1F525;', text: '<strong>Incredible Streak:</strong> <strong style="color:var(--in)">' + gap + ' no-spend days</strong> running -- ~<strong style="color:var(--in)">' + fmtS(Math.round(avgDay * gap)) + '</strong> preserved vs your daily average.' });
-        } else if (gap >= 3) {
-          candidates.push({ priority: 40, type: 'pos', icon: '&#x1F525;', text: '<strong>Momentum:</strong> <strong style="color:var(--in)">' + gap + '-day no-spend streak</strong> -- ~<strong style="color:var(--in)">' + fmtS(Math.round(avgDay * gap)) + '</strong> preserved. Keep going!' });
-        } else if (zeroDays >= 5 && cD >= 7) {
-          candidates.push({ priority: 35, type: 'pos', icon: '&#x1F6E1;&#xFE0F;', text: '<strong>Discipline:</strong> <strong style="color:var(--in)">' + zeroDays + ' zero-spend days</strong> (' + Math.round((zeroDays / cD) * 100) + '% of month so far). Spending on ' + curExpDays.size + ' active days only.' });
-        }
-        const dayEntries = Object.entries(curDayExp).sort(function(a,b){ return b[1]-a[1]; });
-        if (dayEntries.length > 0) {
-          const topDay = dayEntries[0][0], topDayAmt = dayEntries[0][1];
-          const ratio = avgDay > 0 ? (topDayAmt / avgDay).toFixed(1) : '0';
-          if (parseFloat(ratio) >= 3.0) {
-            candidates.push({ priority: 55, type: 'neg', icon: '&#x1F4C5;', text: '<strong>Spending Spike:</strong> <strong>' + fmtDt(topDay) + '</strong> cost <strong style="color:var(--ex)">' + fmtS(topDayAmt) + '</strong> -- <strong style="color:var(--ex)">' + ratio + 'x</strong> your <strong>' + fmtS(Math.round(avgDay)) + '</strong> daily average.' });
-          } else if (gap < 3 && zeroDays < 5) {
-            candidates.push({ priority: 16, type: 'neu', icon: '&#x1F4C5;', text: '<strong>Peak Day:</strong> <strong>' + fmtDt(topDay) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topDayAmt) + '</strong> (' + ratio + 'x avg). ' + (zeroDays > 0 ? zeroDays + ' zero-spend day' + (zeroDays > 1 ? 's' : '') + ' so far.' : 'No zero-spend days yet.') });
+        // B2. Year mode: YTD pacing insight
+        if (isYearMode && curExp > 0) {
+          const startOfYear = new Date(cY, 0, 1);
+          const dayOfYear = Math.max(1, Math.floor((now - startOfYear) / 86400000) + 1);
+          const dailyYTD = Math.round(curExp / dayOfYear);
+          const projYear = Math.round(dailyYTD * 365);
+          if (prevExp > 0) {
+            const vsLastYr = Math.round(((curExp - prevExp) / prevExp) * 100);
+            const prio = vsLastYr > 20 ? 72 : vsLastYr < -15 ? 44 : 22;
+            const typeStr = vsLastYr > 0 ? 'neg' : 'pos';
+            candidates.push({ priority: prio, type: vsLastYr > 20 ? 'neg' : vsLastYr < -15 ? 'pos' : 'neu', icon: '&#x1F4CA;', text: '<strong>YTD Spending:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> in ' + dayOfYear + ' days (<strong>' + fmtS(dailyYTD) + '/day</strong>) vs same period last year <strong>' + fmtS(prevExp) + '</strong> -- <span class="' + (vsLastYr > 0 ? 'up' : 'down') + '">' + (vsLastYr > 0 ? '+' : '') + vsLastYr + '%</span>. Full-year projection: <strong>' + fmtS(projYear) + '</strong>.' });
+          } else {
+            candidates.push({ priority: 30, type: 'neu', icon: '&#x1F4CA;', text: '<strong>YTD Spending:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> over <strong>' + dayOfYear + ' days</strong> at <strong>' + fmtS(dailyYTD) + '/day</strong>. Full-year projection: <strong>' + fmtS(projYear) + '</strong>.' });
           }
         }
-      } else if (cD >= 4 && curTxs.length > 0) {
-        candidates.push({ priority: 32, type: 'pos', icon: '&#x1F525;', text: '<strong>Clean Start:</strong> Zero spending in <strong style="color:var(--in)">first ' + cD + ' days</strong> of ' + MF[cM] + '. Perfect month so far.' });
-      }
 
-      // Sort by priority and render top 6
+        // C. Savings Rate
+        if (curInc > 0 && curExp > 0) {
+          let vsPrev = '';
+          if (prevInc > 0) {
+            const prevSavRate = Math.round(((prevInc - prevExp) / prevInc) * 100);
+            const diff = savRate - prevSavRate;
+            if (diff > 2) vsPrev = ' <span class="down">+' + diff + 'pp vs ' + (isYearMode ? (cY-1) + ' YTD' : MN[pM]) + '</span>';
+            else if (diff < -2) vsPrev = ' <span class="up">' + diff + 'pp vs ' + (isYearMode ? (cY-1) + ' YTD' : MN[pM]) + '</span>';
+          }
+          if (savRate >= 50) {
+            candidates.push({ priority: 48, type: 'pos', icon: '&#x1F3C6;', text: '<strong>Exceptional Savings:</strong> <strong style="color:var(--in)">' + savRate + '%</strong> saved -- <strong style="color:var(--in)">' + fmtS(buffer) + '</strong> retained' + vsPrev + '. Well above the 20% benchmark.' });
+          } else if (savRate >= 20) {
+            candidates.push({ priority: 42, type: 'pos', icon: '&#x1F3C6;', text: '<strong>Healthy Savings:</strong> <strong style="color:var(--in)">' + savRate + '%</strong> saved -- <strong style="color:var(--in)">' + fmtS(buffer) + '</strong> retained' + vsPrev + '. Hitting the 50-30-20 target.' });
+          } else if (savRate >= 10) {
+            const needed = Math.round(curInc * 0.2) - buffer;
+            candidates.push({ priority: 28, type: 'neu', icon: '&#x1F6E1;&#xFE0F;', text: '<strong>Moderate Savings:</strong> <strong style="color:var(--in)">' + savRate + '%</strong> saved (<strong>' + fmtS(buffer) + '</strong> left)' + vsPrev + '. Need <strong>' + fmtS(needed) + '</strong> more to hit 20%.' });
+          } else if (savRate > 0) {
+            const safeDay = daysLeft > 0 ? Math.round(buffer / daysLeft) : 0;
+            candidates.push({ priority: 55, type: 'neg', icon: '&#x26A1;', text: '<strong>Thin Buffer:</strong> Only <strong style="color:var(--ex)">' + savRate + '%</strong> saved -- <strong>' + fmtS(buffer) + '</strong> left' + vsPrev + '. ' + (safeDay > 0 ? '~<strong>' + fmtS(safeDay) + '/day</strong> runway for ' + daysLeft + 'd.' : '') });
+          }
+        } else if (curInc > 0 && curExp === 0 && cD > 5) {
+          candidates.push({ priority: 30, type: 'pos', icon: '&#x1F6E1;&#xFE0F;', text: '<strong>Full Buffer:</strong> Entire <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> income untouched. <strong>' + fmtS(Math.round(curInc / Math.max(1, daysLeft))) + '/day</strong> available for ' + daysLeft + 'd.' });
+        }
+
+        // D. Income Trend vs comparison period (month mode only)
+        if (!isYearMode && !isAllMode && !isCustomMode && curInc > 0 && prevInc > 0) {
+          const incChg = Math.round(((curInc - prevInc) / prevInc) * 100);
+          if (incChg > 20) {
+            candidates.push({ priority: 46, type: 'pos', icon: '&#x1F4B0;', text: '<strong>Income Up:</strong> <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> this month -- <span class="down">+' + incChg + '% (+' + fmtS(curInc - prevInc) + ')</span> over ' + MN[pM] + '\'s <strong>' + fmtS(prevInc) + '</strong>.' });
+          } else if (incChg < -20) {
+            candidates.push({ priority: 68, type: 'neg', icon: '&#x1F4B0;', text: '<strong>Income Drop:</strong> <strong style="color:var(--ex)">' + fmtS(curInc) + '</strong> vs ' + MN[pM] + '\'s <strong>' + fmtS(prevInc) + '</strong> -- <span class="up">' + fmtS(prevInc - curInc) + ' less (' + Math.abs(incChg) + '%)</span>. Tighten discretionary spend.' });
+          }
+        }
+
+        // E. Category Concentration & Top Drain
+        const catEntries = Object.entries(curCats).sort(function(a,b){ return b[1]-a[1]; });
+        if (catEntries.length > 0) {
+          const topCat = catEntries[0][0], topAmt = catEntries[0][1];
+          const secAmt = catEntries.length > 1 ? catEntries[1][1] : 0;
+          const secCat = catEntries.length > 1 ? catEntries[1][0] : null;
+          const cn = topCat.charAt(0).toUpperCase() + topCat.slice(1);
+          const topPct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 100;
+          const prevTopAmt = prevCats[topCat] || 0;
+          let vsLast = '';
+          if (prevTopAmt > 0) {
+            const catChgPct = Math.round(((topAmt - prevTopAmt) / prevTopAmt) * 100);
+            if (catChgPct > 5) vsLast = ' <span class="up">+' + catChgPct + '% vs ' + (isYearMode ? (cY-1)+' YTD' : MN[pM]) + '</span>';
+            else if (catChgPct < -5) vsLast = ' <span class="down">' + Math.abs(catChgPct) + '% lower than ' + (isYearMode ? (cY-1)+' YTD' : MN[pM]) + '</span>';
+          }
+          const catIcon = (CICO[topCat] || '');
+          if (topPct >= 60) {
+            const prio = Math.min(78, 62 + Math.round((topPct - 60) * 0.4));
+            candidates.push({ priority: prio, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Concentration Risk:</strong> <strong>' + esc(cn) + '</strong> consumes <strong style="color:var(--ex)">' + topPct + '%</strong> of all spending (<strong style="color:var(--ex)">' + fmtS(topAmt) + '</strong>)' + vsLast + '. Diversify to reveal savings.' });
+          } else if (secAmt > 0 && topAmt > secAmt * 1.5) {
+            const scn = secCat ? secCat.charAt(0).toUpperCase() + secCat.slice(1) : 'next category';
+            candidates.push({ priority: 40, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Main Drain:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(topAmt - secAmt) + '</strong> more than ' + esc(scn) + vsLast + '.' });
+          } else {
+            candidates.push({ priority: 20, type: 'neu', icon: catIcon || '&#x2736;', text: '<strong>Top Category:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>' + vsLast + '.' });
+          }
+        }
+
+        // F. Notable Category Shift vs comparison period
+        if (prevTxs.length > 0 && curExp > 0) {
+          let bCat = null, bDiff = 0, bCur = 0, bPrev = 0, bPctChg = 0;
+          const allC = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
+          allC.forEach(function(cat) {
+            const cur = curCats[cat] || 0, prev = prevCats[cat] || 0;
+            const diff = cur - prev;
+            if (Math.abs(diff) > Math.abs(bDiff) && prev > 0) { bDiff = diff; bCat = cat; bCur = cur; bPrev = prev; bPctChg = Math.round((diff / prev) * 100); }
+          });
+          if (bCat && Math.abs(bDiff) > 100) {
+            const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1);
+            const absPct = Math.abs(bPctChg);
+            const compLabel = isYearMode ? (cY-1)+' YTD' : MN[pM];
+            if (bDiff > 0) {
+              const prio = Math.min(88, 62 + Math.round(Math.min(100, absPct) * 0.26));
+              candidates.push({ priority: prio, type: 'neg', icon: '&#x1F53A;', text: '<strong>' + (absPct >= 100 ? 'Spending Explosion' : 'Creep Alert') + ':</strong> <strong>' + esc(cn) + '</strong> <span class="up">+' + absPct + '%</span> to <strong style="color:var(--ex)">' + fmtS(bCur) + '</strong> vs ' + compLabel + '\'s <strong>' + fmtS(bPrev) + '</strong> -- <strong style="color:var(--ex)">' + fmtS(bDiff) + '</strong> extra.' });
+            } else {
+              const prio = Math.min(50, 32 + Math.round(Math.min(80, absPct) * 0.22));
+              candidates.push({ priority: prio, type: 'pos', icon: '&#x1F53B;', text: '<strong>Cost Cutting:</strong> <strong>' + esc(cn) + '</strong> <span class="down">-' + absPct + '%</span> to <strong style="color:var(--in)">' + fmtS(bCur) + '</strong> vs ' + compLabel + '\'s <strong>' + fmtS(bPrev) + '</strong>. Saved <strong style="color:var(--in)">' + fmtS(Math.abs(bDiff)) + '</strong>.' });
+            }
+          }
+        }
+
+        // G. Largest Single Purchase
+        const sortedExpTxs = expTxs.filter(function(t){ return t.date <= todayISO; }).sort(function(a,b){ return b.amount-a.amount; });
+        if (sortedExpTxs.length > 0) {
+          const topTx = sortedExpTxs[0];
+          const pctTotal = curExp > 0 ? Math.round((topTx.amount / curExp) * 100) : 100;
+          const avgExp = pastExp / Math.max(1, sortedExpTxs.length);
+          const xAvg = avgExp > 0 ? (topTx.amount / avgExp).toFixed(1) : '--';
+          const catName = topTx.cat ? topTx.cat.charAt(0).toUpperCase() + topTx.cat.slice(1) : 'Other';
+          const descStr = topTx.desc ? ' "' + esc(topTx.desc) + '"' : '';
+          if (pctTotal >= 35) {
+            const prio = Math.min(85, 70 + Math.round((pctTotal - 35) * 0.33));
+            candidates.push({ priority: prio, type: 'neg', icon: '&#x1F4B3;', text: '<strong>Outsized Buy:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- <strong style="color:var(--ex)">' + pctTotal + '% of spend</strong>, ' + xAvg + 'x avg.' });
+          } else if (sortedExpTxs.length >= 3) {
+            candidates.push({ priority: 17, type: 'neu', icon: '&#x1F3F7;&#xFE0F;', text: '<strong>Top Purchase:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- ' + pctTotal + '% of spend, ' + xAvg + 'x avg.' });
+          }
+        }
+
+        // H. Repeat Payee
+        const descEntries = Object.entries(descCount).filter(function(e){ return e[1] >= 3; }).sort(function(a,b){ return b[1]-a[1]; });
+        if (descEntries.length > 0) {
+          const topDesc = descEntries[0][0], topCnt = descEntries[0][1];
+          const totalForDesc = expTxs.filter(function(t){ return t.desc && t.desc.trim().toLowerCase() === topDesc; }).reduce(function(s,t){ return s+t.amount; }, 0);
+          const disp = topDesc.charAt(0).toUpperCase() + topDesc.slice(1);
+          candidates.push({ priority: 35, type: 'neg', icon: '&#x1F501;', text: '<strong>Repeat Spend:</strong> <strong>' + esc(disp) + '</strong> -- <strong>' + topCnt + ' transactions</strong> totaling <strong style="color:var(--ex)">' + fmtS(totalForDesc) + '</strong> (~' + fmtS(Math.round(totalForDesc / topCnt)) + '/tx). Worth reviewing.' });
+        }
+
+        // I. Subscription Burn
+        if (typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
+          const activeSubs = recurringList.filter(function(r){ return r.active && !r.archived && r.type !== 'income'; });
+          if (activeSubs.length > 0) {
+            const monthlySubTotal = activeSubs.reduce(function(s, r) {
+              let mo = r.amount || 0;
+              if (r.freq === 'yearly') mo = mo / 12;
+              else if (r.freq === 'weekly') mo = mo * 4.33;
+              else if (r.freq === 'daily') mo = mo * 30;
+              else if (r.freq === 'custom' && r.customDays) mo = mo * (30 / r.customDays);
+              return s + mo;
+            }, 0);
+            if (monthlySubTotal > 200 && curExp > 0) {
+              const subPct = Math.round((monthlySubTotal / curExp) * 100);
+              const prio = subPct > 40 ? 60 : subPct > 20 ? 36 : 22;
+              candidates.push({ priority: prio, type: subPct > 40 ? 'neg' : 'neu', icon: '&#x1F504;', text: '<strong>Subscription Burn:</strong> <strong style="color:var(--ex)">' + fmtS(Math.round(monthlySubTotal)) + '/mo</strong> (<strong style="color:var(--ex)">' + fmtS(Math.round(monthlySubTotal * 12)) + '/yr</strong>) across <strong>' + activeSubs.length + ' active subs</strong> -- <strong>' + subPct + '%</strong> of this period\'s expenses.' });
+            }
+          }
+        }
+
+        // J. Average Transaction Size vs comparison period
+        const prevExpTxList = prevTxs.filter(function(t){ return t.type !== 'income'; });
+        if (expTxs.length >= 5 && prevExpTxList.length >= 5) {
+          const avgCur = Math.round(curExp / expTxs.length);
+          const avgPrev = Math.round(prevExp / prevExpTxList.length);
+          const chgPct = Math.round(((avgCur - avgPrev) / avgPrev) * 100);
+          if (Math.abs(chgPct) > 20) {
+            const isUp = chgPct > 0;
+            const compLabel = isYearMode ? (cY-1)+' YTD' : MN[pM];
+            candidates.push({ priority: isUp ? 33 : 25, type: isUp ? 'neg' : 'pos', icon: '&#x1F4CA;', text: '<strong>Avg Transaction:</strong> <strong style="color:' + (isUp ? 'var(--ex)' : 'var(--in)') + '">' + fmtS(avgCur) + '</strong> per expense (<span class="' + (isUp ? 'up' : 'down') + '">' + (isUp ? '+' : '') + chgPct + '%</span> vs ' + compLabel + '\'s <strong>' + fmtS(avgPrev) + '</strong>). ' + expTxs.length + ' txns vs ' + prevExpTxList.length + ' prior.' });
+          }
+        }
+
+        // K. No-Spend Streak & Spike Day (month mode only)
+        if (!isYearMode && !isAllMode && !isCustomMode) {
+          const sortedExpDays = Array.from(curExpDays).filter(function(d){ return d <= todayISO; }).sort().reverse();
+          const zeroDays = cD - curExpDays.size;
+          if (sortedExpDays.length > 0) {
+            const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000);
+            const avgDay = pastExp / Math.max(1, cD);
+            if (gap >= 7) {
+              candidates.push({ priority: 52, type: 'pos', icon: '&#x1F525;', text: '<strong>Incredible Streak:</strong> <strong style="color:var(--in)">' + gap + ' no-spend days</strong> running -- ~<strong style="color:var(--in)">' + fmtS(Math.round(avgDay * gap)) + '</strong> preserved vs your daily average.' });
+            } else if (gap >= 3) {
+              candidates.push({ priority: 40, type: 'pos', icon: '&#x1F525;', text: '<strong>Momentum:</strong> <strong style="color:var(--in)">' + gap + '-day no-spend streak</strong> -- ~<strong style="color:var(--in)">' + fmtS(Math.round(avgDay * gap)) + '</strong> preserved. Keep going!' });
+            } else if (zeroDays >= 5 && cD >= 7) {
+              candidates.push({ priority: 35, type: 'pos', icon: '&#x1F6E1;&#xFE0F;', text: '<strong>Discipline:</strong> <strong style="color:var(--in)">' + zeroDays + ' zero-spend days</strong> (' + Math.round((zeroDays / cD) * 100) + '% of month so far). Spending on ' + curExpDays.size + ' active days only.' });
+            }
+            const dayEntries = Object.entries(curDayExp).sort(function(a,b){ return b[1]-a[1]; });
+            if (dayEntries.length > 0) {
+              const topDay = dayEntries[0][0], topDayAmt = dayEntries[0][1];
+              const ratio = avgDay > 0 ? (topDayAmt / avgDay).toFixed(1) : '0';
+              if (parseFloat(ratio) >= 3.0) {
+                candidates.push({ priority: 55, type: 'neg', icon: '&#x1F4C5;', text: '<strong>Spending Spike:</strong> <strong>' + fmtDt(topDay) + '</strong> cost <strong style="color:var(--ex)">' + fmtS(topDayAmt) + '</strong> -- <strong style="color:var(--ex)">' + ratio + 'x</strong> your <strong>' + fmtS(Math.round(avgDay)) + '</strong> daily average.' });
+              } else if (gap < 3 && zeroDays < 5) {
+                candidates.push({ priority: 16, type: 'neu', icon: '&#x1F4C5;', text: '<strong>Peak Day:</strong> <strong>' + fmtDt(topDay) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topDayAmt) + '</strong> (' + ratio + 'x avg). ' + (zeroDays > 0 ? zeroDays + ' zero-spend day' + (zeroDays > 1 ? 's' : '') + ' so far.' : 'No zero-spend days yet.') });
+              }
+            }
+          } else if (cD >= 4 && curTxs.length > 0) {
+            candidates.push({ priority: 32, type: 'pos', icon: '&#x1F525;', text: '<strong>Clean Start:</strong> Zero spending in <strong style="color:var(--in)">first ' + cD + ' days</strong> of ' + MF[cM] + '. Perfect month so far.' });
+          }
+        }
+      } // end !incomeOnly
+
+      // ── Sort by priority and render top 7 ──
       candidates.sort(function(a,b){ return b.priority - a.priority; });
-      const insights = candidates.slice(0, 6);
+      const insights = candidates.slice(0, 7);
       if (!insights.length) { _insightsLastHtml = ''; area.innerHTML = '<div class="insight-empty">Add transactions to unlock insights</div>'; return; }
       const itemAnimStyle = _initialAnimsDone ? 'animation:none;' : '';
       const newInsightsHtml = insights.map(function(i){ return '<div class="insight-item ' + (i.type || 'neu') + '" style="' + itemAnimStyle + '"><div class="insight-icon">' + i.icon + '</div><div class="insight-text">' + i.text + '</div></div>'; }).join('');
@@ -5597,7 +5747,8 @@
       if (typeof twemoji !== 'undefined') twemoji.parse(area);
     }
 
-    let _yrLastHtml = ''; // Cache to skip re-render when yearly data hasn't changed
+
+        let _yrLastHtml = ''; // Cache to skip re-render when yearly data hasn't changed
     function renderYearly() {
       const area = document.getElementById('yrArea');
       const now = new Date(), todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10), cY = now.getFullYear(), cM = now.getMonth(), cD = now.getDate();
