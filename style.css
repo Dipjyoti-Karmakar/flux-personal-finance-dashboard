@@ -9620,7 +9620,8 @@ body.mob-yearly-active #dashboardView > .ys {
     gap: 4px;
   }
 
-  .analysis-filter-wrap .ft {
+  .analysis-filter-wrap .ft,
+  #dashHeader .ft {
     padding: 6px 10px;
     font-size: 10px;
     letter-spacing: 0.5px;
