@@ -538,9 +538,14 @@
             </div>
             <div id="eventTxFilterWrap">
               <label class="etf-label">Event</label>
-              <select id="eventTxFilterSel" onchange="setEventFilter(this.value)" style="max-height:calc(4 * 2.2em);overflow-y:auto;size:1;">
-                <option value="all">All</option>
-              </select>
+              <div class="cs-wrap etf-cs-wrap" id="cs-evtTxFilt">
+                <input type="hidden" id="evtTxFiltHidden" value="all">
+                <button class="cs-btn etf-cs-btn" type="button" onclick="toggleCS('cs-evtTxFilt')">
+                  <span class="cs-val">All Events</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="cs-menu" id="cs-evtTxFilt-menu"></div>
+              </div>
             </div>
           </div>
           <div class="tx-search-wrap">
@@ -605,7 +610,65 @@
 
       <!-- Month-over-Month Insights -->
       <div class="insight-card section-in" id="insightCard" style="animation-delay:.3s;">
-        <div class="ph"><span class="pt">Monthly Insights</span><span class="pb" id="insightPeriod"></span></div>
+        <div class="ph">
+          <span class="pt">Monthly Insights</span>
+          <div class="ph-actions" style="display:flex;align-items:center;gap:8px;">
+            <button id="insightFilterBtn" class="insight-filter-btn" onclick="toggleInsightFilter()" title="Filter Insights" aria-controls="insightFilterBox" aria-expanded="false"><svg class="sub-filter-btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span class="insight-filter-badge" id="insightFilterBadge" style="display:none">0</span></button>
+            <span class="pb" id="insightPeriod"></span>
+          </div>
+        </div>
+        <!-- Insight Filter Box -->
+        <div class="insight-filter-box" id="insightFilterBox">
+          <button class="insight-filter-mob-trigger" id="insightFilterMobTrigger" onclick="toggleInsightFilter()" aria-expanded="false" title="Tap to toggle insight filters">
+            <div class="sub-filter-mob-left">
+              <svg class="sub-filter-mob-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg>
+              <span class="sub-filter-mob-title">Insight Filters</span>
+              <span class="sub-filter-badge" id="insightFilterMobBadge" style="display:none">0</span>
+            </div>
+            <div class="sub-filter-mob-right">
+              <span class="sub-filter-mob-status" id="insightFilterMobStatus">All</span>
+              <svg class="sub-filter-mob-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+          </button>
+          <div class="insight-filter-toolbar" id="insightFilterToolbar" inert>
+            <!-- Date filter pills -->
+            <div class="sub-filter-pills insight-dt-pills" title="Filter by Period">
+              <button class="sub-fpill act" data-idt="month" onclick="setInsightDate(this,'month')">This Month</button>
+              <button class="sub-fpill" data-idt="year" onclick="setInsightDate(this,'year')">This Year</button>
+              <button class="sub-fpill" data-idt="all" onclick="setInsightDate(this,'all')">All Time</button>
+              <button class="sub-fpill" data-idt="custom" onclick="setInsightDate(this,'custom')">Custom</button>
+            </div>
+            <!-- Custom date range row -->
+            <div class="insight-custom-dt-wrap" id="insightCustomDtWrap" style="display:none;">
+              <input type="date" id="insightDtFrom" class="insight-dt-input" onchange="applyInsightFilters()" title="From date">
+              <span class="insight-dt-sep">&#8212;</span>
+              <input type="date" id="insightDtTo" class="insight-dt-input" onchange="applyInsightFilters()" title="To date">
+              <button class="insight-dt-clear" onclick="clearInsightCustomDt()" title="Clear dates">&#x2715;</button>
+            </div>
+            <!-- Type filter pills -->
+            <div class="sub-filter-pills" title="Filter by Type">
+              <button class="sub-fpill act" data-ift="all" onclick="setInsightType(this,'all')">All</button>
+              <button class="sub-fpill sub-type-exp" data-ift="expense" onclick="setInsightType(this,'expense')">Expense</button>
+              <button class="sub-fpill sub-type-inc" data-ift="income" onclick="setInsightType(this,'income')">Income</button>
+            </div>
+            <!-- Event filter cs-wrap -->
+            <div class="insight-event-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;stroke:var(--mu);flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <div class="cs-wrap insight-evt-cs" id="cs-insightEvt">
+                <input type="hidden" id="insightEvtHidden" value="all">
+                <button class="cs-btn insight-evt-btn" type="button" onclick="toggleCS('cs-insightEvt')">
+                  <span class="cs-val">All Events</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="cs-menu" id="cs-insightEvt-menu"></div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="insight-list" id="insightList">
           <div class="insight-empty">Add transactions to see insights</div>
         </div>
@@ -5116,6 +5179,105 @@
       area.innerHTML = newHtml;
     }
 
+    // -- Insight Filter State & Controls --
+    let _insightTypeFilt  = 'all';   // 'all' | 'expense' | 'income'
+    let _insightDateFilt  = 'month'; // 'month' | 'year' | 'all' | 'custom'
+    let _insightEventFilt = 'all';   // 'all' | eventId
+    let _insightFilterBoxOpen = false;
+
+    function toggleInsightFilter() {
+      _insightFilterBoxOpen = !_insightFilterBoxOpen;
+      const box     = document.getElementById('insightFilterBox');
+      const dBtn    = document.getElementById('insightFilterBtn');
+      const mTrig   = document.getElementById('insightFilterMobTrigger');
+      const toolbar = document.getElementById('insightFilterToolbar');
+      if (box)     box.classList.toggle('open', _insightFilterBoxOpen);
+      if (dBtn)    { dBtn.classList.toggle('act', _insightFilterBoxOpen); dBtn.setAttribute('aria-expanded', _insightFilterBoxOpen ? 'true' : 'false'); }
+      if (mTrig)   mTrig.setAttribute('aria-expanded', _insightFilterBoxOpen ? 'true' : 'false');
+      if (toolbar) toolbar.inert = !_insightFilterBoxOpen;
+    }
+
+    function updateInsightFilterBadge() {
+      let count = 0;
+      if (_insightTypeFilt !== 'all')   count++;
+      if (_insightDateFilt !== 'month') count++;
+      if (_insightEventFilt !== 'all') count++;
+      const badge   = document.getElementById('insightFilterBadge');
+      const mBadge  = document.getElementById('insightFilterMobBadge');
+      const mStatus = document.getElementById('insightFilterMobStatus');
+      const dBtn    = document.getElementById('insightFilterBtn');
+      const mTrig   = document.getElementById('insightFilterMobTrigger');
+      if (badge)   { badge.textContent = count;  badge.style.display  = count > 0 ? 'inline-flex' : 'none'; }
+      if (mBadge)  { mBadge.textContent = count; mBadge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+      if (mStatus) mStatus.textContent = count > 0 ? (count + ' active') : 'All';
+      if (dBtn)    dBtn.classList.toggle('has-active', count > 0);
+      if (mTrig)   mTrig.classList.toggle('has-active', count > 0);
+    }
+
+    window.setInsightType = function(btn, type) {
+      _insightTypeFilt = type;
+      document.querySelectorAll('#insightFilterToolbar .sub-fpill[data-ift]').forEach(b => b.classList.remove('act'));
+      if (btn) btn.classList.add('act');
+      updateInsightFilterBadge();
+      _insightsLastHtml = '';
+      renderInsights();
+    };
+
+    window.setInsightDate = function(btn, period) {
+      _insightDateFilt = period;
+      document.querySelectorAll('#insightFilterToolbar .sub-fpill[data-idt]').forEach(b => b.classList.remove('act'));
+      if (btn) btn.classList.add('act');
+      const customWrap = document.getElementById('insightCustomDtWrap');
+      if (customWrap) customWrap.style.display = period === 'custom' ? 'flex' : 'none';
+      updateInsightFilterBadge();
+      _insightsLastHtml = '';
+      renderInsights();
+    };
+
+    window.setInsightEventFilt = function(eventId) {
+      _insightEventFilt = eventId || 'all';
+      const menu = document.getElementById('cs-insightEvt-menu');
+      if (menu) menu.querySelectorAll('.cs-opt').forEach(o => o.classList.toggle('act', o.dataset.val === _insightEventFilt));
+      const btn = document.querySelector('#cs-insightEvt .cs-val');
+      if (btn) {
+        if (_insightEventFilt === 'all') { btn.textContent = 'All Events'; }
+        else if (events[_insightEventFilt]) {
+          const ev = events[_insightEventFilt]; const c = getLegibleColor(ev.color);
+          btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle;"></span>' + esc(ev.name);
+        }
+      }
+      const wrap = document.getElementById('cs-insightEvt');
+      if (wrap) wrap.classList.remove('open');
+      updateInsightFilterBadge();
+      _insightsLastHtml = '';
+      renderInsights();
+    };
+
+    window.applyInsightFilters = function() { _insightsLastHtml = ''; renderInsights(); };
+
+    window.clearInsightCustomDt = function() {
+      const f = document.getElementById('insightDtFrom'), t = document.getElementById('insightDtTo');
+      if (f) f.value = ''; if (t) t.value = '';
+      applyInsightFilters();
+    };
+
+    window.setEvtTxFilt = function(eventId) {
+      cEventFilt = eventId || 'all';
+      const menu = document.getElementById('cs-evtTxFilt-menu');
+      if (menu) menu.querySelectorAll('.cs-opt').forEach(o => o.classList.toggle('act', o.dataset.val === cEventFilt));
+      const btn = document.querySelector('#cs-evtTxFilt .cs-val');
+      if (btn) {
+        if (cEventFilt === 'all') { btn.textContent = 'All Events'; }
+        else if (events[cEventFilt]) {
+          const ev = events[cEventFilt]; const c = getLegibleColor(ev.color);
+          btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle;"></span>' + esc(ev.name);
+        }
+      }
+      const wrap = document.getElementById('cs-evtTxFilt');
+      if (wrap) wrap.classList.remove('open');
+      if (cModeFilt === 'event') renderTxList();
+    };
+
     // -- Monthly Insights Engine v3 -- Rich, dynamic, hierarchical --
     // Priority tiers: 95-100 CRITICAL | 75-90 ALERT | 55-74 WARNING | 35-54 POSITIVE | 15-34 INFO
     // 11 insight categories. Top 6 by priority render. No useless fillers.
@@ -5126,20 +5288,67 @@
       if (!area) return;
       const now = new Date();
       const cY = now.getFullYear(), cM = now.getMonth(), cD = now.getDate();
-      const curPrefix = cY + '-' + String(cM + 1).padStart(2, '0');
-      const pDate = new Date(cY, cM - 1, 1);
-      const pY = pDate.getFullYear(), pM = pDate.getMonth();
-      const prevPrefix = pY + '-' + String(pM + 1).padStart(2, '0');
-      const daysInMonth = new Date(cY, cM + 1, 0).getDate();
-      const daysLeft = daysInMonth - cD;
-      const monthProgress = Math.round((cD / daysInMonth) * 100);
-      if (periodEl) periodEl.textContent = MF[cM] + ' ' + cY;
-      const curTxs = txs.filter(function(t){ return (t.date || '').startsWith(curPrefix); });
-      const prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevPrefix); });
+      const todayISO = getTodayStr();
+
+      // ── Apply date filter to determine curTxs / prevTxs ──
+      let curTxs, prevTxs, curPrefix, prevPrefix, pM, daysInMonth, daysLeft, monthProgress;
+      let periodLabel = '';
+      const df = _insightDateFilt || 'month';
+
+      if (df === 'month') {
+        curPrefix = cY + '-' + String(cM + 1).padStart(2, '0');
+        const pDate = new Date(cY, cM - 1, 1);
+        const pY2 = pDate.getFullYear(); pM = pDate.getMonth();
+        prevPrefix = pY2 + '-' + String(pM + 1).padStart(2, '0');
+        daysInMonth = new Date(cY, cM + 1, 0).getDate();
+        daysLeft = daysInMonth - cD;
+        monthProgress = Math.round((cD / daysInMonth) * 100);
+        curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(curPrefix); });
+        prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevPrefix); });
+        periodLabel = MF[cM] + ' ' + cY;
+      } else if (df === 'year') {
+        const yearStr = String(cY);
+        const prevYearStr = String(cY - 1);
+        curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(yearStr); });
+        prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevYearStr); });
+        daysInMonth = 365; daysLeft = 0; monthProgress = Math.round((new Date(cY, cM, cD) - new Date(cY, 0, 1)) / 86400000 / 3.65);
+        pM = 11;
+        periodLabel = 'Year ' + cY;
+      } else if (df === 'custom') {
+        const fromDt = (document.getElementById('insightDtFrom') || {}).value || '';
+        const toDt   = (document.getElementById('insightDtTo')   || {}).value || todayISO;
+        curTxs  = txs.filter(function(t){ return (!fromDt || t.date >= fromDt) && (!toDt || t.date <= toDt); });
+        prevTxs = [];
+        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM - 1 < 0 ? 11 : cM - 1;
+        periodLabel = (fromDt || '?') + ' — ' + (toDt || '?');
+      } else { // 'all'
+        curTxs  = txs.slice();
+        prevTxs = [];
+        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM - 1 < 0 ? 11 : cM - 1;
+        periodLabel = 'All Time';
+      }
+
+      // ── Apply type filter ──
+      if (_insightTypeFilt === 'expense') {
+        curTxs  = curTxs.filter(function(t){ return t.type !== 'income'; });
+        prevTxs = prevTxs.filter(function(t){ return t.type !== 'income'; });
+      } else if (_insightTypeFilt === 'income') {
+        curTxs  = curTxs.filter(function(t){ return t.type === 'income'; });
+        prevTxs = prevTxs.filter(function(t){ return t.type === 'income'; });
+      }
+
+      // ── Apply event filter ──
+      if (_insightEventFilt && _insightEventFilt !== 'all') {
+        curTxs  = curTxs.filter(function(t){ return t.eventId === _insightEventFilt; });
+        prevTxs = prevTxs.filter(function(t){ return t.eventId === _insightEventFilt; });
+        const ev = events[_insightEventFilt];
+        if (ev) periodLabel += ' · ' + esc(ev.name);
+      }
+
+      if (periodEl) periodEl.textContent = periodLabel;
       if (!curTxs.length && !prevTxs.length) { _insightsLastHtml = ''; area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>'; return; }
 
       const candidates = [];
-      const todayISO = getTodayStr();
 
       // Pre-compute aggregates
       let curInc = 0, curExp = 0, prevInc = 0, prevExp = 0;
@@ -6437,13 +6646,47 @@
          }
       }
 
-      const evtFilterSel = document.getElementById('eventTxFilterSel');
-      if (evtFilterSel) {
+      // Populate cs-wrap event filter for the transaction panel (replaces old plain select)
+      const evtTxFiltMenu = document.getElementById('cs-evtTxFilt-menu');
+      if (evtTxFiltMenu) {
         const prev = cEventFilt;
-        evtFilterSel.innerHTML = '<option value="all">All</option>' +
-          evts.map(e => `<option value="${e.id}">${esc(e.name)}</option>`).join('');
+        let txFiltHtml = `<button type="button" class="cs-opt${prev === 'all' ? ' act' : ''}" data-val="all" onclick="setEvtTxFilt('all')">All Events</button>`;
+        txFiltHtml += evts.map(e => {
+          const c = getLegibleColor(e.color);
+          const icon = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};"></span>`;
+          return `<button type="button" class="cs-opt${prev === e.id ? ' act' : ''}" data-val="${e.id}" onclick="setEvtTxFilt('${e.id}')">${icon} <span>${esc(e.name)}</span></button>`;
+        }).join('');
+        evtTxFiltMenu.innerHTML = txFiltHtml;
         cEventFilt = (prev === 'all' || events[prev]) ? prev : 'all';
-        evtFilterSel.value = cEventFilt;
+        const evtTxBtn = document.querySelector('#cs-evtTxFilt .cs-val');
+        if (evtTxBtn) {
+          if (cEventFilt === 'all') { evtTxBtn.textContent = 'All Events'; }
+          else if (events[cEventFilt]) {
+            const ev = events[cEventFilt]; const c = getLegibleColor(ev.color);
+            evtTxBtn.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};margin-right:5px;vertical-align:middle;"></span>${esc(ev.name)}`;
+          }
+        }
+      }
+
+      // Populate cs-wrap event filter for the Monthly Insights panel
+      const insightEvtMenu = document.getElementById('cs-insightEvt-menu');
+      if (insightEvtMenu) {
+        const prev = _insightEventFilt || 'all';
+        let iHtml = `<button type="button" class="cs-opt${prev === 'all' ? ' act' : ''}" data-val="all" onclick="setInsightEventFilt('all')">All Events</button>`;
+        iHtml += evts.map(e => {
+          const c = getLegibleColor(e.color);
+          const icon = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};"></span>`;
+          return `<button type="button" class="cs-opt${prev === e.id ? ' act' : ''}" data-val="${e.id}" onclick="setInsightEventFilt('${e.id}')">${icon} <span>${esc(e.name)}</span></button>`;
+        }).join('');
+        insightEvtMenu.innerHTML = iHtml;
+        const iBtn = document.querySelector('#cs-insightEvt .cs-val');
+        if (iBtn) {
+          if (prev === 'all') { iBtn.textContent = 'All Events'; }
+          else if (events[prev]) {
+            const ev = events[prev]; const c = getLegibleColor(ev.color);
+            iBtn.innerHTML = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};margin-right:5px;vertical-align:middle;"></span>${esc(ev.name)}`;
+          }
+        }
       }
     }
 
@@ -10067,6 +10310,7 @@
     window.toggleSubHistory = toggleSubHistory;
     // Phase 2 toolbar
     window.toggleSubFilters     = toggleSubFilters;
+    window.toggleInsightFilter  = toggleInsightFilter;
     window.updateSubFilterBadges = updateSubFilterBadges;
     window.setSubFreq      = setSubFreq;
     window.setSubType      = setSubType;
