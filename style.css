@@ -3273,7 +3273,7 @@
       background: var(--sf);
       border: 1px solid var(--bd);
       border-radius: var(--r);
-      overflow: hidden;
+      overflow: visible;
       margin-top: 24px;
       transition: box-shadow .4s ease, border-color .4s ease;
       box-shadow: var(--sh-card);
@@ -3291,6 +3291,7 @@
       align-items: center;
       justify-content: space-between;
       background: linear-gradient(180deg, color-mix(in srgb, var(--sf) 95%, var(--s2)) 0%, var(--sf) 100%);
+      border-radius: var(--r) var(--r) 0 0;
     }
 
     .insight-list {
@@ -3601,6 +3602,10 @@
     }
     .insight-evt-cs.open .cs-menu {
       animation: csMenuSlideDown .2s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes csMenuSlideDown {
+      from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     /* etf cs-wrap in transaction panel */

@@ -611,7 +611,7 @@
       <!-- Month-over-Month Insights -->
       <div class="insight-card section-in" id="insightCard" style="animation-delay:.3s;">
         <div class="ph">
-          <span class="pt">Monthly Insights</span>
+          <span class="pt">Insights</span>
           <div class="ph-actions" style="display:flex;align-items:center;gap:8px;">
             <button id="insightFilterBtn" class="insight-filter-btn" onclick="toggleInsightFilter()" title="Filter Insights" aria-controls="insightFilterBox" aria-expanded="false"><svg class="sub-filter-btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span class="insight-filter-badge" id="insightFilterBadge" style="display:none">0</span></button>
             <span class="pb" id="insightPeriod"></span>
@@ -5204,9 +5204,13 @@
 
     function updateInsightFilterBadge() {
       let count = 0;
-      if (_insightTypeFilt !== 'all')   count++;
-      if (_insightDateFilt !== 'month') count++;
-      if (_insightEventFilt !== 'all') count++;
+      const isEvt = _insightEventFilt && _insightEventFilt !== 'all' && events[_insightEventFilt];
+      if (isEvt) {
+        count = 1;
+      } else {
+        if (_insightTypeFilt !== 'all')   count++;
+        if (_insightDateFilt !== 'month') count++;
+      }
       const badge   = document.getElementById('insightFilterBadge');
       const mBadge  = document.getElementById('insightFilterMobBadge');
       const mStatus = document.getElementById('insightFilterMobStatus');
@@ -5214,12 +5218,19 @@
       const mTrig   = document.getElementById('insightFilterMobTrigger');
       if (badge)   { badge.textContent = count;  badge.style.display  = count > 0 ? 'inline-flex' : 'none'; }
       if (mBadge)  { mBadge.textContent = count; mBadge.style.display = count > 0 ? 'inline-flex' : 'none'; }
-      if (mStatus) mStatus.textContent = count > 0 ? (count + ' active') : 'All';
+      if (mStatus) mStatus.textContent = isEvt ? events[_insightEventFilt].name : (count > 0 ? (count + ' active') : 'All');
       if (dBtn)    dBtn.classList.toggle('has-active', count > 0);
       if (mTrig)   mTrig.classList.toggle('has-active', count > 0);
     }
 
     window.setInsightType = function(btn, type) {
+      if (_insightEventFilt !== 'all') {
+        _insightEventFilt = 'all';
+        const iBtn = document.querySelector('#cs-insightEvt .cs-val');
+        if (iBtn) iBtn.textContent = 'All Events';
+        const menu = document.getElementById('cs-insightEvt-menu');
+        if (menu) menu.querySelectorAll('.cs-opt').forEach(o => o.classList.toggle('act', o.dataset.val === 'all'));
+      }
       _insightTypeFilt = type;
       document.querySelectorAll('#insightFilterToolbar .sub-fpill[data-ift]').forEach(b => b.classList.remove('act'));
       if (btn) btn.classList.add('act');
@@ -5229,6 +5240,13 @@
     };
 
     window.setInsightDate = function(btn, period) {
+      if (_insightEventFilt !== 'all') {
+        _insightEventFilt = 'all';
+        const iBtn = document.querySelector('#cs-insightEvt .cs-val');
+        if (iBtn) iBtn.textContent = 'All Events';
+        const menu = document.getElementById('cs-insightEvt-menu');
+        if (menu) menu.querySelectorAll('.cs-opt').forEach(o => o.classList.toggle('act', o.dataset.val === 'all'));
+      }
       _insightDateFilt = period;
       document.querySelectorAll('#insightFilterToolbar .sub-fpill[data-idt]').forEach(b => b.classList.remove('act'));
       if (btn) btn.classList.add('act');
@@ -5245,7 +5263,7 @@
       if (menu) menu.querySelectorAll('.cs-opt').forEach(o => o.classList.toggle('act', o.dataset.val === _insightEventFilt));
       const btn = document.querySelector('#cs-insightEvt .cs-val');
       if (btn) {
-        if (_insightEventFilt === 'all') { btn.textContent = 'All Events'; }
+        if (_insightEventFilt === 'all' || !events[_insightEventFilt]) { btn.textContent = 'All Events'; }
         else if (events[_insightEventFilt]) {
           const ev = events[_insightEventFilt]; const c = getLegibleColor(ev.color);
           btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle;"></span>' + esc(ev.name);
@@ -5294,80 +5312,99 @@
       const cY = now.getFullYear(), cM = now.getMonth(), cD = now.getDate();
       const todayISO = getTodayStr();
 
-      // ── Apply date filter to determine curTxs / prevTxs ──
+      // ── Apply filters: event filter nullifies all rest of filters if active ──
       let curTxs, prevTxs, pM, daysInMonth, daysLeft, monthProgress;
       let periodLabel = '', isYearMode = false, isAllMode = false, isCustomMode = false;
-      const df = _insightDateFilt || 'month';
+      let incomeOnly = false, expenseOnly = false;
+      const isEventActive = Boolean(_insightEventFilt && _insightEventFilt !== 'all' && events[_insightEventFilt]);
 
-      if (df === 'month') {
-        const curPrefix = cY + '-' + String(cM + 1).padStart(2, '0');
-        const pDate = new Date(cY, cM - 1, 1);
-        const pY2 = pDate.getFullYear(); pM = pDate.getMonth();
-        const prevPrefix = pY2 + '-' + String(pM + 1).padStart(2, '0');
-        daysInMonth = new Date(cY, cM + 1, 0).getDate();
-        daysLeft = daysInMonth - cD;
-        monthProgress = Math.round((cD / daysInMonth) * 100);
-        curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(curPrefix); });
-        prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevPrefix); });
-        periodLabel = MF[cM] + ' ' + cY;
-      } else if (df === 'year') {
-        isYearMode = true;
-        // YTD: current year up to today vs same period last year (Jan 1 – today-minus-1-year)
-        const yearStr = String(cY);
-        const prevYearStr = String(cY - 1);
-        const todayLastYear = (cY - 1) + '-' + String(cM + 1).padStart(2, '0') + '-' + String(cD).padStart(2, '0');
-        const prevYearStart = prevYearStr + '-01-01';
-        curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(yearStr) && t.date <= todayISO; });
-        prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevYearStr) && t.date >= prevYearStart && t.date <= todayLastYear; });
-        // days into year for pacing
-        const startOfYear = new Date(cY, 0, 1);
-        const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
-        daysInMonth = 365; daysLeft = 365 - dayOfYear; monthProgress = Math.round((dayOfYear / 365) * 100);
-        pM = cM > 0 ? cM - 1 : 11;
-        periodLabel = 'YTD ' + cY + ' (vs ' + (cY-1) + ')';
-      } else if (df === 'custom') {
-        isCustomMode = true;
-        const fromDt = (document.getElementById('insightDtFrom') || {}).value || '';
-        const toDt   = (document.getElementById('insightDtTo')   || {}).value || todayISO;
-        curTxs  = txs.filter(function(t){ return (!fromDt || t.date >= fromDt) && (!toDt || t.date <= toDt); });
-        prevTxs = [];
-        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
-        periodLabel = (fromDt || '?') + ' \u2014 ' + (toDt || '?');
-      } else { // 'all'
-        isAllMode = true;
-        curTxs  = txs.slice();
-        prevTxs = [];
-        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
-        periodLabel = 'All Time';
-      }
-
-      // ── Apply type filter ──
-      const incomeOnly = _insightTypeFilt === 'income';
-      const expenseOnly = _insightTypeFilt === 'expense';
-      if (expenseOnly) {
-        curTxs  = curTxs.filter(function(t){ return t.type !== 'income'; });
-        prevTxs = prevTxs.filter(function(t){ return t.type !== 'income'; });
-      } else if (incomeOnly) {
-        curTxs  = curTxs.filter(function(t){ return t.type === 'income'; });
-        prevTxs = prevTxs.filter(function(t){ return t.type === 'income'; });
-      }
-
-      // ── Apply event filter ──
-      if (_insightEventFilt && _insightEventFilt !== 'all') {
-        curTxs  = curTxs.filter(function(t){ return t.eventId === _insightEventFilt; });
-        prevTxs = prevTxs.filter(function(t){ return t.eventId === _insightEventFilt; });
+      if (isEventActive) {
         const ev = events[_insightEventFilt];
-        if (ev) periodLabel += ' \u00b7 ' + esc(ev.name);
+        curTxs = txs.filter(function(t){ return t.eventId === _insightEventFilt; });
+        prevTxs = [];
+        isAllMode = true;
+        daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
+        periodLabel = ev.name;
+      } else {
+        const df = _insightDateFilt || 'month';
+        if (df === 'month') {
+          const curPrefix = cY + '-' + String(cM + 1).padStart(2, '0');
+          const pDate = new Date(cY, cM - 1, 1);
+          const pY2 = pDate.getFullYear(); pM = pDate.getMonth();
+          const prevPrefix = pY2 + '-' + String(pM + 1).padStart(2, '0');
+          daysInMonth = new Date(cY, cM + 1, 0).getDate();
+          daysLeft = daysInMonth - cD;
+          monthProgress = Math.round((cD / daysInMonth) * 100);
+          curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(curPrefix); });
+          prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevPrefix); });
+          periodLabel = MF[cM] + ' ' + cY;
+        } else if (df === 'year') {
+          isYearMode = true;
+          // YTD: current year up to today vs same period last year (Jan 1 – today-minus-1-year)
+          const yearStr = String(cY);
+          const prevYearStr = String(cY - 1);
+          const todayLastYear = (cY - 1) + '-' + String(cM + 1).padStart(2, '0') + '-' + String(cD).padStart(2, '0');
+          const prevYearStart = prevYearStr + '-01-01';
+          curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(yearStr) && t.date <= todayISO; });
+          prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevYearStr) && t.date >= prevYearStart && t.date <= todayLastYear; });
+          // days into year for pacing
+          const startOfYear = new Date(cY, 0, 1);
+          const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
+          daysInMonth = 365; daysLeft = 365 - dayOfYear; monthProgress = Math.round((dayOfYear / 365) * 100);
+          pM = cM > 0 ? cM - 1 : 11;
+          periodLabel = 'YTD ' + cY + ' (vs ' + (cY-1) + ')';
+        } else if (df === 'custom') {
+          isCustomMode = true;
+          const fromDt = (document.getElementById('insightDtFrom') || {}).value || '';
+          const toDt   = (document.getElementById('insightDtTo')   || {}).value || todayISO;
+          curTxs  = txs.filter(function(t){ return (!fromDt || t.date >= fromDt) && (!toDt || t.date <= toDt); });
+          prevTxs = [];
+          daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
+          periodLabel = (fromDt || '?') + ' \u2014 ' + (toDt || '?');
+        } else { // 'all'
+          isAllMode = true;
+          curTxs  = txs.slice();
+          prevTxs = [];
+          daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
+          periodLabel = 'All Time';
+        }
+
+        // ── Apply type filter ──
+        incomeOnly = _insightTypeFilt === 'income';
+        expenseOnly = _insightTypeFilt === 'expense';
+        if (expenseOnly) {
+          curTxs  = curTxs.filter(function(t){ return t.type !== 'income'; });
+          prevTxs = prevTxs.filter(function(t){ return t.type !== 'income'; });
+        } else if (incomeOnly) {
+          curTxs  = curTxs.filter(function(t){ return t.type === 'income'; });
+          prevTxs = prevTxs.filter(function(t){ return t.type === 'income'; });
+        }
       }
 
       if (periodEl) periodEl.textContent = periodLabel;
       if (!curTxs.length && !prevTxs.length) {
         _insightsLastHtml = '';
-        area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>';
+        area.innerHTML = '<div class="insight-empty">' + (isEventActive ? 'No transactions found for ' + esc(events[_insightEventFilt].name) : 'Add transactions to see insights') + '</div>';
         return;
       }
 
       const candidates = [];
+
+      if (isEventActive) {
+        const ev = events[_insightEventFilt];
+        const dateSpan = (ev.start && ev.end) ? ' (' + ev.start + ' to ' + ev.end + ')' : '';
+        const evExpTxs = curTxs.filter(function(t){ return t.type !== 'income'; });
+        const evIncTxs = curTxs.filter(function(t){ return t.type === 'income'; });
+        const evExp = evExpTxs.reduce(function(s,t){ return s + t.amount; }, 0);
+        const evInc = evIncTxs.reduce(function(s,t){ return s + t.amount; }, 0);
+        if (evExp > 0 && evInc > 0) {
+          candidates.push({ priority: 95, type: evInc >= evExp ? 'pos' : 'neg', icon: '&#x1F3AF;', text: '<strong>Event Overview:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total spend <strong style="color:var(--ex)">' + fmtS(evExp) + '</strong> vs income <strong style="color:var(--in)">' + fmtS(evInc) + '</strong> (' + (evInc >= evExp ? 'surplus' : 'deficit') + ' of <strong>' + fmtS(Math.abs(evInc - evExp)) + '</strong> across ' + curTxs.length + ' transactions).' });
+        } else if (evExp > 0) {
+          candidates.push({ priority: 95, type: 'neu', icon: '&#x1F3AF;', text: '<strong>Event Spend:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total spend <strong style="color:var(--ex)">' + fmtS(evExp) + '</strong> across <strong>' + evExpTxs.length + ' transaction' + (evExpTxs.length === 1 ? '' : 's') + '</strong>.' });
+        } else if (evInc > 0) {
+          candidates.push({ priority: 95, type: 'pos', icon: '&#x1F3AF;', text: '<strong>Event Income:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total income <strong style="color:var(--in)">' + fmtS(evInc) + '</strong> across <strong>' + evIncTxs.length + ' transaction' + (evIncTxs.length === 1 ? '' : 's') + '</strong>.' });
+        }
+      }
 
       // ── Pre-compute aggregates ──
       let curInc = 0, curExp = 0, prevInc = 0, prevExp = 0;
