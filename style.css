@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Flux: Personal Finance Dashboard - Core Stylesheet
    ========================================================================== */
 
@@ -3532,12 +3532,13 @@
       font-weight: 600;
     }
     .insight-dt-input {
-      padding: 8px 10px;
+      padding: 5px 10px;
       font-size: 12px;
+      height: 32px;
       min-width: 0;
       width: 100%;
       box-sizing: border-box;
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid var(--bd);
       background: var(--s2);
       color: var(--tx);
@@ -3552,10 +3553,10 @@
       box-shadow: 0 0 0 3px color-mix(in srgb, var(--ac) 10%, transparent);
     }
     .insight-dt-clear {
-      padding: 8px 12px;
-      height: 35px;
+      padding: 0 12px;
+      height: 32px;
       flex: 0 0 auto;
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid var(--bd);
       background: var(--s3);
       color: var(--mu);
@@ -3589,17 +3590,17 @@
     .insight-evt-cs .cs-btn svg { width: 10px; height: 10px; }
     .insight-evt-cs .cs-menu {
       position: absolute;
-      bottom: calc(100% + 6px);
-      top: auto;
+      top: calc(100% + 6px);
+      bottom: auto;
       left: 0;
       right: auto;
       min-width: 180px;
       max-height: 220px;
       z-index: 9999;
-      transform-origin: bottom left;
+      transform-origin: top left;
     }
     .insight-evt-cs.open .cs-menu {
-      animation: csMenuSlideUp .2s cubic-bezier(0.16,1,0.3,1);
+      animation: csMenuSlideDown .2s cubic-bezier(0.16,1,0.3,1);
     }
 
     /* etf cs-wrap in transaction panel */
