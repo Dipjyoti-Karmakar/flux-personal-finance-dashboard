@@ -4350,37 +4350,54 @@
     }
 
     /* ── Inline Log Payment pill inside sub-card-right (beside progress bar) ── */
+    @keyframes payPillPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--in) 45%, transparent),
+                    0 2px 8px color-mix(in srgb, var(--in) 22%, transparent);
+        border-color: color-mix(in srgb, var(--in) 42%, transparent);
+      }
+      50% {
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--in) 18%, transparent),
+                    0 4px 16px color-mix(in srgb, var(--in) 38%, transparent);
+        border-color: color-mix(in srgb, var(--in) 80%, transparent);
+      }
+    }
+
     .log-pay-pill {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 3px;
-      font-size: 9px;
+      gap: 4px;
+      font-size: 10px;
       font-family: 'DM Mono', monospace;
       font-weight: 800;
-      letter-spacing: .5px;
+      letter-spacing: .8px;
       text-transform: uppercase;
-      padding: 3px 9px;
-      height: 21px;
+      padding: 4px 12px;
+      height: 25px;
       line-height: 1;
       box-sizing: border-box;
-      border-radius: 7px;
+      border-radius: 999px;
       color: var(--in);
-      background: color-mix(in srgb, var(--in) 12%, transparent);
-      border: 1px solid color-mix(in srgb, var(--in) 35%, transparent);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--in) 20%, transparent) 0%, color-mix(in srgb, var(--in) 10%, transparent) 100%);
+      border: 1px solid color-mix(in srgb, var(--in) 45%, transparent);
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                  background 0.2s ease,
+                  border-color 0.2s ease,
+                  box-shadow 0.2s ease;
       margin-top: auto;
       align-self: flex-end;
       flex-shrink: 0;
-      box-shadow: 0 2px 8px color-mix(in srgb, var(--in) 20%, transparent);
       white-space: nowrap;
+      animation: payPillPulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
     .log-pay-pill:hover {
-      background: color-mix(in srgb, var(--in) 22%, transparent);
-      border-color: color-mix(in srgb, var(--in) 55%, transparent);
+      background: color-mix(in srgb, var(--in) 30%, transparent);
+      border-color: var(--in);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px color-mix(in srgb, var(--in) 30%, transparent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--in) 28%, transparent),
+                  0 6px 18px color-mix(in srgb, var(--in) 45%, transparent);
     }
     .log-pay-pill:active {
       transform: translateY(0) scale(0.96);
@@ -5106,6 +5123,12 @@
       .sub-card-right {
         max-width: 80px;
         gap: 4px;
+      }
+
+      .sub-card-right .log-pay-pill {
+        padding: 3px 10px;
+        font-size: 9.5px;
+        height: 23px;
       }
 
       .sub-action-btn {
@@ -7915,9 +7938,9 @@
       background: color-mix(in srgb, var(--in) 22%, transparent) !important;
     }
 
-    /* ── Log-pay pill: cleaner ── */
+    /* ── Log-pay pill: rounded pill ── */
     .log-pay-pill {
-      border-radius: 7px;
+      border-radius: 999px;
     }
 
     /* ── Archived card: slightly more elegant muting ── */
@@ -7999,6 +8022,12 @@
 
     [data-theme="light"] .sub-hist-list {
       background: var(--sf);
+    }
+
+    [data-theme="light"] .log-pay-pill {
+      background: linear-gradient(135deg, color-mix(in srgb, var(--in) 18%, #fff) 0%, color-mix(in srgb, var(--in) 8%, #fff) 100%);
+      border-color: color-mix(in srgb, var(--in) 50%, transparent);
+      color: var(--in);
     }
 
 
