@@ -4341,12 +4341,14 @@
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 6px;
+      gap: 5px;
       flex-shrink: 0;
       max-width: 100px;
+      align-self: stretch;
+      justify-content: flex-start;
     }
 
-    /* ── Inline Log Payment pill inside sub-card-right ── */
+    /* ── Inline Log Payment pill inside sub-card-right (beside progress bar) ── */
     .log-pay-pill {
       display: inline-flex;
       align-items: center;
@@ -4354,20 +4356,33 @@
       gap: 3px;
       font-size: 9px;
       font-family: 'DM Mono', monospace;
-      font-weight: 700;
-      letter-spacing: .4px;
+      font-weight: 800;
+      letter-spacing: .5px;
       text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 50px;
+      padding: 3px 9px;
+      height: 21px;
+      line-height: 1;
+      box-sizing: border-box;
+      border-radius: 7px;
       color: var(--in);
       background: color-mix(in srgb, var(--in) 12%, transparent);
       border: 1px solid color-mix(in srgb, var(--in) 35%, transparent);
       cursor: pointer;
       transition: all 0.2s ease;
+      margin-top: auto;
+      align-self: flex-end;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--in) 20%, transparent);
+      white-space: nowrap;
     }
     .log-pay-pill:hover {
       background: color-mix(in srgb, var(--in) 22%, transparent);
       border-color: color-mix(in srgb, var(--in) 55%, transparent);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px color-mix(in srgb, var(--in) 30%, transparent);
+    }
+    .log-pay-pill:active {
+      transform: translateY(0) scale(0.96);
     }
 
     .sub-card-amt {
@@ -5089,6 +5104,7 @@
 
       .sub-card-right {
         max-width: 80px;
+        gap: 4px;
       }
 
       .sub-action-btn {
@@ -7900,12 +7916,7 @@
 
     /* ── Log-pay pill: cleaner ── */
     .log-pay-pill {
-      border-radius: 8px;
-      padding: 4px 10px;
-      font-size: 9.5px;
-      letter-spacing: 0.5px;
-      font-weight: 800;
-      box-shadow: 0 2px 8px color-mix(in srgb, var(--in) 20%, transparent);
+      border-radius: 7px;
     }
 
     /* ── Archived card: slightly more elegant muting ── */

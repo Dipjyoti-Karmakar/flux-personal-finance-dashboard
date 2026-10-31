@@ -8066,11 +8066,9 @@
           + (() => { const cp = getCycleProgress(rec, today); if (!cp) return ''; const fillCls = cp.overdue ? 'cycle-overdue' : (cp.soon ? 'cycle-soon' : '') + (!rec.active ? ' cycle-paused' : ''); const label = cp.overdue ? Math.abs(cp.daysLeft) + 'd overdue' : cp.daysLeft + 'd left'; return '<div class="sub-cycle-wrap"><div class="sub-cycle-bar"><div class="sub-cycle-fill ' + fillCls.trim() + '" style="width:' + cp.pct + '%"></div></div><div class="sub-cycle-meta"><span>' + cp.elapsed + ' / ' + cp.cycleDays + ' days</span><span>' + label + '</span></div></div>'; })()
           + '</div>'
           + '<div class="sub-card-right">'
-          + '<div style="display:flex; gap:6px; align-items:center;">'
-          + (showEarlyPay ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">PAY</button>' : '')
           + badgeHtml
-          + '</div>'
           + '<div class="sub-card-amt" style="color:' + amtColor + '">' + amtSign + '\u20b9' + Math.abs(rec.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 }) + '</div>'
+          + (showEarlyPay ? '<button class="log-pay-pill" onclick="markAsPaid(' + recIdJson + ')">PAY</button>' : '')
           + '</div>'
           + '</div>'
           + (isManualDue ? '<div style="margin-top:13px; border-top:1px solid var(--bd); padding-top:13px;"><button class="sub-action-btn mark-paid-btn" style="width:100%; padding:10px; font-size:12px; font-weight:500; background:color-mix(in srgb,var(--in) 15%,transparent); color:var(--in); border:1px solid color-mix(in srgb,var(--in) 30%,transparent); border-radius:10px; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="markAsPaid(' + recIdJson + ')"><span style="font-weight:bold; font-size:13px;">✓</span> Mark as Paid</button></div>' : '')
