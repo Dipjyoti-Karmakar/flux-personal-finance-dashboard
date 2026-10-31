@@ -5707,8 +5707,9 @@
           if (prevInc > 0) {
             const prevSavRate = Math.round(((prevInc - prevExp) / prevInc) * 100);
             const diff = savRate - prevSavRate;
-            if (diff > 2) vsPrev = ' <span class="down">+' + diff + 'pp vs ' + (isYearMode ? (cY-1) + ' YTD' : MN[pM]) + '</span>';
-            else if (diff < -2) vsPrev = ' <span class="up">' + diff + 'pp vs ' + (isYearMode ? (cY-1) + ' YTD' : MN[pM]) + '</span>';
+            const compLabel = isYearMode ? (cY-1) + ' YTD' : (isCustomMode || isAllMode ? 'prior period' : MN[pM]);
+            if (diff > 2) vsPrev = ' <span class="down">+' + diff + 'pp vs ' + compLabel + '</span>';
+            else if (diff < -2) vsPrev = ' <span class="up">' + diff + 'pp vs ' + compLabel + '</span>';
           }
           if (savRate >= 50) {
             candidates.push({ priority: 48, type: 'pos', icon: '&#x1F3C6;', text: '<strong>Exceptional Savings:</strong> <strong style="color:var(--in)">' + savRate + '%</strong> saved -- <strong style="color:var(--in)">' + fmtS(buffer) + '</strong> retained' + vsPrev + '. Well above the 20% benchmark.' });
@@ -5737,8 +5738,9 @@
           let vsLast = '';
           if (!isEventActive && prevTopAmt > 0) {
             const catChgPct = Math.round(((topAmt - prevTopAmt) / prevTopAmt) * 100);
-            if (catChgPct > 5) vsLast = ' <span class="up">+' + catChgPct + '% vs ' + (isYearMode ? (cY-1)+' YTD' : MN[pM]) + '</span>';
-            else if (catChgPct < -5) vsLast = ' <span class="down">' + Math.abs(catChgPct) + '% lower than ' + (isYearMode ? (cY-1)+' YTD' : MN[pM]) + '</span>';
+            const compLabel = isYearMode ? (cY-1)+' YTD' : (isCustomMode || isAllMode ? 'prior period' : MN[pM]);
+            if (catChgPct > 5) vsLast = ' <span class="up">+' + catChgPct + '% vs ' + compLabel + '</span>';
+            else if (catChgPct < -5) vsLast = ' <span class="down">' + Math.abs(catChgPct) + '% lower than ' + compLabel + '</span>';
           }
           const catIcon = (CICO[topCat] || '');
           if (topPct >= 60 && catEntries.length >= 2 && expTxs.length >= 3) {
@@ -5750,19 +5752,19 @@
           } else {
             const isMonthMode = !isYearMode && !isAllMode && !isCustomMode && !isEventActive;
             let dailyRate = '';
-            if (isMonthMode) {
-              dailyRate = ' -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>';
-            } else if (isYearMode) {
-              const startOfYear = new Date(cY, 0, 1);
-              const dayOfYear = Math.max(1, Math.floor((now - startOfYear) / 86400000) + 1);
-              dailyRate = ' -- <strong>' + fmtS(Math.round(topAmt / dayOfYear)) + '/day</strong>';
-            } else if (isEventActive) {
+            if (isEventActive) {
               const ev = events[_insightEventFilt];
               if (ev && ev.start && ev.end) {
                 const sD = new Date(ev.start + 'T00:00:00'), eD = new Date(ev.end + 'T00:00:00');
                 const durDays = Math.max(1, Math.round((eD - sD) / 86400000) + 1);
                 if (durDays > 1) dailyRate = ' -- <strong>' + fmtS(Math.round(topAmt / durDays)) + '/day</strong>';
               }
+            } else if (isMonthMode) {
+              dailyRate = ' -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>';
+            } else if (isYearMode && !isEventActive) {
+              const startOfYear = new Date(cY, 0, 1);
+              const dayOfYear = Math.max(1, Math.floor((now - startOfYear) / 86400000) + 1);
+              dailyRate = ' -- <strong>' + fmtS(Math.round(topAmt / dayOfYear)) + '/day</strong>';
             } else if (isCustomMode) {
               const fromDt = (document.getElementById('insightDtFrom') || {}).value || '';
               const toDt   = (document.getElementById('insightDtTo')   || {}).value || todayISO;
@@ -5790,7 +5792,7 @@
               bDiff = diff; bCat = cat; bCur = cur; bPrev = prev; bPctChg = Math.round((diff / prev) * 100);
             }
           });
-          const compLabel = isYearMode ? (cY-1)+' YTD' : MN[pM];
+          const compLabel = isYearMode ? (cY-1)+' YTD' : (isCustomMode || isAllMode ? 'prior period' : MN[pM]);
           if (bCat && Math.abs(bDiff) > 100) {
             const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1);
             const absPct = Math.abs(bPctChg);
@@ -5869,7 +5871,7 @@
             const chgPct = Math.round(((avgCur - avgPrev) / avgPrev) * 100);
             if (Math.abs(chgPct) > 20) {
               const isUp = chgPct > 0;
-              const compLabel = isYearMode ? (cY-1)+' YTD' : MN[pM];
+              const compLabel = isYearMode ? (cY-1)+' YTD' : (isCustomMode || isAllMode ? 'prior period' : MN[pM]);
               candidates.push({ priority: isUp ? 33 : 25, type: isUp ? 'neg' : 'pos', icon: '&#x1F4CA;', text: '<strong>Avg Transaction:</strong> <strong style="' + (isUp ? 'color:var(--ex)' : 'color:var(--in)') + '">' + fmtS(avgCur) + '</strong> per expense (<span class="' + (isUp ? 'up' : 'down') + '">' + (isUp ? '+' : '') + chgPct + '%</span> vs ' + compLabel + '\'s <strong>' + fmtS(avgPrev) + '</strong>). ' + expTxs.length + ' txns vs ' + prevExpTxList.length + ' prior.' });
             }
           } else {
