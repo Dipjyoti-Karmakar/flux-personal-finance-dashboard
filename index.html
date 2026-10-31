@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 
 <head>
@@ -5135,7 +5135,7 @@
       if (periodEl) periodEl.textContent = MF[cM] + ' ' + cY;
       const curTxs = txs.filter(function(t){ return (t.date || '').startsWith(curPrefix); });
       const prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevPrefix); });
-      if (!curTxs.length && !prevTxs.length) { area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>'; return; }
+      if (!curTxs.length && !prevTxs.length) { _insightsLastHtml = ''; area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>'; return; }
 
       const candidates = [];
       const todayISO = getTodayStr();
@@ -5151,8 +5151,10 @@
           curExp += t.amount; expTxs.push(t);
           const c = t.cat || 'other';
           curCats[c] = (curCats[c] || 0) + t.amount;
-          curDayExp[t.date] = (curDayExp[t.date] || 0) + t.amount;
-          curExpDays.add(t.date);
+          if (t.date <= todayISO) {
+            curDayExp[t.date] = (curDayExp[t.date] || 0) + t.amount;
+            curExpDays.add(t.date);
+          }
           if (t.desc) { const k = t.desc.trim().toLowerCase(); descCount[k] = (descCount[k] || 0) + 1; }
         }
       });
@@ -5256,12 +5258,12 @@
         const catIcon = (CICO[topCat] || '');
         if (topPct >= 60) {
           const prio = Math.min(78, 62 + Math.round((topPct - 60) * 0.4));
-          candidates.push({ priority: prio, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Concentration Risk:</strong> <strong>' + cn + '</strong> consumes <strong style="color:var(--ex)">' + topPct + '%</strong> of all spending (<strong style="color:var(--ex)">' + fmtS(topAmt) + '</strong>)' + vsLast + '. Diversify to reveal savings.' });
+          candidates.push({ priority: prio, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Concentration Risk:</strong> <strong>' + esc(cn) + '</strong> consumes <strong style="color:var(--ex)">' + topPct + '%</strong> of all spending (<strong style="color:var(--ex)">' + fmtS(topAmt) + '</strong>)' + vsLast + '. Diversify to reveal savings.' });
         } else if (secAmt > 0 && topAmt > secAmt * 1.5) {
           const scn = secCat ? secCat.charAt(0).toUpperCase() + secCat.slice(1) : 'next category';
-          candidates.push({ priority: 40, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Main Drain:</strong> <strong>' + cn + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(topAmt - secAmt) + '</strong> more than ' + scn + vsLast + '.' });
+          candidates.push({ priority: 40, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Main Drain:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(topAmt - secAmt) + '</strong> more than ' + esc(scn) + vsLast + '.' });
         } else {
-          candidates.push({ priority: 20, type: 'neu', icon: catIcon || '&#x2736;', text: '<strong>Top Category:</strong> <strong>' + cn + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>' + vsLast + '.' });
+          candidates.push({ priority: 20, type: 'neu', icon: catIcon || '&#x2736;', text: '<strong>Top Category:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>' + vsLast + '.' });
         }
       }
 
@@ -5279,10 +5281,10 @@
           const absPct = Math.abs(bPctChg);
           if (bDiff > 0) {
             const prio = Math.min(88, 62 + Math.round(Math.min(100, absPct) * 0.26));
-            candidates.push({ priority: prio, type: 'neg', icon: '&#x1F53A;', text: '<strong>' + (absPct >= 100 ? 'Spending Explosion' : 'Creep Alert') + ':</strong> <strong>' + cn + '</strong> <span class="up">+' + absPct + '%</span> to <strong style="color:var(--ex)">' + fmtS(bCur) + '</strong> vs ' + MN[pM] + '\'s <strong>' + fmtS(bPrev) + '</strong> -- <strong style="color:var(--ex)">' + fmtS(bDiff) + '</strong> extra.' });
+            candidates.push({ priority: prio, type: 'neg', icon: '&#x1F53A;', text: '<strong>' + (absPct >= 100 ? 'Spending Explosion' : 'Creep Alert') + ':</strong> <strong>' + esc(cn) + '</strong> <span class="up">+' + absPct + '%</span> to <strong style="color:var(--ex)">' + fmtS(bCur) + '</strong> vs ' + MN[pM] + '\'s <strong>' + fmtS(bPrev) + '</strong> -- <strong style="color:var(--ex)">' + fmtS(bDiff) + '</strong> extra.' });
           } else {
             const prio = Math.min(50, 32 + Math.round(Math.min(80, absPct) * 0.22));
-            candidates.push({ priority: prio, type: 'pos', icon: '&#x1F53B;', text: '<strong>Cost Cutting:</strong> <strong>' + cn + '</strong> <span class="down">-' + absPct + '%</span> to <strong style="color:var(--in)">' + fmtS(bCur) + '</strong> vs ' + MN[pM] + '\'s <strong>' + fmtS(bPrev) + '</strong>. Saved <strong style="color:var(--in)">' + fmtS(Math.abs(bDiff)) + '</strong>.' });
+            candidates.push({ priority: prio, type: 'pos', icon: '&#x1F53B;', text: '<strong>Cost Cutting:</strong> <strong>' + esc(cn) + '</strong> <span class="down">-' + absPct + '%</span> to <strong style="color:var(--in)">' + fmtS(bCur) + '</strong> vs ' + MN[pM] + '\'s <strong>' + fmtS(bPrev) + '</strong>. Saved <strong style="color:var(--in)">' + fmtS(Math.abs(bDiff)) + '</strong>.' });
           }
         }
       }
@@ -5292,15 +5294,15 @@
       if (sortedExpTxs.length > 0) {
         const topTx = sortedExpTxs[0];
         const pctTotal = curExp > 0 ? Math.round((topTx.amount / curExp) * 100) : 100;
-        const avgExp = curExp / Math.max(1, sortedExpTxs.length);
+        const avgExp = pastExp / Math.max(1, sortedExpTxs.length);
         const xAvg = avgExp > 0 ? (topTx.amount / avgExp).toFixed(1) : '--';
         const catName = topTx.cat ? topTx.cat.charAt(0).toUpperCase() + topTx.cat.slice(1) : 'Other';
         const descStr = topTx.desc ? ' "' + esc(topTx.desc) + '"' : '';
         if (pctTotal >= 35) {
           const prio = Math.min(85, 70 + Math.round((pctTotal - 35) * 0.33));
-          candidates.push({ priority: prio, type: 'neg', icon: '&#x1F4B3;', text: '<strong>Outsized Buy:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' (' + catName + ') is <strong style="color:var(--ex)">' + pctTotal + '% of monthly spend</strong> -- ' + xAvg + 'x your avg.' });
+          candidates.push({ priority: prio, type: 'neg', icon: '&#x1F4B3;', text: '<strong>Outsized Buy:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' (' + esc(catName) + ') is <strong style="color:var(--ex)">' + pctTotal + '% of monthly spend</strong> -- ' + xAvg + 'x your avg.' });
         } else if (sortedExpTxs.length >= 3) {
-          candidates.push({ priority: 17, type: 'neu', icon: '&#x1F3F7;&#xFE0F;', text: '<strong>Top Purchase:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' (' + catName + ') -- ' + pctTotal + '% of total spend, ' + xAvg + 'x avg.' });
+          candidates.push({ priority: 17, type: 'neu', icon: '&#x1F3F7;&#xFE0F;', text: '<strong>Top Purchase:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' (' + esc(catName) + ') -- ' + pctTotal + '% of total spend, ' + xAvg + 'x avg.' });
         }
       }
 
@@ -5334,7 +5336,7 @@
       }
 
       // J. Average Transaction Size vs Last Month
-      const prevExpTxList = prevTxs.filter(function(t){ return t.type === 'expense'; });
+      const prevExpTxList = prevTxs.filter(function(t){ return t.type !== 'income'; });
       if (expTxs.length >= 5 && prevExpTxList.length >= 5) {
         const avgCur = Math.round(curExp / expTxs.length);
         const avgPrev = Math.round(prevExp / prevExpTxList.length);
@@ -5350,7 +5352,7 @@
       const zeroDays = cD - curExpDays.size;
       if (sortedExpDays.length > 0) {
         const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000);
-        const avgDay = curExp / Math.max(1, curExpDays.size);
+        const avgDay = pastExp / Math.max(1, curExpDays.size);
         if (gap >= 7) {
           candidates.push({ priority: 52, type: 'pos', icon: '&#x1F525;', text: '<strong>Incredible Streak:</strong> <strong style="color:var(--in)">' + gap + ' no-spend days</strong> running -- ~<strong style="color:var(--in)">' + fmtS(Math.round(avgDay * gap)) + '</strong> preserved vs your daily average.' });
         } else if (gap >= 3) {
@@ -5375,7 +5377,7 @@
       // Sort by priority and render top 6
       candidates.sort(function(a,b){ return b.priority - a.priority; });
       const insights = candidates.slice(0, 6);
-      if (!insights.length) { area.innerHTML = '<div class="insight-empty">Add transactions to unlock insights</div>'; return; }
+      if (!insights.length) { _insightsLastHtml = ''; area.innerHTML = '<div class="insight-empty">Add transactions to unlock insights</div>'; return; }
       const itemAnimStyle = _initialAnimsDone ? 'animation:none;' : '';
       const newInsightsHtml = insights.map(function(i){ return '<div class="insight-item ' + (i.type || 'neu') + '" style="' + itemAnimStyle + '"><div class="insight-icon">' + i.icon + '</div><div class="insight-text">' + i.text + '</div></div>'; }).join('');
       const stableInsights = newInsightsHtml.replace(/style="animation:[^"]*"/g, 'style=""');
