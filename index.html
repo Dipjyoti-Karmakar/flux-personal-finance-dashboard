@@ -5226,6 +5226,8 @@
     window.setInsightType = function(btn, type) {
       if (_insightEventFilt !== 'all') {
         _insightEventFilt = 'all';
+        const toolbar = document.getElementById('insightFilterToolbar');
+        if (toolbar) toolbar.classList.remove('event-override');
         const iBtn = document.querySelector('#cs-insightEvt .cs-val');
         if (iBtn) iBtn.textContent = 'All Events';
         const menu = document.getElementById('cs-insightEvt-menu');
@@ -5242,6 +5244,8 @@
     window.setInsightDate = function(btn, period) {
       if (_insightEventFilt !== 'all') {
         _insightEventFilt = 'all';
+        const toolbar = document.getElementById('insightFilterToolbar');
+        if (toolbar) toolbar.classList.remove('event-override');
         const iBtn = document.querySelector('#cs-insightEvt .cs-val');
         if (iBtn) iBtn.textContent = 'All Events';
         const menu = document.getElementById('cs-insightEvt-menu');
@@ -5259,11 +5263,14 @@
 
     window.setInsightEventFilt = function(eventId) {
       _insightEventFilt = eventId || 'all';
+      const isEvt = Boolean(_insightEventFilt !== 'all' && events[_insightEventFilt]);
+      const toolbar = document.getElementById('insightFilterToolbar');
+      if (toolbar) toolbar.classList.toggle('event-override', isEvt);
       const menu = document.getElementById('cs-insightEvt-menu');
       if (menu) menu.querySelectorAll('.cs-opt').forEach(o => o.classList.toggle('act', o.dataset.val === _insightEventFilt));
       const btn = document.querySelector('#cs-insightEvt .cs-val');
       if (btn) {
-        if (_insightEventFilt === 'all' || !events[_insightEventFilt]) { btn.textContent = 'All Events'; }
+        if (!isEvt) { btn.textContent = 'All Events'; }
         else if (events[_insightEventFilt]) {
           const ev = events[_insightEventFilt]; const c = getLegibleColor(ev.color);
           btn.innerHTML = '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle;"></span>' + esc(ev.name);
@@ -5276,7 +5283,20 @@
       renderInsights();
     };
 
-    window.applyInsightFilters = function() { _insightsLastHtml = ''; renderInsights(); };
+    window.applyInsightFilters = function() {
+      if (_insightEventFilt !== 'all') {
+        _insightEventFilt = 'all';
+        const toolbar = document.getElementById('insightFilterToolbar');
+        if (toolbar) toolbar.classList.remove('event-override');
+        const iBtn = document.querySelector('#cs-insightEvt .cs-val');
+        if (iBtn) iBtn.textContent = 'All Events';
+        const menu = document.getElementById('cs-insightEvt-menu');
+        if (menu) menu.querySelectorAll('.cs-opt').forEach(o => o.classList.toggle('act', o.dataset.val === 'all'));
+        updateInsightFilterBadge();
+      }
+      _insightsLastHtml = '';
+      renderInsights();
+    };
 
     window.clearInsightCustomDt = function() {
       const f = document.getElementById('insightDtFrom'), t = document.getElementById('insightDtTo');
@@ -5317,6 +5337,8 @@
       let periodLabel = '', isYearMode = false, isAllMode = false, isCustomMode = false;
       let incomeOnly = false, expenseOnly = false;
       const isEventActive = Boolean(_insightEventFilt && _insightEventFilt !== 'all' && events[_insightEventFilt]);
+      const toolbar = document.getElementById('insightFilterToolbar');
+      if (toolbar) toolbar.classList.toggle('event-override', isEventActive);
 
       if (isEventActive) {
         const ev = events[_insightEventFilt];
@@ -5324,7 +5346,14 @@
         prevTxs = [];
         isAllMode = true;
         daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
-        periodLabel = ev.name;
+        let daysStr = '';
+        if (ev.start && ev.end) {
+          const s = new Date(ev.start + 'T00:00:00');
+          const e = new Date(ev.end + 'T00:00:00');
+          const diffDays = Math.max(1, Math.round((e - s) / 86400000) + 1);
+          daysStr = ' \u00b7 ' + diffDays + (diffDays === 1 ? ' day' : ' days');
+        }
+        periodLabel = ev.name + daysStr;
       } else {
         const df = _insightDateFilt || 'month';
         if (df === 'month') {
@@ -5381,7 +5410,10 @@
         }
       }
 
-      if (periodEl) periodEl.textContent = periodLabel;
+      if (periodEl) {
+        periodEl.textContent = periodLabel;
+        periodEl.title = periodLabel;
+      }
       if (!curTxs.length && !prevTxs.length) {
         _insightsLastHtml = '';
         area.innerHTML = '<div class="insight-empty">' + (isEventActive ? 'No transactions found for ' + esc(events[_insightEventFilt].name) : 'Add transactions to see insights') + '</div>';
@@ -5389,22 +5421,6 @@
       }
 
       const candidates = [];
-
-      if (isEventActive) {
-        const ev = events[_insightEventFilt];
-        const dateSpan = (ev.start && ev.end) ? ' (' + ev.start + ' to ' + ev.end + ')' : '';
-        const evExpTxs = curTxs.filter(function(t){ return t.type !== 'income'; });
-        const evIncTxs = curTxs.filter(function(t){ return t.type === 'income'; });
-        const evExp = evExpTxs.reduce(function(s,t){ return s + t.amount; }, 0);
-        const evInc = evIncTxs.reduce(function(s,t){ return s + t.amount; }, 0);
-        if (evExp > 0 && evInc > 0) {
-          candidates.push({ priority: 95, type: evInc >= evExp ? 'pos' : 'neg', icon: '&#x1F3AF;', text: '<strong>Event Overview:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total spend <strong style="color:var(--ex)">' + fmtS(evExp) + '</strong> vs income <strong style="color:var(--in)">' + fmtS(evInc) + '</strong> (' + (evInc >= evExp ? 'surplus' : 'deficit') + ' of <strong>' + fmtS(Math.abs(evInc - evExp)) + '</strong> across ' + curTxs.length + ' transactions).' });
-        } else if (evExp > 0) {
-          candidates.push({ priority: 95, type: 'neu', icon: '&#x1F3AF;', text: '<strong>Event Spend:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total spend <strong style="color:var(--ex)">' + fmtS(evExp) + '</strong> across <strong>' + evExpTxs.length + ' transaction' + (evExpTxs.length === 1 ? '' : 's') + '</strong>.' });
-        } else if (evInc > 0) {
-          candidates.push({ priority: 95, type: 'pos', icon: '&#x1F3AF;', text: '<strong>Event Income:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total income <strong style="color:var(--in)">' + fmtS(evInc) + '</strong> across <strong>' + evIncTxs.length + ' transaction' + (evIncTxs.length === 1 ? '' : 's') + '</strong>.' });
-        }
-      }
 
       // ── Pre-compute aggregates ──
       let curInc = 0, curExp = 0, prevInc = 0, prevExp = 0;
@@ -5444,9 +5460,54 @@
       const savRate = curInc > 0 ? Math.round((buffer / curInc) * 100) : null;
 
       // ══════════════════════════════════════════════════════════════════════
+      // DEDICATED EVENT INSIGHTS (when an event filter is active)
+      // ══════════════════════════════════════════════════════════════════════
+      if (isEventActive) {
+        const ev = events[_insightEventFilt];
+        const dateSpan = (ev.start && ev.end) ? ' (' + fmtDt(ev.start) + ' to ' + fmtDt(ev.end) + ')' : '';
+
+        // 1. Overview
+        if (curExp > 0 && curInc > 0) {
+          candidates.push({ priority: 98, type: curInc >= curExp ? 'pos' : 'neg', icon: '&#x1F3AF;', text: '<strong>Event Overview:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total spend <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> vs income <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> (' + (curInc >= curExp ? 'surplus' : 'deficit') + ' of <strong>' + fmtS(Math.abs(curInc - curExp)) + '</strong> across ' + curTxs.length + ' transactions).' });
+        } else if (curExp > 0) {
+          candidates.push({ priority: 98, type: 'neu', icon: '&#x1F3AF;', text: '<strong>Event Spend:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total spend <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> across <strong>' + expTxs.length + ' transaction' + (expTxs.length === 1 ? '' : 's') + '</strong>.' });
+        } else if (curInc > 0) {
+          candidates.push({ priority: 98, type: 'pos', icon: '&#x1F3AF;', text: '<strong>Event Income:</strong> <strong>' + esc(ev.name) + '</strong>' + dateSpan + ' -- total income <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> across <strong>' + incTxs.length + ' transaction' + (incTxs.length === 1 ? '' : 's') + '</strong>.' });
+        }
+
+        // 2. Duration & Daily Burn Rate
+        if (ev.start && ev.end && curExp > 0) {
+          const sD = new Date(ev.start + 'T00:00:00'), eD = new Date(ev.end + 'T00:00:00');
+          const durDays = Math.max(1, Math.round((eD - sD) / 86400000) + 1);
+          if (durDays > 1) {
+            candidates.push({ priority: 82, type: 'neu', icon: '&#x23F1;&#xFE0F;', text: '<strong>Event Pace:</strong> <strong>' + durDays + ' days duration</strong> with average spend of <strong style="color:var(--ex)">' + fmtS(Math.round(curExp / durDays)) + '/day</strong>.' });
+          }
+        }
+
+        // 3. Peak Spending Day
+        if (curExpDays.size >= 2) {
+          const dayEntries = Object.entries(curDayExp).sort(function(a,b){ return b[1]-a[1]; });
+          if (dayEntries.length > 0) {
+            const topDay = dayEntries[0][0], topDayAmt = dayEntries[0][1];
+            const peakPct = curExp > 0 ? Math.round((topDayAmt / curExp) * 100) : 0;
+            candidates.push({ priority: 70, type: 'neu', icon: '&#x1F4C5;', text: '<strong>Peak Day:</strong> <strong>' + fmtDt(topDay) + '</strong> had the highest spend at <strong style="color:var(--ex)">' + fmtS(topDayAmt) + '</strong> (' + peakPct + '% of event total).' });
+          }
+        }
+
+        // 4. Payment Split (Online vs Cash)
+        if (expTxs.length >= 2) {
+          const onExp = expTxs.filter(function(t){ return t.mode === 'online'; }).reduce(function(s,t){ return s + t.amount; }, 0);
+          const offExp = expTxs.filter(function(t){ return t.mode !== 'online'; }).reduce(function(s,t){ return s + t.amount; }, 0);
+          if (onExp > 0 && offExp > 0) {
+            candidates.push({ priority: 50, type: 'neu', icon: '&#x1F4B3;', text: '<strong>Payment Split:</strong> <strong style="color:var(--on)">' + fmtS(onExp) + ' (' + Math.round((onExp / curExp) * 100) + '%)</strong> online vs <strong style="color:var(--of)">' + fmtS(offExp) + ' (' + Math.round((offExp / curExp) * 100) + '%)</strong> offline/cash.' });
+          }
+        }
+      }
+
+      // ══════════════════════════════════════════════════════════════════════
       // INCOME-MODE INSIGHTS (when incomeOnly OR extended periods with income)
       // ══════════════════════════════════════════════════════════════════════
-      if (incomeOnly || (curInc > 0 && (isAllMode || isYearMode || isCustomMode))) {
+      if (!isEventActive && (incomeOnly || (curInc > 0 && (isAllMode || isYearMode || isCustomMode)))) {
 
         // L1. Total income summary with comparison
         if (curInc > 0) {

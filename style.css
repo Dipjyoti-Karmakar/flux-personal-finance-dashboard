@@ -3293,6 +3293,14 @@
       background: linear-gradient(180deg, color-mix(in srgb, var(--sf) 95%, var(--s2)) 0%, var(--sf) 100%);
       border-radius: var(--r) var(--r) 0 0;
     }
+    #insightPeriod {
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      vertical-align: middle;
+    }
 
     .insight-list {
       padding: 20px 24px;
@@ -3608,6 +3616,29 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
+    /* Event override: filters lose color, become static gray without fading opacity */
+    .insight-filter-toolbar.event-override .insight-dt-pills,
+    .insight-filter-toolbar.event-override .insight-custom-dt-wrap,
+    .insight-filter-toolbar.event-override .sub-filter-pills:not(.insight-dt-pills) {
+      filter: grayscale(1);
+      pointer-events: none;
+      user-select: none;
+      transition: filter .25s ease;
+    }
+    .insight-filter-toolbar.event-override .sub-fpill.act {
+      background: var(--s3) !important;
+      color: var(--mu) !important;
+      border-color: var(--bd) !important;
+      box-shadow: none !important;
+    }
+    .insight-filter-toolbar.event-override .sub-fpill,
+    .insight-filter-toolbar.event-override .insight-dt-input,
+    .insight-filter-toolbar.event-override .insight-dt-clear {
+      color: var(--mu) !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+    }
+
     /* etf cs-wrap in transaction panel */
     .etf-cs-wrap .cs-btn {
       height: 30px;
@@ -3670,6 +3701,9 @@
       }
       .insight-card .ph .ph-actions {
         gap: 6px;
+      }
+      #insightPeriod {
+        max-width: 140px;
       }
     }
 
