@@ -10051,29 +10051,33 @@ body.mob-yearly-active #catAreaWrap .ph {
   pointer-events: none;
 }
 
-/* ── 5. Transaction item: refined hover ── */
-.txi:hover {
-  background: color-mix(in srgb, var(--s2) 70%, transparent);
-  transform: translateX(2px);
-  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--ac) 35%, transparent),
-              0 4px 16px rgba(0,0,0,0.12);
+/* ── 5. Transaction item: refined hover (desktop/pointer only — mobile already overrides to none) ── */
+@media (min-width: 521px) and (hover: hover) {
+  .txi:hover {
+    background: color-mix(in srgb, var(--s2) 70%, transparent);
+    transform: translateX(2px);
+    box-shadow: inset 3px 0 0 color-mix(in srgb, var(--ac) 35%, transparent),
+                0 4px 16px rgba(0,0,0,0.12);
+  }
 }
 
-/* ── 6. Header utility buttons: better shape ── */
-.ib {
-  border-radius: 10px;
-  padding: 7px 13px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.ib:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.18);
-}
-.ib:active {
-  transform: translateY(0) scale(0.97);
+/* ── 6. Header utility buttons: better shape (desktop only to avoid mobile .ib layout conflicts) ── */
+@media (min-width: 768px) {
+  .ib {
+    border-radius: 10px;
+    padding: 7px 13px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: all .2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .ib:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+  }
+  .ib:active {
+    transform: translateY(0) scale(0.97);
+  }
 }
 
 /* ── 7. Filter pills: active glow ── */
@@ -10090,9 +10094,9 @@ body.mob-yearly-active #catAreaWrap .ph {
 }
 
 /* ── 8. Form inputs: consistent min-height & focus ring ── */
-input[type="text"],
+/* Exempt compact date pickers, hidden fields, file pickers */
+input[type="text"]:not(.analysis-date-input):not(.cdt-input),
 input[type="number"],
-input[type="date"],
 input[type="email"],
 input[type="url"],
 textarea,
@@ -10100,7 +10104,7 @@ select {
   min-height: 44px;
   transition: border-color .2s, box-shadow .2s, background .2s;
 }
-input:focus,
+input:not([type="file"]):not([type="hidden"]):not([type="range"]):focus,
 textarea:focus,
 select:focus {
   outline: none;
@@ -10222,8 +10226,8 @@ select:focus {
 @media (min-width: 768px) {
   header {
     border-bottom: 1px solid var(--bd);
-    padding-bottom: 24px !important;
-    margin-bottom: 28px !important;
+    /* Avoid doubling margin — existing rule sets 24px. Just add subtle padding for the divider. */
+    padding-bottom: 12px;
   }
   .desktop-view-title {
     font-size: 28px;
