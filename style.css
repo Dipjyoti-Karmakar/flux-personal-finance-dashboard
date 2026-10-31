@@ -9616,7 +9616,8 @@ body.mob-yearly-active #dashboardView > .ys {
 }
 
 @media (max-width: 479px) {
-  .analysis-filter-wrap {
+  .analysis-filter-wrap,
+  #dashHeader .fltr {
     gap: 4px;
   }
 
@@ -9632,14 +9633,20 @@ body.mob-yearly-active #dashboardView > .ys {
 .analysis-custom-dt {
   display: none;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
+  margin-top: 4px;
   margin-bottom: 14px;
+  margin-left: auto;
+  width: fit-content;
+  max-width: 100%;
   padding: 8px 14px;
   background: var(--sf);
   border: 1px solid var(--bd);
   border-radius: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   color: var(--di);
+  box-sizing: border-box;
 }
 
 .analysis-custom-dt svg {
@@ -9694,6 +9701,45 @@ body.mob-yearly-active #dashboardView > .ys {
   border-color: var(--ex);
   color: var(--ex);
   background: color-mix(in srgb, var(--ex) 8%, transparent);
+}
+
+@media (max-width: 520px) {
+  .analysis-custom-dt {
+    width: 100%;
+    margin-left: 0;
+    padding: 6px 8px;
+    gap: 4px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+
+  .analysis-custom-dt svg {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+  }
+
+  .analysis-date-input {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: 0 !important;
+    padding: 5px 4px !important;
+    font-size: 11px !important;
+  }
+
+  .analysis-date-sep {
+    font-size: 10px;
+    flex-shrink: 0;
+    padding: 0 1px;
+  }
+
+  .analysis-date-clear {
+    padding: 5px 8px;
+    font-size: 10px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
 
 /* ── Analytics Period Pulse Strip ── */
