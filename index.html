@@ -5441,7 +5441,7 @@
           curExp += t.amount; expTxs.push(t);
           const c = t.cat || 'other';
           curCats[c] = (curCats[c] || 0) + t.amount;
-          if (t.date <= todayISO) {
+          if (isEventActive || t.date <= todayISO) {
             curDayExp[t.date] = (curDayExp[t.date] || 0) + t.amount;
             curExpDays.add(t.date);
           }
@@ -5453,7 +5453,7 @@
         else { prevExp += t.amount; const c = t.cat || 'other'; prevCats[c] = (prevCats[c] || 0) + t.amount; }
       });
 
-      const pastExp = expTxs.filter(function(t){ return t.date <= todayISO; }).reduce(function(s,t){ return s+t.amount; }, 0);
+      const pastExp = expTxs.filter(function(t){ return isEventActive ? true : t.date <= todayISO; }).reduce(function(s,t){ return s+t.amount; }, 0);
       const dailyBurn = pastExp > 0 && cD > 0 ? Math.round(pastExp / cD) : 0;
       const projected = (!isYearMode && !isAllMode && !isCustomMode && dailyBurn > 0) ? Math.round(dailyBurn * daysInMonth) : 0;
       const buffer = curInc - curExp;
@@ -5501,6 +5501,12 @@
           if (onExp > 0 && offExp > 0) {
             candidates.push({ priority: 50, type: 'neu', icon: '&#x1F4B3;', text: '<strong>Payment Split:</strong> <strong style="color:var(--on)">' + fmtS(onExp) + ' (' + Math.round((onExp / curExp) * 100) + '%)</strong> online vs <strong style="color:var(--of)">' + fmtS(offExp) + ' (' + Math.round((offExp / curExp) * 100) + '%)</strong> offline/cash.' });
           }
+        }
+
+        // 5. Average Expense in Event
+        if (expTxs.length >= 3) {
+          const avgTx = Math.round(curExp / expTxs.length);
+          candidates.push({ priority: 45, type: 'neu', icon: '&#x1F4CA;', text: '<strong>Average Expense:</strong> <strong style="color:var(--ex)">' + fmtS(avgTx) + '</strong> across <strong>' + expTxs.length + ' expenses</strong> in this event.' });
         }
       }
 
@@ -5605,19 +5611,19 @@
       // ══════════════════════════════════════════════════════════════════════
       if (!incomeOnly) {
 
-        // A. Deficit / No-Income
-        if (curInc > 0 && savRate !== null && savRate < 0) {
+        // A. Deficit / No-Income (monthly & non-event only)
+        if (!isEventActive && curInc > 0 && savRate !== null && savRate < 0) {
           const defPct = Math.abs(savRate);
           const prio = Math.min(100, 85 + Math.round(Math.min(50, defPct) * 0.3));
           const dayNote = daysLeft > 0 ? ' <span class="up">' + daysLeft + ' days remaining.</span>' : '';
           candidates.push({ priority: prio, type: 'neg', icon: '&#x1F6A8;', text: '<strong>Deficit:</strong> Overspent by <strong style="color:var(--ex)">' + fmtS(Math.abs(buffer)) + ' (' + defPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent vs <strong>' + fmtS(curInc) + '</strong> income.' + dayNote });
         }
-        if (curInc === 0 && curExp > 500 && !expenseOnly) {
+        if (!isEventActive && curInc === 0 && curExp > 500 && !expenseOnly) {
           candidates.push({ priority: 90, type: 'neg', icon: '&#x1F6A8;', text: '<strong>No Income Logged:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent across <strong>' + curExpDays.size + ' days</strong> with zero income recorded -- depleting reserves.' });
         }
 
-        // B. Pacing & Projection (only for month mode after day 4)
-        if (projected > 0 && cD >= 4 && !isYearMode && !isAllMode && !isCustomMode) {
+        // B. Pacing & Projection (only for month mode after day 4, never for events)
+        if (!isEventActive && projected > 0 && cD >= 4 && !isYearMode && !isAllMode && !isCustomMode) {
           if (curInc > 0 && projected > curInc) {
             const overAmt = projected - curInc;
             const overPct = Math.round((overAmt / curInc) * 100);
@@ -5644,7 +5650,7 @@
         }
 
         // B2. Year mode: YTD pacing insight
-        if (isYearMode && curExp > 0) {
+        if (!isEventActive && isYearMode && curExp > 0) {
           const startOfYear = new Date(cY, 0, 1);
           const dayOfYear = Math.max(1, Math.floor((now - startOfYear) / 86400000) + 1);
           const dailyYTD = Math.round(curExp / dayOfYear);
@@ -5659,8 +5665,8 @@
           }
         }
 
-        // C. Savings Rate
-        if (curInc > 0 && curExp > 0) {
+        // C. Savings Rate (monthly & non-event only)
+        if (!isEventActive && curInc > 0 && curExp > 0) {
           let vsPrev = '';
           if (prevInc > 0) {
             const prevSavRate = Math.round(((prevInc - prevExp) / prevInc) * 100);
@@ -5679,12 +5685,12 @@
             const safeDay = daysLeft > 0 ? Math.round(buffer / daysLeft) : 0;
             candidates.push({ priority: 55, type: 'neg', icon: '&#x26A1;', text: '<strong>Thin Buffer:</strong> Only <strong style="color:var(--ex)">' + savRate + '%</strong> saved -- <strong>' + fmtS(buffer) + '</strong> left' + vsPrev + '. ' + (safeDay > 0 ? '~<strong>' + fmtS(safeDay) + '/day</strong> runway for ' + daysLeft + 'd.' : '') });
           }
-        } else if (curInc > 0 && curExp === 0 && cD > 5) {
+        } else if (!isEventActive && curInc > 0 && curExp === 0 && cD > 5) {
           candidates.push({ priority: 30, type: 'pos', icon: '&#x1F6E1;&#xFE0F;', text: '<strong>Full Buffer:</strong> Entire <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> income untouched. <strong>' + fmtS(Math.round(curInc / Math.max(1, daysLeft))) + '/day</strong> available for ' + daysLeft + 'd.' });
         }
 
         // D. Income Trend vs comparison period (month mode only)
-        if (!isYearMode && !isAllMode && !isCustomMode && curInc > 0 && prevInc > 0) {
+        if (!isEventActive && !isYearMode && !isAllMode && !isCustomMode && curInc > 0 && prevInc > 0) {
           const incChg = Math.round(((curInc - prevInc) / prevInc) * 100);
           if (incChg > 20) {
             candidates.push({ priority: 46, type: 'pos', icon: '&#x1F4B0;', text: '<strong>Income Up:</strong> <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> this month -- <span class="down">+' + incChg + '% (+' + fmtS(curInc - prevInc) + ')</span> over ' + MN[pM] + '\'s <strong>' + fmtS(prevInc) + '</strong>.' });
@@ -5703,7 +5709,7 @@
           const topPct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 100;
           const prevTopAmt = prevCats[topCat] || 0;
           let vsLast = '';
-          if (prevTopAmt > 0) {
+          if (!isEventActive && prevTopAmt > 0) {
             const catChgPct = Math.round(((topAmt - prevTopAmt) / prevTopAmt) * 100);
             if (catChgPct > 5) vsLast = ' <span class="up">+' + catChgPct + '% vs ' + (isYearMode ? (cY-1)+' YTD' : MN[pM]) + '</span>';
             else if (catChgPct < -5) vsLast = ' <span class="down">' + Math.abs(catChgPct) + '% lower than ' + (isYearMode ? (cY-1)+' YTD' : MN[pM]) + '</span>';
@@ -5711,17 +5717,18 @@
           const catIcon = (CICO[topCat] || '');
           if (topPct >= 60) {
             const prio = Math.min(78, 62 + Math.round((topPct - 60) * 0.4));
-            candidates.push({ priority: prio, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Concentration Risk:</strong> <strong>' + esc(cn) + '</strong> consumes <strong style="color:var(--ex)">' + topPct + '%</strong> of all spending (<strong style="color:var(--ex)">' + fmtS(topAmt) + '</strong>)' + vsLast + '. Diversify to reveal savings.' });
+            candidates.push({ priority: prio, type: isEventActive ? 'neu' : 'neg', icon: catIcon || '&#x2736;', text: '<strong>Concentration' + (isEventActive ? '' : ' Risk') + ':</strong> <strong>' + esc(cn) + '</strong> consumes <strong style="color:var(--ex)">' + topPct + '%</strong> of ' + (isEventActive ? 'event spend' : 'all spending') + ' (<strong style="color:var(--ex)">' + fmtS(topAmt) + '</strong>)' + vsLast + '. Diversify to reveal savings.' });
           } else if (secAmt > 0 && topAmt > secAmt * 1.5) {
             const scn = secCat ? secCat.charAt(0).toUpperCase() + secCat.slice(1) : 'next category';
-            candidates.push({ priority: 40, type: 'neg', icon: catIcon || '&#x2736;', text: '<strong>Main Drain:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(topAmt - secAmt) + '</strong> more than ' + esc(scn) + vsLast + '.' });
+            candidates.push({ priority: 40, type: isEventActive ? 'neu' : 'neg', icon: catIcon || '&#x2736;', text: '<strong>Main Drain:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(topAmt - secAmt) + '</strong> more than ' + esc(scn) + vsLast + '.' });
           } else {
-            candidates.push({ priority: 20, type: 'neu', icon: catIcon || '&#x2736;', text: '<strong>Top Category:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>' + vsLast + '.' });
+            const dailyRate = isEventActive ? '' : ' -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>';
+            candidates.push({ priority: 20, type: 'neu', icon: catIcon || '&#x2736;', text: '<strong>Top Category:</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong>' + dailyRate + vsLast + '.' });
           }
         }
 
-        // F. Notable Category Shift vs comparison period
-        if (prevTxs.length > 0 && curExp > 0) {
+        // F. Notable Category Shift vs comparison period (non-event only)
+        if (!isEventActive && prevTxs.length > 0 && curExp > 0) {
           let bCat = null, bDiff = 0, bCur = 0, bPrev = 0, bPctChg = 0;
           const allC = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
           allC.forEach(function(cat) {
@@ -5744,7 +5751,7 @@
         }
 
         // G. Largest Single Purchase
-        const sortedExpTxs = expTxs.filter(function(t){ return t.date <= todayISO; }).sort(function(a,b){ return b.amount-a.amount; });
+        const sortedExpTxs = expTxs.filter(function(t){ return isEventActive ? true : t.date <= todayISO; }).sort(function(a,b){ return b.amount-a.amount; });
         if (sortedExpTxs.length > 0) {
           const topTx = sortedExpTxs[0];
           const pctTotal = curExp > 0 ? Math.round((topTx.amount / curExp) * 100) : 100;
@@ -5754,23 +5761,23 @@
           const descStr = topTx.desc ? ' "' + esc(topTx.desc) + '"' : '';
           if (pctTotal >= 35) {
             const prio = Math.min(85, 70 + Math.round((pctTotal - 35) * 0.33));
-            candidates.push({ priority: prio, type: 'neg', icon: '&#x1F4B3;', text: '<strong>Outsized Buy:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- <strong style="color:var(--ex)">' + pctTotal + '% of spend</strong>, ' + xAvg + 'x avg.' });
+            candidates.push({ priority: prio, type: isEventActive ? 'neu' : 'neg', icon: '&#x1F4B3;', text: '<strong>Outsized Buy:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- <strong style="color:var(--ex)">' + pctTotal + '% of ' + (isEventActive ? 'event spend' : 'spend') + '</strong>, ' + xAvg + 'x avg.' });
           } else if (sortedExpTxs.length >= 3) {
-            candidates.push({ priority: 17, type: 'neu', icon: '&#x1F3F7;&#xFE0F;', text: '<strong>Top Purchase:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- ' + pctTotal + '% of spend, ' + xAvg + 'x avg.' });
+            candidates.push({ priority: 17, type: 'neu', icon: '&#x1F3F7;&#xFE0F;', text: '<strong>Top Purchase:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- ' + pctTotal + '% of ' + (isEventActive ? 'event spend' : 'spend') + ', ' + xAvg + 'x avg.' });
           }
         }
 
         // H. Repeat Payee
-        const descEntries = Object.entries(descCount).filter(function(e){ return e[1] >= 3; }).sort(function(a,b){ return b[1]-a[1]; });
+        const descEntries = Object.entries(descCount).filter(function(e){ return e[1] >= (isEventActive ? 2 : 3); }).sort(function(a,b){ return b[1]-a[1]; });
         if (descEntries.length > 0) {
           const topDesc = descEntries[0][0], topCnt = descEntries[0][1];
           const totalForDesc = expTxs.filter(function(t){ return t.desc && t.desc.trim().toLowerCase() === topDesc; }).reduce(function(s,t){ return s+t.amount; }, 0);
           const disp = topDesc.charAt(0).toUpperCase() + topDesc.slice(1);
-          candidates.push({ priority: 35, type: 'neg', icon: '&#x1F501;', text: '<strong>Repeat Spend:</strong> <strong>' + esc(disp) + '</strong> -- <strong>' + topCnt + ' transactions</strong> totaling <strong style="color:var(--ex)">' + fmtS(totalForDesc) + '</strong> (~' + fmtS(Math.round(totalForDesc / topCnt)) + '/tx). Worth reviewing.' });
+          candidates.push({ priority: 35, type: 'neu', icon: '&#x1F501;', text: '<strong>Repeat Spend:</strong> <strong>' + esc(disp) + '</strong> -- <strong>' + topCnt + ' transactions</strong> totaling <strong style="color:var(--ex)">' + fmtS(totalForDesc) + '</strong> (~' + fmtS(Math.round(totalForDesc / topCnt)) + '/tx).' + (isEventActive ? '' : ' Worth reviewing.') });
         }
 
-        // I. Subscription Burn
-        if (typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
+        // I. Subscription Burn (strictly disabled when an event filter is active)
+        if (!isEventActive && typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
           const activeSubs = recurringList.filter(function(r){ return r.active && !r.archived && r.type !== 'income'; });
           if (activeSubs.length > 0) {
             const monthlySubTotal = activeSubs.reduce(function(s, r) {
@@ -5789,9 +5796,9 @@
           }
         }
 
-        // J. Average Transaction Size vs comparison period
+        // J. Average Transaction Size vs comparison period (non-event only)
         const prevExpTxList = prevTxs.filter(function(t){ return t.type !== 'income'; });
-        if (expTxs.length >= 5 && prevExpTxList.length >= 5) {
+        if (!isEventActive && expTxs.length >= 5 && prevExpTxList.length >= 5) {
           const avgCur = Math.round(curExp / expTxs.length);
           const avgPrev = Math.round(prevExp / prevExpTxList.length);
           const chgPct = Math.round(((avgCur - avgPrev) / avgPrev) * 100);
@@ -5802,8 +5809,8 @@
           }
         }
 
-        // K. No-Spend Streak & Spike Day (month mode only)
-        if (!isYearMode && !isAllMode && !isCustomMode) {
+        // K. No-Spend Streak & Spike Day (month mode only, non-event only)
+        if (!isEventActive && !isYearMode && !isAllMode && !isCustomMode) {
           const sortedExpDays = Array.from(curExpDays).filter(function(d){ return d <= todayISO; }).sort().reverse();
           const zeroDays = cD - curExpDays.size;
           if (sortedExpDays.length > 0) {
