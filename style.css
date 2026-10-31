@@ -3302,7 +3302,7 @@
 
     .insight-item {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 16px;
       padding: 16px 20px;
       border-radius: var(--rs);
@@ -4296,6 +4296,7 @@
       flex-shrink: 0;
       background: var(--s2);
       border: 1px solid var(--bd);
+      align-self: center;
     }
 
     .sub-card-info {
@@ -10288,4 +10289,15 @@ select:focus {
     animation-duration: .01ms !important;
     transition-duration: .01ms !important;
   }
+}
+
+/* ── 26. Center emoji icons in subscription cards & monthly insight cards ── */
+.sub-card-icon {
+  align-self: center !important;
+}
+.insight-item {
+  align-items: center !important;
+}
+.insight-icon {
+  align-self: center !important;
 }
