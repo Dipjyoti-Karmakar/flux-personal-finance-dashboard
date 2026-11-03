@@ -3174,9 +3174,19 @@
         else if (r.freq === 'daily') monthlyTotal += amt * (365.25 / 12);
         else if (r.freq === 'custom' && r.customDays > 0) monthlyTotal += (amt * 365.25 / r.customDays) / 12;
       });
-      const monthly = Math.round(monthlyTotal + yearlyTotal);
-      const yearly = Math.round(monthly * 12);
+      const rawMonthly = monthlyTotal + yearlyTotal;
+      const monthly = Math.round(rawMonthly);
+      const yearly = Math.round(rawMonthly * 12);
       return { monthly, yearly, count: activeSubs.length, activeSubs };
+    }
+
+    function getEventDurationStr(start, end) {
+      if (!start || !end) return '';
+      const d1 = new Date(start + 'T00:00:00');
+      const d2 = new Date(end + 'T00:00:00');
+      if (isNaN(d1) || isNaN(d2)) return '';
+      const diffDays = Math.max(1, Math.round(Math.abs(d2 - d1) / 86400000) + 1);
+      return ' · ' + diffDays + (diffDays === 1 ? ' day' : ' days');
     }
 
     function getLegibleColor(c) {
@@ -3963,15 +3973,7 @@
         let evtHeader = '';
         if (isEventFilter && activeEvent) {
           const sColor = safeColor(activeEvent.color);
-          let durStr = '';
-          if (activeEvent.start && activeEvent.end) {
-            const d1 = new Date(activeEvent.start + 'T00:00:00');
-            const d2 = new Date(activeEvent.end + 'T00:00:00');
-            if (!isNaN(d1) && !isNaN(d2)) {
-              const diffDays = Math.max(1, Math.round(Math.abs(d2 - d1) / 86400000) + 1);
-              durStr = ` · ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
-            }
-          }
+          const durStr = getEventDurationStr(activeEvent.start, activeEvent.end);
           evtHeader = `<div class="evt-header-wrap">
         <div style="width:4px;height:28px;border-radius:2px;background:${sColor};flex-shrink:0;"></div>
         <span class="evt-header-title">${esc(activeEvent.name)}</span>
@@ -5372,13 +5374,7 @@
         prevTxs = [];
         isAllMode = true;
         daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
-        let daysStr = '';
-        if (ev.start && ev.end) {
-          const s = new Date(ev.start + 'T00:00:00');
-          const e = new Date(ev.end + 'T00:00:00');
-          const diffDays = Math.max(1, Math.round((e - s) / 86400000) + 1);
-          daysStr = ' \u00b7 ' + diffDays + (diffDays === 1 ? ' day' : ' days');
-        }
+        const daysStr = getEventDurationStr(ev.start, ev.end);
         periodLabel = ev.name + daysStr;
       } else {
         const df = _insightDateFilt || 'month';
@@ -5441,13 +5437,7 @@
       if (periodEl) {
         if (isEventActive && _insightEventFilt && events[_insightEventFilt]) {
           const ev = events[_insightEventFilt];
-          let daysStr = '';
-          if (ev.start && ev.end) {
-            const s = new Date(ev.start + 'T00:00:00');
-            const e = new Date(ev.end + 'T00:00:00');
-            const diffDays = Math.max(1, Math.round((e - s) / 86400000) + 1);
-            daysStr = ' · ' + diffDays + (diffDays === 1 ? ' day' : ' days');
-          }
+          const daysStr = getEventDurationStr(ev.start, ev.end);
           periodEl.innerHTML = `<span class="insight-period-name">${esc(ev.name)}</span><span class="insight-period-dur">${esc(daysStr)}</span>`;
         } else {
           periodEl.textContent = periodLabel;
@@ -5709,6 +5699,13 @@
               icon: '&#x1F3AF;',
               text: '<strong>Monthly Blueprint:</strong> Day <strong>' + cD + ' of ' + daysInMonth + '</strong>. With <strong style="color:var(--in)">' + fmtRound(curInc) + '</strong> income' + blueprintDetail + ', your safe discretionary budget is <strong style="color:var(--in)">' + fmtRound(safeDaily) + '/day</strong> across remaining ' + remainingDays + ' days.'
             });
+          } else if (curExp === 0 && cD >= 1) {
+            candidates.push({
+              priority: 86,
+              type: 'pos',
+              icon: '&#x1F525;',
+              text: '<strong>Clean Start:</strong> Zero expenses logged through Day ' + cD + ' of ' + MF[cM] + '. Excellent start to the month.'
+            });
           } else if (prevTxs.length > 0) {
             // Apples-to-Apples benchmark: compare Day 1..cD of this month vs Day 1..cD of last month
             const prevSamePeriodExp = prevTxs.filter(function(t){
@@ -5727,13 +5724,6 @@
                 icon: '&#x1F4CA;',
                 text: '<strong>Early Benchmark:</strong> Day ' + cD + ' spend is <strong style="color:' + (isLower ? 'var(--in)' : 'var(--ex)') + '">' + fmtRound(curExp) + '</strong> vs <strong>' + fmtRound(prevSamePeriodExp) + '</strong> spent by Day ' + cD + ' in ' + MN[pM] + ' (<span class="' + (isLower ? 'down' : 'up') + '">' + (isLower ? '-' : '+') + periodPct + '%</span> ' + (isLower ? 'leaner' : 'higher') + ').'
               });
-            } else if (curExp === 0 && cD >= 1) {
-              candidates.push({
-                priority: 86,
-                type: 'pos',
-                icon: '&#x1F525;',
-                text: '<strong>Clean Start:</strong> Zero expenses logged through Day ' + cD + ' of ' + MF[cM] + '. Excellent start to the month.'
-              });
             } else if (curExp > 0 && curExp < 500) {
               candidates.push({
                 priority: 80,
@@ -5747,7 +5737,7 @@
           // Upcoming Subscriptions Readiness check (next 7 days)
           if (typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
             const todayStr = todayISO;
-            const in7Days = new Date(now.getTime() + 7 * 86400000).toISOString().slice(0, 10);
+            const in7Days = getLocalIsoDateStr(new Date(cY, cM, cD + 7));
             const dueSoonSubs = recurringList.filter(function(r){
               return !r.archived && r.active && r.type !== 'income' && r.nextDue && r.nextDue >= todayStr && r.nextDue <= in7Days;
             });
@@ -5770,10 +5760,10 @@
           const dayNote = (!isCustomMode && !isAllMode && daysLeft > 0) ? ' <span class="up">' + daysLeft + ' days remaining.</span>' : '';
           candidates.push({ priority: prio, type: 'neg', icon: '&#x1F6A8;', text: '<strong>Deficit:</strong> Overspent by <strong style="color:var(--ex)">' + fmtS(Math.abs(buffer)) + ' (' + defPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent vs <strong>' + fmtS(curInc) + '</strong> income.' + dayNote });
         }
-        if (!isEventActive && !isCustomMode && !isAllMode && curInc === 0 && !expenseOnly) {
+        if (!isEventActive && isMonthMode && curInc === 0 && !expenseOnly) {
           if (cD > 7 && curExp > 1000) {
             candidates.push({ priority: 75, type: 'neg', icon: '&#x1F6A8;', text: '<strong>No Income Logged:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent across <strong>' + curExpDays.size + ' days</strong> with zero income recorded -- depleting reserves.' });
-          } else if (cD <= 7 && curExp >= 1500 && !isEarlyMonth) {
+          } else if (cD <= 7 && curExp >= 1500 && !prevTxs.length) {
             candidates.push({ priority: 45, type: 'neu', icon: '&#x1F4CB;', text: '<strong>Early Spend:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent while awaiting this month\'s primary income.' });
           }
         }
