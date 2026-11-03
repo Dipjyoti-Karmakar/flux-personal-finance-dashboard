@@ -5403,6 +5403,17 @@
           }
         }
 
+        function setTxType(ty) {
+          const btn = document.querySelector('.ft.ty-flt.ty-flt-' + (ty === 'income' ? 'inc' : (ty === 'expense' ? 'exp' : 'all')));
+          if (btn && typeof setF === 'function') {
+            setF(ty, btn);
+          } else {
+            cTyFilt = ty;
+            document.querySelectorAll('.ft.ty-flt').forEach(b => b.classList.toggle('act', b === btn));
+            if (typeof renderTxList === 'function') renderTxList();
+          }
+        }
+
         if (actionType === 'filter-cat') {
           syncInsightPeriodToTxFilter();
           const targetCat = (param || '').toLowerCase();
@@ -5414,7 +5425,8 @@
             sInput.value = '';
             sInput.placeholder = targetCat ? 'Filtered by ' + cn + ' (type to search all)…' : 'Search transactions…';
           }
-          if (typeof renderTxList === 'function') renderTxList();
+          // Expense category insights MUST show expenses only (exclude income in same category)
+          setTxType('expense');
 
           // Also activate the category in By Category panel if available
           if (typeof toggleCatFilter === 'function') {
@@ -5427,7 +5439,7 @@
           }
 
           if (typeof showToast === 'function') {
-            showToast('Filtered transactions to ' + cn, 'in');
+            showToast('Filtered to ' + cn + ' expenses', 'in');
           }
 
           const txPanel = document.getElementById('txPanel') || document.getElementById('txList');
@@ -5444,12 +5456,9 @@
           cTxSearch = param || '';
           const sInput = document.getElementById('txSearch');
           if (sInput) sInput.value = param || '';
-          if (!param) {
-            const expBtn = Array.from(document.querySelectorAll('.ft.ty-flt')).find(function(b){
-              return b.textContent.trim().toLowerCase() === 'expense';
-            });
-            if (expBtn && typeof setTyFilt === 'function') setTyFilt('expense', expBtn);
-            else { cTyFilt = 'expense'; if (typeof renderTxList === 'function') renderTxList(); }
+          const isEvt = Boolean(_insightEventFilt && _insightEventFilt !== 'all' && events[_insightEventFilt]);
+          if (!isEvt) {
+            setTxType('expense');
           } else {
             if (typeof renderTxList === 'function') renderTxList();
           }
@@ -5457,6 +5466,13 @@
           if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else if (actionType === 'filter-date') {
           if (param) {
+            if (cCatFilt !== 'all') {
+              cCatFilt = 'all';
+              const sInput = document.getElementById('txSearch');
+              if (sInput) sInput.placeholder = 'Search transactions…';
+            }
+            // Peak spend day insight filters to expenses
+            setTxType('expense');
             const f = document.getElementById('cDtFrom'), t = document.getElementById('cDtTo');
             if (f) f.value = param;
             if (t) t.value = param;
@@ -5471,17 +5487,23 @@
               if (dtWrap) dtWrap.style.display = 'flex';
               if (typeof renderTxList === 'function') renderTxList();
             }
-            const txEl = document.getElementById('txList');
-            if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            const txEl = document.getElementById('txPanel') || document.getElementById('txList');
+            if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         } else if (actionType === 'filter-desc') {
           syncInsightPeriodToTxFilter();
+          if (cCatFilt !== 'all') {
+            cCatFilt = 'all';
+            const sInput = document.getElementById('txSearch');
+            if (sInput) sInput.placeholder = 'Search transactions…';
+          }
           cTxSearch = param || '';
           const sInput = document.getElementById('txSearch');
           if (sInput) sInput.value = param || '';
-          if (typeof renderTxList === 'function') renderTxList();
-          const txEl = document.getElementById('txList');
-          if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          // Largest purchase / repeat vendor insights filter to expenses
+          setTxType('expense');
+          const txEl = document.getElementById('txPanel') || document.getElementById('txList');
+          if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else if (actionType === 'open-subs') {
           if (typeof switchTab === 'function') switchTab('subscriptions');
         } else if (actionType === 'open-add-sub') {
@@ -5501,6 +5523,13 @@
           }
         } else if (actionType === 'filter-mode') {
           syncInsightPeriodToTxFilter();
+          if (cCatFilt !== 'all') {
+            cCatFilt = 'all';
+            const sInput = document.getElementById('txSearch');
+            if (sInput) sInput.placeholder = 'Search transactions…';
+          }
+          // Online vs Cash channel insights filter to expenses
+          setTxType('expense');
           const modeVal = param || 'all';
           const modeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
             const txt = b.textContent.trim().toLowerCase();
@@ -5515,8 +5544,8 @@
             cModeFilt = modeVal;
             if (typeof renderTxList === 'function') renderTxList();
           }
-          const txEl = document.getElementById('txList');
-          if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          const txEl = document.getElementById('txPanel') || document.getElementById('txList');
+          if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       } catch (err) {
         console.warn('Insight action failed:', err);
