@@ -5909,19 +5909,19 @@
               const tip = safeDailyDiscretionary > 0 
                 ? ' Keep daily spend under <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> to break even.' 
                 : ' Log your full monthly income or trim daily spending to balance.';
-              const billsNote = totalCommittedMonth > 0 ? (' + ' + fmtS(totalCommittedMonth) + ' bills') : '';
+              const billsNote = totalCommittedMonth > 0 ? (' (excluding ' + fmtS(totalCommittedMonth) + ' in fixed bills)') : '';
               candidates.push({
                 priority: 96, pillar: 'compass', topicKey: 'pacing',
                 type: 'neg', icon: '&#x26A0;&#xFE0F;',
                 badge: 'PACING DEFICIT', badgeClass: 'badge-red',
                 metric: fmtS(overAmt) + ' Projected Deficit',
-                text: '<strong>Pacing Alert:</strong> At ~' + fmtS(discDailyBurn) + '/day spend' + billsNote + ', projected month spend is <strong style="color:var(--ex)">' + fmtS(projectedSpend) + '</strong>, exceeding your income (' + fmtS(curInc) + ') by <strong style="color:var(--ex)">' + fmtS(overAmt) + '</strong>.' + tip,
+                text: '<strong>Pacing Alert:</strong> At ~' + fmtS(discDailyBurn) + '/day daily spend' + billsNote + ', projected month spend is <strong style="color:var(--ex)">' + fmtS(projectedSpend) + '</strong>, exceeding your income (' + fmtS(curInc) + ') by <strong style="color:var(--ex)">' + fmtS(overAmt) + '</strong>.' + tip,
                 microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-ex" style="width:100%;"></div></div>',
                 actions: [{ label: 'Inspect Expenses', action: 'filter-tx-cat', param: '' }]
               });
             } else {
               const surplusProj = curInc - projectedSpend;
-              const billsNote = totalCommittedMonth > 0 ? ('After bills (' + fmtS(totalCommittedMonth) + '), you') : 'You';
+              const billsNote = totalCommittedMonth > 0 ? ('After fixed bills (' + fmtS(totalCommittedMonth) + '), you') : 'You';
               candidates.push({
                 priority: 90, pillar: 'compass', topicKey: 'pacing',
                 type: 'pos', icon: '&#x1F3AF;',
@@ -6207,20 +6207,67 @@
           }
         }
 
-        // ── 12. SUBSCRIPTION OVERHEAD BURN ──
+        // ── 12. ACTIONABLE RENEWAL RADAR & LEDGER AUDIT ──
         if (!isEventActive && !isCustomMode && !isAllMode && typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
-          const subData = calcSubscriptionBurn(recurringList);
-          if (subData.count > 0 && subData.monthly > 0) {
-            const monthlySubTotal = subData.monthly;
-            let subPctOfInc = curInc > 0 ? Math.round((monthlySubTotal / curInc) * 100) : null;
-            const isHeavy = subPctOfInc && subPctOfInc > 30;
+          const activeSubs = recurringList.filter(function(r) {
+            return !r.archived && r.active && r.type !== 'income' && r.nextDue;
+          });
+          const upcoming = activeSubs
+            .filter(function(r) { return r.nextDue >= todayISO; })
+            .sort(function(a, b) { return a.nextDue.localeCompare(b.nextDue); });
+
+          if (upcoming.length > 0) {
+            const nextSub = upcoming[0];
+            const nextDueObj = new Date(nextSub.nextDue + 'T00:00:00');
+            const todayObj = new Date(todayISO + 'T00:00:00');
+            const diffDays = Math.max(0, Math.round((nextDueObj - todayObj) / 86400000));
+
+            // Find all subs due in the next 7 days
+            const dueSoon = upcoming.filter(function(r) {
+              const d = new Date(r.nextDue + 'T00:00:00');
+              const diff = Math.round((d - todayObj) / 86400000);
+              return diff >= 0 && diff <= 7;
+            });
+
+            if (dueSoon.length > 0) {
+              const dueSoonTotal = dueSoon.reduce(function(s, r) { return s + (r.amount || 0); }, 0);
+              const names = dueSoon.map(function(r) { return esc(r.name); }).join(', ');
+              const isUrgent = diffDays <= 3;
+              const dueWhen = diffDays === 0 ? 'today' : (diffDays === 1 ? 'tomorrow' : 'in ' + diffDays + ' days');
+              candidates.push({
+                priority: isUrgent ? 85 : 68, pillar: 'action', topicKey: 'renewal_radar',
+                type: isUrgent ? 'neg' : 'neu', icon: isUrgent ? '&#x26A0;&#xFE0F;' : '&#x1F4C5;',
+                badge: isUrgent ? 'DUE SOON' : 'UPCOMING RENEWAL',
+                badgeClass: isUrgent ? 'badge-amber' : 'badge-blue',
+                metric: fmtS(dueSoonTotal) + ' due ' + dueWhen,
+                text: '<strong>Renewal Radar:</strong> <strong>' + names + '</strong> (' + fmtS(dueSoonTotal) + ') ' + (dueSoon.length === 1 ? 'is' : 'are') + ' due ' + dueWhen + ' (' + fmtDt(nextSub.nextDue) + '). Keep account funded to prevent failed auto-debit.',
+                actions: [{ label: 'View in Subscriptions', action: 'open-subs', param: '' }]
+              });
+            } else if (diffDays <= 14) {
+              candidates.push({
+                priority: 45, pillar: 'action', topicKey: 'renewal_radar',
+                type: 'neu', icon: '&#x1F4C5;',
+                badge: 'NEXT RENEWAL', badgeClass: 'badge-blue',
+                metric: fmtS(nextSub.amount) + ' in ' + diffDays + 'd',
+                text: '<strong>Upcoming Payment:</strong> <strong>' + esc(nextSub.name) + '</strong> (' + fmtS(nextSub.amount) + ') is your next scheduled renewal, due in <strong>' + diffDays + ' days</strong> (' + fmtDt(nextSub.nextDue) + ').',
+                actions: [{ label: 'View in Subscriptions', action: 'open-subs', param: '' }]
+              });
+            }
+          }
+        }
+
+        // Action pillar fallback: Ledger Hygiene if there are uncategorized transactions
+        if (!isEventActive && expTxs.length >= 3) {
+          const otherTxs = expTxs.filter(function(t) { return (t.cat || 'other').toLowerCase() === 'other'; });
+          if (otherTxs.length >= 2) {
+            const otherTotal = otherTxs.reduce(function(s, t) { return s + t.amount; }, 0);
             candidates.push({
-              priority: isHeavy ? 65 : 38, pillar: 'action', topicKey: 'sub_burn',
-              type: isHeavy ? 'neg' : 'neu', icon: '&#x1F504;',
-              badge: 'SUBSCRIPTIONS', badgeClass: isHeavy ? 'badge-amber' : 'badge-blue',
-              metric: fmtRound(monthlySubTotal) + '/mo (' + subData.count + ' subs)',
-              text: '<strong>Committed Overhead:</strong> <strong style="color:var(--ex)">' + fmtRound(monthlySubTotal) + '/mo</strong> (<strong style="color:var(--ex)">' + fmtRound(subData.yearly) + '/yr</strong>) across <strong>' + subData.count + ' active subscriptions</strong>' + (subPctOfInc ? ' (' + subPctOfInc + '% of monthly income)' : '') + '.',
-              actions: [{ label: 'Manage Subscriptions', action: 'open-subs', param: '' }]
+              priority: 39, pillar: 'action', topicKey: 'audit_other',
+              type: 'neu', icon: '&#x1F3F7;&#xFE0F;',
+              badge: 'LEDGER AUDIT', badgeClass: 'badge-gray',
+              metric: otherTxs.length + ' uncategorized (' + fmtS(otherTotal) + ')',
+              text: '<strong>Ledger Hygiene:</strong> <strong>' + otherTxs.length + ' purchases</strong> (' + fmtS(otherTotal) + ') are categorized as "Other". Assigning specific categories sharpens spending analytics.',
+              actions: [{ label: 'Inspect Other', action: 'filter-cat', param: 'other' }]
             });
           }
         }
