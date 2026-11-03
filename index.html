@@ -5355,11 +5355,49 @@
     // ═════════════════════════════════════════════════════════════════════════
     window.triggerInsightAction = function(actionType, param, extra) {
       try {
+        function syncInsightPeriodToTxFilter() {
+          const df = _insightDateFilt || 'month';
+          const isEvt = Boolean(_insightEventFilt && _insightEventFilt !== 'all' && events[_insightEventFilt]);
+          if (isEvt) {
+            const evBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
+              return b.textContent.trim().toLowerCase() === 'event' || b.classList.contains('mode-flt-ev');
+            });
+            if (evBtn && typeof setModeFilt === 'function') setModeFilt('event', evBtn);
+            if (typeof setEvtTxFilt === 'function') setEvtTxFilt(_insightEventFilt);
+          } else {
+            if ((df === 'month' || df === 'year' || df === 'all') && cDtFilt !== df) {
+              const targetBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function(b){
+                const txt = b.textContent.trim().toLowerCase();
+                if (df === 'month') return txt.includes('month');
+                if (df === 'year') return txt.includes('year');
+                if (df === 'all') return txt === 'all';
+                return false;
+              });
+              if (targetBtn && typeof setDt === 'function') {
+                setDt(df, targetBtn);
+              }
+            } else if (df === 'custom') {
+              const fIn = document.getElementById('insightDtFrom'), tIn = document.getElementById('insightDtTo');
+              const fTx = document.getElementById('cDtFrom'), tTx = document.getElementById('cDtTo');
+              if (fIn && fTx) fTx.value = fIn.value;
+              if (tIn && tTx) tTx.value = tIn.value;
+              const customBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function(b){
+                return b.textContent.trim().toLowerCase() === 'custom';
+              });
+              if (customBtn && typeof setDt === 'function') {
+                setDt('custom', customBtn);
+              }
+            }
+          }
+        }
+
         if (actionType === 'filter-cat') {
+          syncInsightPeriodToTxFilter();
           if (typeof toggleCatFilter === 'function') toggleCatFilter(param);
           const catArea = document.getElementById('catAreaWrap') || document.getElementById('ctArea');
           if (catArea) catArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else if (actionType === 'filter-tx-cat') {
+          syncInsightPeriodToTxFilter();
           cTxSearch = param || '';
           const sInput = document.getElementById('txSearch');
           if (sInput) sInput.value = param || '';
@@ -5368,20 +5406,25 @@
           if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         } else if (actionType === 'filter-date') {
           if (param) {
-            cDtFilt = 'custom';
             const f = document.getElementById('cDtFrom'), t = document.getElementById('cDtTo');
             if (f) f.value = param;
             if (t) t.value = param;
-            const dtWrap = document.getElementById('customDtWrap');
-            if (dtWrap) dtWrap.classList.add('vis');
-            document.querySelectorAll('#dashboardView .sub-fpill[data-dt]').forEach(function(b){
-              b.classList.toggle('act', b.dataset.dt === 'custom');
+            const customBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function(b){
+              return b.textContent.trim().toLowerCase() === 'custom';
             });
-            if (typeof renderTxList === 'function') renderTxList();
+            if (customBtn && typeof setDt === 'function') {
+              setDt('custom', customBtn);
+            } else {
+              cDtFilt = 'custom';
+              const dtWrap = document.getElementById('customDtWrap');
+              if (dtWrap) dtWrap.style.display = 'flex';
+              if (typeof renderTxList === 'function') renderTxList();
+            }
             const txEl = document.getElementById('txList');
             if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
         } else if (actionType === 'filter-desc') {
+          syncInsightPeriodToTxFilter();
           cTxSearch = param || '';
           const sInput = document.getElementById('txSearch');
           if (sInput) sInput.value = param || '';
@@ -5406,14 +5449,21 @@
             }, 180);
           }
         } else if (actionType === 'filter-mode') {
-          cModeFilt = param || 'all';
-          const menu = document.getElementById('cs-modeFilt-menu');
-          if (menu) menu.querySelectorAll('.cs-opt').forEach(function(o){ o.classList.toggle('act', o.dataset.val === cModeFilt); });
-          const btnVal = document.querySelector('#cs-modeFilt .cs-val');
-          if (btnVal) {
-            btnVal.textContent = param === 'online' ? 'Online' : param === 'offline' ? 'Offline' : 'All Modes';
+          syncInsightPeriodToTxFilter();
+          const modeVal = param || 'all';
+          const modeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
+            const txt = b.textContent.trim().toLowerCase();
+            if (modeVal === 'online') return txt === 'online' || b.classList.contains('mode-flt-on');
+            if (modeVal === 'offline') return txt === 'offline' || b.classList.contains('mode-flt-of');
+            if (modeVal === 'subscription') return txt === 'subs' || b.classList.contains('mode-flt-sub');
+            return txt === 'all' || b.classList.contains('mode-flt-all');
+          });
+          if (modeBtn && typeof setModeFilt === 'function') {
+            setModeFilt(modeVal, modeBtn);
+          } else {
+            cModeFilt = modeVal;
+            if (typeof renderTxList === 'function') renderTxList();
           }
-          if (typeof renderTxList === 'function') renderTxList();
           const txEl = document.getElementById('txList');
           if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -5635,9 +5685,8 @@
         if (!actions || !actions.length) return '';
         const btns = actions.map(function(a) {
           const icon = a.iconSvg || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
-          const paramSafe = esc(a.param || '').replace(/'/g, "\\'");
-          const extraSafe = esc(a.extra || '').replace(/'/g, "\\'");
-          return '<button type="button" class="insight-action-btn" onclick="triggerInsightAction(\'' + a.action + '\',\'' + paramSafe + '\',\'' + extraSafe + '\')">' + icon + '<span>' + esc(a.label) + '</span></button>';
+          const callJs = 'triggerInsightAction(' + JSON.stringify(a.action || '') + ',' + JSON.stringify(a.param || '') + ',' + JSON.stringify(a.extra || '') + ')';
+          return '<button type="button" class="insight-action-btn" onclick="' + esc(callJs) + '">' + icon + '<span>' + esc(a.label) + '</span></button>';
         }).join('');
         return '<div class="insight-actions">' + btns + '</div>';
       }
@@ -6082,7 +6131,10 @@
         }
 
         // ── 10. REPEAT VENDOR / MERCHANT ──
-        const descEntries = Object.entries(descCount).filter(function(e){ return e[1] >= 3; }).sort(function(a,b){ return b[1]-a[1]; });
+        const shadowNameLc = foundShadow ? (foundShadow.name || '').toLowerCase() : '';
+        const descEntries = Object.entries(descCount)
+          .filter(function(e){ return e[1] >= 3 && (!shadowNameLc || e[0] !== shadowNameLc); })
+          .sort(function(a,b){ return b[1]-a[1]; });
         if (descEntries.length > 0) {
           const topDesc = descEntries[0][0], topCnt = descEntries[0][1];
           const totalForDesc = expTxs.filter(function(t){ return t.desc && t.desc.trim().toLowerCase() === topDesc; }).reduce(function(s,t){ return s+t.amount; }, 0);
@@ -6216,6 +6268,7 @@
     }
 
 
+    let _yrLastHtml = '';
     function renderYearly() {
       const area = document.getElementById('yrArea');
       const now = new Date(), todayISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 10), cY = now.getFullYear(), cM = now.getMonth(), cD = now.getDate();
