@@ -550,7 +550,7 @@
           </div>
           <div class="tx-search-wrap">
             <input type="text" id="txSearch" class="tx-search-input" placeholder="Search transactions…" oninput="setTxSearch(this.value)"
-              aria-label="Search transactions by description">
+              aria-label="Search transactions by description or category">
           </div>
           <div class="txl" id="txList">
             <div class="empty-state">
@@ -1523,6 +1523,7 @@
     let cTyFilt = 'all';
     let cModeFilt = 'all';
     let cEventFilt = 'all';
+    let cCatFilt = 'all';
     let cTxSearch = '';
     let cLogSearch = '';
     let cLogDateFrom = '';
@@ -3880,6 +3881,12 @@
       else if (cModeFilt === 'subscription') list = list.filter(t => !!t._recurring);
       else if (cModeFilt === 'receipt') list = list.filter(t => t.receipts && t.receipts.length > 0);
 
+      // Dedicated category filter (exact, case-insensitive match from filter-cat action)
+      if (cCatFilt && cCatFilt !== 'all') {
+        const target = cCatFilt.toLowerCase();
+        list = list.filter(t => (t.cat || 'other').toLowerCase() === target);
+      }
+
       // Apply text search filter (matches description or category)
       if (cTxSearch) {
         const q = cTxSearch.toLowerCase();
@@ -5399,9 +5406,14 @@
         if (actionType === 'filter-cat') {
           syncInsightPeriodToTxFilter();
           const targetCat = (param || '').toLowerCase();
-          cTxSearch = param || '';
+          cCatFilt = targetCat || 'all';
+          cTxSearch = '';
           const sInput = document.getElementById('txSearch');
-          if (sInput) sInput.value = param || '';
+          const cn = (param || '').charAt(0).toUpperCase() + (param || '').slice(1);
+          if (sInput) {
+            sInput.value = '';
+            sInput.placeholder = targetCat ? 'Filtered by ' + cn + ' (type to search all)…' : 'Search transactions…';
+          }
           if (typeof renderTxList === 'function') renderTxList();
 
           // Also activate the category in By Category panel if available
@@ -5414,7 +5426,6 @@
             }
           }
 
-          const cn = (param || '').charAt(0).toUpperCase() + (param || '').slice(1);
           if (typeof showToast === 'function') {
             showToast('Filtered transactions to ' + cn, 'in');
           }
@@ -5425,12 +5436,25 @@
           }
         } else if (actionType === 'filter-tx-cat') {
           syncInsightPeriodToTxFilter();
+          if (cCatFilt !== 'all') {
+            cCatFilt = 'all';
+            const sInput = document.getElementById('txSearch');
+            if (sInput) sInput.placeholder = 'Search transactions…';
+          }
           cTxSearch = param || '';
           const sInput = document.getElementById('txSearch');
           if (sInput) sInput.value = param || '';
-          if (typeof renderTxList === 'function') renderTxList();
-          const txEl = document.getElementById('txList');
-          if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          if (!param) {
+            const expBtn = Array.from(document.querySelectorAll('.ft.ty-flt')).find(function(b){
+              return b.textContent.trim().toLowerCase() === 'expense';
+            });
+            if (expBtn && typeof setTyFilt === 'function') setTyFilt('expense', expBtn);
+            else { cTyFilt = 'expense'; if (typeof renderTxList === 'function') renderTxList(); }
+          } else {
+            if (typeof renderTxList === 'function') renderTxList();
+          }
+          const txEl = document.getElementById('txPanel') || document.getElementById('txList');
+          if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else if (actionType === 'filter-date') {
           if (param) {
             const f = document.getElementById('cDtFrom'), t = document.getElementById('cDtTo');
@@ -7927,6 +7951,11 @@
       }, 60);
     }
     function setTxSearch(val) {
+      if (cCatFilt !== 'all') {
+        cCatFilt = 'all';
+        const sInput = document.getElementById('txSearch');
+        if (sInput) sInput.placeholder = 'Search transactions…';
+      }
       cTxSearch = val;
       txVisibleCount = (cDtFilt === 'today' && cModeFilt !== 'event') ? TX_TODAY_SIZE : TX_PAGE_SIZE;
       renderTxList();
