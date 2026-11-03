@@ -3851,7 +3851,8 @@
       // When an event filter is active or mode is "event", filter by event
       const isExplicitEventMode = (cModeFilt === 'event');
       const hasActiveEventFilt = Boolean(cEventFilt && cEventFilt !== 'all' && events[cEventFilt]);
-      const filterByEvent = isExplicitEventMode || hasActiveEventFilt;
+      const isEventFilter = isExplicitEventMode || hasActiveEventFilt;
+      const filterByEvent = isEventFilter;
       let activeEvent = null;
 
       if (filterByEvent) {
