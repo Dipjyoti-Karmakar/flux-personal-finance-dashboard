@@ -1174,19 +1174,6 @@
           onclick="closeRecurringMod()">×</button></div>
       <div class="mb">
         <div class="fb2" style="padding:0">
-          <div class="sub-presets-bar" id="subPresetsBar">
-            <div class="sub-presets-lbl">Quick Presets</div>
-            <div class="sub-presets-chips">
-              <button type="button" class="sub-preset-chip" onclick="applyRecPreset('Netflix','entertainment','monthly',649)">🍿 Netflix</button>
-              <button type="button" class="sub-preset-chip" onclick="applyRecPreset('Spotify','entertainment','monthly',119)">🎵 Spotify</button>
-              <button type="button" class="sub-preset-chip" onclick="applyRecPreset('Amazon Prime','entertainment','yearly',1499)">📦 Prime</button>
-              <button type="button" class="sub-preset-chip" onclick="applyRecPreset('YouTube Premium','entertainment','monthly',149)">▶️ YouTube</button>
-              <button type="button" class="sub-preset-chip" onclick="applyRecPreset('Gym Membership','health','monthly',1500)">💪 Gym</button>
-              <button type="button" class="sub-preset-chip" onclick="applyRecPreset('House Rent','housing','monthly',15000)">🏠 Rent</button>
-              <button type="button" class="sub-preset-chip" onclick="applyRecPreset('Broadband Internet','utilities','monthly',999)">🌐 Internet</button>
-              <button type="button" class="sub-preset-chip" onclick="applyRecPreset('iCloud+','utilities','monthly',75)">☁️ iCloud</button>
-            </div>
-          </div>
           <div class="fd full-mob" style="margin-bottom:14px;">
             <label
               style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Name</label>
@@ -3893,10 +3880,10 @@
       else if (cModeFilt === 'subscription') list = list.filter(t => !!t._recurring);
       else if (cModeFilt === 'receipt') list = list.filter(t => t.receipts && t.receipts.length > 0);
 
-      // Apply text search filter
+      // Apply text search filter (matches description or category)
       if (cTxSearch) {
         const q = cTxSearch.toLowerCase();
-        list = list.filter(t => t.desc.toLowerCase().includes(q));
+        list = list.filter(t => (t.desc && t.desc.toLowerCase().includes(q)) || (t.cat && t.cat.toLowerCase().includes(q)));
       }
 
       document.getElementById('txCnt').textContent = list.length;
@@ -5230,7 +5217,11 @@
       if (box)     box.classList.toggle('open', _insightFilterBoxOpen);
       if (dBtn)    { dBtn.classList.toggle('act', _insightFilterBoxOpen); dBtn.setAttribute('aria-expanded', _insightFilterBoxOpen ? 'true' : 'false'); }
       if (mTrig)   mTrig.setAttribute('aria-expanded', _insightFilterBoxOpen ? 'true' : 'false');
-      if (toolbar) toolbar.inert = !_insightFilterBoxOpen;
+      if (toolbar) {
+        toolbar.inert = !_insightFilterBoxOpen;
+        if (_insightFilterBoxOpen) toolbar.removeAttribute('inert');
+        else toolbar.setAttribute('inert', '');
+      }
     }
 
     function updateInsightFilterBadge() {
@@ -5407,9 +5398,31 @@
 
         if (actionType === 'filter-cat') {
           syncInsightPeriodToTxFilter();
-          if (typeof toggleCatFilter === 'function') toggleCatFilter(param);
-          const catArea = document.getElementById('catAreaWrap') || document.getElementById('ctArea');
-          if (catArea) catArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          const targetCat = (param || '').toLowerCase();
+          cTxSearch = param || '';
+          const sInput = document.getElementById('txSearch');
+          if (sInput) sInput.value = param || '';
+          if (typeof renderTxList === 'function') renderTxList();
+
+          // Also activate the category in By Category panel if available
+          if (typeof toggleCatFilter === 'function') {
+            if (activeCatFilter !== targetCat) {
+              activeCatFilter = targetCat;
+              catTxVisibleCount = CAT_TX_PAGE_SIZE;
+              _catLastHtml = '';
+              if (typeof renderCats === 'function') renderCats();
+            }
+          }
+
+          const cn = (param || '').charAt(0).toUpperCase() + (param || '').slice(1);
+          if (typeof showToast === 'function') {
+            showToast('Filtered transactions to ' + cn, 'in');
+          }
+
+          const txPanel = document.getElementById('txPanel') || document.getElementById('txList');
+          if (txPanel) {
+            txPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
         } else if (actionType === 'filter-tx-cat') {
           syncInsightPeriodToTxFilter();
           cTxSearch = param || '';
@@ -5893,27 +5906,28 @@
           if (curInc > 0) {
             if (projectedSpend > curInc) {
               const overAmt = projectedSpend - curInc;
-              const overPct = Math.round((overAmt / curInc) * 100);
               const tip = safeDailyDiscretionary > 0 
-                ? ' Trim discretionary spend to <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> for ' + remainingDays + 'd to break even.' 
-                : ' Zero safe discretionary budget remaining for ' + remainingDays + ' days.';
+                ? ' Keep daily spend under <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> to break even.' 
+                : ' Log your full monthly income or trim daily spending to balance.';
+              const billsNote = totalCommittedMonth > 0 ? (' + ' + fmtS(totalCommittedMonth) + ' bills') : '';
               candidates.push({
                 priority: 96, pillar: 'compass', topicKey: 'pacing',
                 type: 'neg', icon: '&#x26A0;&#xFE0F;',
                 badge: 'PACING DEFICIT', badgeClass: 'badge-red',
-                metric: '+' + fmtS(overAmt) + ' Projected Deficit',
-                text: '<strong>Pacing Alert:</strong> With committed bills (' + fmtS(totalCommittedMonth) + ') and discretionary spend (' + fmtS(discDailyBurn) + '/day), projected to exceed income by <strong style="color:var(--ex)">' + fmtS(overAmt) + ' (+' + overPct + '%)</strong>.' + tip,
+                metric: fmtS(overAmt) + ' Projected Deficit',
+                text: '<strong>Pacing Alert:</strong> At ~' + fmtS(discDailyBurn) + '/day spend' + billsNote + ', projected month spend is <strong style="color:var(--ex)">' + fmtS(projectedSpend) + '</strong>, exceeding your income (' + fmtS(curInc) + ') by <strong style="color:var(--ex)">' + fmtS(overAmt) + '</strong>.' + tip,
                 microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-ex" style="width:100%;"></div></div>',
                 actions: [{ label: 'Inspect Expenses', action: 'filter-tx-cat', param: '' }]
               });
             } else {
               const surplusProj = curInc - projectedSpend;
+              const billsNote = totalCommittedMonth > 0 ? ('After bills (' + fmtS(totalCommittedMonth) + '), you') : 'You';
               candidates.push({
                 priority: 90, pillar: 'compass', topicKey: 'pacing',
                 type: 'pos', icon: '&#x1F3AF;',
                 badge: 'SAFE RUNWAY', badgeClass: 'badge-blue',
                 metric: fmtS(safeDailyDiscretionary) + '/day safe',
-                text: '<strong>Discretionary Blueprint:</strong> Day <strong>' + cD + ' of ' + daysInMonth + '</strong>. After committed bills (' + fmtS(totalCommittedMonth) + '), your safe discretionary budget is <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> across remaining ' + remainingDays + ' days (projected surplus: <strong style="color:var(--in)">' + fmtS(surplusProj) + '</strong>).',
+                text: '<strong>Safe Pacing:</strong> Day <strong>' + cD + ' of ' + daysInMonth + '</strong>. ' + billsNote + ' can safely spend <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> for the remaining ' + remainingDays + ' days (projected surplus: <strong style="color:var(--in)">' + fmtS(surplusProj) + '</strong>).',
                 microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-in" style="width:' + Math.min(100, Math.round((cD/daysInMonth)*100)) + '%;"></div></div>'
               });
             }
@@ -6044,38 +6058,7 @@
         }
 
         // ── 6. SHADOW SUBSCRIPTIONS (Unlinked Recurring Charges) ──
-        if (prevTxs.length > 0 && typeof recurringList !== 'undefined') {
-          const existingSubNames = new Set(recurringList.map(function(r){ return (r.name || '').trim().toLowerCase(); }));
-          const potentialShadows = {};
-          curTxs.forEach(function(t) {
-            if (t.type === 'expense' && !t.subId && !t._recurring && t.desc && t.amount >= 50) {
-              const k = t.desc.trim().toLowerCase();
-              if (!existingSubNames.has(k)) {
-                potentialShadows[k] = { name: t.desc.trim(), amt: t.amount, cat: t.cat };
-              }
-            }
-          });
-          let foundShadow = null;
-          prevTxs.forEach(function(t) {
-            if (foundShadow) return;
-            if (t.type === 'expense' && t.desc) {
-              const k = t.desc.trim().toLowerCase();
-              if (potentialShadows[k] && Math.abs(potentialShadows[k].amt - t.amount) < 1) {
-                foundShadow = potentialShadows[k];
-              }
-            }
-          });
-          if (foundShadow) {
-            candidates.push({
-              priority: 76, pillar: 'action', topicKey: 'shadow_sub',
-              type: 'neu', icon: '&#x1F504;',
-              badge: 'UNLINKED RECURRING', badgeClass: 'badge-purple',
-              metric: fmtS(foundShadow.amt) + '/mo auto-charge',
-              text: '<strong>Shadow Recurring Charge:</strong> <strong>' + esc(foundShadow.name) + '</strong> (' + fmtS(foundShadow.amt) + ') was billed in both current and prior periods. Add to Subscriptions to track auto-renewal dates.',
-              actions: [{ label: '+ Add to Subscriptions', action: 'open-add-sub', param: foundShadow.name, extra: String(foundShadow.amt) }]
-            });
-          }
-        }
+        // (Removed by user request)
 
         // ── 7. SAVINGS RATE & HEALTH BENCHMARK ──
         if (!isEventActive && curInc > 0 && curExp > 0 && savRate !== null) {
@@ -9329,9 +9312,6 @@
       document.getElementById('altAmountInput').value = '';
       renderAltAmountsChips();
       document.getElementById('recurringMod').classList.add('op');
-      // Phase 5: show presets bar only for new subscriptions
-      const pb = document.getElementById('subPresetsBar');
-      if (pb) pb.style.display = 'flex';
     }
 
     function openEditRecurring(id) {
@@ -9362,9 +9342,6 @@
       document.getElementById('altAmountInput').value = '';
       renderAltAmountsChips();
       document.getElementById('recurringMod').classList.add('op');
-      // Phase 5: hide presets bar in edit mode
-      const pb = document.getElementById('subPresetsBar');
-      if (pb) pb.style.display = 'none';
     }
 
     function closeRecurringMod() {
