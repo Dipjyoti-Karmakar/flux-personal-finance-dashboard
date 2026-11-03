@@ -3848,15 +3848,18 @@
       renderCats(catList);
 
 
-      // When mode filter is "Event", filter by event (date filters skipped for event view)
-      const isEventFilter = (cModeFilt === 'event');
+      // When an event filter is active or mode is "event", filter by event
+      const isExplicitEventMode = (cModeFilt === 'event');
+      const hasActiveEventFilt = Boolean(cEventFilt && cEventFilt !== 'all' && events[cEventFilt]);
+      const filterByEvent = isExplicitEventMode || hasActiveEventFilt;
       let activeEvent = null;
 
-      if (isEventFilter) {
-        list = list.filter(t => !!t.eventId);
-        if (cEventFilt !== 'all') {
+      if (filterByEvent) {
+        if (cEventFilt !== 'all' && events[cEventFilt]) {
           list = list.filter(t => t.eventId === cEventFilt);
           activeEvent = events[cEventFilt] || null;
+        } else {
+          list = list.filter(t => !!t.eventId);
         }
       } else {
         const now = new Date();
@@ -3883,13 +3886,11 @@
       if (cTyFilt === 'income') list = list.filter(t => t.type === 'income');
       else if (cTyFilt === 'expense') list = list.filter(t => t.type === 'expense');
 
-      // Mode: All / Online / Offline / Subscription / Receipt / Event (event already applied above when isEventFilter)
-      if (!isEventFilter) {
-        if (cModeFilt === 'online') list = list.filter(t => t.mode === 'online');
-        else if (cModeFilt === 'offline') list = list.filter(t => t.mode !== 'online');
-        else if (cModeFilt === 'subscription') list = list.filter(t => !!t._recurring);
-        else if (cModeFilt === 'receipt') list = list.filter(t => t.receipts && t.receipts.length > 0);
-      }
+      // Mode: All / Online / Offline / Subscription / Receipt (applied even when an event is selected)
+      if (cModeFilt === 'online') list = list.filter(t => t.mode === 'online');
+      else if (cModeFilt === 'offline') list = list.filter(t => t.mode !== 'online');
+      else if (cModeFilt === 'subscription') list = list.filter(t => !!t._recurring);
+      else if (cModeFilt === 'receipt') list = list.filter(t => t.receipts && t.receipts.length > 0);
 
       // Apply text search filter
       if (cTxSearch) {
@@ -5359,12 +5360,24 @@
           const df = _insightDateFilt || 'month';
           const isEvt = Boolean(_insightEventFilt && _insightEventFilt !== 'all' && events[_insightEventFilt]);
           if (isEvt) {
+            if (typeof setEvtTxFilt === 'function') setEvtTxFilt(_insightEventFilt);
             const evBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
               return b.textContent.trim().toLowerCase() === 'event' || b.classList.contains('mode-flt-ev');
             });
-            if (evBtn && typeof setModeFilt === 'function') setModeFilt('event', evBtn);
-            if (typeof setEvtTxFilt === 'function') setEvtTxFilt(_insightEventFilt);
+            if (actionType !== 'filter-mode' && evBtn && typeof setModeFilt === 'function') {
+              setModeFilt('event', evBtn);
+            }
           } else {
+            if (cEventFilt !== 'all' && typeof setEvtTxFilt === 'function') {
+              setEvtTxFilt('all');
+            }
+            if (cModeFilt === 'event') {
+              const allModeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
+                return b.textContent.trim().toLowerCase() === 'all' || b.classList.contains('mode-flt-all');
+              });
+              if (allModeBtn && typeof setModeFilt === 'function') setModeFilt('all', allModeBtn);
+              else cModeFilt = 'all';
+            }
             if ((df === 'month' || df === 'year' || df === 'all') && cDtFilt !== df) {
               const targetBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function(b){
                 const txt = b.textContent.trim().toLowerCase();
@@ -5568,11 +5581,17 @@
       }
       if (!curTxs.length && !prevTxs.length) {
         _insightsLastHtml = '';
-        let emptyMsg = 'Add transactions to see insights';
-        if (isEventActive) emptyMsg = 'No transactions found for ' + esc(events[_insightEventFilt].name);
-        else if (incomeOnly) emptyMsg = 'No income transactions found for this period';
-        else if (expenseOnly) emptyMsg = 'No expense transactions found for this period';
-        area.innerHTML = '<div class="insight-empty">' + emptyMsg + '</div>';
+        if (isEventActive) {
+          area.innerHTML = '<div class="insight-empty">No transactions found for ' + esc(events[_insightEventFilt].name) + '</div>';
+        } else if (incomeOnly) {
+          area.innerHTML = '<div class="insight-empty">No income transactions found for this period</div>';
+        } else if (expenseOnly) {
+          area.innerHTML = '<div class="insight-empty">No expense transactions found for this period</div>';
+        } else if (txs.length > 0) {
+          area.innerHTML = '<div class="insight-empty"><div style="margin-bottom:8px;">No transactions found for ' + esc(periodLabel) + '</div><div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;"><button type="button" class="insight-action-btn" onclick="setInsightDate(document.querySelector(\'[data-idt=year]\'), \'year\')">View This Year</button><button type="button" class="insight-action-btn" onclick="setInsightDate(document.querySelector(\'[data-idt=all]\'), \'all\')">View All Time</button></div></div>';
+        } else {
+          area.innerHTML = '<div class="insight-empty">Add transactions to see insights</div>';
+        }
         return;
       }
 
@@ -5596,7 +5615,7 @@
         return false;
       }
 
-      let fixedExpPaid = 0, discExpPaid = 0;
+      let fixedExpPaid = 0, discExpPaid = 0, foundShadow = null;
       let weekendExp = 0, weekdayExp = 0;
       let onlineExp = 0, offlineExp = 0;
       let weekendTxCount = 0, weekdayTxCount = 0;
@@ -5897,13 +5916,15 @@
                 microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-in" style="width:' + Math.min(100, Math.round((cD/daysInMonth)*100)) + '%;"></div></div>'
               });
             }
-          } else if (cD >= 5 && curExp > 800) {
+          } else if (curExp > 0) {
             candidates.push({
-              priority: 78, pillar: 'compass', topicKey: 'no_income_burn',
-              type: 'neg', icon: '&#x1F6A8;',
-              badge: 'RESERVE DRAIN', badgeClass: 'badge-red',
-              metric: fmtS(discDailyBurn) + '/day burn',
-              text: '<strong>No Income Logged:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent (' + fmtS(discDailyBurn) + '/day) without logged income. Ensure reserves are sufficient for remaining ' + remainingDays + ' days.'
+              priority: (cD >= 5 && curExp > 800) ? 78 : 50, pillar: 'compass', topicKey: 'no_income_burn',
+              type: (cD >= 5 && curExp > 800) ? 'neg' : 'neu', icon: (cD >= 5 && curExp > 800) ? '&#x1F6A8;' : '&#x1F4CA;',
+              badge: (cD >= 5 && curExp > 800) ? 'RESERVE DRAIN' : 'PERIOD SPEND',
+              badgeClass: (cD >= 5 && curExp > 800) ? 'badge-red' : 'badge-blue',
+              metric: fmtS(curExp) + ' total spend',
+              text: '<strong>Active Spend:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> logged across <strong>' + expTxs.length + ' transaction' + (expTxs.length === 1 ? '' : 's') + '</strong> (~' + fmtS(discDailyBurn) + '/day). Log income to unlock full runway projections.',
+              actions: [{ label: 'View All Txs', action: 'filter-tx-cat', param: '' }]
             });
           }
         }
@@ -5978,6 +5999,23 @@
             }
           }
         });
+
+        // Fallback: Largest Single Purchase (if not an outlier)
+        if (!foundOutlier && expTxs.length >= 1) {
+          const sortedExp = expTxs.slice().sort(function(a,b){ return b.amount - a.amount; });
+          const topTx = sortedExp[0];
+          const topPct = curExp > 0 ? Math.round((topTx.amount / curExp) * 100) : 100;
+          const catName = topTx.cat ? topTx.cat.charAt(0).toUpperCase() + topTx.cat.slice(1) : 'Other';
+          const descStr = topTx.desc ? ' "' + esc(topTx.desc) + '"' : '';
+          candidates.push({
+            priority: 25, pillar: 'risk', topicKey: 'top_purchase',
+            type: 'neu', icon: '&#x1F3F7;&#xFE0F;',
+            badge: 'TOP PURCHASE', badgeClass: 'badge-gray',
+            metric: fmtS(topTx.amount) + ' (' + topPct + '%)',
+            text: '<strong>Largest Purchase:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ').',
+            actions: [{ label: 'Inspect Tx', action: 'filter-desc', param: topTx.desc || '' }]
+          });
+        }
 
         // ── 5. PAYMENT CHANNEL INTELLIGENCE (Online vs Cash in Normal Views, Solves Finding 5) ──
         if (!isEventActive && expTxs.length >= 4 && curExp >= 600) {
@@ -6113,7 +6151,7 @@
 
         // ── 9. TOP CATEGORY CONCENTRATION ──
         const catEntries = Object.entries(curCats).sort(function(a,b){ return b[1]-a[1]; });
-        if (catEntries.length > 0 && curExp >= 500) {
+        if (catEntries.length > 0) {
           const topCat = catEntries[0][0], topAmt = catEntries[0][1];
           const topPct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 100;
           const cn = topCat.charAt(0).toUpperCase() + topCat.slice(1);
@@ -6125,6 +6163,15 @@
               badge: 'MAIN DRAIN', badgeClass: 'badge-amber',
               metric: topPct + '% of Budget',
               text: '<strong>Spending Concentration:</strong> <strong>' + esc(cn) + '</strong> consumes <strong style="color:var(--ex)">' + topPct + '%</strong> of expenses (<strong style="color:var(--ex)">' + fmtS(topAmt) + '</strong>). Trimming this category yields highest leverage.',
+              actions: [{ label: 'Filter ' + esc(cn), action: 'filter-cat', param: topCat }]
+            });
+          } else {
+            candidates.push({
+              priority: 35, pillar: 'habit', topicKey: 'top_drain',
+              type: 'neu', icon: catIcon,
+              badge: 'TOP CATEGORY', badgeClass: 'badge-blue',
+              metric: fmtS(topAmt) + ' (' + topPct + '%)',
+              text: '<strong>Top Category:</strong> <strong>' + esc(cn) + '</strong> accounts for <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> across ' + (catTxMap[topCat] ? catTxMap[topCat].length : 1) + ' transaction' + ((catTxMap[topCat] && catTxMap[topCat].length === 1) ? '' : 's') + '.',
               actions: [{ label: 'Filter ' + esc(cn), action: 'filter-cat', param: topCat }]
             });
           }
