@@ -3162,6 +3162,23 @@
     function fmtDt(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }); }
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
 
+    function calcSubscriptionBurn(list) {
+      if (!list || !list.length) return { monthly: 0, yearly: 0, count: 0, activeSubs: [] };
+      const activeSubs = list.filter(r => !r.archived && r.active && r.type !== 'income');
+      let monthlyTotal = 0, yearlyTotal = 0;
+      activeSubs.forEach(r => {
+        const amt = Math.abs(r.amount || 0);
+        if (r.freq === 'monthly') monthlyTotal += amt;
+        else if (r.freq === 'yearly') yearlyTotal += amt / 12;
+        else if (r.freq === 'weekly') monthlyTotal += amt * (365.25 / 84);
+        else if (r.freq === 'daily') monthlyTotal += amt * (365.25 / 12);
+        else if (r.freq === 'custom' && r.customDays > 0) monthlyTotal += (amt * 365.25 / r.customDays) / 12;
+      });
+      const monthly = Math.round(monthlyTotal + yearlyTotal);
+      const yearly = Math.round(monthly * 12);
+      return { monthly, yearly, count: activeSubs.length, activeSubs };
+    }
+
     function getLegibleColor(c) {
       if (!/^#[0-9a-fA-F]{3,8}$/.test(c)) return '#c8a96e';
       let hex = c.replace(/^#/, '');
@@ -3946,10 +3963,19 @@
         let evtHeader = '';
         if (isEventFilter && activeEvent) {
           const sColor = safeColor(activeEvent.color);
+          let durStr = '';
+          if (activeEvent.start && activeEvent.end) {
+            const d1 = new Date(activeEvent.start + 'T00:00:00');
+            const d2 = new Date(activeEvent.end + 'T00:00:00');
+            if (!isNaN(d1) && !isNaN(d2)) {
+              const diffDays = Math.max(1, Math.round(Math.abs(d2 - d1) / 86400000) + 1);
+              durStr = ` · ${diffDays} day${diffDays !== 1 ? 's' : ''}`;
+            }
+          }
           evtHeader = `<div class="evt-header-wrap">
         <div style="width:4px;height:28px;border-radius:2px;background:${sColor};flex-shrink:0;"></div>
         <span class="evt-header-title">${esc(activeEvent.name)}</span>
-        <span class="evt-header-dates">${activeEvent.start || '?'} → ${activeEvent.end || '?'}</span>
+        <span class="evt-header-dates">${activeEvent.start || '?'} → ${activeEvent.end || '?'}${durStr}</span>
       </div>`;
         }
 
@@ -5413,7 +5439,19 @@
       }
 
       if (periodEl) {
-        periodEl.textContent = periodLabel;
+        if (isEventActive && _insightEventFilt && events[_insightEventFilt]) {
+          const ev = events[_insightEventFilt];
+          let daysStr = '';
+          if (ev.start && ev.end) {
+            const s = new Date(ev.start + 'T00:00:00');
+            const e = new Date(ev.end + 'T00:00:00');
+            const diffDays = Math.max(1, Math.round((e - s) / 86400000) + 1);
+            daysStr = ' · ' + diffDays + (diffDays === 1 ? ' day' : ' days');
+          }
+          periodEl.innerHTML = `<span class="insight-period-name">${esc(ev.name)}</span><span class="insight-period-dur">${esc(daysStr)}</span>`;
+        } else {
+          periodEl.textContent = periodLabel;
+        }
         periodEl.title = periodLabel;
       }
       if (!curTxs.length && !prevTxs.length) {
@@ -5648,19 +5686,100 @@
       // ══════════════════════════════════════════════════════════════════════
       if (!incomeOnly) {
 
+        const isMonthMode = !isYearMode && !isAllMode && !isCustomMode && !isEventActive;
+        const isEarlyMonth = isMonthMode && (cD <= 7 || expTxs.length <= 3);
+
+        // ── 0. Early-Month Strategic Blueprint & Safe Daily Allowance ──
+        if (isEarlyMonth) {
+          const subData = (typeof recurringList !== 'undefined' && recurringList) ? calcSubscriptionBurn(recurringList) : { monthly: 0, count: 0 };
+
+          if (curInc > 0) {
+            const committedSubs = subData.monthly || 0;
+            const remainingDays = Math.max(1, daysInMonth - cD + 1);
+            const discretionaryPool = Math.max(0, curInc - curExp - committedSubs);
+            const safeDaily = Math.round(discretionaryPool / remainingDays);
+
+            let blueprintDetail = '';
+            if (committedSubs > 0) {
+              blueprintDetail = ' and <strong style="color:var(--ex)">' + fmtRound(committedSubs) + '</strong> in subs committed';
+            }
+            candidates.push({
+              priority: 92,
+              type: 'pos',
+              icon: '&#x1F3AF;',
+              text: '<strong>Monthly Blueprint:</strong> Day <strong>' + cD + ' of ' + daysInMonth + '</strong>. With <strong style="color:var(--in)">' + fmtRound(curInc) + '</strong> income' + blueprintDetail + ', your safe discretionary budget is <strong style="color:var(--in)">' + fmtRound(safeDaily) + '/day</strong> across remaining ' + remainingDays + ' days.'
+            });
+          } else if (prevTxs.length > 0) {
+            // Apples-to-Apples benchmark: compare Day 1..cD of this month vs Day 1..cD of last month
+            const prevSamePeriodExp = prevTxs.filter(function(t){
+              if (t.type === 'income') return false;
+              const dayNum = parseInt((t.date || '').slice(8, 10), 10);
+              return !isNaN(dayNum) && dayNum <= cD;
+            }).reduce(function(s, t){ return s + t.amount; }, 0);
+
+            if (prevSamePeriodExp > 0 && curExp > 0) {
+              const diffPeriod = curExp - prevSamePeriodExp;
+              const isLower = diffPeriod <= 0;
+              const periodPct = Math.round((Math.abs(diffPeriod) / prevSamePeriodExp) * 100);
+              candidates.push({
+                priority: 88,
+                type: isLower ? 'pos' : 'neu',
+                icon: '&#x1F4CA;',
+                text: '<strong>Early Benchmark:</strong> Day ' + cD + ' spend is <strong style="color:' + (isLower ? 'var(--in)' : 'var(--ex)') + '">' + fmtRound(curExp) + '</strong> vs <strong>' + fmtRound(prevSamePeriodExp) + '</strong> spent by Day ' + cD + ' in ' + MN[pM] + ' (<span class="' + (isLower ? 'down' : 'up') + '">' + (isLower ? '-' : '+') + periodPct + '%</span> ' + (isLower ? 'leaner' : 'higher') + ').'
+              });
+            } else if (curExp === 0 && cD >= 1) {
+              candidates.push({
+                priority: 86,
+                type: 'pos',
+                icon: '&#x1F525;',
+                text: '<strong>Clean Start:</strong> Zero expenses logged through Day ' + cD + ' of ' + MF[cM] + '. Excellent start to the month.'
+              });
+            } else if (curExp > 0 && curExp < 500) {
+              candidates.push({
+                priority: 80,
+                type: 'pos',
+                icon: '&#x1F6E1;&#xFE0F;',
+                text: '<strong>Lean Opening:</strong> Only <strong style="color:var(--in)">' + fmtRound(curExp) + '</strong> spent so far across Day ' + cD + ' (' + fmtRound(Math.round(curExp / Math.max(1, cD))) + '/day). Great fiscal discipline.'
+              });
+            }
+          }
+
+          // Upcoming Subscriptions Readiness check (next 7 days)
+          if (typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
+            const todayStr = todayISO;
+            const in7Days = new Date(now.getTime() + 7 * 86400000).toISOString().slice(0, 10);
+            const dueSoonSubs = recurringList.filter(function(r){
+              return !r.archived && r.active && r.type !== 'income' && r.nextDue && r.nextDue >= todayStr && r.nextDue <= in7Days;
+            });
+            if (dueSoonSubs.length > 0) {
+              const dueSoonAmt = dueSoonSubs.reduce(function(s, r){ return s + (r.amount || 0); }, 0);
+              candidates.push({
+                priority: 76,
+                type: 'neu',
+                icon: '&#x1F4C5;',
+                text: '<strong>Upcoming Commitments:</strong> <strong>' + dueSoonSubs.length + ' subscription' + (dueSoonSubs.length === 1 ? '' : 's') + '</strong> totaling <strong style="color:var(--ex)">' + fmtRound(dueSoonAmt) + '</strong> due in the next 7 days. Ensure account balance is prepared.'
+              });
+            }
+          }
+        }
+
         // A. Deficit / No-Income
-        if (!isEventActive && curInc > 0 && savRate !== null && savRate < 0) {
+        if (!isEventActive && curInc > 0 && savRate !== null && savRate < 0 && (curExp > curInc + 200 || cD > 5)) {
           const defPct = Math.abs(savRate);
           const prio = Math.min(100, 85 + Math.round(Math.min(50, defPct) * 0.3));
           const dayNote = (!isCustomMode && !isAllMode && daysLeft > 0) ? ' <span class="up">' + daysLeft + ' days remaining.</span>' : '';
           candidates.push({ priority: prio, type: 'neg', icon: '&#x1F6A8;', text: '<strong>Deficit:</strong> Overspent by <strong style="color:var(--ex)">' + fmtS(Math.abs(buffer)) + ' (' + defPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent vs <strong>' + fmtS(curInc) + '</strong> income.' + dayNote });
         }
-        if (!isEventActive && !isCustomMode && !isAllMode && curInc === 0 && curExp > 500 && !expenseOnly) {
-          candidates.push({ priority: 90, type: 'neg', icon: '&#x1F6A8;', text: '<strong>No Income Logged:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent across <strong>' + curExpDays.size + ' days</strong> with zero income recorded -- depleting reserves.' });
+        if (!isEventActive && !isCustomMode && !isAllMode && curInc === 0 && !expenseOnly) {
+          if (cD > 7 && curExp > 1000) {
+            candidates.push({ priority: 75, type: 'neg', icon: '&#x1F6A8;', text: '<strong>No Income Logged:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent across <strong>' + curExpDays.size + ' days</strong> with zero income recorded -- depleting reserves.' });
+          } else if (cD <= 7 && curExp >= 1500 && !isEarlyMonth) {
+            candidates.push({ priority: 45, type: 'neu', icon: '&#x1F4CB;', text: '<strong>Early Spend:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> spent while awaiting this month\'s primary income.' });
+          }
         }
 
         // B. Pacing & Projection (only for month mode after day 4, never for events/custom/all)
-        if (!isEventActive && projected > 0 && cD >= 4 && !isYearMode && !isAllMode && !isCustomMode) {
+        if (!isEventActive && projected > 0 && cD >= 4 && curExp >= 500 && !isYearMode && !isAllMode && !isCustomMode) {
           if (curInc > 0 && projected > curInc) {
             const overAmt = projected - curInc;
             const overPct = Math.round((overAmt / curInc) * 100);
@@ -5722,7 +5841,7 @@
             const safeDay = (!isCustomMode && !isAllMode && daysLeft > 0) ? Math.round(buffer / daysLeft) : 0;
             candidates.push({ priority: 55, type: 'neg', icon: '&#x26A1;', text: '<strong>Thin Buffer:</strong> Only <strong style="color:var(--ex)">' + savRate + '%</strong> saved -- <strong>' + fmtS(buffer) + '</strong> left' + vsPrev + '. ' + (safeDay > 0 ? '~<strong>' + fmtS(safeDay) + '/day</strong> runway for ' + daysLeft + 'd.' : '') });
           }
-        } else if (!isEventActive && !isCustomMode && !isAllMode && !isYearMode && curInc > 0 && curExp === 0 && cD > 5 && daysLeft > 0) {
+        } else if (!isEventActive && !isCustomMode && !isAllMode && !isYearMode && curInc > 0 && curExp === 0 && daysLeft > 0) {
           candidates.push({ priority: 30, type: 'pos', icon: '&#x1F6E1;&#xFE0F;', text: '<strong>Full Buffer:</strong> Entire <strong style="color:var(--in)">' + fmtS(curInc) + '</strong> income untouched. <strong>' + fmtS(Math.round(curInc / daysLeft)) + '/day</strong> available for ' + daysLeft + 'd.' });
         }
 
@@ -5743,14 +5862,13 @@
             else if (catChgPct < -5) vsLast = ' <span class="down">' + Math.abs(catChgPct) + '% lower than ' + compLabel + '</span>';
           }
           const catIcon = (CICO[topCat] || '');
-          if (topPct >= 60 && catEntries.length >= 2 && expTxs.length >= 3) {
+          if (topPct >= 60 && catEntries.length >= 2 && expTxs.length >= 3 && topAmt >= 500 && curExp >= 1000) {
             const prio = Math.min(78, 62 + Math.round((topPct - 60) * 0.4));
             candidates.push({ priority: prio, type: isEventActive ? 'neu' : 'neg', icon: catIcon || '&#x2736;', text: '<strong>Concentration' + (isEventActive ? '' : ' Risk') + ':</strong> <strong>' + esc(cn) + '</strong> consumes <strong style="color:var(--ex)">' + topPct + '%</strong> of ' + (isEventActive ? 'event spend' : 'all spending') + ' (<strong style="color:var(--ex)">' + fmtS(topAmt) + '</strong>)' + vsLast + '.' + (isEventActive ? '' : ' Diversify to reveal savings.') });
-          } else if (secAmt > 0 && topAmt > secAmt * 1.5 && expTxs.length >= 3) {
+          } else if (secAmt > 0 && topAmt > secAmt * 1.5 && expTxs.length >= 3 && topAmt >= 400) {
             const scn = secCat ? secCat.charAt(0).toUpperCase() + secCat.slice(1) : 'next category';
             candidates.push({ priority: 40, type: isEventActive ? 'neu' : 'neg', icon: catIcon || '&#x2736;', text: '<strong>' + (isEventActive ? 'Main Expense' : 'Main Drain') + ':</strong> <strong>' + esc(cn) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topAmt) + ' (' + topPct + '%)</strong> -- <strong style="color:var(--ex)">' + fmtS(topAmt - secAmt) + '</strong> more than ' + esc(scn) + vsLast + '.' });
-          } else {
-            const isMonthMode = !isYearMode && !isAllMode && !isCustomMode && !isEventActive;
+          } else if (topAmt >= 200 || !isEarlyMonth) {
             let dailyRate = '';
             if (isEventActive) {
               const ev = events[_insightEventFilt];
@@ -5759,7 +5877,7 @@
                 const durDays = Math.max(1, Math.round((eD - sD) / 86400000) + 1);
                 if (durDays > 1) dailyRate = ' -- <strong>' + fmtS(Math.round(topAmt / durDays)) + '/day</strong>';
               }
-            } else if (isMonthMode) {
+            } else if (isMonthMode && (cD >= 5 || curExpDays.size >= 2)) {
               dailyRate = ' -- <strong>' + fmtS(Math.round(topAmt / Math.max(1, cD))) + '/day</strong>';
             } else if (isYearMode && !isEventActive) {
               const startOfYear = new Date(cY, 0, 1);
@@ -5796,12 +5914,15 @@
           if (bCat && Math.abs(bDiff) > 100) {
             const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1);
             const absPct = Math.abs(bPctChg);
-            if (bDiff > 0) {
+            if (bDiff > 0 && bCur > bPrev + 200) {
               const prio = Math.min(88, 62 + Math.round(Math.min(100, absPct) * 0.26));
               candidates.push({ priority: prio, type: 'neg', icon: '&#x1F53A;', text: '<strong>' + (absPct >= 100 ? 'Spending Explosion' : 'Creep Alert') + ':</strong> <strong>' + esc(cn) + '</strong> <span class="up">+' + absPct + '%</span> to <strong style="color:var(--ex)">' + fmtS(bCur) + '</strong> vs ' + compLabel + '\'s <strong>' + fmtS(bPrev) + '</strong> -- <strong style="color:var(--ex)">' + fmtS(bDiff) + '</strong> extra.' });
-            } else {
-              const prio = Math.min(50, 32 + Math.round(Math.min(80, absPct) * 0.22));
-              candidates.push({ priority: prio, type: 'pos', icon: '&#x1F53B;', text: '<strong>Cost Cutting:</strong> <strong>' + esc(cn) + '</strong> <span class="down">-' + absPct + '%</span> to <strong style="color:var(--in)">' + fmtS(bCur) + '</strong> vs ' + compLabel + '\'s <strong>' + fmtS(bPrev) + '</strong>. Saved <strong style="color:var(--in)">' + fmtS(Math.abs(bDiff)) + '</strong>.' });
+            } else if (bDiff < 0) {
+              const canClaimCostCutting = isYearMode || isCustomMode || (isMonthMode && (monthProgress >= 70 || (cD >= 14 && (bCur / cD) < (bPrev / 30) * 0.75)));
+              if (canClaimCostCutting && bPrev >= 800) {
+                const prio = Math.min(50, 32 + Math.round(Math.min(80, absPct) * 0.22));
+                candidates.push({ priority: prio, type: 'pos', icon: '&#x1F53B;', text: '<strong>Cost Cutting:</strong> <strong>' + esc(cn) + '</strong> <span class="down">-' + absPct + '%</span> to <strong style="color:var(--in)">' + fmtS(bCur) + '</strong> vs ' + compLabel + '\'s <strong>' + fmtS(bPrev) + '</strong>. Saved <strong style="color:var(--in)">' + fmtS(Math.abs(bDiff)) + '</strong>.' });
+              }
             }
           } else if (newCat && newCatAmt >= 300) {
             const ncn = newCat.charAt(0).toUpperCase() + newCat.slice(1);
@@ -5818,10 +5939,10 @@
           const xAvg = avgExp > 0 ? (topTx.amount / avgExp).toFixed(1) : '--';
           const catName = topTx.cat ? topTx.cat.charAt(0).toUpperCase() + topTx.cat.slice(1) : 'Other';
           const descStr = topTx.desc ? ' "' + esc(topTx.desc) + '"' : '';
-          if (pctTotal >= 35 && sortedExpTxs.length >= 2) {
+          if (pctTotal >= 35 && sortedExpTxs.length >= 2 && topTx.amount >= 500 && curExp >= 1200) {
             const prio = Math.min(85, 70 + Math.round((pctTotal - 35) * 0.33));
             candidates.push({ priority: prio, type: isEventActive ? 'neu' : 'neg', icon: '&#x1F4B3;', text: '<strong>' + (isEventActive ? 'Largest Expense' : 'Outsized Buy') + ':</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- <strong style="color:var(--ex)">' + pctTotal + '% of ' + (isEventActive ? 'event spend' : 'spend') + '</strong>, ' + xAvg + 'x avg.' });
-          } else if (sortedExpTxs.length >= 3) {
+          } else if (sortedExpTxs.length >= 3 && topTx.amount >= 300) {
             candidates.push({ priority: 17, type: 'neu', icon: '&#x1F3F7;&#xFE0F;', text: '<strong>Top Purchase:</strong> <strong style="color:var(--ex)">' + fmtS(topTx.amount) + '</strong>' + descStr + ' on <strong>' + fmtDt(topTx.date) + '</strong> (' + esc(catName) + ') -- ' + pctTotal + '% of ' + (isEventActive ? 'event spend' : 'spend') + ', ' + xAvg + 'x avg.' });
           }
         }
@@ -5837,27 +5958,36 @@
 
         // I. Subscription Burn (only for month and year modes; never for custom, all-time, or events)
         if (!isEventActive && !isCustomMode && !isAllMode && typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
-          const activeSubs = recurringList.filter(function(r){ return r.active && !r.archived && r.type !== 'income'; });
-          if (activeSubs.length > 0 && curExp > 0) {
-            const monthlySubTotal = activeSubs.reduce(function(s, r) {
-              let mo = r.amount || 0;
-              if (r.freq === 'yearly') mo = mo / 12;
-              else if (r.freq === 'weekly') mo = mo * 4.33;
-              else if (r.freq === 'daily') mo = mo * 30;
-              else if (r.freq === 'custom' && r.customDays) mo = mo * (30 / r.customDays);
-              return s + mo;
-            }, 0);
-            if (monthlySubTotal > 200) {
-              if (isYearMode) {
-                const annualSub = monthlySubTotal * 12;
-                const subPct = Math.round((annualSub / curExp) * 100);
-                const prio = subPct > 35 ? 60 : subPct > 15 ? 36 : 22;
-                candidates.push({ priority: prio, type: subPct > 35 ? 'neg' : 'neu', icon: '&#x1F504;', text: '<strong>Annual Subscriptions:</strong> <strong style="color:var(--ex)">' + fmtS(Math.round(annualSub)) + '/yr</strong> across <strong>' + activeSubs.length + ' active subs</strong> -- <strong>' + subPct + '%</strong> of annual expenses.' });
-              } else {
+          const subData = calcSubscriptionBurn(recurringList);
+          if (subData.count > 0 && subData.monthly > 0) {
+            const monthlySubTotal = subData.monthly;
+            const annualSub = subData.yearly;
+            if (isYearMode) {
+              const subPct = curExp > 0 ? Math.round((annualSub / curExp) * 100) : null;
+              const prio = (subPct && subPct > 35) ? 60 : (subPct && subPct > 15) ? 36 : 22;
+              const pctText = (subPct !== null && subPct <= 200) ? ' -- <strong>' + subPct + '%</strong> of annual expenses.' : '.';
+              candidates.push({ priority: prio, type: (subPct && subPct > 35) ? 'neg' : 'neu', icon: '&#x1F504;', text: '<strong>Annual Subscriptions:</strong> <strong style="color:var(--ex)">' + fmtRound(annualSub) + '/yr</strong> across <strong>' + subData.count + ' active subs</strong>' + pctText });
+            } else {
+              // Month mode
+              let contextStr = '';
+              let isHeavy = false;
+              if (curExp >= monthlySubTotal) {
                 const subPct = Math.round((monthlySubTotal / curExp) * 100);
-                const prio = subPct > 40 ? 60 : subPct > 20 ? 36 : 22;
-                candidates.push({ priority: prio, type: subPct > 40 ? 'neg' : 'neu', icon: '&#x1F504;', text: '<strong>Subscription Burn:</strong> <strong style="color:var(--ex)">' + fmtS(Math.round(monthlySubTotal)) + '/mo</strong> (<strong style="color:var(--ex)">' + fmtS(Math.round(monthlySubTotal * 12)) + '/yr</strong>) across <strong>' + activeSubs.length + ' active subs</strong> -- <strong>' + subPct + '%</strong> of this month\'s expenses.' });
+                contextStr = ' -- <strong>' + subPct + '%</strong> of this month\'s expenses so far.';
+                if (subPct > 40) isHeavy = true;
+              } else if (curInc > 0) {
+                const incPct = Math.round((monthlySubTotal / curInc) * 100);
+                contextStr = ' -- <strong>' + incPct + '%</strong> of monthly income (~' + fmtRound(Math.round(monthlySubTotal / daysInMonth)) + '/day committed).';
+                if (incPct > 30) isHeavy = true;
+              } else if (prevExp > 0) {
+                const prevPct = Math.round((monthlySubTotal / prevExp) * 100);
+                contextStr = ' -- ~<strong>' + prevPct + '%</strong> of typical monthly spend (~' + fmtRound(Math.round(monthlySubTotal / daysInMonth)) + '/day committed).';
+                if (prevPct > 30) isHeavy = true;
+              } else {
+                contextStr = ' (~<strong>' + fmtRound(Math.round(monthlySubTotal / daysInMonth)) + '/day</strong> committed overhead).';
               }
+              const prio = isHeavy ? 58 : 28;
+              candidates.push({ priority: prio, type: isHeavy ? 'neg' : 'neu', icon: '&#x1F504;', text: '<strong>Subscription Burn:</strong> <strong style="color:var(--ex)">' + fmtRound(monthlySubTotal) + '/mo</strong> (<strong style="color:var(--ex)">' + fmtRound(annualSub) + '/yr</strong>) across <strong>' + subData.count + ' active sub' + (subData.count === 1 ? '' : 's') + '</strong>' + contextStr });
             }
           }
         }
@@ -5898,13 +6028,13 @@
               if (dayEntries.length > 0) {
                 const topDay = dayEntries[0][0], topDayAmt = dayEntries[0][1];
                 const ratio = avgDay > 0 ? (topDayAmt / avgDay).toFixed(1) : '0';
-                if (parseFloat(ratio) >= 3.0) {
+                if (parseFloat(ratio) >= 3.0 && topDayAmt >= 500) {
                   candidates.push({ priority: 55, type: 'neg', icon: '&#x1F4C5;', text: '<strong>Spending Spike:</strong> <strong>' + fmtDt(topDay) + '</strong> cost <strong style="color:var(--ex)">' + fmtS(topDayAmt) + '</strong> -- <strong style="color:var(--ex)">' + ratio + 'x</strong> your <strong>' + fmtS(Math.round(avgDay)) + '</strong> daily average.' });
-                } else if (gap < 3 && zeroDays < 5) {
+                } else if (gap < 3 && zeroDays < 5 && curExpDays.size >= 2 && topDayAmt >= 300) {
                   candidates.push({ priority: 16, type: 'neu', icon: '&#x1F4C5;', text: '<strong>Peak Day:</strong> <strong>' + fmtDt(topDay) + '</strong> at <strong style="color:var(--ex)">' + fmtS(topDayAmt) + '</strong> (' + ratio + 'x avg). ' + (zeroDays > 0 ? zeroDays + ' zero-spend day' + (zeroDays > 1 ? 's' : '') + ' so far.' : 'No zero-spend days yet.') });
                 }
               }
-            } else if (cD >= 4 && expTxs.length === 0) {
+            } else if (cD >= 1 && expTxs.length === 0 && !isEarlyMonth) {
               candidates.push({ priority: 32, type: 'pos', icon: '&#x1F525;', text: '<strong>Clean Start:</strong> Zero spending in <strong style="color:var(--in)">first ' + cD + ' days</strong> of ' + MF[cM] + '. Perfect month so far.' });
             }
           } else if ((isYearMode || isCustomMode) && curExpDays.size >= 3) {
@@ -5913,7 +6043,7 @@
               const topDay = dayEntries[0][0], topDayAmt = dayEntries[0][1];
               const avgDaily = curExp / curExpDays.size;
               const ratio = avgDaily > 0 ? (topDayAmt / avgDaily).toFixed(1) : '1.0';
-              if (parseFloat(ratio) >= 2.0) {
+              if (parseFloat(ratio) >= 2.0 && topDayAmt >= 500) {
                 candidates.push({ priority: 30, type: 'neu', icon: '&#x1F4C5;', text: '<strong>Peak Day:</strong> <strong>' + fmtDt(topDay) + '</strong> had the highest spend at <strong style="color:var(--ex)">' + fmtS(topDayAmt) + '</strong> (' + ratio + 'x active-day average).' });
               }
             }
@@ -8404,17 +8534,10 @@
       const FREQ = { daily: 'Daily', weekly: 'Weekly', monthly: 'Monthly', yearly: 'Yearly' };
 
       // Summary bar — active non-archived subs only
-      let monthlyTotal = 0, yearlyTotal = 0, dueCount = 0, activeCount = 0;
+      const burn = calcSubscriptionBurn(recurringList);
+      let dueCount = 0;
       recurringList.forEach(r => {
-        if (r.archived) return; // Archived excluded from all summary totals
-        if (!r.active) return;
-        activeCount++;
-        const amt = r.type === 'expense' ? r.amount : 0;
-        if (r.freq === 'monthly') monthlyTotal += amt;
-        else if (r.freq === 'yearly') yearlyTotal += amt / 12;
-        else if (r.freq === 'weekly') monthlyTotal += amt * (365.25 / 84);
-        else if (r.freq === 'daily') monthlyTotal += amt * (365.25 / 12);
-        else if (r.freq === 'custom' && r.customDays > 0) monthlyTotal += (amt * 365.25 / r.customDays) / 12;
+        if (r.archived || !r.active) return;
         if (r.nextDue && r.nextDue <= today) dueCount++;
         else if (r.nextDue) {
           const days = Math.ceil((new Date(r.nextDue + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
@@ -8422,10 +8545,10 @@
         }
       });
       const el = (id) => document.getElementById(id);
-      if (el('subTotalMonthly')) el('subTotalMonthly').textContent = '\u20b9' + (monthlyTotal).toLocaleString('en-IN', { maximumFractionDigits: 0 });
-      if (el('subTotalYearly')) el('subTotalYearly').textContent = '\u20b9' + (monthlyTotal * 12 + yearlyTotal * 12).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+      if (el('subTotalMonthly')) el('subTotalMonthly').textContent = '₹' + burn.monthly.toLocaleString('en-IN');
+      if (el('subTotalYearly')) el('subTotalYearly').textContent = '₹' + burn.yearly.toLocaleString('en-IN');
       if (el('subDueCount')) el('subDueCount').textContent = dueCount;
-      if (el('subActiveCount')) el('subActiveCount').textContent = activeCount;
+      if (el('subActiveCount')) el('subActiveCount').textContent = burn.count;
 
       // Update the archived toggle chip in header
       const archivedCount = recurringList.filter(r => r.archived).length;

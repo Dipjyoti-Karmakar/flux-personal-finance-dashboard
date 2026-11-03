@@ -3294,12 +3294,26 @@
       border-radius: var(--r) var(--r) 0 0;
     }
     #insightPeriod {
-      max-width: 260px;
+      display: inline-flex;
+      align-items: center;
+      max-width: min(280px, 62vw);
+      overflow: hidden;
+      white-space: nowrap;
+      vertical-align: middle;
+      gap: 2px;
+    }
+    .insight-period-name {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      display: inline-block;
-      vertical-align: middle;
+      min-width: 0;
+    }
+    .insight-period-dur {
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-weight: 600;
+      color: var(--tx);
+      opacity: 0.9;
     }
 
     .insight-list {
@@ -3703,7 +3717,8 @@
         gap: 6px;
       }
       #insightPeriod {
-        max-width: 140px;
+        max-width: min(230px, 58vw);
+        font-size: 10.5px;
       }
     }
 
@@ -6690,6 +6705,10 @@
       font-size: 13px;
       font-weight: 600;
       color: var(--tx);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      min-width: 0;
     }
 
     .evt-header-dates {
@@ -6697,6 +6716,8 @@
       font-size: 11px;
       color: var(--mu);
       margin-left: auto;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .totals-row {
