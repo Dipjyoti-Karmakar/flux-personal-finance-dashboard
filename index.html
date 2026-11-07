@@ -6053,9 +6053,10 @@
             // Avg of remaining txs (exclude the outlier itself to avoid deflation)
             const otherSum = sortedC.slice(1).reduce(function(s,t){ return s + t.amount; }, 0);
             const otherAvg = otherSum / (sortedC.length - 1);
-            const ratio = otherAvg > 0 ? (topTx.amount / otherAvg).toFixed(1) : '1.0';
-            if (parseFloat(ratio) >= 2.8 && topTx.amount >= 350 && curExp > 0 && (topTx.amount / curExp) >= 0.12) {
+            const rawRatio = otherAvg > 0 ? (topTx.amount / otherAvg) : 1.0;
+            if (rawRatio >= 2.8 && topTx.amount >= 350 && curExp > 0 && (topTx.amount / curExp) >= 0.12) {
               foundOutlier = true;
+              const ratio = rawRatio.toFixed(1);
               const cn = c.charAt(0).toUpperCase() + c.slice(1);
               candidates.push({
                 priority: 80, pillar: 'risk', topicKey: 'category_anomaly',
