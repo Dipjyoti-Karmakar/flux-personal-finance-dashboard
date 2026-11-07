@@ -5414,17 +5414,30 @@
           }
         }
 
+        // Helper: fully reset all orthogonal tx filters before applying a new one
+        function resetTxFilters() {
+          cTxSearch = '';
+          cCatFilt = 'all';
+          const sInput = document.getElementById('txSearch');
+          if (sInput) { sInput.value = ''; sInput.placeholder = 'Search transactions…'; }
+          // Reset mode filter to 'all' if it was set to something other than event/subscription
+          if (cModeFilt !== 'all' && cModeFilt !== 'event' && cModeFilt !== 'subscription') {
+            const allModeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
+              return b.textContent.trim().toLowerCase() === 'all' || b.classList.contains('mode-flt-all');
+            });
+            if (allModeBtn && typeof setModeFilt === 'function') setModeFilt('all', allModeBtn);
+            else cModeFilt = 'all';
+          }
+        }
+
         if (actionType === 'filter-cat') {
           syncInsightPeriodToTxFilter();
+          resetTxFilters();
           const targetCat = (param || '').toLowerCase();
           cCatFilt = targetCat || 'all';
-          cTxSearch = '';
-          const sInput = document.getElementById('txSearch');
           const cn = (param || '').charAt(0).toUpperCase() + (param || '').slice(1);
-          if (sInput) {
-            sInput.value = '';
-            sInput.placeholder = targetCat ? 'Filtered by ' + cn + ' (type to search all)…' : 'Search transactions…';
-          }
+          const sInput = document.getElementById('txSearch');
+          if (sInput) sInput.placeholder = targetCat ? 'Filtered by ' + cn + ' (type to search all)…' : 'Search transactions…';
           // Expense category insights MUST show expenses only (exclude income in same category)
           setTxType('expense');
 
@@ -5448,11 +5461,7 @@
           }
         } else if (actionType === 'filter-tx-cat') {
           syncInsightPeriodToTxFilter();
-          if (cCatFilt !== 'all') {
-            cCatFilt = 'all';
-            const sInput = document.getElementById('txSearch');
-            if (sInput) sInput.placeholder = 'Search transactions…';
-          }
+          resetTxFilters();
           cTxSearch = param || '';
           const sInput = document.getElementById('txSearch');
           if (sInput) sInput.value = param || '';
@@ -5466,11 +5475,7 @@
           if (txEl) txEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else if (actionType === 'filter-date') {
           if (param) {
-            if (cCatFilt !== 'all') {
-              cCatFilt = 'all';
-              const sInput = document.getElementById('txSearch');
-              if (sInput) sInput.placeholder = 'Search transactions…';
-            }
+            resetTxFilters();
             // Peak spend day insight filters to expenses
             setTxType('expense');
             const f = document.getElementById('cDtFrom'), t = document.getElementById('cDtTo');
@@ -5492,11 +5497,7 @@
           }
         } else if (actionType === 'filter-desc') {
           syncInsightPeriodToTxFilter();
-          if (cCatFilt !== 'all') {
-            cCatFilt = 'all';
-            const sInput = document.getElementById('txSearch');
-            if (sInput) sInput.placeholder = 'Search transactions…';
-          }
+          resetTxFilters();
           cTxSearch = param || '';
           const sInput = document.getElementById('txSearch');
           if (sInput) sInput.value = param || '';
@@ -5523,11 +5524,7 @@
           }
         } else if (actionType === 'filter-mode') {
           syncInsightPeriodToTxFilter();
-          if (cCatFilt !== 'all') {
-            cCatFilt = 'all';
-            const sInput = document.getElementById('txSearch');
-            if (sInput) sInput.placeholder = 'Search transactions…';
-          }
+          resetTxFilters();
           // Online vs Cash channel insights filter to expenses
           setTxType('expense');
           const modeVal = param || 'all';
@@ -6118,7 +6115,9 @@
         // (Removed by user request)
 
         // ── 7. SAVINGS RATE & HEALTH BENCHMARK ──
-        if (!isEventActive && curInc > 0 && curExp > 0 && savRate !== null) {
+        // For month mode, require at least 20% of month elapsed to avoid day-1 false positives
+        const savRateReady = !isMonthMode || monthProgress >= 20;
+        if (!isEventActive && curInc > 0 && curExp > 0 && savRate !== null && savRateReady) {
           let vsPrev = '';
           if (prevInc > 0) {
             const prevSavRate = Math.round(((prevInc - prevExp) / prevInc) * 100);
