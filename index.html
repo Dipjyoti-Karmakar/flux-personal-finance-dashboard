@@ -5712,10 +5712,10 @@
             if (isFixedTx(t)) fixedExpPaid += t.amount;
             else discExpPaid += t.amount;
 
-            // Weekend vs Weekday analysis
+            // Weekend vs Weekday analysis (Sat=6, Sun=0 only)
             const dObj = new Date(t.date + 'T00:00:00');
-            const dayOfWeek = !isNaN(dObj) ? dObj.getDay() : 1; // 0=Sun, 6=Sat, 5=Fri
-            if (dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6) {
+            const dayOfWeek = !isNaN(dObj) ? dObj.getDay() : 1;
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
               weekendExp += t.amount; weekendTxCount++;
             } else {
               weekdayExp += t.amount; weekdayTxCount++;
@@ -5954,42 +5954,44 @@
       // ══════════════════════════════════════════════════════════════════════
       if (!incomeOnly) {
 
-        // ── 1. DECOUPLED STRATEGIC PACING & SAFE ALLOWANCE (Solves Finding 1) ──
+        // ── 1. DECOUPLED STRATEGIC PACING & SAFE ALLOWANCE ──
         if (isMonthMode) {
           if (curInc > 0) {
             if (projectedSpend > curInc) {
               const overAmt = projectedSpend - curInc;
-              const tip = safeDailyDiscretionary > 0 
-                ? ' Keep daily spend under <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> to break even.' 
-                : ' Log your full monthly income or trim daily spending to balance.';
+              const tip = safeDailyDiscretionary > 0
+                ? ' Keep daily spend under <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> to break even.'
+                : ' Trim spending or log additional income to balance.';
               const billsNote = totalCommittedMonth > 0 ? (' (excluding ' + fmtS(totalCommittedMonth) + ' in fixed bills)') : '';
               candidates.push({
                 priority: 96, pillar: 'compass', topicKey: 'pacing',
                 type: 'neg', icon: '&#x26A0;&#xFE0F;',
                 badge: 'PACING DEFICIT', badgeClass: 'badge-red',
                 metric: fmtS(overAmt) + ' Projected Deficit',
-                text: '<strong>Pacing Alert:</strong> At ~' + fmtS(discDailyBurn) + '/day daily spend' + billsNote + ', projected month spend is <strong style="color:var(--ex)">' + fmtS(projectedSpend) + '</strong>, exceeding your income (' + fmtS(curInc) + ') by <strong style="color:var(--ex)">' + fmtS(overAmt) + '</strong>.' + tip,
+                text: '<strong>Pacing Alert:</strong> At ~' + fmtS(discDailyBurn) + '/day discretionary spend' + billsNote + ', projected month-end total is <strong style="color:var(--ex)">' + fmtS(projectedSpend) + '</strong>, exceeding your income (' + fmtS(curInc) + ') by <strong style="color:var(--ex)">' + fmtS(overAmt) + '</strong>.' + tip,
                 microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-ex" style="width:100%;"></div></div>',
                 actions: [{ label: 'Inspect Expenses', action: 'filter-tx-cat', param: '' }]
               });
             } else {
               const surplusProj = curInc - projectedSpend;
+              const daysRemaining = daysInMonth - cD; // days after today
               const billsNote = totalCommittedMonth > 0 ? ('After fixed bills (' + fmtS(totalCommittedMonth) + '), you') : 'You';
               candidates.push({
                 priority: 90, pillar: 'compass', topicKey: 'pacing',
                 type: 'pos', icon: '&#x1F3AF;',
                 badge: 'SAFE RUNWAY', badgeClass: 'badge-blue',
                 metric: fmtS(safeDailyDiscretionary) + '/day safe',
-                text: '<strong>Safe Pacing:</strong> Day <strong>' + cD + ' of ' + daysInMonth + '</strong>. ' + billsNote + ' can safely spend <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> for the remaining ' + remainingDays + ' days (projected surplus: <strong style="color:var(--in)">' + fmtS(surplusProj) + '</strong>).',
+                text: '<strong>Safe Pacing:</strong> Day <strong>' + cD + ' of ' + daysInMonth + '</strong>. ' + billsNote + ' can safely spend <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> for the remaining ' + daysRemaining + ' day' + (daysRemaining === 1 ? '' : 's') + ' (projected surplus: <strong style="color:var(--in)">' + fmtS(surplusProj) + '</strong>).',
                 microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-in" style="width:' + Math.min(100, Math.round((cD/daysInMonth)*100)) + '%;"></div></div>'
               });
             }
           } else if (curExp > 0) {
+            const isAlarm = cD >= 5 && curExp > 800;
             candidates.push({
-              priority: (cD >= 5 && curExp > 800) ? 78 : 50, pillar: 'compass', topicKey: 'no_income_burn',
-              type: (cD >= 5 && curExp > 800) ? 'neg' : 'neu', icon: (cD >= 5 && curExp > 800) ? '&#x1F6A8;' : '&#x1F4CA;',
-              badge: (cD >= 5 && curExp > 800) ? 'RESERVE DRAIN' : 'PERIOD SPEND',
-              badgeClass: (cD >= 5 && curExp > 800) ? 'badge-red' : 'badge-blue',
+              priority: isAlarm ? 78 : 50, pillar: 'compass', topicKey: 'no_income_burn',
+              type: isAlarm ? 'neg' : 'neu', icon: isAlarm ? '&#x1F6A8;' : '&#x1F4CA;',
+              badge: isAlarm ? 'RESERVE DRAIN' : 'PERIOD SPEND',
+              badgeClass: isAlarm ? 'badge-red' : 'badge-blue',
               metric: fmtS(curExp) + ' total spend',
               text: '<strong>Active Spend:</strong> <strong style="color:var(--ex)">' + fmtS(curExp) + '</strong> logged across <strong>' + expTxs.length + ' transaction' + (expTxs.length === 1 ? '' : 's') + '</strong> (~' + fmtS(discDailyBurn) + '/day). Log income to unlock full runway projections.',
               actions: [{ label: 'View All Txs', action: 'filter-tx-cat', param: '' }]
@@ -6019,24 +6021,25 @@
           }
         }
 
-        // ── 3. WEEKEND VS WEEKDAY DIVERGENCE (Solves Finding 4) ──
+        // ── 3. WEEKEND VS WEEKDAY DIVERGENCE ──
+        // Weekend = Sat(6) + Sun(0) only; Fri is a workday
         if (isMonthMode && cD >= 5 && weekendTxCount >= 2 && weekdayTxCount >= 2) {
           let weekendDaysElapsed = 0, weekdayDaysElapsed = 0;
           for (let d = 1; d <= cD; d++) {
             const dow = new Date(cY, cM, d).getDay();
-            if (dow === 0 || dow === 5 || dow === 6) weekendDaysElapsed++;
+            if (dow === 0 || dow === 6) weekendDaysElapsed++;
             else weekdayDaysElapsed++;
           }
-          const weekendBurnRate = Math.round(weekendExp / Math.max(1, weekendDaysElapsed));
-          const weekdayBurnRate = Math.round(weekdayExp / Math.max(1, weekdayDaysElapsed));
-          if (weekendBurnRate >= 1.75 * weekdayBurnRate && weekendExp >= 350) {
+          const weekendBurnRate = weekendDaysElapsed > 0 ? Math.round(weekendExp / weekendDaysElapsed) : 0;
+          const weekdayBurnRate = weekdayDaysElapsed > 0 ? Math.round(weekdayExp / weekdayDaysElapsed) : 0;
+          if (weekdayBurnRate > 0 && weekendBurnRate >= 1.75 * weekdayBurnRate && weekendExp >= 350) {
             const wkndPct = Math.round((weekendExp / Math.max(1, curExp)) * 100);
             candidates.push({
               priority: 70, pillar: 'habit', topicKey: 'weekend_surge',
               type: 'neu', icon: '&#x1F37B;',
               badge: 'WEEKEND SURGE', badgeClass: 'badge-purple',
               metric: fmtS(weekendBurnRate) + '/day vs ' + fmtS(weekdayBurnRate) + '/day',
-              text: '<strong>Weekend Divergence:</strong> Weekend discretionary spend is <strong style="color:var(--ex)">' + fmtS(weekendBurnRate) + '/day</strong> vs <strong style="color:var(--in)">' + fmtS(weekdayBurnRate) + '/day</strong> on weekdays (' + wkndPct + '% of spend concentrated on Fri-Sun).',
+              text: '<strong>Weekend Divergence:</strong> Weekend discretionary spend is <strong style="color:var(--ex)">' + fmtS(weekendBurnRate) + '/day</strong> vs <strong style="color:var(--in)">' + fmtS(weekdayBurnRate) + '/day</strong> on weekdays (' + wkndPct + '% of spend concentrated on Sat-Sun).',
               microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-purple" style="width:' + wkndPct + '%;"></div><div class="insight-micro-bar-fill fill-in" style="width:' + (100 - wkndPct) + '%;"></div></div>'
             });
           }
@@ -6048,12 +6051,13 @@
           if (foundOutlier) return;
           const cList = catTxMap[c];
           if (cList.length >= 3) {
-            const cTotal = curCats[c] || 0;
-            const cAvg = cTotal / cList.length;
             const sortedC = cList.slice().sort(function(a,b){ return b.amount - a.amount; });
             const topTx = sortedC[0];
-            const ratio = cAvg > 0 ? (topTx.amount / cAvg).toFixed(1) : '1.0';
-            if (parseFloat(ratio) >= 2.8 && topTx.amount >= 350 && (topTx.amount / curExp) >= 0.15) {
+            // Avg of remaining txs (exclude the outlier itself to avoid deflation)
+            const otherSum = sortedC.slice(1).reduce(function(s,t){ return s + t.amount; }, 0);
+            const otherAvg = otherSum / (sortedC.length - 1);
+            const ratio = otherAvg > 0 ? (topTx.amount / otherAvg).toFixed(1) : '1.0';
+            if (parseFloat(ratio) >= 2.8 && topTx.amount >= 350 && curExp > 0 && (topTx.amount / curExp) >= 0.12) {
               foundOutlier = true;
               const cn = c.charAt(0).toUpperCase() + c.slice(1);
               candidates.push({
@@ -6145,6 +6149,15 @@
               badge: 'THIN BUFFER', badgeClass: 'badge-amber',
               metric: savRate + '% Margin',
               text: '<strong>Slim Savings Margin:</strong> Only <strong style="color:var(--ex)">' + savRate + '%</strong> of income retained (<strong>' + fmtS(buffer) + '</strong> runway)' + vsPrev + '. Vulnerable to emergency shocks.'
+            });
+          } else {
+            // savRate === 0: exactly break-even
+            candidates.push({
+              priority: 72, pillar: 'risk', topicKey: 'savings_rate',
+              type: 'neg', icon: '&#x26A1;',
+              badge: 'BREAK-EVEN', badgeClass: 'badge-amber',
+              metric: '0% Saved',
+              text: '<strong>Break-Even Month:</strong> Spending exactly matches income — zero buffer remains' + vsPrev + '. Any unplanned cost pushes you into deficit.'
             });
           }
         }
@@ -6260,56 +6273,7 @@
           }
         }
 
-        // ── 12. ACTIONABLE RENEWAL RADAR & LEDGER AUDIT ──
-        if (!isEventActive && !isCustomMode && !isAllMode && typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
-          const activeSubs = recurringList.filter(function(r) {
-            return !r.archived && r.active && r.type !== 'income' && r.nextDue;
-          });
-          const upcoming = activeSubs
-            .filter(function(r) { return r.nextDue >= todayISO; })
-            .sort(function(a, b) { return a.nextDue.localeCompare(b.nextDue); });
-
-          if (upcoming.length > 0) {
-            const nextSub = upcoming[0];
-            const nextDueObj = new Date(nextSub.nextDue + 'T00:00:00');
-            const todayObj = new Date(todayISO + 'T00:00:00');
-            const diffDays = Math.max(0, Math.round((nextDueObj - todayObj) / 86400000));
-
-            // Find all subs due in the next 7 days
-            const dueSoon = upcoming.filter(function(r) {
-              const d = new Date(r.nextDue + 'T00:00:00');
-              const diff = Math.round((d - todayObj) / 86400000);
-              return diff >= 0 && diff <= 7;
-            });
-
-            if (dueSoon.length > 0) {
-              const dueSoonTotal = dueSoon.reduce(function(s, r) { return s + (r.amount || 0); }, 0);
-              const names = dueSoon.map(function(r) { return esc(r.name); }).join(', ');
-              const isUrgent = diffDays <= 3;
-              const dueWhen = diffDays === 0 ? 'today' : (diffDays === 1 ? 'tomorrow' : 'in ' + diffDays + ' days');
-              candidates.push({
-                priority: isUrgent ? 85 : 68, pillar: 'action', topicKey: 'renewal_radar',
-                type: isUrgent ? 'neg' : 'neu', icon: isUrgent ? '&#x26A0;&#xFE0F;' : '&#x1F4C5;',
-                badge: isUrgent ? 'DUE SOON' : 'UPCOMING RENEWAL',
-                badgeClass: isUrgent ? 'badge-amber' : 'badge-blue',
-                metric: fmtS(dueSoonTotal) + ' due ' + dueWhen,
-                text: '<strong>Renewal Radar:</strong> <strong>' + names + '</strong> (' + fmtS(dueSoonTotal) + ') ' + (dueSoon.length === 1 ? 'is' : 'are') + ' due ' + dueWhen + ' (' + fmtDt(nextSub.nextDue) + '). Keep account funded to prevent failed auto-debit.',
-                actions: [{ label: 'View in Subscriptions', action: 'open-subs', param: '' }]
-              });
-            } else if (diffDays <= 14) {
-              candidates.push({
-                priority: 45, pillar: 'action', topicKey: 'renewal_radar',
-                type: 'neu', icon: '&#x1F4C5;',
-                badge: 'NEXT RENEWAL', badgeClass: 'badge-blue',
-                metric: fmtS(nextSub.amount) + ' in ' + diffDays + 'd',
-                text: '<strong>Upcoming Payment:</strong> <strong>' + esc(nextSub.name) + '</strong> (' + fmtS(nextSub.amount) + ') is your next scheduled renewal, due in <strong>' + diffDays + ' days</strong> (' + fmtDt(nextSub.nextDue) + ').',
-                actions: [{ label: 'View in Subscriptions', action: 'open-subs', param: '' }]
-              });
-            }
-          }
-        }
-
-        // Action pillar fallback: Ledger Hygiene if there are uncategorized transactions
+        // ── 12. LEDGER HYGIENE (Uncategorized Transactions) ──
         if (!isEventActive && expTxs.length >= 3) {
           const otherTxs = expTxs.filter(function(t) { return (t.cat || 'other').toLowerCase() === 'other'; });
           if (otherTxs.length >= 2) {
@@ -6333,7 +6297,7 @@
       function selectDiverseInsights(allCandidates, maxCount) {
         maxCount = maxCount || 6;
         const selected = [];
-        const usedPillars = new Set();
+        const selectedSet = new Set();
         const usedTopics = new Set();
 
         const pillarOrder = ['risk', 'compass', 'habit', 'win', 'action'];
@@ -6345,14 +6309,14 @@
             .sort(function(a, b) { return b.priority - a.priority; });
           if (matching.length > 0) {
             selected.push(matching[0]);
-            usedPillars.add(pil);
+            selectedSet.add(matching[0]);
             usedTopics.add(matching[0].topicKey);
           }
         });
 
         // Pass 2: Fill remaining slots by priority, enforcing topic uniqueness
         const remaining = allCandidates
-          .filter(function(c) { return !selected.includes(c) && !usedTopics.has(c.topicKey); })
+          .filter(function(c) { return !selectedSet.has(c) && !usedTopics.has(c.topicKey); })
           .sort(function(a, b) { return b.priority - a.priority; });
 
         for (let i = 0; i < remaining.length; i++) {
