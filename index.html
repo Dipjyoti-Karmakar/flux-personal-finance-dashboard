@@ -10456,7 +10456,7 @@
           let peakDateFormatted = 'None';
           if (peakDate) {
             const pkD = new Date(peakDate + 'T00:00:00');
-            peakDateFormatted = `${pkD.getDate()} ${pkD.toLocaleString('default', { month: 'short' })}`;
+            peakDateFormatted = `${pkD.getDate()} ${pkD.toLocaleString('en-US', { month: 'short' })}`;
           }
 
           // Average Ticket Size
@@ -10474,7 +10474,7 @@
             {
               topColor: red,
               title: 'PEAK SPEND DAY',
-              value: peakAmt > 0 ? fmtPDFS(peakAmt) : '₹ 0',
+              value: peakAmt > 0 ? fmtPDFS(peakAmt) : fmtPDFS(0),
               sub: peakAmt > 0 ? `${peakDateFormatted} • ${peakPct}% of spend` : 'No expenses recorded'
             },
             {
