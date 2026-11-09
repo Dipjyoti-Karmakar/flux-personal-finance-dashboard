@@ -9930,17 +9930,30 @@
       document.getElementById('rptEventRow').style.display = mode === 'event' ? 'block' : 'none';
     }
 
-    const FLUX_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" width="1200" height="460">
+    // 1. Full-width branded background SVG (dark gradient with gold radial glow)
+    const FLUX_BG_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1c212c"/><stop offset="1" stop-color="#0b0d12"/></linearGradient>
-    <radialGradient id="glow" cx="0.28" cy="0.18" r="0.95"><stop offset="0" stop-color="#c8a96e" stop-opacity="0.18"/><stop offset="1" stop-color="#c8a96e" stop-opacity="0"/></radialGradient>
+    <linearGradient id="flux_hbg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c212c"/>
+      <stop offset="1" stop-color="#0b0d12"/>
+    </linearGradient>
+    <radialGradient id="flux_hglow" cx="0.25" cy="0.25" r="0.95">
+      <stop offset="0" stop-color="#c8a96e" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#c8a96e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="300" fill="url(#flux_hbg)"/>
+  <rect width="1200" height="300" fill="url(#flux_hglow)"/>
+</svg>`;
+
+    // 2. Transparent brand logo (App icon + FLUX typography) for Page 1 main header
+    const FLUX_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 836 216" width="836" height="216">
+  <defs>
     <linearGradient id="ibg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#232937"/><stop offset="1" stop-color="#0d0f14"/></linearGradient>
     <linearGradient id="gg" gradientUnits="userSpaceOnUse" x1="132" y1="0" x2="380" y2="0"><stop offset="0" stop-color="#e8d3a0"/><stop offset="1" stop-color="#b8975a"/></linearGradient>
     <linearGradient id="wg" gradientUnits="userSpaceOnUse" x1="420" y1="170" x2="910" y2="290"><stop offset="0" stop-color="#ecd9a8"/><stop offset="1" stop-color="#b8975a"/></linearGradient>
   </defs>
-  <rect width="1200" height="460" rx="64" fill="url(#bg)"/>
-  <rect width="1200" height="460" rx="64" fill="url(#glow)"/>
-  <g transform="translate(84 0)">
+  <g transform="translate(-102 -122)">
     <g transform="translate(110 130) scale(0.3906)">
       <rect width="512" height="512" rx="116" fill="url(#ibg)"/>
       <rect x="2" y="2" width="508" height="508" rx="114" fill="none" stroke="#fff" stroke-opacity="0.12" stroke-width="3"/>
@@ -9961,6 +9974,31 @@
   </g>
 </svg>`;
 
+    let _fluxBgPngCache = null;
+    function getFluxBgDataUrl() {
+      if (_fluxBgPngCache) return Promise.resolve(_fluxBgPngCache);
+      return new Promise((resolve, reject) => {
+        try {
+          const img = new Image();
+          const blob = new Blob([FLUX_BG_SVG], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = 1200; canvas.height = 300;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, 1200, 300);
+              URL.revokeObjectURL(url);
+              _fluxBgPngCache = canvas.toDataURL('image/png');
+              resolve(_fluxBgPngCache);
+            } catch (e) { URL.revokeObjectURL(url); reject(e); }
+          };
+          img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+          img.src = url;
+        } catch (err) { reject(err); }
+      });
+    }
+
     let _fluxLogoPngCache = null;
     function getFluxLogoDataUrl() {
       if (_fluxLogoPngCache) return Promise.resolve(_fluxLogoPngCache);
@@ -9972,30 +10010,24 @@
           img.onload = () => {
             try {
               const canvas = document.createElement('canvas');
-              canvas.width = 1200;
-              canvas.height = 460;
+              canvas.width = 836; canvas.height = 216;
               const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, 1200, 460);
+              ctx.drawImage(img, 0, 0, 836, 216);
               URL.revokeObjectURL(url);
               _fluxLogoPngCache = canvas.toDataURL('image/png');
               resolve(_fluxLogoPngCache);
-            } catch (e) {
-              URL.revokeObjectURL(url);
-              reject(e);
-            }
+            } catch (e) { URL.revokeObjectURL(url); reject(e); }
           };
-          img.onerror = (e) => {
-            URL.revokeObjectURL(url);
-            reject(e);
-          };
+          img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
           img.src = url;
-        } catch (err) {
-          reject(err);
-        }
+        } catch (err) { reject(err); }
       });
     }
-    // Pre-cache logo PNG rasterization for instant PDF export
-    setTimeout(() => { getFluxLogoDataUrl().catch(() => {}); }, 1500);
+    // Pre-cache asset rasterizations for instant PDF export
+    setTimeout(() => {
+      getFluxBgDataUrl().catch(() => {});
+      getFluxLogoDataUrl().catch(() => {});
+    }, 1500);
 
     async function generatePDF() {
       if (typeof window.jspdf === 'undefined') { showToast('PDF library not loaded yet, try again', 'er'); return; }
@@ -10112,7 +10144,7 @@
         let curY = 0;
         let pageNum = 1;
 
-        const addPage = () => { doc.addPage(); curY = 20; pageNum++; };
+        const addPage = () => { doc.addPage(); curY = 22; pageNum++; };
         const checkBreak = (needed) => { if (curY + needed > H - 18) addPage(); };
 
         // Section title helper — text vertically centred in the strip
@@ -10134,10 +10166,23 @@
           curY += stripH + 5;
         };
 
+        // ── ASSETS FOR HEADER & FOOTER ──────────────────────────────────────────
+        let bgDataUrl = null;
+        let logoDataUrl = null;
+        try {
+          [bgDataUrl, logoDataUrl] = await Promise.all([getFluxBgDataUrl(), getFluxLogoDataUrl()]);
+        } catch (e) {
+          console.warn('[PDF] Asset render error:', e);
+        }
+
         // ── PAGE 1: HEADER BANNER ──────────────────────────────────────────────
-        // Deep navy header background
-        doc.setFillColor(...headerBg);
-        doc.rect(0, 0, W, 50, 'F');
+        // Header background (using the image background across full width)
+        if (bgDataUrl) {
+          doc.addImage(bgDataUrl, 'PNG', 0, 0, W, 50, 'FLUX_BG', 'FAST');
+        } else {
+          doc.setFillColor(...headerBg);
+          doc.rect(0, 0, W, 50, 'F');
+        }
         // Gold accent stripe
         doc.setFillColor(...accentStripe);
         doc.rect(0, 47, W, 2.5, 'F');
@@ -10145,18 +10190,11 @@
         doc.setFillColor(200, 190, 150);
         doc.rect(0, 49.5, W, 0.8, 'F');
 
-        // Brand logo SVG
-        let logoDataUrl = null;
-        try {
-          logoDataUrl = await getFluxLogoDataUrl();
-        } catch (e) {
-          console.warn('[PDF] Logo SVG render error:', e);
-        }
-
+        // Brand logo & FLUX typography (Page 1 main header only)
         if (logoDataUrl) {
-          const logoH = 28;
-          const logoW = logoH * (1200 / 460); // ~73.04 mm
-          const logoY = 9.5; // vertically centered in 47mm header
+          const logoH = 24;
+          const logoW = logoH * (836 / 216); // ~92.88 mm
+          const logoY = 11.5; // vertically centered in 47mm header
           doc.addImage(logoDataUrl, 'PNG', pL, logoY, logoW, logoH, undefined, 'FAST');
         } else {
           // Brand mark fallback — vertical accent bar + FLUX
@@ -10282,7 +10320,7 @@
         // ── PAGE 2: TREND CHARTS (Income and Expense) ───────────────────
         if (allInPeriod.length > 0) {
           doc.addPage();
-          curY = 20;
+          curY = 22;
           sectionTitle('INCOME AND EXPENSE TRENDS');
 
           const trendData = {};
@@ -10455,7 +10493,7 @@
         // ── PAGE 3: CHARTS (Category Donut + Online/Offline Donut) ───────────
         if (catEntries.length > 0 || totalExp > 0) {
           doc.addPage();
-          curY = 20;
+          curY = 22;
           sectionTitle('SPENDING ANALYSIS');
 
           // Helper: draw a donut slice using polygon arc approximation
@@ -10619,7 +10657,7 @@
         // ── CATEGORY BREAKDOWN ───────────────────────────────────────────────
         if (incCat && catEntries.length > 0) {
           doc.addPage(); // Give CATEGORY BREAKDOWN the whole page
-          curY = 20;
+          curY = 22;
           sectionTitle('CATEGORY BREAKDOWN (EXPENSES)');
           const catRows = catEntries.map(([cat, amt]) => {
             const pct = totalExp > 0 ? ((amt / totalExp) * 100).toFixed(0) + '%' : '0%';
@@ -10628,7 +10666,7 @@
           });
           doc.autoTable({
             startY: curY, head: [['Category', 'Amount', 'Share of Expenses']], body: catRows,
-            margin: { left: pL, right: 15 }, theme: 'grid',
+            margin: { left: pL, right: 15, top: 22, bottom: 18 }, theme: 'grid',
             headStyles: { fillColor: headerBg, textColor: accentStripe, fontStyle: 'bold', fontSize: 9.5, cellPadding: 5 },
             bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 9, cellPadding: 4.5, valign: 'middle' },
             alternateRowStyles: { fillColor: altRow },
@@ -10651,7 +10689,7 @@
         if (incList && filtered.length) {
           if (!incCat || catEntries.length >= 7) {
             doc.addPage();
-            curY = 20;
+            curY = 22;
           }
           sectionTitle('TRANSACTION LIST');
 
@@ -10680,7 +10718,7 @@
           });
           doc.autoTable({
             startY: curY, head: [headRow], body: txRows,
-            margin: { left: pL, right: 15 }, theme: 'grid',
+            margin: { left: pL, right: 15, top: 22, bottom: 18 }, theme: 'grid',
             headStyles: { fillColor: headerBg, textColor: accentStripe, fontStyle: 'bold', fontSize: 8.5, cellPadding: 4 },
             bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 8.5, cellPadding: 3.5, valign: 'middle' },
             alternateRowStyles: { fillColor: altRow },
@@ -10729,12 +10767,33 @@
           });
         }
 
-        // ── FOOTER on every page ─────────────────────────────────────────────
+        // ── FOOTER and RUNNING HEADERS on every page ───────────────────────────
         const totalPages = doc.internal.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
           doc.setPage(i);
-          // Footer background
-          doc.setFillColor(...headerBg); doc.rect(0, H - 13, W, 13, 'F');
+
+          // Running header on pages 2+ (uses same background image, NO logo / FLUX text)
+          if (i > 1) {
+            if (bgDataUrl) {
+              doc.addImage(bgDataUrl, 'PNG', 0, 0, W, 14, 'FLUX_BG', 'FAST');
+            } else {
+              doc.setFillColor(...headerBg); doc.rect(0, 0, W, 14, 'F');
+            }
+            // Accent bottom stripe
+            doc.setFillColor(...accentStripe); doc.rect(0, 12.5, W, 1.5, 'F');
+            // Running header text
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...headerText);
+            doc.text(reportTitle, pL, 8.5);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...headerMuted);
+            doc.text(`Generated: ${genDate}`, pR, 8.5, { align: 'right' });
+          }
+
+          // Footer background on all pages (uses same background image)
+          if (bgDataUrl) {
+            doc.addImage(bgDataUrl, 'PNG', 0, H - 13, W, 13, 'FLUX_BG', 'FAST');
+          } else {
+            doc.setFillColor(...headerBg); doc.rect(0, H - 13, W, 13, 'F');
+          }
           // Accent top stripe
           doc.setFillColor(...accentStripe); doc.rect(0, H - 13, W, 1.5, 'F');
           // Footer text
