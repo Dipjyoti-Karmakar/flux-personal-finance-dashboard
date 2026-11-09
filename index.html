@@ -10475,7 +10475,7 @@
                 metric: `${savRateNum}% Margin`,
                 text: `Slim savings margin: Only ${savRateNum}% of income retained (${fmtPDFS(netBal)} remaining). Vulnerable to unexpected shocks.`
               });
-            } else {
+            } else if (netBal < 0) {
               pdfInsightCandidates.push({
                 priority: 1,
                 type: 'neg',
