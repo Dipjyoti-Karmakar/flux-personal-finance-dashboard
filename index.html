@@ -10222,50 +10222,112 @@
         const genDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...headerMuted);
         doc.text(`Generated: ${genDate}`, pR, 30, { align: 'right' });
-        curY = 60;
+        curY = 57;
 
-        // ── SUMMARY CARDS — premium redesign (2x2 grid) ──────────────────────
-        const cardW = (W - 30 - 6) / 2;
-        const cardH = 34;
-        const cardGap = 6;
+        // ── HERO SUMMARY CARDS — Executive Financial Redesign (2x2 grid) ─────
+        const cardW = (W - 30 - 7) / 2;
+        const cardH = 39;
+        const cardGap = 7;
+        const incEntriesCount = allInPeriod.filter(t => t.type === 'income').length;
+        const expEntriesCount = expTxs.length;
+
         const summaryCards = [
-          { label: 'NET BALANCE', val: fmtPDF(netBal, true), icon: '\u2295', color: netBal >= 0 ? green : red, bgColor: netBal >= 0 ? greenBg : redBg, sub: netBal >= 0 ? 'Positive cash flow' : 'Spending exceeds income' },
-          { label: 'TOTAL INCOME', val: fmtPDFS(totalInc), icon: '\u2191', color: green, bgColor: greenBg, sub: `${allInPeriod.filter(t => t.type === 'income').length} income entries` },
-          { label: 'TOTAL EXPENSES', val: fmtPDFS(totalExp), icon: '\u2193', color: red, bgColor: redBg, sub: `${expTxs.length} expense entries` },
-          { label: 'SAVINGS RATE', val: `${savRate}%`, icon: '\u25c9', color: parseFloat(savRate) >= 20 ? green : parseFloat(savRate) >= 0 ? [140, 100, 20] : red, bgColor: parseFloat(savRate) >= 20 ? greenBg : parseFloat(savRate) >= 0 ? [255, 248, 220] : redBg, sub: parseFloat(savRate) >= 20 ? 'Healthy savings' : 'Below target (20%)' },
+          {
+            label: 'NET CASH BALANCE',
+            tag: netBal >= 0 ? 'NET SURPLUS' : 'NET DEFICIT',
+            val: fmtPDF(netBal, true),
+            color: netBal >= 0 ? green : red,
+            bgColor: netBal >= 0 ? greenBg : redBg,
+            sub: netBal >= 0 ? 'Retained cash buffer after all expenditures' : 'Expenditure exceeded total period incoming funds'
+          },
+          {
+            label: 'TOTAL PERIOD INFLOW',
+            tag: `${incEntriesCount} ${incEntriesCount === 1 ? 'CREDIT' : 'CREDITS'}`,
+            val: fmtPDFS(totalInc),
+            color: green,
+            bgColor: greenBg,
+            sub: totalInc > 0 ? `Avg credit: ${fmtPDFS(Math.round(totalInc / Math.max(1, incEntriesCount)))} per transaction` : 'Zero incoming funds logged'
+          },
+          {
+            label: 'TOTAL PERIOD OUTFLOW',
+            tag: `${expEntriesCount} ${expEntriesCount === 1 ? 'DEBIT' : 'DEBITS'}`,
+            val: fmtPDFS(totalExp),
+            color: red,
+            bgColor: redBg,
+            sub: totalExp > 0 ? `Avg debit: ${fmtPDFS(Math.round(totalExp / Math.max(1, expEntriesCount)))} across ${expEntriesCount} purchases` : 'Zero outgoing expenses recorded'
+          },
+          {
+            label: 'CAPITAL RETENTION RATE',
+            tag: parseFloat(savRate) >= 20 ? 'HEALTHY' : (parseFloat(savRate) >= 0 ? 'SUB-OPTIMAL' : 'DEFICIT'),
+            val: `${savRate}%`,
+            color: parseFloat(savRate) >= 20 ? green : (parseFloat(savRate) >= 0 ? [184, 134, 11] : red),
+            bgColor: parseFloat(savRate) >= 20 ? greenBg : (parseFloat(savRate) >= 0 ? [254, 243, 199] : redBg),
+            sub: parseFloat(savRate) >= 20 ? 'Exceeds standard 20% savings threshold' : (parseFloat(savRate) >= 0 ? 'Below recommended 20% retention benchmark' : 'Negative retention • Outflows exceed earnings')
+          },
         ];
-        // Subtle tint behind entire 2x2 grid
-        const gridAreaH = (cardH + cardGap) * 2 - cardGap + 8;
-        doc.setFillColor(...panel2);
-        doc.roundedRect(pL - 3, curY - 3, W - 24, gridAreaH, 3, 3, 'F');
+
         summaryCards.forEach((c, i) => {
           const row = Math.floor(i / 2), col = i % 2;
           const cx = pL + col * (cardW + cardGap);
           const cy = curY + row * (cardH + cardGap);
-          // Card background — white
-          doc.setFillColor(...panel); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'F');
-          // Subtle border
-          doc.setDrawColor(...bd); doc.setLineWidth(0.25); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
-          // Thin colored top stripe (3px)
-          doc.setFillColor(...c.color); doc.roundedRect(cx, cy, cardW, 3, 1.5, 1.5, 'F');
-          doc.rect(cx, cy + 1.5, cardW, 1.5, 'F'); // square off bottom of top stripe
-          // Left accent bar in card color
-          doc.setFillColor(...c.color); doc.roundedRect(cx, cy, 4, cardH, 1.5, 1.5, 'F');
-          doc.setFillColor(...c.color); doc.rect(cx + 2, cy, 2, cardH, 'F'); // square off right side of bar
-          // Icon symbol (top-right corner)
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...c.color);
-          doc.text(c.icon, cx + cardW - 7, cy + 9, { align: 'right' });
-          // Label
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...muted);
-          doc.text(c.label, cx + 9, cy + 9);
-          // Value — large and colored (18pt)
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(...c.color);
-          doc.text(c.val, cx + 9, cy + 23);
-          // Sub-label
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
-          doc.text(c.sub, cx + 9, cy + 30);
+
+          // Card background — pure crisp white
+          doc.setFillColor(...panel);
+          doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'F');
+
+          // Subtle elegant border
+          doc.setDrawColor(...bd);
+          doc.setLineWidth(0.25);
+          doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
+
+          // Left primary accent bar
+          doc.setFillColor(...c.color);
+          doc.roundedRect(cx, cy, 3.5, cardH, 1.5, 1.5, 'F');
+          doc.rect(cx + 2, cy, 1.5, cardH, 'F');
+
+          // Top micro accent strip (matching card color)
+          doc.setFillColor(...c.bgColor);
+          doc.roundedRect(cx + 3.5, cy, cardW - 3.5, 2.5, 1, 1, 'F');
+          doc.rect(cx + 3.5, cy + 1, cardW - 3.5, 1.5, 'F');
+
+          // Header: Category Label (uppercase, tracking, muted)
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.5);
+          doc.setTextColor(...muted);
+          doc.text(c.label, cx + 8, cy + 9.5);
+
+          // Header: Status Tag Pill (Right side)
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6);
+          const tagW = doc.getTextWidth(c.tag) + 5;
+          const tagH = 4.2;
+          const tagX = cx + cardW - tagW - 6;
+          const tagY = cy + 6;
+
+          doc.setFillColor(...c.bgColor);
+          doc.roundedRect(tagX, tagY, tagW, tagH, 1, 1, 'F');
+          doc.setTextColor(...c.color);
+          doc.text(c.tag, tagX + 2.5, tagY + 3.1);
+
+          // Hero Value — Bold, prominent, high-contrast (20pt)
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(20);
+          doc.setTextColor(...c.color);
+          doc.text(c.val, cx + 8, cy + 24);
+
+          // Hairline divider
+          doc.setDrawColor(234, 237, 245);
+          doc.setLineWidth(0.15);
+          doc.line(cx + 8, cy + 28.5, cx + cardW - 8, cy + 28.5);
+
+          // Subtitle commentary (crisp financial context)
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(...muted);
+          doc.text(c.sub, cx + 8, cy + 34);
         });
-        curY += (cardH + cardGap) * 2 + 4;
+
+        curY += (cardH + cardGap) * 2 + 3;
 
         // Tx count summary strip — text vertically centred
         const txStripH = 10;
