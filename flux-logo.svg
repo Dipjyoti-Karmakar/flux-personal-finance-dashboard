@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" width="1200" height="460">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c212c"/>
+      <stop offset="1" stop-color="#0b0d12"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.28" cy="0.18" r="0.95">
+      <stop offset="0" stop-color="#c8a96e" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#c8a96e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ibg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#232937"/>
+      <stop offset="1" stop-color="#0d0f14"/>
+    </linearGradient>
+    <linearGradient id="gg" gradientUnits="userSpaceOnUse" x1="132" y1="0" x2="380" y2="0">
+      <stop offset="0" stop-color="#e8d3a0"/>
+      <stop offset="1" stop-color="#b8975a"/>
+    </linearGradient>
+    <linearGradient id="wg" gradientUnits="userSpaceOnUse" x1="420" y1="170" x2="910" y2="290">
+      <stop offset="0" stop-color="#ecd9a8"/>
+      <stop offset="1" stop-color="#b8975a"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="460" rx="64" fill="url(#bg)"/>
+  <rect width="1200" height="460" rx="64" fill="url(#glow)"/>
+  <g transform="translate(84 0)">
+    <g transform="translate(110 130) scale(0.3906)">
+      <rect width="512" height="512" rx="116" fill="url(#ibg)"/>
+      <rect x="2" y="2" width="508" height="508" rx="114" fill="none" stroke="#fff" stroke-opacity="0.12" stroke-width="3"/>
+      <rect x="132" y="124" width="248" height="42" rx="21" fill="url(#gg)"/>
+      <rect x="132" y="192" width="176" height="42" rx="21" fill="#5dba8a"/>
+      <rect x="132" y="260" width="212" height="42" rx="21" fill="#e07070"/>
+      <rect x="132" y="328" width="112" height="42" rx="21" fill="#4a5068"/>
+      <circle cx="408" cy="145" r="12" fill="#c8a96e"/>
+      <circle cx="346" cy="213" r="12" fill="#5dba8a" fill-opacity="0.45"/>
+      <circle cx="382" cy="281" r="12" fill="#e07070" fill-opacity="0.45"/>
+    </g>
+    <g fill="none" stroke="url(#wg)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M420 170 V290 M420 170 H496 M420 224 H478"/>
+      <path d="M556 170 V290 H632"/>
+      <path d="M692 170 V252 A38 38 0 0 0 768 252 V170"/>
+      <path d="M828 170 L908 290 M908 170 L828 290"/>
+    </g>
+  </g>
+</svg>
