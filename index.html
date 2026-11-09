@@ -10063,13 +10063,19 @@
         const savRate = totalInc > 0 ? ((netBal / totalInc) * 100).toFixed(0) : '0';
         const txCount = allInPeriod.length;
 
-        // Category data for insights
+        // Category & statistical aggregations
         const catMap = {};
         allInPeriod.filter(t => t.type === 'expense').forEach(t => { catMap[t.cat || 'other'] = (catMap[t.cat || 'other'] || 0) + t.amount; });
         const catEntries = Object.entries(catMap).sort((a, b) => b[1] - a[1]);
         const topCat = catEntries[0];
-        const avgDailyExp = totalExp > 0 ? totalExp / Math.max(1, Math.round((new Date(toDate + 'T00:00:00') - new Date(fromDate + 'T00:00:00')) / 86400000) + 1) : 0;
         const expTxs = allInPeriod.filter(t => t.type === 'expense');
+        const todayISO = getTodayStr();
+        // Accurately calculate elapsed period days: do not divide by unelapsed future days if month/year is in progress
+        const effectiveToDate = (toDate > todayISO && fromDate <= todayISO) ? todayISO : toDate;
+        const periodDays = Math.max(1, Math.round((new Date(effectiveToDate + 'T00:00:00') - new Date(fromDate + 'T00:00:00')) / 86400000) + 1);
+        const uniqueExpDays = new Set(expTxs.map(t => t.date)).size;
+        const avgDailyExp = totalExp > 0 ? totalExp / periodDays : 0;
+        const avgActiveDayExp = uniqueExpDays > 0 ? totalExp / uniqueExpDays : 0;
         const largestTx = expTxs.length ? expTxs.reduce((m, t) => t.amount > m.amount ? t : m, expTxs[0]) : null;
         const onlineExp = allInPeriod.filter(t => t.type === 'expense' && t.mode === 'online').reduce((s, t) => s + t.amount, 0);
         const offlineExp = allInPeriod.filter(t => t.type === 'expense' && t.mode === 'offline').reduce((s, t) => s + t.amount, 0);
@@ -10276,84 +10282,291 @@
         doc.text(`${expTxs.length} expenses`, pL + 105, txTextY);
         curY += txStripH + 8;
 
-        // ── FINANCIAL HEALTH SCORE ───────────────────────────────────────────
-        {
+        // ── FINANCIAL HEALTH SCORE (Executive Makeover) ─────────────────────
+        if (txCount > 0) {
           const savRateNum = parseFloat(savRate);
-          const scoreA = savRateNum >= 20 ? 40 : savRateNum >= 10 ? 25 : 10;
-          const scoreB = topCat && totalExp > 0 && topCat[1] / totalExp < 0.5 ? 30 : 15;
-          const scoreC = txCount >= 10 ? 30 : 15;
-          const healthScore = Math.min(100, scoreA + scoreB + scoreC);
-          const scoreColor = healthScore >= 75 ? green : healthScore >= 50 ? [140, 100, 20] : red;
-          const scoreLabel = healthScore >= 75 ? 'Strong Financial Health' : healthScore >= 50 ? 'Moderate Financial Health' : 'Needs Improvement';
+          const scoreA = savRateNum >= 25 ? 40 : savRateNum >= 15 ? 30 : savRateNum >= 5 ? 20 : 10;
+          const scoreB = topCat && totalExp > 0 && (topCat[1] / totalExp) <= 0.4 ? 30 : (topCat && totalExp > 0 && (topCat[1] / totalExp) <= 0.6 ? 20 : 10);
+          const scoreC = txCount >= 8 ? 30 : (txCount >= 3 ? 20 : 10);
+          const healthScore = Math.min(100, Math.max(10, scoreA + scoreB + scoreC));
+          const scoreColor = healthScore >= 75 ? green : (healthScore >= 50 ? [184, 134, 11] : red);
+          const scoreBg = healthScore >= 75 ? greenBg : (healthScore >= 50 ? [254, 243, 199] : redBg);
+          const scoreLabel = healthScore >= 75 ? 'Strong Financial Posture' : (healthScore >= 50 ? 'Moderate Health • Monitor Spending' : 'Needs Optimization');
 
-          checkBreak(22);
-          const bannerH = 20;
+          checkBreak(26);
+          const bannerH = 22;
           const bannerW = W - 30;
-          doc.setFillColor(...panel2); doc.roundedRect(pL, curY, bannerW, bannerH, 3, 3, 'F');
-          doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, curY, bannerW, bannerH, 3, 3, 'S');
-          // Left accent
-          doc.setFillColor(...scoreColor); doc.roundedRect(pL, curY, 4, bannerH, 1.5, 1.5, 'F');
-          doc.rect(pL + 2, curY, 2, bannerH, 'F');
-          // Score number
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(...scoreColor);
-          doc.text(`${healthScore}`, pL + 9, curY + 13);
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...muted);
-          doc.text('/100', pL + 9 + doc.getTextWidth(`${healthScore}`) + 1, curY + 13);
-          // Label
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...darkText);
-          doc.text('FINANCIAL HEALTH SCORE', pL + 36, curY + 7);
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...scoreColor);
-          doc.text(scoreLabel, pL + 36, curY + 14);
-          // Progress bar track
-          const barX = pL + 90;
-          const barW = bannerW - 90 - 8;
-          const barH = 5;
-          const barY = curY + (bannerH - barH) / 2;
-          doc.setFillColor(...panel3); doc.roundedRect(barX, barY, barW, barH, 2, 2, 'F');
-          // Progress fill
-          const fillW = Math.max(4, (healthScore / 100) * barW);
-          doc.setFillColor(...scoreColor); doc.roundedRect(barX, barY, fillW, barH, 2, 2, 'F');
-          curY += bannerH + 8;
+          const bY = curY;
+
+          // Card container (white with subtle border)
+          doc.setFillColor(...panel);
+          doc.roundedRect(pL, bY, bannerW, bannerH, 3, 3, 'F');
+          doc.setDrawColor(...bd);
+          doc.setLineWidth(0.25);
+          doc.roundedRect(pL, bY, bannerW, bannerH, 3, 3, 'S');
+
+          // Left Score Badge Pod
+          const podW = 28;
+          const podH = bannerH - 4;
+          const podX = pL + 2;
+          const podY = bY + 2;
+          doc.setFillColor(...scoreBg);
+          doc.roundedRect(podX, podY, podW, podH, 2, 2, 'F');
+          // Left accent bar inside pod
+          doc.setFillColor(...scoreColor);
+          doc.roundedRect(podX, podY, 3, podH, 1, 1, 'F');
+          doc.rect(podX + 1.5, podY, 1.5, podH, 'F');
+
+          // Score big digits inside pod
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(16);
+          doc.setTextColor(...scoreColor);
+          doc.text(`${healthScore}`, podX + 14, podY + 10.5, { align: 'center' });
+          // Score sub-label
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6);
+          doc.setTextColor(...muted);
+          doc.text('OUT OF 100', podX + 14, podY + 15, { align: 'center' });
+
+          // Middle description column
+          const midX = podX + podW + 6;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.5);
+          doc.setTextColor(...accentStripe);
+          doc.text('FINANCIAL HEALTH INDEX', midX, bY + 7);
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(...darkText);
+          doc.text(scoreLabel, midX, bY + 12.5);
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.setTextColor(...muted);
+          const concPct = topCat && totalExp > 0 ? Math.round((topCat[1] / totalExp) * 100) : 0;
+          doc.text(`Savings rate: ${savRate}% • Top category concentration: ${concPct}%`, midX, bY + 17.5);
+
+          // Right Gauge column
+          const gaugeW = 44;
+          const gaugeX = pR - gaugeW - 3;
+          const gaugeH = 4.5;
+          const gaugeY = bY + 11.5;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7);
+          doc.setTextColor(...muted);
+          doc.text('HEALTH SCORE', gaugeX, bY + 8);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8);
+          doc.setTextColor(...scoreColor);
+          doc.text(`${healthScore}%`, pR - 3, bY + 8, { align: 'right' });
+
+          // Track
+          doc.setFillColor(...panel3);
+          doc.roundedRect(gaugeX, gaugeY, gaugeW, gaugeH, 1.5, 1.5, 'F');
+          // Fill
+          const fillW = Math.max(3, (healthScore / 100) * gaugeW);
+          doc.setFillColor(...scoreColor);
+          doc.roundedRect(gaugeX, gaugeY, fillW, gaugeH, 1.5, 1.5, 'F');
+
+          curY += bannerH + 7;
         }
 
-        // ── INSIGHTS ─────────────────────────────────────────────────────────
+        // ── INSIGHTS (Real Dashboard Intelligence System) ───────────────────
         if (txCount > 0) {
-
-          // Build rich insight candidates first so we can show count in title
           const pdfInsightCandidates = [];
-          const stripHtml = (s) => (s || '').replace(/<[^>]+>/g, '').trim();
 
-          if (topCat) {
-            const pct = totalExp > 0 ? ((topCat[1] / totalExp) * 100).toFixed(0) : '0';
-            pdfInsightCandidates.push({ priority: 1, type: 'neg', icon: '\u{1F4B8}', badge: 'TOP SPEND', metric: fmtPDFS(topCat[1]), text: `Highest spend category: ${topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1)} — ${pct}% of total expenses.` });
-          }
-          if (largestTx) {
-            pdfInsightCandidates.push({ priority: 2, type: 'neg', icon: '\u26A0', badge: 'LARGEST TX', metric: fmtPDFS(largestTx.amount), text: `Largest single expense: "${largestTx.desc || 'No description'}" on ${largestTx.date}.` });
-          }
-          if (parseFloat(savRate) > 30) {
-            pdfInsightCandidates.push({ priority: 3, type: 'pos', icon: '\u2713', badge: 'GREAT SAVE', metric: `${savRate}%`, text: `Excellent savings rate! Saving over 30% of income this period.` });
-          } else if (parseFloat(savRate) > 0) {
-            pdfInsightCandidates.push({ priority: 3, type: 'neu', icon: '\u{1F4CA}', badge: 'SAV RATE', metric: `${savRate}%`, text: `Saved ${fmtPDFS(netBal)} this period. Aim for 20%+ for strong financial health.` });
-          } else if (netBal < 0) {
-            pdfInsightCandidates.push({ priority: 3, type: 'neg', icon: '\u{1F6A8}', badge: 'OVERSPEND', metric: fmtPDFS(Math.abs(netBal)), text: `Spending exceeded income by ${fmtPDFS(Math.abs(netBal))}. Review top categories.` });
-          }
+          // 1. Accurately Computed Daily Burn / Average
           if (avgDailyExp > 0) {
-            pdfInsightCandidates.push({ priority: 4, type: 'neu', icon: '\u{1F4C5}', badge: 'DAILY AVG', metric: fmtPDF(avgDailyExp), text: `Average daily spending was ${fmtPDF(avgDailyExp)} per day over the period.` });
+            pdfInsightCandidates.push({
+              priority: 3,
+              type: 'neu',
+              icon: '\u{1F4C5}',
+              badge: 'DAILY BURN',
+              metric: `${fmtPDFS(Math.round(avgDailyExp))}/day`,
+              text: `Daily spending burn: ${fmtPDFS(Math.round(avgDailyExp))}/day over ${periodDays} elapsed day${periodDays > 1 ? 's' : ''}${uniqueExpDays > 0 && uniqueExpDays < periodDays ? ` (averaged ${fmtPDFS(Math.round(avgActiveDayExp))}/day across ${uniqueExpDays} active spend days)` : ''}.`
+            });
           }
-          if (totalExp > 0) {
-            const oPct = ((onlineExp / totalExp) * 100).toFixed(0);
-            const domMode = parseInt(oPct) >= 50 ? 'Online' : 'Offline';
-            pdfInsightCandidates.push({ priority: 5, type: 'neu', icon: '\u{1F4F1}', badge: 'PAY SPLIT', metric: `${oPct}% online`, text: `Payment split: ${oPct}% online (${fmtPDFS(onlineExp)}) vs ${100 - parseInt(oPct)}% offline (${fmtPDFS(offlineExp)}). ${domMode} dominates.` });
+
+          // 2. Outlier Purchase Detection (from dashboard intelligence)
+          let outlierFound = false;
+          Object.keys(catMap).forEach(cat => {
+            if (outlierFound) return;
+            const cTxs = expTxs.filter(t => (t.cat || 'other') === cat).sort((a,b) => b.amount - a.amount);
+            if (cTxs.length >= 3) {
+              const top = cTxs[0];
+              const restAvg = cTxs.slice(1).reduce((s,t) => s + t.amount, 0) / (cTxs.length - 1);
+              if (restAvg > 0 && top.amount >= restAvg * 2.5 && top.amount >= 300) {
+                outlierFound = true;
+                const ratio = (top.amount / restAvg).toFixed(1);
+                const cn = cat.charAt(0).toUpperCase() + cat.slice(1);
+                pdfInsightCandidates.push({
+                  priority: 1,
+                  type: 'neg',
+                  icon: '\u26A0',
+                  badge: 'OUTLIER BUY',
+                  metric: `${ratio}x ${cn} Avg`,
+                  text: `Outlier expense: "${top.desc || 'No description'}" (${fmtPDFS(top.amount)}) on ${top.date} was ${ratio}x your typical ${cn} purchase.`
+                });
+              }
+            }
+          });
+
+          // 3. Top Category Concentration
+          if (topCat && totalExp > 0) {
+            const pct = Math.round((topCat[1] / totalExp) * 100);
+            const cn = topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1);
+            pdfInsightCandidates.push({
+              priority: pct >= 50 ? 2 : 5,
+              type: pct >= 50 ? 'neg' : 'neu',
+              icon: '\u{1F4B8}',
+              badge: 'TOP CATEGORY',
+              metric: `${fmtPDFS(topCat[1])} (${pct}%)`,
+              text: `Highest spending category is ${cn} at ${fmtPDFS(topCat[1])}, accounting for ${pct}% of all expense transactions.`
+            });
           }
-          if (catEntries.length >= 2) {
-            const pct2 = totalExp > 0 ? ((catEntries[1][1] / totalExp) * 100).toFixed(0) : '0';
-            pdfInsightCandidates.push({ priority: 6, type: 'neu', icon: '\u{1F4CB}', badge: '2ND SPEND', metric: fmtPDFS(catEntries[1][1]), text: `Second highest category: ${catEntries[1][0].charAt(0).toUpperCase() + catEntries[1][0].slice(1)} at ${pct2}% of expenses.` });
+
+          // 4. Micro-Spend Leak / Latte Factor (from dashboard intelligence)
+          if (expTxs.length >= 6 && totalExp >= 600) {
+            const avgTx = totalExp / expTxs.length;
+            const smallThresh = Math.min(300, Math.max(80, Math.round(avgTx * 0.5)));
+            const smallTxs = expTxs.filter(t => t.amount <= smallThresh && t.amount > 0);
+            const smallTotal = smallTxs.reduce((s, t) => s + t.amount, 0);
+            const smallPct = totalExp > 0 ? Math.round((smallTotal / totalExp) * 100) : 0;
+            if (smallTxs.length >= 4 && smallTotal >= 200 && smallPct >= 8) {
+              pdfInsightCandidates.push({
+                priority: 4,
+                type: 'neg',
+                icon: '\u2615',
+                badge: 'MICRO-LEAK',
+                metric: `${fmtPDFS(smallTotal)} (${smallPct}%)`,
+                text: `${smallTxs.length} small purchases (<= ${fmtPDFS(smallThresh)}) accumulated to ${fmtPDFS(smallTotal)} (${smallPct}% of total spend). Habitual small taps quietly erode savings.`
+              });
+            }
           }
+
+          // 5. Capital Retention & Savings Rate Benchmark (from dashboard intelligence)
+          const savRateNum = parseFloat(savRate);
           if (totalInc > 0) {
-            pdfInsightCandidates.push({ priority: 7, type: 'pos', icon: '\u{1F4B0}', badge: 'INCOME', metric: fmtPDFS(totalInc), text: `Total income recorded over this period across ${allInPeriod.filter(t => t.type === 'income').length} transactions.` });
+            if (savRateNum >= 30) {
+              pdfInsightCandidates.push({
+                priority: 2,
+                type: 'pos',
+                icon: '\u2713',
+                badge: 'HIGH SAVINGS',
+                metric: `${savRateNum}% Saved`,
+                text: `Outstanding savings rate: Retaining ${savRateNum}% of total income (${fmtPDFS(netBal)} buffer). Exceeding the 20% benchmark.`
+              });
+            } else if (savRateNum >= 15) {
+              pdfInsightCandidates.push({
+                priority: 3,
+                type: 'pos',
+                icon: '\u2713',
+                badge: 'ON TARGET',
+                metric: `${savRateNum}% Saved`,
+                text: `Healthy savings rate: ${savRateNum}% of income retained (${fmtPDFS(netBal)} net balance), aligned with healthy financial guidelines.`
+              });
+            } else if (savRateNum > 0) {
+              pdfInsightCandidates.push({
+                priority: 2,
+                type: 'neg',
+                icon: '\u26A1',
+                badge: 'SLIM BUFFER',
+                metric: `${savRateNum}% Margin`,
+                text: `Slim savings margin: Only ${savRateNum}% of income retained (${fmtPDFS(netBal)} remaining). Vulnerable to unexpected shocks.`
+              });
+            } else {
+              pdfInsightCandidates.push({
+                priority: 1,
+                type: 'neg',
+                icon: '\u{1F6A8}',
+                badge: 'DEFICIT',
+                metric: `-${fmtPDFS(Math.abs(netBal))}`,
+                text: `Spending exceeded earnings by ${fmtPDFS(Math.abs(netBal))}. Review top expense categories to curb deficit.`
+              });
+            }
           }
-          if (txCount >= 5) {
-            pdfInsightCandidates.push({ priority: 8, type: 'neu', icon: '\u{1F4DD}', badge: 'ACTIVITY', metric: `${txCount} txns`, text: `${txCount} transactions recorded in this period with ${expTxs.length} expenses tracked.` });
+
+          // 6. Weekend vs Weekday Surge Divergence (from dashboard intelligence)
+          let wkndExp = 0, wkdayExp = 0, wkndCount = 0, wkdayCount = 0;
+          expTxs.forEach(t => {
+            const dow = new Date(t.date + 'T00:00:00').getDay();
+            if (dow === 0 || dow === 6) { wkndExp += t.amount; wkndCount++; }
+            else { wkdayExp += t.amount; wkdayCount++; }
+          });
+          if (wkndCount >= 2 && wkdayCount >= 2 && wkndExp > 0 && totalExp > 0) {
+            const wkndPct = Math.round((wkndExp / totalExp) * 100);
+            if (wkndPct >= 40) {
+              pdfInsightCandidates.push({
+                priority: 6,
+                type: 'neu',
+                icon: '\u{1F37B}',
+                badge: 'WEEKEND SPEND',
+                metric: `${wkndPct}% on Sat-Sun`,
+                text: `Weekend spend concentration: ${fmtPDFS(wkndExp)} (${wkndPct}% of total) occurred across Saturday and Sunday (${wkndCount} transactions).`
+              });
+            }
+          }
+
+          // 7. Payment Channel Intelligence
+          if (totalExp > 0 && (onlineExp > 0 || offlineExp > 0)) {
+            const onPct = Math.round((onlineExp / totalExp) * 100);
+            const offPct = 100 - onPct;
+            if (onPct >= 80) {
+              pdfInsightCandidates.push({
+                priority: 7,
+                type: 'neu',
+                icon: '\u{1F4B3}',
+                badge: 'DIGITAL TAP',
+                metric: `${onPct}% Online`,
+                text: `${onPct}% of expenses (${fmtPDFS(onlineExp)}) paid via digital/online channels. Frictionless card/UPI taps dominate this period.`
+              });
+            } else if (offPct >= 40) {
+              pdfInsightCandidates.push({
+                priority: 7,
+                type: 'neu',
+                icon: '\u{1F4B5}',
+                badge: 'CASH SHARE',
+                metric: `${offPct}% Cash`,
+                text: `${offPct}% of expenses (${fmtPDFS(offlineExp)}) paid in offline cash across ${expTxs.filter(t => t.mode === 'offline').length} cash transactions.`
+              });
+            }
+          }
+
+          // 8. Repeat Merchant / Frequent Payee (from dashboard intelligence)
+          const descCounts = {};
+          expTxs.forEach(t => {
+            if (t.desc) {
+              const k = t.desc.trim().toLowerCase();
+              if (k) descCounts[k] = (descCounts[k] || 0) + 1;
+            }
+          });
+          const repeatEntries = Object.entries(descCounts).filter(e => e[1] >= 3).sort((a,b) => b[1] - a[1]);
+          if (repeatEntries.length > 0) {
+            const topDesc = repeatEntries[0][0];
+            const count = repeatEntries[0][1];
+            const totalForDesc = expTxs.filter(t => (t.desc || '').trim().toLowerCase() === topDesc).reduce((s,t) => s + t.amount, 0);
+            const dispName = topDesc.charAt(0).toUpperCase() + topDesc.slice(1);
+            pdfInsightCandidates.push({
+              priority: 8,
+              type: 'neu',
+              icon: '\u{1F501}',
+              badge: 'REPEAT PAYEE',
+              metric: `${count} txns • ${fmtPDFS(totalForDesc)}`,
+              text: `Frequent merchant: "${dispName}" visited ${count} times totaling ${fmtPDFS(totalForDesc)} (~${fmtPDFS(Math.round(totalForDesc / count))}/visit).`
+            });
+          }
+
+          // 9. Largest Transaction Fallback
+          if (largestTx && !outlierFound) {
+            pdfInsightCandidates.push({
+              priority: 9,
+              type: 'neu',
+              icon: '\u26A0',
+              badge: 'LARGEST TX',
+              metric: fmtPDFS(largestTx.amount),
+              text: `Largest single purchase: "${largestTx.desc || 'No description'}" on ${largestTx.date} for ${fmtPDFS(largestTx.amount)}.`
+            });
           }
 
           const topInsights = pdfInsightCandidates.sort((a, b) => a.priority - b.priority).slice(0, 8);
@@ -10862,8 +11075,8 @@
             bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 8.5, cellPadding: 4.5, valign: 'middle' },
             alternateRowStyles: { fillColor: [244, 246, 252] },
             columnStyles: hasEvents
-              ? { 0: { cellWidth: 'wrap', halign: 'left' }, 1: {}, 2: { cellWidth: 26 }, 3: { cellWidth: 'wrap', halign: 'right' }, 4: { cellWidth: 16, halign: 'center' }, 5: { cellWidth: 24 } }
-              : { 0: { cellWidth: 'wrap', halign: 'left' }, 1: {}, 2: { cellWidth: 26 }, 3: { cellWidth: 'wrap', halign: 'right' }, 4: { cellWidth: 16, halign: 'center' } },
+              ? { 0: { cellWidth: 'wrap', halign: 'left' }, 1: {}, 2: { cellWidth: 25 }, 3: { cellWidth: 'wrap', halign: 'right' }, 4: { cellWidth: 20, halign: 'center' }, 5: { cellWidth: 24 } }
+              : { 0: { cellWidth: 'wrap', halign: 'left' }, 1: {}, 2: { cellWidth: 26 }, 3: { cellWidth: 'wrap', halign: 'right' }, 4: { cellWidth: 20, halign: 'center' } },
             tableLineColor: bd, tableLineWidth: 0.15,
             didParseCell: (d) => {
               if (d.section === 'body') {
@@ -10881,17 +11094,18 @@
                   d.cell.styles.fontStyle = 'bold';
                 }
 
-                // Mode column: online = blue tint, offline = purple tint
+                // Mode column: use normal font weight and compact horizontal padding to prevent wrapping
                 if (d.column.index === modeIdx) {
                   const modeVal = (d.cell.raw || '').toString().toLowerCase();
+                  d.cell.styles.fontStyle = 'normal';
+                  d.cell.styles.fontSize = 8;
+                  d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 1, right: 1 };
                   if (modeVal === 'online') {
                     d.cell.styles.fillColor = blueBg;
                     d.cell.styles.textColor = blue;
-                    d.cell.styles.fontStyle = 'bold';
                   } else if (modeVal === 'offline') {
                     d.cell.styles.fillColor = [237, 233, 254];
                     d.cell.styles.textColor = [109, 40, 217];
-                    d.cell.styles.fontStyle = 'bold';
                   }
                 }
 
