@@ -10372,6 +10372,156 @@
           curY += bannerH + 7;
         }
 
+        // ── CASH FLOW VITALS & LIQUIDITY (Page 1 Executive Filler) ──────────
+        if (txCount > 0) {
+          sectionTitle('CASH FLOW VITALS & LIQUIDITY');
+
+          // 1. Full-Width Cash Flow Ratio Bar Card
+          const flowCardH = 17;
+          const flowCardW = W - 30;
+          const flowY = curY;
+
+          doc.setFillColor(...panel);
+          doc.roundedRect(pL, flowY, flowCardW, flowCardH, 2.5, 2.5, 'F');
+          doc.setDrawColor(...bd);
+          doc.setLineWidth(0.2);
+          doc.roundedRect(pL, flowY, flowCardW, flowCardH, 2.5, 2.5, 'S');
+
+          // Labels above the track
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.5);
+          doc.setTextColor(...darkText);
+          doc.text('CASH FLOW RATIO', pL + 6, flowY + 5.5);
+
+          const totalFlow = totalInc + totalExp;
+          const incPct = totalFlow > 0 ? Math.round((totalInc / totalFlow) * 100) : 50;
+          const expPct = 100 - incPct;
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.5);
+          doc.setTextColor(netBal >= 0 ? green[0] : red[0], netBal >= 0 ? green[1] : red[1], netBal >= 0 ? green[2] : red[2]);
+          const netLabel = netBal >= 0 ? `Net Surplus: +${fmtPDFS(netBal)}` : `Net Deficit: -${fmtPDFS(Math.abs(netBal))}`;
+          doc.text(netLabel, pL + 46, flowY + 5.5);
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(...muted);
+          doc.text(`Total Turnover: ${fmtPDFS(totalFlow)}`, pR - 6, flowY + 5.5, { align: 'right' });
+
+          // Dual-Color Progress Track
+          const trkX = pL + 6;
+          const trkW = flowCardW - 12;
+          const trkH = 4;
+          const trkY = flowY + 7.5;
+
+          if (totalFlow > 0) {
+            const incW = Math.max(2, (incPct / 100) * trkW);
+            doc.setFillColor(...red);
+            doc.roundedRect(trkX, trkY, trkW, trkH, 1.5, 1.5, 'F');
+            doc.setFillColor(...green);
+            doc.roundedRect(trkX, trkY, Math.min(incW, trkW), trkH, 1.5, 1.5, 'F');
+          } else {
+            doc.setFillColor(...panel3);
+            doc.roundedRect(trkX, trkY, trkW, trkH, 1.5, 1.5, 'F');
+          }
+
+          // Sub-labels below track
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(...green);
+          doc.text(`Income: ${fmtPDFS(totalInc)} (${incPct}%)`, trkX, flowY + 15);
+
+          doc.setTextColor(...red);
+          doc.text(`Expenses: ${fmtPDFS(totalExp)} (${expPct}%)`, pR - 6, flowY + 15, { align: 'right' });
+
+          curY += flowCardH + 5;
+
+          // 2. 3 Executive Metric Pods (Discretionary vs Fixed, Peak Spend Day, Avg Ticket)
+          const podGap = 5;
+          const pColW = (W - 30 - podGap * 2) / 3;
+          const pPodH = 24;
+
+          // Fixed vs Flexible
+          const fixedExpAmt = expTxs.filter(t => t.subId || t._recurring || t.cat === 'housing' || t.cat === 'utilities').reduce((s,t) => s + t.amount, 0);
+          const discExpAmt = Math.max(0, totalExp - fixedExpAmt);
+          const discPct = totalExp > 0 ? Math.round((discExpAmt / totalExp) * 100) : 0;
+
+          // Peak Spend Day
+          const daySpendMap = {};
+          expTxs.forEach(t => { daySpendMap[t.date] = (daySpendMap[t.date] || 0) + t.amount; });
+          const dayEntries = Object.entries(daySpendMap).sort((a,b) => b[1] - a[1]);
+          const peakDate = dayEntries.length ? dayEntries[0][0] : null;
+          const peakAmt = dayEntries.length ? dayEntries[0][1] : 0;
+          const peakPct = totalExp > 0 ? Math.round((peakAmt / totalExp) * 100) : 0;
+          let peakDateFormatted = 'None';
+          if (peakDate) {
+            const pkD = new Date(peakDate + 'T00:00:00');
+            peakDateFormatted = `${pkD.getDate()} ${pkD.toLocaleString('default', { month: 'short' })}`;
+          }
+
+          // Average Ticket Size
+          const avgExpTicket = expTxs.length ? Math.round(totalExp / expTxs.length) : 0;
+          const incTxs = allInPeriod.filter(t => t.type === 'income');
+          const avgIncTicket = incTxs.length ? Math.round(totalInc / incTxs.length) : 0;
+
+          const vitalsPods = [
+            {
+              topColor: [110, 157, 200],
+              title: 'FIXED VS FLEXIBLE',
+              value: fmtPDFS(fixedExpAmt),
+              sub: `Fixed bills • ${fmtPDFS(discExpAmt)} flex (${discPct}%)`
+            },
+            {
+              topColor: red,
+              title: 'PEAK SPEND DAY',
+              value: peakAmt > 0 ? fmtPDFS(peakAmt) : '₹ 0',
+              sub: peakAmt > 0 ? `${peakDateFormatted} • ${peakPct}% of spend` : 'No expenses recorded'
+            },
+            {
+              topColor: accentStripe,
+              title: 'AVG TICKET SIZE',
+              value: fmtPDFS(avgExpTicket),
+              sub: `Per expense • ${avgIncTicket > 0 ? `${fmtPDFS(avgIncTicket)}/inc` : `${expTxs.length} txns`}`
+            }
+          ];
+
+          vitalsPods.forEach((pod, pIdx) => {
+            const px = pL + pIdx * (pColW + podGap);
+            const py = curY;
+
+            doc.setFillColor(...panel);
+            doc.roundedRect(px, py, pColW, pPodH, 2.5, 2.5, 'F');
+            doc.setDrawColor(...bd);
+            doc.setLineWidth(0.2);
+            doc.roundedRect(px, py, pColW, pPodH, 2.5, 2.5, 'S');
+
+            // Top accent stripe
+            doc.setFillColor(...pod.topColor);
+            doc.roundedRect(px, py, pColW, 2.5, 1, 1, 'F');
+            doc.rect(px, py + 1.2, pColW, 1.3, 'F');
+
+            // Title
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.5);
+            doc.setTextColor(...muted);
+            doc.text(pod.title, px + 5, py + 7);
+
+            // Value
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(...darkText);
+            doc.text(pod.value, px + 5, py + 15);
+
+            // Sub
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(6);
+            doc.setTextColor(...muted);
+            doc.text(pod.sub, px + 5, py + 20.5);
+          });
+
+          curY += pPodH + 6;
+        }
+
         // ── INSIGHTS (Real Dashboard Intelligence System) ───────────────────
         if (txCount > 0) {
           const pdfInsightCandidates = [];
@@ -10570,6 +10720,8 @@
           }
 
           const topInsights = pdfInsightCandidates.sort((a, b) => a.priority - b.priority).slice(0, 8);
+          doc.addPage();
+          curY = 22;
           sectionTitle(`KEY INSIGHTS  (${topInsights.length})`);
 
           // Card rendering — premium PDF vibe: gold/dark palette, pill badges, hairline dividers
