@@ -10149,20 +10149,24 @@
 
         // Section title helper — text vertically centred in the strip
         const sectionTitle = (title) => {
-          checkBreak(17);
+          checkBreak(19);
+          // Hairline separator above section
+          doc.setDrawColor(...bd); doc.setLineWidth(0.2);
+          doc.line(pL, curY, pR, curY);
+          curY += 2;
           const stripH = 11;
           // Background strip
           doc.setFillColor(...panel3);
           doc.roundedRect(pL, curY, W - 30, stripH, 2, 2, 'F');
-          // Gold left accent bar (full height, square right edge)
+          // Gold left accent bar — 5px thick (full height, square right edge)
           doc.setFillColor(...accentStripe);
-          doc.roundedRect(pL, curY, 4, stripH, 1, 1, 'F');
-          doc.rect(pL + 2, curY, 2, stripH, 'F');
+          doc.roundedRect(pL, curY, 5, stripH, 1, 1, 'F');
+          doc.rect(pL + 3, curY, 2, stripH, 'F');
           // Title text — PDF centering formula: baseline = stripTop + (stripH + capH) / 2
-          // 9.5pt bold cap height ≈ 9.5 × 0.3528mm × 0.72 ≈ 2.41mm
-          const capH95 = 9.5 * 0.3528 * 0.72;
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...darkText);
-          doc.text(title, pL + 10, curY + (stripH + capH95) / 2);
+          // 10pt bold cap height ≈ 10 × 0.3528mm × 0.72 ≈ 2.54mm
+          const capH10 = 10 * 0.3528 * 0.72;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...darkText);
+          doc.text(title, pL + 11, curY + (stripH + capH10) / 2);
           curY += stripH + 5;
         };
 
@@ -10219,31 +10223,41 @@
         const cardH = 34;
         const cardGap = 6;
         const summaryCards = [
-          { label: 'NET BALANCE', val: fmtPDF(netBal, true), color: netBal >= 0 ? green : red, bgColor: netBal >= 0 ? greenBg : redBg, sub: netBal >= 0 ? 'Positive cash flow' : 'Spending exceeds income' },
-          { label: 'TOTAL INCOME', val: fmtPDFS(totalInc), color: green, bgColor: greenBg, sub: `${allInPeriod.filter(t => t.type === 'income').length} income entries` },
-          { label: 'TOTAL EXPENSES', val: fmtPDFS(totalExp), color: red, bgColor: redBg, sub: `${expTxs.length} expense entries` },
-          { label: 'SAVINGS RATE', val: `${savRate}%`, color: parseFloat(savRate) >= 20 ? green : parseFloat(savRate) >= 0 ? [140, 100, 20] : red, bgColor: parseFloat(savRate) >= 20 ? greenBg : parseFloat(savRate) >= 0 ? [255, 248, 220] : redBg, sub: parseFloat(savRate) >= 20 ? 'Healthy savings' : 'Below target (20%)' },
+          { label: 'NET BALANCE', val: fmtPDF(netBal, true), icon: '\u2295', color: netBal >= 0 ? green : red, bgColor: netBal >= 0 ? greenBg : redBg, sub: netBal >= 0 ? 'Positive cash flow' : 'Spending exceeds income' },
+          { label: 'TOTAL INCOME', val: fmtPDFS(totalInc), icon: '\u2191', color: green, bgColor: greenBg, sub: `${allInPeriod.filter(t => t.type === 'income').length} income entries` },
+          { label: 'TOTAL EXPENSES', val: fmtPDFS(totalExp), icon: '\u2193', color: red, bgColor: redBg, sub: `${expTxs.length} expense entries` },
+          { label: 'SAVINGS RATE', val: `${savRate}%`, icon: '\u25c9', color: parseFloat(savRate) >= 20 ? green : parseFloat(savRate) >= 0 ? [140, 100, 20] : red, bgColor: parseFloat(savRate) >= 20 ? greenBg : parseFloat(savRate) >= 0 ? [255, 248, 220] : redBg, sub: parseFloat(savRate) >= 20 ? 'Healthy savings' : 'Below target (20%)' },
         ];
+        // Subtle tint behind entire 2x2 grid
+        const gridAreaH = (cardH + cardGap) * 2 - cardGap + 8;
+        doc.setFillColor(...panel2);
+        doc.roundedRect(pL - 3, curY - 3, W - 24, gridAreaH, 3, 3, 'F');
         summaryCards.forEach((c, i) => {
           const row = Math.floor(i / 2), col = i % 2;
           const cx = pL + col * (cardW + cardGap);
           const cy = curY + row * (cardH + cardGap);
-          // Card background — very light tint
+          // Card background — white
           doc.setFillColor(...panel); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'F');
           // Subtle border
           doc.setDrawColor(...bd); doc.setLineWidth(0.25); doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
+          // Thin colored top stripe (3px)
+          doc.setFillColor(...c.color); doc.roundedRect(cx, cy, cardW, 3, 1.5, 1.5, 'F');
+          doc.rect(cx, cy + 1.5, cardW, 1.5, 'F'); // square off bottom of top stripe
           // Left accent bar in card color
           doc.setFillColor(...c.color); doc.roundedRect(cx, cy, 4, cardH, 1.5, 1.5, 'F');
           doc.setFillColor(...c.color); doc.rect(cx + 2, cy, 2, cardH, 'F'); // square off right side of bar
+          // Icon symbol (top-right corner)
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...c.color);
+          doc.text(c.icon, cx + cardW - 7, cy + 9, { align: 'right' });
           // Label
           doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...muted);
-          doc.text(c.label, cx + 9, cy + 8);
-          // Value — large and colored
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(...c.color);
-          doc.text(c.val, cx + 9, cy + 21);
+          doc.text(c.label, cx + 9, cy + 9);
+          // Value — large and colored (18pt)
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(...c.color);
+          doc.text(c.val, cx + 9, cy + 23);
           // Sub-label
           doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
-          doc.text(c.sub, cx + 9, cy + 29);
+          doc.text(c.sub, cx + 9, cy + 30);
         });
         curY += (cardH + cardGap) * 2 + 4;
 
@@ -10262,59 +10276,151 @@
         doc.text(`${expTxs.length} expenses`, pL + 105, txTextY);
         curY += txStripH + 8;
 
+        // ── FINANCIAL HEALTH SCORE ───────────────────────────────────────────
+        {
+          const savRateNum = parseFloat(savRate);
+          const scoreA = savRateNum >= 20 ? 40 : savRateNum >= 10 ? 25 : 10;
+          const scoreB = topCat && totalExp > 0 && topCat[1] / totalExp < 0.5 ? 30 : 15;
+          const scoreC = txCount >= 10 ? 30 : 15;
+          const healthScore = Math.min(100, scoreA + scoreB + scoreC);
+          const scoreColor = healthScore >= 75 ? green : healthScore >= 50 ? [140, 100, 20] : red;
+          const scoreLabel = healthScore >= 75 ? 'Strong Financial Health' : healthScore >= 50 ? 'Moderate Financial Health' : 'Needs Improvement';
+
+          checkBreak(22);
+          const bannerH = 20;
+          const bannerW = W - 30;
+          doc.setFillColor(...panel2); doc.roundedRect(pL, curY, bannerW, bannerH, 3, 3, 'F');
+          doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, curY, bannerW, bannerH, 3, 3, 'S');
+          // Left accent
+          doc.setFillColor(...scoreColor); doc.roundedRect(pL, curY, 4, bannerH, 1.5, 1.5, 'F');
+          doc.rect(pL + 2, curY, 2, bannerH, 'F');
+          // Score number
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(...scoreColor);
+          doc.text(`${healthScore}`, pL + 9, curY + 13);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...muted);
+          doc.text('/100', pL + 9 + doc.getTextWidth(`${healthScore}`) + 1, curY + 13);
+          // Label
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...darkText);
+          doc.text('FINANCIAL HEALTH SCORE', pL + 36, curY + 7);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...scoreColor);
+          doc.text(scoreLabel, pL + 36, curY + 14);
+          // Progress bar track
+          const barX = pL + 90;
+          const barW = bannerW - 90 - 8;
+          const barH = 5;
+          const barY = curY + (bannerH - barH) / 2;
+          doc.setFillColor(...panel3); doc.roundedRect(barX, barY, barW, barH, 2, 2, 'F');
+          // Progress fill
+          const fillW = Math.max(4, (healthScore / 100) * barW);
+          doc.setFillColor(...scoreColor); doc.roundedRect(barX, barY, fillW, barH, 2, 2, 'F');
+          curY += bannerH + 8;
+        }
+
         // ── INSIGHTS ─────────────────────────────────────────────────────────
         if (txCount > 0) {
-          sectionTitle('KEY INSIGHTS');
-          const insights = [];
-          if (topCat) insights.push(`Highest spend category: ${topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1)} (${fmtPDFS(topCat[1])}, ${totalExp > 0 ? ((topCat[1] / totalExp) * 100).toFixed(0) : '0'}% of expenses)`);
-          if (largestTx) insights.push(`Largest single expense: ${largestTx.desc || '(no description)'} on ${largestTx.date} for ${fmtPDFS(largestTx.amount)}`);
-          if (avgDailyExp > 0) insights.push(`Average daily spending: ${fmtPDF(avgDailyExp)} per day`);
-          if (totalExp > 0) {
-            const onlinePct = ((onlineExp / totalExp) * 100).toFixed(0);
-            insights.push(`Payment split: ${onlinePct}% online (${fmtPDFS(onlineExp)})  vs  ${100 - parseInt(onlinePct)}% offline (${fmtPDFS(offlineExp)})`);
+
+          // Build rich insight candidates first so we can show count in title
+          const pdfInsightCandidates = [];
+          const stripHtml = (s) => (s || '').replace(/<[^>]+>/g, '').trim();
+
+          if (topCat) {
+            const pct = totalExp > 0 ? ((topCat[1] / totalExp) * 100).toFixed(0) : '0';
+            pdfInsightCandidates.push({ priority: 1, type: 'neg', icon: '\u{1F4B8}', badge: 'TOP SPEND', metric: fmtPDFS(topCat[1]), text: `Highest spend category: ${topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1)} — ${pct}% of total expenses.` });
           }
-          if (catEntries.length >= 2) insights.push(`Second highest: ${catEntries[1][0].charAt(0).toUpperCase() + catEntries[1][0].slice(1)} at ${fmtPDFS(catEntries[1][1])} (${totalExp > 0 ? ((catEntries[1][1] / totalExp) * 100).toFixed(0) : '0'}%)`);
-          if (parseFloat(savRate) > 30) insights.push('Excellent savings rate! You are saving more than 30% of income this period.');
-          else if (parseFloat(savRate) > 0) insights.push(`You saved ${fmtPDFS(netBal)} this period. Aim for 20%+ for strong financial health.`);
-          else if (netBal < 0) insights.push(`Spending exceeded income by ${fmtPDFS(Math.abs(netBal))}. Review top categories to reduce costs.`);
+          if (largestTx) {
+            pdfInsightCandidates.push({ priority: 2, type: 'neg', icon: '\u26A0', badge: 'LARGEST TX', metric: fmtPDFS(largestTx.amount), text: `Largest single expense: "${largestTx.desc || 'No description'}" on ${largestTx.date}.` });
+          }
+          if (parseFloat(savRate) > 30) {
+            pdfInsightCandidates.push({ priority: 3, type: 'pos', icon: '\u2713', badge: 'GREAT SAVE', metric: `${savRate}%`, text: `Excellent savings rate! Saving over 30% of income this period.` });
+          } else if (parseFloat(savRate) > 0) {
+            pdfInsightCandidates.push({ priority: 3, type: 'neu', icon: '\u{1F4CA}', badge: 'SAV RATE', metric: `${savRate}%`, text: `Saved ${fmtPDFS(netBal)} this period. Aim for 20%+ for strong financial health.` });
+          } else if (netBal < 0) {
+            pdfInsightCandidates.push({ priority: 3, type: 'neg', icon: '\u{1F6A8}', badge: 'OVERSPEND', metric: fmtPDFS(Math.abs(netBal)), text: `Spending exceeded income by ${fmtPDFS(Math.abs(netBal))}. Review top categories.` });
+          }
+          if (avgDailyExp > 0) {
+            pdfInsightCandidates.push({ priority: 4, type: 'neu', icon: '\u{1F4C5}', badge: 'DAILY AVG', metric: fmtPDF(avgDailyExp), text: `Average daily spending was ${fmtPDF(avgDailyExp)} per day over the period.` });
+          }
+          if (totalExp > 0) {
+            const oPct = ((onlineExp / totalExp) * 100).toFixed(0);
+            const domMode = parseInt(oPct) >= 50 ? 'Online' : 'Offline';
+            pdfInsightCandidates.push({ priority: 5, type: 'neu', icon: '\u{1F4F1}', badge: 'PAY SPLIT', metric: `${oPct}% online`, text: `Payment split: ${oPct}% online (${fmtPDFS(onlineExp)}) vs ${100 - parseInt(oPct)}% offline (${fmtPDFS(offlineExp)}). ${domMode} dominates.` });
+          }
+          if (catEntries.length >= 2) {
+            const pct2 = totalExp > 0 ? ((catEntries[1][1] / totalExp) * 100).toFixed(0) : '0';
+            pdfInsightCandidates.push({ priority: 6, type: 'neu', icon: '\u{1F4CB}', badge: '2ND SPEND', metric: fmtPDFS(catEntries[1][1]), text: `Second highest category: ${catEntries[1][0].charAt(0).toUpperCase() + catEntries[1][0].slice(1)} at ${pct2}% of expenses.` });
+          }
+          if (totalInc > 0) {
+            pdfInsightCandidates.push({ priority: 7, type: 'pos', icon: '\u{1F4B0}', badge: 'INCOME', metric: fmtPDFS(totalInc), text: `Total income recorded over this period across ${allInPeriod.filter(t => t.type === 'income').length} transactions.` });
+          }
+          if (txCount >= 5) {
+            pdfInsightCandidates.push({ priority: 8, type: 'neu', icon: '\u{1F4DD}', badge: 'ACTIVITY', metric: `${txCount} txns`, text: `${txCount} transactions recorded in this period with ${expTxs.length} expenses tracked.` });
+          }
 
-          // Font metrics for 9pt regular
-          const FS = 9, PT = 0.3528;
-          const capH = FS * PT * 0.72;   // ~2.286mm — height of capital letters above baseline
-          const descH = FS * PT * 0.22;   // ~0.700mm — depth of descenders below baseline
-          const lineH = FS * PT * 1.15;   // ~3.647mm — matches jsPDF default line-height factor
-          const vPad = 3.5;              // equal top & bottom padding in mm
+          const topInsights = pdfInsightCandidates.sort((a, b) => a.priority - b.priority).slice(0, 8);
+          sectionTitle(`KEY INSIGHTS  (${topInsights.length})`);
 
-          insights.forEach((ins) => {
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(FS);
-            const insLines = doc.splitTextToSize(ins, W - pL - 15 - 18);
+          // Card rendering — premium PDF vibe: gold/dark palette, pill badges, hairline dividers
+          topInsights.forEach((ins, idx) => {
+            const cardFullW = W - 30;
+            const cardTextW = cardFullW - 48; // text area after left bar + icon + right metric
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+            const insLines = doc.splitTextToSize(ins.text, cardTextW);
+            const lineH = 8.5 * 0.3528 * 1.25;
+            const capH = 8.5 * 0.3528 * 0.72;
+            const textBlockH = capH + (insLines.length - 1) * lineH;
+            const vPad = 4.5;
+            const cardRowH = Math.max(20, textBlockH + vPad * 2 + 7); // row for badge + text
+            checkBreak(cardRowH + 2);
 
-            // Strip height = actual text block height + equal padding top and bottom
-            // blockH: from top of first capital to bottom of last descender
-            const blockH = capH + (insLines.length - 1) * lineH + descH;
-            const stripH = blockH + vPad * 2;
-            checkBreak(stripH + 3);
-            const stripY = curY;
+            // Color scheme: pos=green, neg=red, neu=gold (matches PDF brand palette)
+            const insColor    = ins.type === 'pos' ? green        : ins.type === 'neg' ? red        : accentStripe;
+            const insBgLight  = ins.type === 'pos' ? greenBg      : ins.type === 'neg' ? redBg      : [255, 251, 240];
+            const cardY = curY;
 
-            // Background strip
-            doc.setFillColor(...panel2);
-            doc.roundedRect(pL, stripY, W - 30, stripH, 2, 2, 'F');
+            // ── Card background (white with very light tint) ──
+            doc.setFillColor(...panel); doc.roundedRect(pL, cardY, cardFullW, cardRowH, 2.5, 2.5, 'F');
+            // Top tinted strip (3px band at top of card for type-color accent)
+            doc.setFillColor(...insBgLight);
+            doc.roundedRect(pL, cardY, cardFullW, 3, 1, 1, 'F');
+            doc.rect(pL, cardY + 1.5, cardFullW, 1.5, 'F'); // square off bottom of rounded strip
+            // Outer border
+            doc.setDrawColor(...bd); doc.setLineWidth(0.2);
+            doc.roundedRect(pL, cardY, cardFullW, cardRowH, 2.5, 2.5, 'S');
+            // Left accent bar (solid, type color)
+            doc.setFillColor(...insColor);
+            doc.roundedRect(pL, cardY, 4, cardRowH, 1.5, 1.5, 'F');
+            doc.rect(pL + 2, cardY, 2, cardRowH, 'F');
 
-            // Gold bullet — at exact vertical centre of strip (= centre of text block)
-            doc.setFillColor(...accentStripe);
-            doc.circle(pL + 7, stripY + stripH / 2, 1.5, 'F');
+            // ── Badge pill (top-left, after bar) ──
+            const badgeX = pL + 8;
+            const badgeY = cardY + 4;
+            const badgeTxt = ins.badge;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(6);
+            const badgeW = doc.getTextWidth(badgeTxt) + 5;
+            doc.setFillColor(...insColor);
+            doc.roundedRect(badgeX, badgeY, badgeW, 4.5, 1, 1, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.text(badgeTxt, badgeX + 2.5, badgeY + 3.2);
 
-            // Text — first baseline = stripTop + vPad + capH
-            // This places top of first capital at (stripTop + vPad) — perfectly centred
-            doc.setTextColor(...darkText);
-            const firstBaseline = stripY + vPad + capH;
+            // ── Metric value (top-right, type-colored, bold) ──
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...insColor);
+            doc.text(ins.metric, pR - 3, cardY + 7.5, { align: 'right' });
+
+            // ── Vertical divider between badge+metric area and text ──
+            const dividerY = cardY + 10;
+            doc.setDrawColor(...bd); doc.setLineWidth(0.15);
+            doc.line(pL + 8, dividerY, pL + cardFullW - 8, dividerY);
+
+            // ── Main text ──
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...darkText);
+            const firstBaseline = dividerY + 2 + capH;
             insLines.forEach((line, li) => {
-              doc.text(line, pL + 14, firstBaseline + li * lineH);
+              doc.text(line, pL + 8, firstBaseline + li * lineH);
             });
 
-            curY = stripY + stripH + 3;
+            curY = cardY + cardRowH + 2.5;
           });
-          curY += 6;
+          curY += 5;
         }
 
         // ── PAGE 2: TREND CHARTS (Income and Expense) ───────────────────
@@ -10373,7 +10479,14 @@
             doc.setFillColor(...panel2); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'F');
             doc.setDrawColor(...borderDark); doc.setLineWidth(0.15); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'S');
 
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...gold);
+            // 3 horizontal gradient bands (decreasing opacity from bottom)
+            const bandColors = [
+              color.map(c => Math.round(c + (255 - c) * 0.94)),
+              color.map(c => Math.round(c + (255 - c) * 0.97)),
+              color.map(c => Math.round(c + (255 - c) * 0.99)),
+            ];
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...gold);
             doc.text(title, cX + fullW / 2, cY + 8, { align: 'center' });
 
             let maxAmt = 0;
@@ -10389,6 +10502,13 @@
             const gridX = cX + padLeft;
             const gridY = cY + padTop;
             const gridBottom = gridY + drawH;
+
+            // Draw 3 gradient-like horizontal bands as background within chart area
+            const bandH = drawH / 3;
+            [0, 1, 2].forEach(bi => {
+              doc.setFillColor(...bandColors[2 - bi]);
+              doc.rect(gridX, gridY + bi * bandH, drawW, bandH, 'F');
+            });
 
             const formatPdfAmt = (v) => {
               if (v < 1000) return v.toFixed(0);
@@ -10413,6 +10533,25 @@
 
             const getX = (idx) => gridX + (pts.length <= 1 ? drawW / 2 : (idx / (pts.length - 1)) * drawW);
             const getY = (val) => gridBottom - (val / maxAmt) * drawH;
+
+            // Area fill under the line (semi-transparent, mixed with white at ~82% opacity)
+            if (pts.length > 1) {
+              const areaColor = color.map(c => Math.round(c + (255 - c) * 0.82));
+              doc.setFillColor(...areaColor);
+              const areaSegs = [];
+              // Start at bottom-left corner
+              const x0 = getX(0);
+              const xN = getX(pts.length - 1);
+              // Build polygon: (x0,gridBottom) → each point → (xN,gridBottom) → close
+              const polyPts = [[x0, gridBottom]];
+              for (let i = 0; i < pts.length; i++) polyPts.push([getX(i), getY(pts[i][dataKey])]);
+              polyPts.push([xN, gridBottom]);
+              const lineSegsArea = [];
+              for (let i = 1; i < polyPts.length; i++) {
+                lineSegsArea.push([polyPts[i][0] - polyPts[i - 1][0], polyPts[i][1] - polyPts[i - 1][1]]);
+              }
+              doc.lines(lineSegsArea, polyPts[0][0], polyPts[0][1], [1, 1], 'F', true);
+            }
 
             doc.setDrawColor(...color); doc.setLineWidth(1.0);
             for (let i = 1; i < pts.length; i++) doc.line(getX(i - 1), getY(pts[i - 1][dataKey]), getX(i), getY(pts[i][dataKey]));
@@ -10720,8 +10859,8 @@
             startY: curY, head: [headRow], body: txRows,
             margin: { left: pL, right: 15, top: 22, bottom: 18 }, theme: 'grid',
             headStyles: { fillColor: headerBg, textColor: accentStripe, fontStyle: 'bold', fontSize: 8.5, cellPadding: 4 },
-            bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 8.5, cellPadding: 3.5, valign: 'middle' },
-            alternateRowStyles: { fillColor: altRow },
+            bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 8.5, cellPadding: 4.5, valign: 'middle' },
+            alternateRowStyles: { fillColor: [244, 246, 252] },
             columnStyles: hasEvents
               ? { 0: { cellWidth: 'wrap', halign: 'left' }, 1: {}, 2: { cellWidth: 26 }, 3: { cellWidth: 'wrap', halign: 'right' }, 4: { cellWidth: 16, halign: 'center' }, 5: { cellWidth: 24 } }
               : { 0: { cellWidth: 'wrap', halign: 'left' }, 1: {}, 2: { cellWidth: 26 }, 3: { cellWidth: 'wrap', halign: 'right' }, 4: { cellWidth: 16, halign: 'center' } },
@@ -10731,6 +10870,7 @@
                 const idIdx = hasEvents ? 6 : 5;
                 const typeIdx = hasEvents ? 7 : 6;
                 const colorIdx = hasEvents ? 8 : -1;
+                const modeIdx = 4;
 
                 const isLargest = largestTx && d.row.raw[idIdx] === largestTx.id;
                 const evHex = hasEvents ? d.row.raw[colorIdx] : '';
@@ -10739,6 +10879,20 @@
                 if (d.column.index === 3) {
                   d.cell.styles.textColor = d.row.raw[typeIdx] === 'income' ? green : red;
                   d.cell.styles.fontStyle = 'bold';
+                }
+
+                // Mode column: online = blue tint, offline = purple tint
+                if (d.column.index === modeIdx) {
+                  const modeVal = (d.cell.raw || '').toString().toLowerCase();
+                  if (modeVal === 'online') {
+                    d.cell.styles.fillColor = blueBg;
+                    d.cell.styles.textColor = blue;
+                    d.cell.styles.fontStyle = 'bold';
+                  } else if (modeVal === 'offline') {
+                    d.cell.styles.fillColor = [237, 233, 254];
+                    d.cell.styles.textColor = [109, 40, 217];
+                    d.cell.styles.fontStyle = 'bold';
+                  }
                 }
 
                 // Event column: use event background color + auto-computed readable text color
