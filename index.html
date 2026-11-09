@@ -11056,8 +11056,8 @@
             const yr = d.getFullYear();
             const dateStr = `${day}-${mon}-${yr}`;
             const amtStr = fmtPDF(t.type === 'income' ? t.amount : -t.amount, true);
-            // Use real spaces after common delimiters (+,/) because jsPDF ignores zero-width spaces for wrapping
-            const desc = (t.desc || '(no description)').replace(/([+,/])/g, '$1 ');
+            // Format description: ensure natural word-breaking at whitespace & punctuation delimiters so whole words wrap to 2nd row
+            const desc = (t.desc || '(no description)').replace(/([+,/_\-])(?=[^\s])/g, '$1 ').replace(/\s+/g, ' ').trim();
             const catLabel = (t.cat || 'other').charAt(0).toUpperCase() + (t.cat || 'other').slice(1);
 
             const row = [dateStr, desc, catLabel, amtStr, (t.mode || 'online')];
@@ -11072,11 +11072,11 @@
             startY: curY, head: [headRow], body: txRows,
             margin: { left: pL, right: 15, top: 22, bottom: 18 }, theme: 'grid',
             headStyles: { fillColor: headerBg, textColor: accentStripe, fontStyle: 'bold', fontSize: 8.5, cellPadding: 4 },
-            bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 8.5, cellPadding: 4.5, valign: 'middle' },
+            bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 2.5, right: 2.5 }, valign: 'middle', overflow: 'linebreak' },
             alternateRowStyles: { fillColor: [244, 246, 252] },
             columnStyles: hasEvents
-              ? { 0: { cellWidth: 'wrap', halign: 'left' }, 1: {}, 2: { cellWidth: 25 }, 3: { cellWidth: 'wrap', halign: 'right' }, 4: { cellWidth: 20, halign: 'center' }, 5: { cellWidth: 24 } }
-              : { 0: { cellWidth: 'wrap', halign: 'left' }, 1: {}, 2: { cellWidth: 26 }, 3: { cellWidth: 'wrap', halign: 'right' }, 4: { cellWidth: 20, halign: 'center' } },
+              ? { 0: { cellWidth: 22, halign: 'left', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 1: { overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 3, right: 3 } }, 2: { cellWidth: 30, overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 3: { cellWidth: 'wrap', halign: 'right', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 4: { cellWidth: 20, halign: 'center', cellPadding: { top: 3.5, bottom: 3.5, left: 1, right: 1 } }, 5: { cellWidth: 24, overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } } }
+              : { 0: { cellWidth: 22, halign: 'left', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 1: { overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 3, right: 3 } }, 2: { cellWidth: 32, overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 3: { cellWidth: 'wrap', halign: 'right', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 4: { cellWidth: 20, halign: 'center', cellPadding: { top: 3.5, bottom: 3.5, left: 1, right: 1 } } },
             tableLineColor: bd, tableLineWidth: 0.15,
             didParseCell: (d) => {
               if (d.section === 'body') {
