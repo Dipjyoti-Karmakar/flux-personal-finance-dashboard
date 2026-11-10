@@ -9062,21 +9062,28 @@
     .sub-cycle-fill {
       height: 100%;
       border-radius: 99px;
-      transition: width 0.4s ease;
+      transition: width 0.4s ease, background 0.3s ease;
       background: linear-gradient(90deg, var(--in), color-mix(in srgb, var(--in) 80%, var(--ac)));
     }
 
     .sub-cycle-fill.cycle-soon {
-      background: linear-gradient(90deg, var(--ac), color-mix(in srgb, var(--ac) 80%, var(--ex)));
+      background: linear-gradient(90deg, var(--ac), color-mix(in srgb, var(--ac) 70%, var(--ex)));
+    }
+
+    .sub-cycle-fill.cycle-urgent {
+      background: linear-gradient(90deg, color-mix(in srgb, var(--ex) 70%, var(--ac)), var(--ex));
+      box-shadow: 0 0 6px color-mix(in srgb, var(--ex) 35%, transparent);
     }
 
     .sub-cycle-fill.cycle-overdue {
       background: linear-gradient(90deg, var(--ex), #ff4757);
+      box-shadow: 0 0 8px color-mix(in srgb, #ff4757 45%, transparent);
     }
 
     .sub-cycle-fill.cycle-paused {
-      background: var(--mu);
+      background: var(--mu) !important;
       opacity: 0.5;
+      box-shadow: none !important;
     }
 
     .sub-cycle-meta {
@@ -9094,6 +9101,11 @@
     }
 
     .sub-cycle-days.overdue {
+      color: #ff4757;
+      font-weight: 700;
+    }
+
+    .sub-cycle-days.urgent {
       color: var(--ex);
       font-weight: 700;
     }

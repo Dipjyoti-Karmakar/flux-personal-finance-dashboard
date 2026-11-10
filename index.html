@@ -15,9 +15,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Flux">
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=6">
-  <link rel="alternate icon" type="image/png" sizes="192x192" href="icon-192.png?v=6">
-  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=6">
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=7">
+  <link rel="alternate icon" type="image/png" sizes="192x192" href="icon-192.png?v=7">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=7">
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com https://open.er-api.com https://api.cloudinary.com https://res.cloudinary.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://cdnjs.cloudflare.com https://unpkg.com https://twemoji.maxcdn.com https://res.cloudinary.com; worker-src 'self' blob:">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,7 +36,7 @@
     integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3"
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="./style.css?v=1">
+  <link rel="stylesheet" href="./style.css?v=2">
   <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 
@@ -1730,8 +1730,12 @@
       const pct = Math.min(100, Math.max(0, Math.round((elapsed / cycleDays) * 100)));
       const daysLeft = Math.ceil((nextDue - todayD) / 86400000);
       const overdue = daysLeft < 0;
-      const soon = !overdue && daysLeft <= 7;
-      return { cycleDays, elapsed: Math.max(0, elapsed), pct, daysLeft, overdue, soon };
+      // Approaching due date:
+      // Urgent / Red state: >= 80% of billing cycle elapsed (<= 20% left) OR within 5 days
+      // Soon / Amber state: >= 60% of cycle elapsed OR within 10 days
+      const urgent = !overdue && (pct >= 80 || daysLeft <= 5);
+      const soon = !overdue && !urgent && (pct >= 60 || daysLeft <= 10);
+      return { cycleDays, elapsed: Math.max(0, elapsed), pct, daysLeft, overdue, urgent, soon };
     }
 
     // ── History Inline Panel helpers ──────────────────────────────────────────
@@ -9092,7 +9096,7 @@
           + '<div class="sub-card-name">' + esc(rec.name) + manualTag + '</div>'
           + '<div class="sub-card-plan">' + planLabel + ' Plan<span style="white-space:nowrap">&nbsp;\u00b7&nbsp; ' + freqLabel + '</span></div>'
           + '<div class="sub-card-renewal">Next Renewal: <span>' + renewalDate + '</span>' + (rec.paymentsLimit ? ' &nbsp;\u00b7&nbsp; ' + (rec.paymentsMade || 0) + '/' + rec.paymentsLimit + ' paid' : '') + '</div>'
-          + (() => { const cp = getCycleProgress(rec, today); if (!cp) return ''; const fillCls = cp.overdue ? 'cycle-overdue' : (cp.soon ? 'cycle-soon' : '') + (!rec.active ? ' cycle-paused' : ''); const label = cp.overdue ? Math.abs(cp.daysLeft) + 'd overdue' : cp.daysLeft + 'd left'; return '<div class="sub-cycle-wrap"><div class="sub-cycle-bar"><div class="sub-cycle-fill ' + fillCls.trim() + '" style="width:' + cp.pct + '%"></div></div><div class="sub-cycle-meta"><span>' + cp.elapsed + ' / ' + cp.cycleDays + ' days</span><span>' + label + '</span></div></div>'; })()
+          + (() => { const cp = getCycleProgress(rec, today); if (!cp) return ''; const fillCls = (cp.overdue ? 'cycle-overdue' : (cp.urgent ? 'cycle-urgent' : (cp.soon ? 'cycle-soon' : ''))) + (!rec.active ? ' cycle-paused' : ''); const daysCls = cp.overdue ? 'overdue' : (cp.urgent ? 'urgent' : (cp.soon ? 'soon' : '')); const label = cp.overdue ? Math.abs(cp.daysLeft) + 'd overdue' : (cp.daysLeft === 0 ? 'Due today' : cp.daysLeft + 'd left'); return '<div class="sub-cycle-wrap"><div class="sub-cycle-bar"><div class="sub-cycle-fill ' + fillCls.trim() + '" style="width:' + cp.pct + '%"></div></div><div class="sub-cycle-meta"><span>' + cp.elapsed + ' / ' + cp.cycleDays + ' days</span><span class="sub-cycle-days ' + daysCls + '">' + label + '</span></div></div>'; })()
           + '</div>'
           + '<div class="sub-card-right">'
           + badgeHtml
@@ -12098,7 +12102,7 @@
           try {
             new Notification('Flux \u2014 ' + rec.name, {
               body: `${rec.name} (${rec.type === 'income' ? '+' : '-'}\u20b9${Math.abs(rec.amount).toLocaleString('en-IN')}) ${when}`,
-              icon: './icon-192.png?v=6',
+              icon: './icon-192.png?v=7',
               tag: 'flux-bill-' + rec.id,
             });
           } catch (e) { /* Notifications blocked or unavailable */ }
