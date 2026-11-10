@@ -1,15 +1,15 @@
 // Flux Service Worker - Offline-first caching strategy
-// V50: Updated app icons to new brand identity (SVG + PNG)
-const CACHE_NAME = 'flux-v50';
+// V51: Refined app download icon padding and enlarged PDF header lockup
+const CACHE_NAME = 'flux-v51';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './?v=38',
-  './index.html?v=38',
+  './?v=39',
+  './index.html?v=39',
   './style.css?v=1',
-  './manifest.json?v=5',
-  './icon.svg?v=5',
-  './icon-192.png?v=5',
-  './icon-512.png?v=5',
+  './manifest.json?v=6',
+  './icon.svg?v=6',
+  './icon-192.png?v=6',
+  './icon-512.png?v=6',
   'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js',
@@ -24,7 +24,7 @@ self.addEventListener('install', (event) => {
         // If any CDN asset fails to cache during install, continue gracefully
         console.warn('[SW] Pre-cache partial failure:', err);
         // At minimum, cache the local files
-        return cache.addAll(['./', './index.html', './style.css?v=1', './manifest.json?v=5', './icon.svg?v=5', './icon-192.png?v=5', './icon-512.png?v=5']);
+        return cache.addAll(['./', './index.html', './style.css?v=1', './manifest.json?v=6', './icon.svg?v=6', './icon-192.png?v=6', './icon-512.png?v=6']);
       });
     })
   );

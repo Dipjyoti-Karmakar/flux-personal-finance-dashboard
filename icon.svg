@@ -25,16 +25,18 @@
       </feMerge>
     </filter>
   </defs>
-  <path d="M154 76 H302 L382 156 V412 a24 24 0 0 1 -24 24 H154 a24 24 0 0 1 -24 -24 V100 a24 24 0 0 1 24 -24 Z" fill="url(#p1)"/>
-  <path d="M302 76 L382 156 H326 a24 24 0 0 1 -24 -24 Z" fill="url(#f1)"/>
-  <g filter="url(#fs)">
-    <g transform="translate(256 161) scale(0.3) translate(-260 -256)">
-      <path d="M170 120 H350 V186 H236 V226 H312 V286 H236 V392 H170 Z" fill="#10131a"/>
+  <g transform="translate(256 256) scale(0.84) translate(-256 -256)">
+    <path d="M154 76 H302 L382 156 V412 a24 24 0 0 1 -24 24 H154 a24 24 0 0 1 -24 -24 V100 a24 24 0 0 1 24 -24 Z" fill="url(#p1)"/>
+    <path d="M302 76 L382 156 H326 a24 24 0 0 1 -24 -24 Z" fill="url(#f1)"/>
+    <g filter="url(#fs)">
+      <g transform="translate(256 161) scale(0.3) translate(-260 -256)">
+        <path d="M170 120 H350 V186 H236 V226 H312 V286 H236 V392 H170 Z" fill="#10131a"/>
+      </g>
     </g>
+    <path d="M170 243 H342" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
+    <path d="M170 285 H342" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
+    <path d="M170 327 H270" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
+    <rect x="193" y="368" width="58" height="24" rx="12" fill="#2f9a69"/>
+    <rect x="261" y="368" width="58" height="24" rx="12" fill="#d24f4f"/>
   </g>
-  <path d="M170 243 H342" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
-  <path d="M170 285 H342" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
-  <path d="M170 327 H270" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
-  <rect x="193" y="368" width="58" height="24" rx="12" fill="#2f9a69"/>
-  <rect x="261" y="368" width="58" height="24" rx="12" fill="#d24f4f"/>
 </svg>

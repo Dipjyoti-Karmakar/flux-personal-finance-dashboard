@@ -9,15 +9,15 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>Flux - Personal Finance</title>
-  <link rel="manifest" href="manifest.json?v=5">
+  <link rel="manifest" href="manifest.json?v=6">
   <meta name="theme-color" content="#c8a96e">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Flux">
-  <link rel="icon" type="image/svg+xml" href="icon.svg?v=5">
-  <link rel="alternate icon" type="image/png" sizes="192x192" href="icon-192.png?v=5">
-  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=5">
+  <link rel="icon" type="image/svg+xml" href="icon.svg?v=6">
+  <link rel="alternate icon" type="image/png" sizes="192x192" href="icon-192.png?v=6">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=6">
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.gstatic.com https://cdnjs.cloudflare.com https://apis.google.com https://accounts.google.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com data:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com https://cdnjs.cloudflare.com https://www.gstatic.com https://open.er-api.com https://api.cloudinary.com https://res.cloudinary.com; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: blob: https://lh3.googleusercontent.com https://cdnjs.cloudflare.com https://unpkg.com https://twemoji.maxcdn.com https://res.cloudinary.com; worker-src 'self' blob:">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -9948,7 +9948,7 @@
 </svg>`;
 
     // 2. Transparent brand logo (App icon + FLUX typography) for Page 1 main header
-    const FLUX_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 836 216" width="836" height="216">
+    const FLUX_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 736 216" width="736" height="216">
   <defs>
     <linearGradient id="p1" gradientUnits="userSpaceOnUse" x1="0" y1="76" x2="0" y2="436">
       <stop offset="0.000" stop-color="#f0dca8" stop-opacity="1"/>
@@ -9976,21 +9976,23 @@
     </filter>
     <linearGradient id="wg" gradientUnits="userSpaceOnUse" x1="420" y1="170" x2="910" y2="290"><stop offset="0" stop-color="#ecd9a8"/><stop offset="1" stop-color="#b8975a"/></linearGradient>
   </defs>
-  <g transform="translate(-102 -122)">
-    <g transform="translate(110 130) scale(0.3906)">
-      <path d="M154 76 H302 L382 156 V412 a24 24 0 0 1 -24 24 H154 a24 24 0 0 1 -24 -24 V100 a24 24 0 0 1 24 -24 Z" fill="url(#p1)"/>
-      <path d="M302 76 L382 156 H326 a24 24 0 0 1 -24 -24 Z" fill="url(#f1)"/>
-      <g filter="url(#fs)">
-        <g transform="translate(256 161) scale(0.3) translate(-260 -256)">
-          <path d="M170 120 H350 V186 H236 V226 H312 V286 H236 V392 H170 Z" fill="#10131a"/>
-        </g>
+  <!-- Icon: enlarged to scale 0.48 for prominent presence in PDF header -->
+  <g transform="translate(-38 -15) scale(0.48)">
+    <path d="M154 76 H302 L382 156 V412 a24 24 0 0 1 -24 24 H154 a24 24 0 0 1 -24 -24 V100 a24 24 0 0 1 24 -24 Z" fill="url(#p1)"/>
+    <path d="M302 76 L382 156 H326 a24 24 0 0 1 -24 -24 Z" fill="url(#f1)"/>
+    <g filter="url(#fs)">
+      <g transform="translate(256 161) scale(0.3) translate(-260 -256)">
+        <path d="M170 120 H350 V186 H236 V226 H312 V286 H236 V392 H170 Z" fill="#10131a"/>
       </g>
-      <path d="M170 243 H342" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
-      <path d="M170 285 H342" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
-      <path d="M170 327 H270" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
-      <rect x="193" y="368" width="58" height="24" rx="12" fill="#2f9a69"/>
-      <rect x="261" y="368" width="58" height="24" rx="12" fill="#d24f4f"/>
     </g>
+    <path d="M170 243 H342" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
+    <path d="M170 285 H342" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
+    <path d="M170 327 H270" stroke="#10131a" stroke-width="14" stroke-linecap="round" stroke-opacity="0.8"/>
+    <rect x="193" y="368" width="58" height="24" rx="12" fill="#2f9a69"/>
+    <rect x="261" y="368" width="58" height="24" rx="12" fill="#d24f4f"/>
+  </g>
+  <!-- FLUX wordmark: brought closer to the icon for tight lockup -->
+  <g transform="translate(-224 -122)">
     <g fill="none" stroke="url(#wg)" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
       <path d="M420 170 V290 M420 170 H496 M420 224 H478"/>
       <path d="M556 170 V290 H632"/>
@@ -10036,9 +10038,9 @@
           img.onload = () => {
             try {
               const canvas = document.createElement('canvas');
-              canvas.width = 836; canvas.height = 216;
+              canvas.width = 736; canvas.height = 216;
               const ctx = canvas.getContext('2d');
-              ctx.drawImage(img, 0, 0, 836, 216);
+              ctx.drawImage(img, 0, 0, 736, 216);
               URL.revokeObjectURL(url);
               _fluxLogoPngCache = canvas.toDataURL('image/png');
               resolve(_fluxLogoPngCache);
@@ -10228,9 +10230,9 @@
 
         // Brand logo & FLUX typography (Page 1 main header only)
         if (logoDataUrl) {
-          const logoH = 24;
-          const logoW = logoH * (836 / 216); // ~92.88 mm
-          const logoY = 11.5; // vertically centered in 47mm header
+          const logoH = 26;
+          const logoW = logoH * (736 / 216); // ~88.59 mm
+          const logoY = 10.5; // vertically centered in 47mm header
           doc.addImage(logoDataUrl, 'PNG', pL, logoY, logoW, logoH, undefined, 'FAST');
         } else {
           // Brand mark fallback — vertical accent bar + FLUX
@@ -11842,7 +11844,7 @@
     let _deferredPrompt = null;
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=38').then((reg) => {
+      navigator.serviceWorker.register('./sw.js?v=39').then((reg) => {
       }).catch((err) => {
         console.warn('[PWA] SW registration failed:', err);
       });
@@ -12096,7 +12098,7 @@
           try {
             new Notification('Flux \u2014 ' + rec.name, {
               body: `${rec.name} (${rec.type === 'income' ? '+' : '-'}\u20b9${Math.abs(rec.amount).toLocaleString('en-IN')}) ${when}`,
-              icon: './icon-192.png?v=5',
+              icon: './icon-192.png?v=6',
               tag: 'flux-bill-' + rec.id,
             });
           } catch (e) { /* Notifications blocked or unavailable */ }
