@@ -242,6 +242,23 @@
         <span class="sidebar-nav-label">Activity Log</span>
         <span class="sidebar-nav-indicator"></span>
       </button>
+
+      <button class="sidebar-nav-item" id="snDebts" onclick="switchTab('debts')" style="--nav-col: #e7b849;">
+        <span class="sidebar-nav-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="sideDebtGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#e7b849"/>
+                <stop offset="100%" stop-color="#c8860a"/>
+              </linearGradient>
+            </defs>
+            <circle cx="12" cy="12" r="9" stroke="url(#sideDebtGrad)" stroke-width="1.8"/>
+            <path d="M8 12h8M12 8v8" stroke="url(#sideDebtGrad)" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="sidebar-nav-label">Debts</span>
+        <span class="sidebar-nav-indicator"></span>
+      </button>
     </nav>
 
     <!-- Sidebar Footer with Realtime Sync Status -->
@@ -260,6 +277,12 @@
         <div class="header-brand-wrap">
           <div class="logo">Flu<span>x</span></div>
           <div class="logo-sub">Personal Finance</div>
+          <button class="debt-menu-trigger" id="debtMenuTrigger" onclick="openDebtSection()" aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
+            <span class="dmt-bar"></span>
+            <span class="dmt-bar"></span>
+            <span class="dmt-bar"></span>
+            <span class="dmt-badge" id="debtOverdueBadge" style="display:none">!</span>
+          </button>
         </div>
         <div class="desktop-header-title-wrap">
           <h1 class="desktop-view-title" id="desktopViewTitle">Dashboard</h1>
@@ -895,6 +918,278 @@
       <input type="hidden" id="logFilter" value="all">
       <div id="logList"></div>
     </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DEBT MANAGEMENT SYSTEM (3-Tab Architecture)
+    ════════════════════════════════════════════════════════════════ -->
+    <div id="debtView" style="display:none; position:relative; min-height:100vh; background:#0d0f12;">
+
+      <!-- Tab 1: Dashboard -->
+      <div id="debtDashView">
+        <div class="dv-brand-header">
+          <div>
+            <div class="dv-flux-label">FLUX</div>
+            <h1 class="dv-title">Debts</h1>
+          </div>
+          <button class="dv-add-btn" onclick="openDebtPersonModal()" aria-label="Add person">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+
+        <!-- Net Position Hero Card -->
+        <div class="dv-net-card">
+          <div class="dv-net-left">
+            <div class="dv-net-label">Net position</div>
+            <div class="dv-net-amount" id="dvNetAmount">+&#8377;0</div>
+            <div class="dv-net-sentiment" id="dvNetSentiment">All settled up</div>
+            <div class="dv-net-metrics">
+              <div class="dv-metric">
+                <span class="dv-metric-dot dv-green"></span>
+                <div>
+                  <div class="dv-metric-label">Owed to me</div>
+                  <div class="dv-metric-val dv-green-txt" id="dvOwedToMe">&#8377;0</div>
+                </div>
+              </div>
+              <div class="dv-metric">
+                <span class="dv-metric-dot dv-coral"></span>
+                <div>
+                  <div class="dv-metric-label">I owe</div>
+                  <div class="dv-metric-val dv-coral-txt" id="dvIOwe">&#8377;0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dv-donut-wrap">
+            <svg class="dv-donut" width="90" height="90" viewBox="0 0 90 90">
+              <circle class="dv-donut-bg" cx="45" cy="45" r="36" fill="none" stroke="#282620" stroke-width="8"/>
+              <circle class="dv-donut-coral" cx="45" cy="45" r="36" fill="none" stroke="#ef968e" stroke-width="8"
+                stroke-dasharray="226.2" stroke-dashoffset="0" stroke-linecap="round"
+                transform="rotate(-90 45 45)" id="dvDonutCoral"/>
+              <circle class="dv-donut-green" cx="45" cy="45" r="36" fill="none" stroke="#52d6a4" stroke-width="8"
+                stroke-dasharray="226.2" stroke-dashoffset="226.2" stroke-linecap="round"
+                transform="rotate(-90 45 45)" id="dvDonutGreen"/>
+              <text x="45" y="42" text-anchor="middle" class="dv-donut-pct" id="dvDonutPct">0%</text>
+              <text x="45" y="55" text-anchor="middle" class="dv-donut-sub-txt">owed to</text>
+              <text x="45" y="65" text-anchor="middle" class="dv-donut-sub-txt">you</text>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Filter Pills -->
+        <div class="dv-filter-row">
+          <button class="dv-pill dv-pill-act" id="dvPillAll" onclick="setDebtFilter('all')">All</button>
+          <button class="dv-pill" id="dvPillIOwe" onclick="setDebtFilter('iowe')">I owe</button>
+          <button class="dv-pill" id="dvPillOwed" onclick="setDebtFilter('owed')">Owed to me</button>
+        </div>
+
+        <!-- Upcoming Timeline -->
+        <div class="dv-upcoming-header">
+          <span class="dv-upcoming-title">Upcoming</span>
+        </div>
+        <div class="dv-timeline" id="dvTimeline">
+          <div class="dv-empty" id="dvTimelineEmpty" style="display:flex;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            <p>No debt records yet.<br>Tap <strong>+</strong> to add a person.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Accounts -->
+      <div id="debtAccountsView" style="display:none;">
+        <div class="dv-brand-header">
+          <div>
+            <div class="dv-flux-label">DEBTS</div>
+            <h1 class="dv-title">Accounts</h1>
+          </div>
+          <button class="dv-add-btn" onclick="openDebtPersonModal()" aria-label="Add person">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="dv-search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="debtAccountSearch" class="dv-search-input" placeholder="Search people&#8230;" oninput="renderDebtAccounts()">
+        </div>
+        <div class="dv-filter-row" style="margin-bottom:12px;">
+          <button class="dv-pill dv-pill-act" id="dvaFilterAll" onclick="setDebtAccountFilter('all')">All</button>
+          <button class="dv-pill" id="dvaFilterActive" onclick="setDebtAccountFilter('active')">Active</button>
+          <button class="dv-pill" id="dvaFilterSettled" onclick="setDebtAccountFilter('settled')">Settled</button>
+        </div>
+        <div id="debtAccountsList">
+          <div class="dv-empty" id="debtAccountsEmpty" style="display:flex;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <p>No accounts yet.<br>Tap <strong>+</strong> to add a person.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Analytics -->
+      <div id="debtAnalyticsView" style="display:none;">
+        <div class="dv-brand-header">
+          <div>
+            <div class="dv-flux-label">DEBTS</div>
+            <h1 class="dv-title">Analytics</h1>
+          </div>
+        </div>
+        <div class="dva-metrics-grid" id="dvaMetricsGrid"></div>
+        <div class="dva-section-title">Debt Aging</div>
+        <div class="dva-aging-card" id="dvaAgingCard"></div>
+        <div class="dva-section-title">Top Exposure</div>
+        <div class="dva-exposure-list" id="dvaExposureList"></div>
+      </div>
+
+      <!-- Person Ledger Drill-down (Screen 2) -->
+      <div id="debtPersonView" style="display:none; position:absolute; top:0; left:0; right:0; min-height:100vh; background:#0d0f12; z-index:10; padding-bottom:32px;">
+        <div class="dpv-topbar">
+          <button class="dpv-back-btn" onclick="closePersonLedger()" aria-label="Back">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <span class="dpv-topbar-title">ACCOUNT</span>
+          <button class="dpv-menu-btn" id="dpvMenuBtn" onclick="togglePersonMenu()" aria-label="Options">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+          </button>
+          <div class="dpv-context-menu" id="dpvContextMenu" style="display:none;">
+            <button onclick="editDebtPerson(); togglePersonMenu()">Edit Details</button>
+            <button onclick="settleDebtPerson(); togglePersonMenu()">Mark as Settled</button>
+            <button class="dpv-ctx-danger" onclick="deleteDebtPerson(); togglePersonMenu()">Delete Account</button>
+          </div>
+        </div>
+        <div class="dpv-profile">
+          <div class="dpv-avatar" id="dpvAvatar">PS</div>
+          <div>
+            <div class="dpv-name" id="dpvName">Person Name</div>
+            <div class="dpv-role" id="dpvRole">Borrower</div>
+          </div>
+        </div>
+        <div class="dpv-balance-card">
+          <div class="dpv-balance-header">
+            <span class="dpv-balance-sub" id="dpvBalanceSub">Owes you</span>
+            <span class="dpv-overdue-badge" id="dpvOverdueBadge" style="display:none;">Overdue</span>
+          </div>
+          <div class="dpv-balance-amount" id="dpvBalanceAmount">&#8377;0</div>
+          <div class="dpv-progress-bar"><div class="dpv-progress-fill" id="dpvProgressFill" style="width:0%"></div></div>
+          <div class="dpv-progress-labels">
+            <span id="dpvRepaidLabel">Repaid &#8377;0</span>
+            <span id="dpvTotalLabel">Lent &#8377;0</span>
+          </div>
+        </div>
+        <div class="dpv-actions">
+          <button class="dpv-btn-primary" onclick="openRecordPaymentModal()">Record payment</button>
+          <button class="dpv-btn-secondary" id="dpvLendMoreBtn" onclick="openLendMoreModal()">Lend more</button>
+        </div>
+        <div class="dpv-records-header">
+          <span class="dpv-records-title">All records</span>
+          <span class="dpv-records-sort">Newest first</span>
+        </div>
+        <div id="dpvRecordsList"></div>
+        <div class="dpv-statement-wrap">
+          <button class="dpv-statement-btn" onclick="shareDebtStatement()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            Share statement
+          </button>
+        </div>
+      </div>
+
+      <!-- Debt Bottom 3-Tab Nav -->
+      <nav class="dv-bottom-nav" id="debtBottomNav">
+        <button class="dv-tab-btn dv-tab-act" id="dvTab1" onclick="switchDebtTab('dashboard')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="8" height="9" rx="2" fill="#e7b849"/>
+            <rect x="3" y="14" width="8" height="7" rx="1.5" fill="#e7b849" opacity="0.5"/>
+            <rect x="13" y="3" width="8" height="5" rx="1.5" fill="#e7b849" opacity="0.5"/>
+            <rect x="13" y="10" width="8" height="11" rx="2" fill="#e7b849"/>
+          </svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="dv-tab-btn" id="dvTab2" onclick="switchDebtTab('accounts')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.6">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span>Accounts</span>
+        </button>
+        <button class="dv-tab-btn" id="dvTab3" onclick="switchDebtTab('analytics')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.6">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+          <span>Analytics</span>
+        </button>
+      </nav>
+
+      <!-- Modal: Add/Edit Person -->
+      <div class="dv-modal-backdrop" id="debtPersonModal" style="display:none;" onclick="if(event.target===this)closeDebtPersonModal()">
+        <div class="dv-modal">
+          <div class="dv-modal-title" id="debtPersonModalTitle">Add Person</div>
+          <input type="hidden" id="debtPersonId">
+          <label class="dv-label">Full Name <span style="color:#ef968e">*</span></label>
+          <input type="text" id="debtPersonName" class="dv-input" placeholder="e.g. Priya Sharma">
+          <label class="dv-label">Role</label>
+          <div class="dv-role-toggle">
+            <button class="dv-role-btn dv-role-act" id="dvrBorrower" onclick="setDebtRole('borrower')">They owe me</button>
+            <button class="dv-role-btn" id="dvrLender" onclick="setDebtRole('lender')">I owe them</button>
+          </div>
+          <label class="dv-label">Initial Amount (&#8377;) <span style="color:#ef968e">*</span></label>
+          <input type="number" id="debtPersonAmount" class="dv-input" placeholder="0.00" min="0" step="0.01">
+          <label class="dv-label">Note / Reason</label>
+          <input type="text" id="debtPersonNote" class="dv-input" placeholder="e.g. Trip share, Laptop repair">
+          <label class="dv-label">Due Date</label>
+          <input type="date" id="debtPersonDue" class="dv-input">
+          <label class="dv-label">Phone (optional)</label>
+          <input type="tel" id="debtPersonPhone" class="dv-input" placeholder="+91 &#8230;">
+          <div class="dv-modal-actions">
+            <button class="dv-btn-cancel" onclick="closeDebtPersonModal()">Cancel</button>
+            <button class="dv-btn-save" onclick="saveDebtPerson()">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Record Payment -->
+      <div class="dv-modal-backdrop" id="debtPaymentModal" style="display:none;" onclick="if(event.target===this)closePaymentModal()">
+        <div class="dv-modal">
+          <div class="dv-modal-title" id="debtPaymentModalTitle">Record Payment</div>
+          <label class="dv-label">Amount (&#8377;) <span style="color:#ef968e">*</span></label>
+          <input type="number" id="paymentAmount" class="dv-input" placeholder="0.00" min="0.01" step="0.01">
+          <label class="dv-label">Date</label>
+          <input type="date" id="paymentDate" class="dv-input">
+          <label class="dv-label">Mode</label>
+          <div class="dv-role-toggle">
+            <button class="dv-role-btn dv-role-act" id="payModeUPI" onclick="setPayMode('upi')">UPI / Online</button>
+            <button class="dv-role-btn" id="payModeCash" onclick="setPayMode('cash')">Cash</button>
+          </div>
+          <label class="dv-label">Note</label>
+          <input type="text" id="paymentNote" class="dv-input" placeholder="e.g. Google Pay partial">
+          <label class="dv-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:0;font-size:12px;">
+            <input type="checkbox" id="paymentSyncFlux"> Also add to Flux transactions
+          </label>
+          <div class="dv-modal-actions">
+            <button class="dv-btn-cancel" onclick="closePaymentModal()">Cancel</button>
+            <button class="dv-btn-save" onclick="savePayment()">Record</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal: Lend More -->
+      <div class="dv-modal-backdrop" id="debtLendModal" style="display:none;" onclick="if(event.target===this)closeLendMoreModal()">
+        <div class="dv-modal">
+          <div class="dv-modal-title" id="debtLendModalTitle">Lend More</div>
+          <label class="dv-label">Amount (&#8377;) <span style="color:#ef968e">*</span></label>
+          <input type="number" id="lendAmount" class="dv-input" placeholder="0.00" min="0.01" step="0.01">
+          <label class="dv-label">Date</label>
+          <input type="date" id="lendDate" class="dv-input">
+          <label class="dv-label">Revised Due Date (optional)</label>
+          <input type="date" id="lendDueDate" class="dv-input">
+          <label class="dv-label">Note / Reason</label>
+          <input type="text" id="lendNote" class="dv-input" placeholder="e.g. Emergency, medical">
+          <div class="dv-modal-actions">
+            <button class="dv-btn-cancel" onclick="closeLendMoreModal()">Cancel</button>
+            <button class="dv-btn-save" onclick="saveLendMore()">Save</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#debtView -->
   </div> <!-- /.app -->
 
   <!-- Mobile Bottom Navigation -->
@@ -981,6 +1276,21 @@
         </svg>
       </span>
       <span class="mob-nav-label">Activity</span>
+    </button>
+    <button class="mob-nav-item" id="mnDebts" onclick="switchTab('debts')" style="--nav-col: #e7b849;">
+      <span class="mob-nav-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="debtNavGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#e7b849"/>
+              <stop offset="100%" stop-color="#c8860a"/>
+            </linearGradient>
+          </defs>
+          <circle cx="12" cy="12" r="9" stroke="url(#debtNavGrad)" stroke-width="1.8"/>
+          <path d="M8 12h8M12 8v8" stroke="url(#debtNavGrad)" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="mob-nav-label">Debts</span>
     </button>
   </nav>
 
@@ -1993,6 +2303,9 @@
         loadEvents();
         loadActivityLog();
         loadRecurring();
+        if (_unsubDebtPersons) _unsubDebtPersons();
+        if (_unsubDebtRecords) _unsubDebtRecords();
+        loadDebtFromCloud();
         // Kick off non-blocking feature initialisation
         requestBillNotifications();           // Soft notification permission nudge
         // Clear stale localStorage activity log (migrated to Firestore)
@@ -2006,8 +2319,12 @@
         if (unsubscribeEvents) unsubscribeEvents();
         if (unsubscribeActivityLog) unsubscribeActivityLog();
         if (unsubscribeRecurring) unsubscribeRecurring();
+        if (_unsubDebtPersons) _unsubDebtPersons();
+        if (_unsubDebtRecords) _unsubDebtRecords();
         activityLogs = [];
         recurringList = [];
+        debtPersons = [];
+        debtRecords = [];
         // Clear log selection mode if active
         if (logSelectionMode) { logSelectionMode = false; selectedLogs.clear(); const ab = document.getElementById('logDeleteAction'); const bb = document.getElementById('btnToggleDeleteLogs'); if (ab) ab.style.display = 'none'; if (bb) bb.style.display = 'inline-block'; }
         renderLogs();
@@ -11442,6 +11759,8 @@
       if (mnYearly) mnYearly.classList.toggle('act', tab === 'yearly');
       const mnLog = document.getElementById('mnLog');
       if (mnLog) mnLog.classList.toggle('act', tab === 'log');
+      const mnDebts = document.getElementById('mnDebts');
+      if (mnDebts) mnDebts.classList.toggle('act', tab === 'debts');
 
       // Update Desktop Sidebar Nav Active States & Accessibility
       const snDash = document.getElementById('snDash');
@@ -11468,6 +11787,12 @@
         snLog.classList.toggle('act', isAct);
         if (isAct) snLog.setAttribute('aria-current', 'page'); else snLog.removeAttribute('aria-current');
       }
+      const snDebts = document.getElementById('snDebts');
+      if (snDebts) {
+        const isAct = tab === 'debts';
+        snDebts.classList.toggle('act', isAct);
+        if (isAct) snDebts.setAttribute('aria-current', 'page'); else snDebts.removeAttribute('aria-current');
+      }
 
       // Update Desktop View Title Header
       const desktopViewTitle = document.getElementById('desktopViewTitle');
@@ -11485,12 +11810,18 @@
         } else if (tab === 'log') {
           desktopViewTitle.textContent = 'Activity Log';
           if (desktopViewSub) desktopViewSub.textContent = 'Audit Trail & Transaction History';
+        } else if (tab === 'debts') {
+          desktopViewTitle.textContent = 'Debts & Loans';
+          if (desktopViewSub) desktopViewSub.textContent = 'Manage Borrowers & Creditors';
         }
       }
 
       document.getElementById('dashboardView').style.display = (tab === 'dashboard' || tab === 'yearly') ? 'block' : 'none';
       document.getElementById('subView').style.display = tab === 'subscriptions' ? 'block' : 'none';
       document.getElementById('logView').style.display = tab === 'log' ? 'block' : 'none';
+      const debtV = document.getElementById('debtView');
+      if (debtV) debtV.style.display = tab === 'debts' ? 'block' : 'none';
+      document.body.classList.toggle('in-debts', tab === 'debts');
 
       if (tab === 'yearly') {
         document.body.classList.add('mob-yearly-active');
@@ -11513,6 +11844,7 @@
       // Defer heavy renders to next frame so click handler completes fast
       if (tab === 'log') requestAnimationFrame(() => renderLogs());
       if (tab === 'subscriptions') requestAnimationFrame(() => renderRecurring());
+      if (tab === 'debts') requestAnimationFrame(() => renderDebtDashboard());
 
       window.scrollTo(0, 0);
     }
@@ -12732,6 +13064,687 @@
       setupMenu('txD', 'txDSuggMenu', 'add');
       setupMenu('eDesc', 'eDescSuggMenu', 'edit');
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  DEBT MANAGEMENT SYSTEM JS
+    // ═══════════════════════════════════════════════════════════════════
+    let debtPersons = [];
+    let debtRecords = [];
+    let _currentDebtPersonId = null;
+    let _debtFilter = 'all';
+    let _debtAccountFilter = 'all';
+    let _debtRole = 'borrower';
+    let _payMode = 'upi';
+    let _unsubDebtPersons = null;
+    let _unsubDebtRecords = null;
+    const DEBT_PERSONS_KEY = 'flux_debt_persons';
+    const DEBT_RECORDS_KEY = 'flux_debt_records';
+
+    function saveDebtLocal() {
+      try {
+        localStorage.setItem(DEBT_PERSONS_KEY, JSON.stringify(debtPersons));
+        localStorage.setItem(DEBT_RECORDS_KEY, JSON.stringify(debtRecords));
+      } catch(e) {}
+    }
+    function loadDebtLocal() {
+      try {
+        debtPersons = JSON.parse(localStorage.getItem(DEBT_PERSONS_KEY) || '[]');
+        debtRecords = JSON.parse(localStorage.getItem(DEBT_RECORDS_KEY) || '[]');
+      } catch(e) { debtPersons = []; debtRecords = []; }
+    }
+
+    function loadDebtFromCloud() {
+      if (!userId || typeof collection === 'undefined') return;
+      if (_unsubDebtPersons) _unsubDebtPersons();
+      const persRef = collection(db, 'users', userId, 'debt_persons');
+      _unsubDebtPersons = onSnapshot(persRef, snap => {
+        debtPersons = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        saveDebtLocal();
+        refreshDebtViews();
+        checkDebtOverdueBadge();
+      });
+      if (_unsubDebtRecords) _unsubDebtRecords();
+      const recRef = collection(db, 'users', userId, 'debt_records');
+      _unsubDebtRecords = onSnapshot(recRef, snap => {
+        debtRecords = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        saveDebtLocal();
+        refreshDebtViews();
+      });
+    }
+
+    function saveDebtPersonCloud(person) {
+      if (!userId || typeof doc === 'undefined') return Promise.resolve();
+      return setDoc(doc(db, 'users', userId, 'debt_persons', person.id), person);
+    }
+    function saveDebtRecordCloud(record) {
+      if (!userId || typeof doc === 'undefined') return Promise.resolve();
+      return setDoc(doc(db, 'users', userId, 'debt_records', record.id), record);
+    }
+    function deleteDebtPersonCloud(id) {
+      if (!userId || typeof doc === 'undefined') return Promise.resolve();
+      return deleteDoc(doc(db, 'users', userId, 'debt_persons', id));
+    }
+    function deleteDebtRecordCloud(id) {
+      if (!userId || typeof doc === 'undefined') return Promise.resolve();
+      return deleteDoc(doc(db, 'users', userId, 'debt_records', id));
+    }
+
+    function dvId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+    function dvFmt(n) {
+      return '\u20b9' + Math.abs(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+    function dvInitials(name) {
+      return (name || '').trim().split(/\s+/).filter(w => w.length > 0).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+    }
+    function dvDaysOverdue(dueDate) {
+      if (!dueDate) return 0;
+      const due = new Date(dueDate + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diff = Math.floor((today - due) / 86400000);
+      return diff > 0 ? diff : 0;
+    }
+    function dvFormatDate(isoDate) {
+      if (!isoDate) return '';
+      const d = new Date(isoDate + 'T00:00:00');
+      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+    }
+
+    function openDebtSection() {
+      switchTab('debts');
+    }
+
+    function switchDebtTab(tab) {
+      document.getElementById('debtDashView').style.display      = tab === 'dashboard' ? 'block' : 'none';
+      document.getElementById('debtAccountsView').style.display  = tab === 'accounts'  ? 'block' : 'none';
+      document.getElementById('debtAnalyticsView').style.display = tab === 'analytics' ? 'block' : 'none';
+      document.getElementById('dvTab1').classList.toggle('dv-tab-act', tab === 'dashboard');
+      document.getElementById('dvTab2').classList.toggle('dv-tab-act', tab === 'accounts');
+      document.getElementById('dvTab3').classList.toggle('dv-tab-act', tab === 'analytics');
+      const t2svg = document.querySelector('#dvTab2 svg');
+      const t3svg = document.querySelector('#dvTab3 svg');
+      if (t2svg) t2svg.setAttribute('stroke', tab === 'accounts'  ? '#e7b849' : '#8e887d');
+      if (t3svg) t3svg.setAttribute('stroke', tab === 'analytics' ? '#e7b849' : '#8e887d');
+      if (tab === 'dashboard') renderDebtDashboard();
+      if (tab === 'accounts')  renderDebtAccounts();
+      if (tab === 'analytics') renderDebtAnalytics();
+    }
+
+    function refreshDebtViews() {
+      const debtV = document.getElementById('debtView');
+      if (!debtV || debtV.style.display === 'none') return;
+      if (document.getElementById('debtDashView').style.display !== 'none') renderDebtDashboard();
+      if (document.getElementById('debtAccountsView').style.display !== 'none') renderDebtAccounts();
+      if (document.getElementById('debtAnalyticsView').style.display !== 'none') renderDebtAnalytics();
+      if (document.getElementById('debtPersonView').style.display !== 'none' && _currentDebtPersonId) renderPersonLedger(_currentDebtPersonId);
+    }
+
+    function renderDebtDashboard() {
+      let owedToMe = 0, iOwe = 0;
+      debtPersons.forEach(p => {
+        if (p.status !== 'settled') {
+          if (p.role === 'borrower') owedToMe += (p.currentBalance || 0);
+          else iOwe += (p.currentBalance || 0);
+        }
+      });
+      const net = owedToMe - iOwe;
+      const total = owedToMe + iOwe;
+      const pct = total > 0 ? Math.round((owedToMe / total) * 100) : 0;
+
+      const netEl = document.getElementById('dvNetAmount');
+      if (netEl) {
+        netEl.textContent = (net >= 0 ? '+' : '-') + dvFmt(net);
+        netEl.style.color = net >= 0 ? '#52d6a4' : '#ef968e';
+      }
+      const sentEl = document.getElementById('dvNetSentiment');
+      if (sentEl) {
+        sentEl.textContent = net > 0 ? 'You are in the green' : net < 0 ? 'You are in the red' : 'All settled up';
+        sentEl.style.color  = net > 0 ? '#52d6a4' : net < 0 ? '#ef968e' : '#8e887d';
+      }
+      const owedEl = document.getElementById('dvOwedToMe');
+      if (owedEl) owedEl.textContent = dvFmt(owedToMe);
+      const iOweEl = document.getElementById('dvIOwe');
+      if (iOweEl) iOweEl.textContent = dvFmt(iOwe);
+
+      const circ = 2 * Math.PI * 36;
+      const greenDash = (pct / 100) * circ;
+      const greenOffset = circ - greenDash;
+      const coralOffset = greenDash;
+      const dg = document.getElementById('dvDonutGreen');
+      const dc = document.getElementById('dvDonutCoral');
+      if (dg) dg.setAttribute('stroke-dashoffset', greenOffset.toFixed(1));
+      if (dc) dc.setAttribute('stroke-dashoffset', coralOffset.toFixed(1));
+      const dp = document.getElementById('dvDonutPct');
+      if (dp) dp.textContent = pct + '%';
+
+      const filter = _debtFilter;
+      let persons = debtPersons.filter(p => {
+        if (p.status === 'settled') return false;
+        if (filter === 'iowe') return p.role === 'lender';
+        if (filter === 'owed') return p.role === 'borrower';
+        return true;
+      });
+      persons = persons.slice().sort((a, b) => {
+        if (a.dueDate && b.dueDate) return new Date(a.dueDate) - new Date(b.dueDate);
+        if (a.dueDate) return -1;
+        if (b.dueDate) return 1;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      const tl = document.getElementById('dvTimeline');
+      const empty = document.getElementById('dvTimelineEmpty');
+      if (!tl) return;
+      if (!persons.length) {
+        tl.innerHTML = '';
+        if (empty) { tl.appendChild(empty); empty.style.display = 'flex'; }
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      tl.innerHTML = '';
+      persons.forEach(p => {
+        const overdue = dvDaysOverdue(p.dueDate);
+        const isOwed  = p.role === 'borrower';
+        const color   = isOwed ? '#52d6a4' : '#ef968e';
+        const sign    = isOwed ? '+' : '-';
+        let dateDay = '', dateMonth = '';
+        if (p.dueDate) {
+          const d = new Date(p.dueDate + 'T00:00:00');
+          dateDay   = d.getDate();
+          dateMonth = d.toLocaleString('en', { month: 'short' }).toUpperCase();
+        }
+        const noteText = overdue > 0
+          ? ('Overdue ' + overdue + ' day' + (overdue > 1 ? 's' : '') + (p.note ? ', ' + p.note : ''))
+          : (p.note || '');
+        const item = document.createElement('div');
+        item.className = 'dv-tl-item';
+        item.onclick = () => openPersonLedger(p.id);
+        item.innerHTML = '<div class="dv-tl-date" style="color:' + (overdue > 0 ? '#ef968e' : '#8e887d') + '">'
+          + '<div class="dv-tl-day">' + (dateDay || '&mdash;') + '</div>'
+          + '<div class="dv-tl-mon">' + dateMonth + '</div>'
+          + '</div>'
+          + '<div class="dv-tl-line-col"><div class="dv-tl-node" style="background:' + color + ';box-shadow:0 0 8px ' + color + '44;"></div></div>'
+          + '<div class="dv-tl-card">'
+          + '<div class="dv-tl-card-top">'
+          + '<div><div class="dv-tl-name">' + p.name + '</div>'
+          + (noteText ? '<div class="dv-tl-note">' + noteText + '</div>' : '')
+          + '</div>'
+          + '<div class="dv-tl-amount" style="color:' + color + '">' + sign + dvFmt(p.currentBalance)
+          + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>'
+          + '</div></div>';
+        tl.appendChild(item);
+      });
+    }
+
+    function setDebtFilter(f) {
+      _debtFilter = f;
+      ['All', 'IOwe', 'Owed'].forEach(id => {
+        const el = document.getElementById('dvPill' + id);
+        const match = (id === 'All' && f === 'all') || (id === 'IOwe' && f === 'iowe') || (id === 'Owed' && f === 'owed');
+        if (el) el.classList.toggle('dv-pill-act', match);
+      });
+      renderDebtDashboard();
+    }
+
+    function renderDebtAccounts() {
+      const q = (document.getElementById('debtAccountSearch') ? document.getElementById('debtAccountSearch').value : '').toLowerCase();
+      const sf = _debtAccountFilter;
+      let persons = debtPersons.filter(p => {
+        const matchQ = !q || p.name.toLowerCase().includes(q);
+        const matchS = sf === 'all' || p.status === sf || (sf === 'active' && p.status !== 'settled');
+        return matchQ && matchS;
+      });
+      persons = persons.slice().sort((a, b) => {
+        const oa = dvDaysOverdue(a.dueDate) > 0 && a.status !== 'settled' ? -1 : 0;
+        const ob = dvDaysOverdue(b.dueDate) > 0 && b.status !== 'settled' ? -1 : 0;
+        return oa - ob || (new Date(b.createdAt) - new Date(a.createdAt));
+      });
+      const list = document.getElementById('debtAccountsList');
+      const empty = document.getElementById('debtAccountsEmpty');
+      if (!list) return;
+      if (!persons.length) {
+        list.innerHTML = '';
+        if (empty) { list.appendChild(empty); empty.style.display = 'flex'; }
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+      list.innerHTML = '';
+      persons.forEach(p => {
+        const isOwed   = p.role === 'borrower';
+        const color    = isOwed ? '#52d6a4' : '#ef968e';
+        const overdue  = dvDaysOverdue(p.dueDate);
+        const isSettled = p.status === 'settled';
+        const recs     = debtRecords.filter(r => r.personId === p.id).length;
+        const extraLent = debtRecords.filter(r => r.personId === p.id && r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
+        const totalLent = (p.initialAmount || 0) + extraLent;
+        const progPct  = totalLent > 0 ? Math.min(100, Math.round(((p.repaidAmount || 0) / totalLent) * 100)) : 0;
+        const card = document.createElement('div');
+        card.className = 'dva-card';
+        card.onclick = () => openPersonLedger(p.id);
+        card.innerHTML = '<div class="dva-card-left">'
+          + '<div class="dva-avatar" style="border-color:' + (isSettled ? '#8e887d' : color) + '">' + dvInitials(p.name) + '</div>'
+          + '<div><div class="dva-card-name">' + p.name + '</div>'
+          + '<div class="dva-card-meta">' + (isOwed ? 'Borrower' : 'Lender') + ' &middot; ' + recs + ' record' + (recs !== 1 ? 's' : '') + '</div>'
+          + (p.phone ? '<div class="dva-card-meta">' + p.phone + '</div>' : '')
+          + '</div></div>'
+          + '<div class="dva-card-right">'
+          + '<div class="dva-card-bal" style="color:' + (isSettled ? '#8e887d' : color) + '">' + (isSettled ? 'Settled' : dvFmt(p.currentBalance)) + '</div>'
+          + (overdue > 0 && !isSettled ? '<div class="dva-overdue-badge">Overdue ' + overdue + 'd</div>' : '')
+          + (!isSettled && totalLent > 0 ? '<div class="dva-mini-prog"><div class="dva-mini-fill" style="width:' + progPct + '%;background:' + color + '"></div></div><div class="dva-mini-pct">' + progPct + '% repaid</div>' : '')
+          + '</div>';
+        list.appendChild(card);
+      });
+    }
+
+    function setDebtAccountFilter(f) {
+      _debtAccountFilter = f;
+      ['All', 'Active', 'Settled'].forEach(id => {
+        const el = document.getElementById('dvaFilter' + id);
+        if (el) el.classList.toggle('dv-pill-act', id.toLowerCase() === f || (id === 'All' && f === 'all'));
+      });
+      renderDebtAccounts();
+    }
+
+    function renderDebtAnalytics() {
+      const borrowers = debtPersons.filter(p => p.role === 'borrower' && p.status !== 'settled');
+      const lenders   = debtPersons.filter(p => p.role === 'lender'  && p.status !== 'settled');
+      const owedToMe  = borrowers.reduce((s, p) => s + (p.currentBalance || 0), 0);
+      const iOwe      = lenders.reduce((s, p) => s + (p.currentBalance || 0), 0);
+      const totalLentAll = debtPersons.filter(p => p.role === 'borrower').reduce((s, p) => {
+        const extra = debtRecords.filter(r => r.personId === p.id && r.type === 'lend_more').reduce((x, r) => x + r.amount, 0);
+        return s + (p.initialAmount || 0) + extra;
+      }, 0);
+      const totalRepaid = debtPersons.filter(p => p.role === 'borrower').reduce((s, p) => s + (p.repaidAmount || 0), 0);
+      const recoveryRate = totalLentAll > 0 ? Math.round((totalRepaid / totalLentAll) * 100) : 0;
+      const overdueCount = debtPersons.filter(p => dvDaysOverdue(p.dueDate) > 0 && p.status !== 'settled').length;
+
+      const mg = document.getElementById('dvaMetricsGrid');
+      if (mg) {
+        mg.innerHTML = '<div class="dva-metric-card"><div class="dva-mc-val" style="color:#52d6a4">' + dvFmt(owedToMe) + '</div><div class="dva-mc-lbl">Total Owed to Me</div></div>'
+          + '<div class="dva-metric-card"><div class="dva-mc-val" style="color:#ef968e">' + dvFmt(iOwe) + '</div><div class="dva-mc-lbl">Total I Owe</div></div>'
+          + '<div class="dva-metric-card"><div class="dva-mc-val" style="color:#e7b849">' + recoveryRate + '%</div><div class="dva-mc-lbl">Recovery Rate</div></div>'
+          + '<div class="dva-metric-card"><div class="dva-mc-val" style="color:' + (overdueCount > 0 ? '#ef968e' : '#52d6a4') + '">' + overdueCount + '</div><div class="dva-mc-lbl">Overdue Accounts</div></div>';
+      }
+
+      const aging = { cur: 0, d30: 0, d60: 0, d60p: 0 };
+      borrowers.forEach(p => {
+        const od = dvDaysOverdue(p.dueDate);
+        const bal = p.currentBalance || 0;
+        if (od === 0) aging.cur += bal;
+        else if (od <= 30) aging.d30 += bal;
+        else if (od <= 60) aging.d60 += bal;
+        else aging.d60p += bal;
+      });
+      const agingTotal = aging.cur + aging.d30 + aging.d60 + aging.d60p || 1;
+      const agingData = [
+        { label: 'On Track', val: aging.cur, color: '#52d6a4' },
+        { label: '1-30d Overdue', val: aging.d30, color: '#e7b849' },
+        { label: '31-60d Overdue', val: aging.d60, color: '#ef968e' },
+        { label: '60d+ High Risk', val: aging.d60p, color: '#c0392b' }
+      ];
+      const ac = document.getElementById('dvaAgingCard');
+      if (ac) {
+        ac.innerHTML = agingData.map(a => {
+          const pct = Math.round((a.val / agingTotal) * 100);
+          return '<div class="dva-aging-row">'
+            + '<div class="dva-aging-label"><span style="background:' + a.color + ';width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0;"></span>' + a.label + '</div>'
+            + '<div class="dva-aging-bar-wrap"><div class="dva-aging-bar" style="width:' + pct + '%;background:' + a.color + '"></div></div>'
+            + '<div class="dva-aging-amt">' + dvFmt(a.val) + '</div>'
+            + '</div>';
+        }).join('');
+      }
+
+      const allActive = borrowers.concat(lenders).filter(p => p.currentBalance > 0).sort((a, b) => b.currentBalance - a.currentBalance).slice(0, 5);
+      const maxBal = allActive.length ? allActive[0].currentBalance : 1;
+      const el2 = document.getElementById('dvaExposureList');
+      if (el2) {
+        el2.innerHTML = allActive.length ? allActive.map(p => {
+          const isOwed = p.role === 'borrower';
+          const color = isOwed ? '#52d6a4' : '#ef968e';
+          const pct = Math.round((p.currentBalance / maxBal) * 100);
+          return '<div class="dva-exp-row">'
+            + '<div class="dva-exp-avatar" style="border-color:' + color + '">' + dvInitials(p.name) + '</div>'
+            + '<div class="dva-exp-mid"><div class="dva-exp-name">' + p.name + '</div>'
+            + '<div class="dva-aging-bar-wrap"><div class="dva-aging-bar" style="width:' + pct + '%;background:' + color + '"></div></div></div>'
+            + '<div class="dva-exp-amt" style="color:' + color + '">' + dvFmt(p.currentBalance) + '</div>'
+            + '</div>';
+        }).join('') : '<div class="dv-empty" style="display:flex"><p>No active accounts yet.</p></div>';
+      }
+    }
+
+    function openPersonLedger(personId) {
+      _currentDebtPersonId = personId;
+      renderPersonLedger(personId);
+      document.getElementById('debtPersonView').style.display = 'block';
+      document.getElementById('debtBottomNav').style.display = 'none';
+      window.scrollTo(0, 0);
+    }
+    function closePersonLedger() {
+      document.getElementById('debtPersonView').style.display = 'none';
+      document.getElementById('debtBottomNav').style.display = 'flex';
+      _currentDebtPersonId = null;
+    }
+
+    function renderPersonLedger(personId) {
+      const p = debtPersons.find(x => x.id === personId);
+      if (!p) return;
+      const isOwed = p.role === 'borrower';
+      const isSettled = p.status === 'settled';
+      const color = isOwed ? '#52d6a4' : '#ef968e';
+      const records = debtRecords.filter(r => r.personId === personId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      const overdue = dvDaysOverdue(p.dueDate);
+      const extraLent = debtRecords.filter(r => r.personId === personId && r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
+      const totalLent = (p.initialAmount || 0) + extraLent;
+      const progPct = totalLent > 0 ? Math.min(100, Math.round(((p.repaidAmount || 0) / totalLent) * 100)) : 0;
+
+      document.getElementById('dpvAvatar').textContent = dvInitials(p.name);
+      document.getElementById('dpvAvatar').style.borderColor = color;
+      document.getElementById('dpvName').textContent = p.name;
+      document.getElementById('dpvRole').textContent = (isOwed ? 'Borrower' : 'Lender') + ' · ' + records.length + ' record' + (records.length !== 1 ? 's' : '');
+      document.getElementById('dpvBalanceSub').textContent = isOwed ? p.name + ' owes you' : 'You owe ' + p.name;
+      document.getElementById('dpvBalanceAmount').textContent = dvFmt(p.currentBalance || 0);
+      document.getElementById('dpvBalanceAmount').style.color = color;
+      const ob = document.getElementById('dpvOverdueBadge');
+      if (overdue > 0 && !isSettled) {
+        ob.style.display = 'inline-block';
+        ob.textContent = 'Overdue ' + overdue + ' day' + (overdue > 1 ? 's' : '');
+        ob.style.background = 'rgba(239,150,142,0.12)';
+        ob.style.color = '#ef968e';
+      } else if (isSettled) {
+        ob.style.display = 'inline-block';
+        ob.textContent = 'Settled';
+        ob.style.background = 'rgba(82,214,164,0.12)';
+        ob.style.color = '#52d6a4';
+      } else {
+        ob.style.display = 'none';
+      }
+      document.getElementById('dpvProgressFill').style.width = progPct + '%';
+      document.getElementById('dpvRepaidLabel').textContent = 'Repaid ' + dvFmt(p.repaidAmount || 0);
+      document.getElementById('dpvTotalLabel').textContent  = (isOwed ? 'Lent ' : 'Borrowed ') + dvFmt(totalLent);
+      document.getElementById('dpvLendMoreBtn').textContent = isOwed ? 'Lend more' : 'Borrow more';
+
+      const rl = document.getElementById('dpvRecordsList');
+      if (!rl) return;
+      if (!records.length) {
+        rl.innerHTML = '<div class="dv-empty" style="display:flex;padding:24px 16px"><p>No transactions yet.</p></div>';
+        return;
+      }
+      rl.innerHTML = records.map(r => {
+        const isInward = r.type === 'repayment';
+        const rColor = isInward ? '#52d6a4' : '#e7b849';
+        const rSign  = isInward ? '+' : '';
+        const arrowInward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>';
+        const arrowOutward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
+        const rIcon  = isInward ? arrowInward : arrowOutward;
+        const rTitle = r.type === 'repayment' ? 'Repayment received'
+          : r.type === 'lend_more' ? 'Lent — ' + (r.note || 'additional')
+          : r.type === 'borrow_more' ? 'Borrowed — ' + (r.note || 'additional')
+          : (r.note || 'Initial loan');
+        return '<div class="dpv-record-item">'
+          + '<div class="dpv-record-icon" style="background:' + rColor + '18;border:1px solid ' + rColor + '30">' + rIcon + '</div>'
+          + '<div class="dpv-record-mid"><div class="dpv-record-title">' + rTitle + '</div><div class="dpv-record-date">' + dvFormatDate(r.date) + (r.note && r.type === 'repayment' ? ' · ' + r.note : '') + '</div></div>'
+          + '<div class="dpv-record-right"><div class="dpv-record-amt" style="color:' + rColor + '">' + rSign + dvFmt(r.amount) + '</div><div class="dpv-record-bal">Balance ' + dvFmt(r.runningBalance) + '</div></div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function togglePersonMenu() {
+      const m = document.getElementById('dpvContextMenu');
+      if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+    }
+    document.addEventListener('click', e => {
+      const m = document.getElementById('dpvContextMenu');
+      const btn = document.getElementById('dpvMenuBtn');
+      if (m && m.style.display === 'block' && btn && !m.contains(e.target) && !btn.contains(e.target)) m.style.display = 'none';
+    });
+
+    function editDebtPerson() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      document.getElementById('debtPersonModalTitle').textContent = 'Edit Person';
+      document.getElementById('debtPersonId').value = p.id;
+      document.getElementById('debtPersonName').value = p.name;
+      document.getElementById('debtPersonAmount').value = p.initialAmount || '';
+      document.getElementById('debtPersonNote').value = p.note || '';
+      document.getElementById('debtPersonDue').value = p.dueDate || '';
+      document.getElementById('debtPersonPhone').value = p.phone || '';
+      _debtRole = p.role;
+      document.getElementById('dvrBorrower').classList.toggle('dv-role-act', p.role === 'borrower');
+      document.getElementById('dvrLender').classList.toggle('dv-role-act', p.role === 'lender');
+      document.getElementById('debtPersonModal').style.display = 'flex';
+    }
+
+    async function settleDebtPerson() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      if (!confirm('Mark ' + p.name + ' as settled?')) return;
+      p.status = 'settled';
+      p.currentBalance = 0;
+      p.updatedAt = Date.now();
+      saveDebtLocal();
+      await saveDebtPersonCloud(p);
+      renderPersonLedger(p.id);
+      checkDebtOverdueBadge();
+    }
+
+    async function deleteDebtPerson() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      if (!confirm("Delete " + p.name + "'s account and all records? This cannot be undone.")) return;
+      const recs = debtRecords.filter(r => r.personId === p.id);
+      for (const r of recs) {
+        await deleteDebtRecordCloud(r.id);
+      }
+      debtRecords = debtRecords.filter(r => r.personId !== p.id);
+      await deleteDebtPersonCloud(p.id);
+      debtPersons = debtPersons.filter(x => x.id !== p.id);
+      saveDebtLocal();
+      closePersonLedger();
+      refreshDebtViews();
+      checkDebtOverdueBadge();
+    }
+
+    function openDebtPersonModal() {
+      document.getElementById('debtPersonModalTitle').textContent = 'Add Person';
+      document.getElementById('debtPersonId').value = '';
+      document.getElementById('debtPersonName').value = '';
+      document.getElementById('debtPersonAmount').value = '';
+      document.getElementById('debtPersonNote').value = '';
+      document.getElementById('debtPersonDue').value = '';
+      document.getElementById('debtPersonPhone').value = '';
+      _debtRole = 'borrower';
+      document.getElementById('dvrBorrower').classList.add('dv-role-act');
+      document.getElementById('dvrLender').classList.remove('dv-role-act');
+      document.getElementById('debtPersonModal').style.display = 'flex';
+    }
+    function closeDebtPersonModal() {
+      document.getElementById('debtPersonModal').style.display = 'none';
+    }
+    function setDebtRole(r) {
+      _debtRole = r;
+      document.getElementById('dvrBorrower').classList.toggle('dv-role-act', r === 'borrower');
+      document.getElementById('dvrLender').classList.toggle('dv-role-act', r === 'lender');
+    }
+
+    async function saveDebtPerson() {
+      const name = document.getElementById('debtPersonName').value.trim();
+      const amt = parseFloat(document.getElementById('debtPersonAmount').value);
+      if (!name) { alert('Name is required.'); return; }
+      if (isNaN(amt) || amt < 0) { alert('Enter a valid amount.'); return; }
+      const existingId = document.getElementById('debtPersonId').value;
+      if (existingId) {
+        const idx = debtPersons.findIndex(x => x.id === existingId);
+        if (idx >= 0) {
+          debtPersons[idx].name = name;
+          debtPersons[idx].role = _debtRole;
+          debtPersons[idx].note = document.getElementById('debtPersonNote').value.trim();
+          debtPersons[idx].dueDate = document.getElementById('debtPersonDue').value;
+          debtPersons[idx].phone = document.getElementById('debtPersonPhone').value.trim();
+          debtPersons[idx].updatedAt = Date.now();
+          saveDebtLocal();
+          await saveDebtPersonCloud(debtPersons[idx]);
+        }
+      } else {
+        const id = dvId();
+        const person = {
+          id: id, name: name, role: _debtRole, initialAmount: amt, currentBalance: amt, repaidAmount: 0,
+          dueDate: document.getElementById('debtPersonDue').value,
+          note: document.getElementById('debtPersonNote').value.trim(),
+          phone: document.getElementById('debtPersonPhone').value.trim(),
+          status: 'active', createdAt: Date.now(), updatedAt: Date.now()
+        };
+        const initRecord = {
+          id: dvId(), personId: id, personName: name,
+          type: _debtRole === 'borrower' ? 'initial_loan' : 'initial_borrow',
+          amount: amt, date: new Date().toISOString().split('T')[0],
+          note: person.note, mode: 'other', runningBalance: amt, createdAt: Date.now()
+        };
+        debtPersons.push(person);
+        debtRecords.push(initRecord);
+        saveDebtLocal();
+        await saveDebtPersonCloud(person);
+        await saveDebtRecordCloud(initRecord);
+      }
+      closeDebtPersonModal();
+      refreshDebtViews();
+      checkDebtOverdueBadge();
+    }
+
+    function openRecordPaymentModal() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      document.getElementById('debtPaymentModalTitle').textContent = p.role === 'borrower' ? 'Record Repayment' : 'Record Payment';
+      document.getElementById('paymentAmount').value = '';
+      document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('paymentNote').value = '';
+      document.getElementById('paymentSyncFlux').checked = false;
+      _payMode = 'upi';
+      document.getElementById('payModeUPI').classList.add('dv-role-act');
+      document.getElementById('payModeCash').classList.remove('dv-role-act');
+      document.getElementById('debtPaymentModal').style.display = 'flex';
+    }
+    function closePaymentModal() {
+      document.getElementById('debtPaymentModal').style.display = 'none';
+    }
+    function setPayMode(m) {
+      _payMode = m;
+      document.getElementById('payModeUPI').classList.toggle('dv-role-act', m === 'upi');
+      document.getElementById('payModeCash').classList.toggle('dv-role-act', m === 'cash');
+    }
+    async function savePayment() {
+      const amt = parseFloat(document.getElementById('paymentAmount').value);
+      if (isNaN(amt) || amt <= 0) { alert('Enter a valid amount.'); return; }
+      const pid = _currentDebtPersonId;
+      const idx = debtPersons.findIndex(x => x.id === pid);
+      if (idx < 0) return;
+      const p = debtPersons[idx];
+      p.repaidAmount = (p.repaidAmount || 0) + amt;
+      p.currentBalance = Math.max(0, (p.currentBalance || 0) - amt);
+      if (p.currentBalance === 0) p.status = 'settled';
+      p.updatedAt = Date.now();
+      debtPersons[idx] = p;
+      const rec = {
+        id: dvId(), personId: pid, personName: p.name, type: 'repayment', amount: amt,
+        date: document.getElementById('paymentDate').value,
+        note: document.getElementById('paymentNote').value.trim(),
+        mode: _payMode, runningBalance: p.currentBalance, createdAt: Date.now()
+      };
+      debtRecords.push(rec);
+      saveDebtLocal();
+      await saveDebtPersonCloud(p);
+      await saveDebtRecordCloud(rec);
+      if (document.getElementById('paymentSyncFlux').checked && userId && typeof addDoc !== 'undefined') {
+        addDoc(collection(db, 'users', userId, 'transactions'), {
+          desc: 'Repayment from ' + p.name, amount: amt, type: 'income',
+          cat: 'Debt Repayment', mode: _payMode, date: rec.date, createdAt: Date.now()
+        }).catch(() => {});
+      }
+      closePaymentModal();
+      renderPersonLedger(pid);
+      refreshDebtViews();
+      checkDebtOverdueBadge();
+    }
+
+    function openLendMoreModal() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      document.getElementById('debtLendModalTitle').textContent = p.role === 'borrower' ? 'Lend More' : 'Borrow More';
+      document.getElementById('lendAmount').value = '';
+      document.getElementById('lendDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('lendDueDate').value = '';
+      document.getElementById('lendNote').value = '';
+      document.getElementById('debtLendModal').style.display = 'flex';
+    }
+    function closeLendMoreModal() {
+      document.getElementById('debtLendModal').style.display = 'none';
+    }
+    async function saveLendMore() {
+      const amt = parseFloat(document.getElementById('lendAmount').value);
+      if (isNaN(amt) || amt <= 0) { alert('Enter a valid amount.'); return; }
+      const pid = _currentDebtPersonId;
+      const idx = debtPersons.findIndex(x => x.id === pid);
+      if (idx < 0) return;
+      const p = debtPersons[idx];
+      p.currentBalance = (p.currentBalance || 0) + amt;
+      const nd = document.getElementById('lendDueDate').value;
+      if (nd) p.dueDate = nd;
+      if (p.status === 'settled') p.status = 'active';
+      p.updatedAt = Date.now();
+      debtPersons[idx] = p;
+      const rec = {
+        id: dvId(), personId: pid, personName: p.name,
+        type: p.role === 'borrower' ? 'lend_more' : 'borrow_more',
+        amount: amt, date: document.getElementById('lendDate').value,
+        note: document.getElementById('lendNote').value.trim(),
+        mode: 'other', runningBalance: p.currentBalance, createdAt: Date.now()
+      };
+      debtRecords.push(rec);
+      saveDebtLocal();
+      await saveDebtPersonCloud(p);
+      await saveDebtRecordCloud(rec);
+      closeLendMoreModal();
+      renderPersonLedger(pid);
+      refreshDebtViews();
+    }
+
+    function checkDebtOverdueBadge() {
+      const count = debtPersons.filter(p => dvDaysOverdue(p.dueDate) > 0 && p.status !== 'settled').length;
+      const badge = document.getElementById('debtOverdueBadge');
+      if (badge) {
+        badge.style.display = count > 0 ? 'flex' : 'none';
+        badge.textContent = count > 9 ? '9+' : String(count);
+      }
+    }
+
+    function shareDebtStatement() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      const records = debtRecords.filter(r => r.personId === p.id).sort((a, b) => new Date(a.date) - new Date(b.date));
+      const isOwed = p.role === 'borrower';
+      const lines = [
+        '*Debt Statement — ' + p.name + '*',
+        'Role: ' + (isOwed ? 'Borrower (owes me)' : 'Lender (I owe)'),
+        'Status: ' + (p.status === 'settled' ? 'Settled' : 'Active'),
+        'Balance: ' + dvFmt(p.currentBalance || 0),
+        '',
+        '*Transactions:*'
+      ];
+      records.forEach(r => {
+        const sign = r.type === 'repayment' ? '+' : '-';
+        lines.push(r.date + ' | ' + sign + dvFmt(r.amount) + ' | ' + (r.note || r.type) + ' | Bal: ' + dvFmt(r.runningBalance));
+      });
+      lines.push('');
+      lines.push('Generated by Flux Personal Finance');
+      const msg = lines.join(String.fromCharCode(10));
+      window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    // Init: load local debt data immediately
+    (function initDebtSystem() {
+      loadDebtLocal();
+      checkDebtOverdueBadge();
+    })();
 
   </script>
 </body>

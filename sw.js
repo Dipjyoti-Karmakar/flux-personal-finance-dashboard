@@ -1,6 +1,6 @@
 // Flux Service Worker - Offline-first caching strategy
-// V52: Updated icon with background and subscription cycle progress bar
-const CACHE_NAME = 'flux-v52';
+// V53: Added 3-tab Debts management system with personal accounts
+const CACHE_NAME = 'flux-v53';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './?v=39',

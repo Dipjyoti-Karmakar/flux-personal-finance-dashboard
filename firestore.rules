@@ -1,5 +1,5 @@
 // Firebase Console Rules Link:
-// https://console.firebase.google.com/u/0/project/my-ledger-8f8b5/firestore/databases/-default-/security/rules?fb_gclid=CjwKCAjwqc_UBhBKEiwAWbl25kg-iNrkiCp4ZLvyDU8s9DCooIct8FweZlpB4GQ3GNT3CP1N8PNoBBoCuRYQAvD_BwE&fb_utm_campaign=Cloud-SS-DR-Firebase-FY26-global-pmax-1713590&fb_utm_content=pmax&fb_utm_medium=display&fb_utm_source=PMAX
+// https://console.firebase.google.com/project/my-ledger-8f8b5/firestore/databases/-default-/security/rules
 
 rules_version = '2';
 service cloud.firestore {
@@ -69,6 +69,16 @@ service cloud.firestore {
         allow update: if isOwner(userId)
           && request.resource.data.a in ['ADD', 'EDIT', 'DELETE', 'UPDATE', 'IMPORT']
           && request.resource.data.ts is number;
+      }
+
+      // Debt Persons Collection
+      match /debt_persons/{personId} {
+        allow read, write, delete: if isOwner(userId);
+      }
+
+      // Debt Records Collection
+      match /debt_records/{recordId} {
+        allow read, write, delete: if isOwner(userId);
       }
     }
   }
