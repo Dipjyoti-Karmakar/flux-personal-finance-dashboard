@@ -13234,7 +13234,7 @@
             const progPct = totalPrincipal > 0 ? Math.min(100, Math.round(((p.repaidAmount || 0) / totalPrincipal) * 100)) : 0;
             const roleLabel = isSettled ? 'Settled' : (isOwed ? 'Borrower (Owes you)' : 'Creditor (You owe)');
 
-            return '<div class="dva-card" onclick="openPersonLedger(\'' + dvEscape(p.id) + '\')">'
+            return '<div class="dva-card" data-person-id="' + dvEscape(p.id) + '">'
               + '<div class="dva-card-left">'
               + '<div class="dva-avatar" style="border-color:' + color + '">' + dvInitials(p.name) + '</div>'
               + '<div><div class="dva-card-name">' + dvEscape(p.name) + '</div>'
@@ -13247,6 +13247,12 @@
               + (!isSettled && totalPrincipal > 0 ? '<div class="dva-mini-prog"><div class="dva-mini-fill" style="width:' + progPct + '%;background:' + color + '"></div></div><div class="dva-mini-pct">' + progPct + '% repaid</div>' : '')
               + '</div></div>';
           }).join('');
+          listEl.querySelectorAll('.dva-card').forEach(card => {
+            card.addEventListener('click', () => {
+              const pid = card.getAttribute('data-person-id');
+              if (pid) openPersonLedger(pid);
+            });
+          });
         }
       }
 
@@ -13270,7 +13276,7 @@
               : (p.note || (isOwed ? 'Payment expected' : 'Payment due'));
             const noteText = dvEscape(noteRaw);
 
-            return '<div class="dv-tl-item" onclick="openPersonLedger(\'' + dvEscape(p.id) + '\')">'
+            return '<div class="dv-tl-item" data-person-id="' + dvEscape(p.id) + '">'
               + '<div class="dv-tl-date" style="color:' + (overdue > 0 ? '#ef968e' : '#8e887d') + '">'
               + '<div class="dv-tl-day">' + dateDay + '</div>'
               + '<div class="dv-tl-mon">' + dateMonth + '</div>'
@@ -13284,6 +13290,12 @@
               + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>'
               + '</div></div></div>';
           }).join('');
+          tl.querySelectorAll('.dv-tl-item').forEach(item => {
+            item.addEventListener('click', () => {
+              const pid = item.getAttribute('data-person-id');
+              if (pid) openPersonLedger(pid);
+            });
+          });
         }
       }
     }
@@ -13389,7 +13401,7 @@
           : dvEscape(r.note || (isOwed ? 'Initial loan given' : 'Initial loan taken'));
         const modeLabel = r.mode ? (' · ' + dvEscape(r.mode.toUpperCase())) : '';
         const isInitial = r.type === 'initial_loan' || r.type === 'initial_borrow';
-        const delBtn = isInitial ? '' : '<button class="dpv-del-rec-btn" onclick="deleteDebtRecord(\'' + dvEscape(r.id) + '\')" title="Delete this entry">&#x2715;</button>';
+        const delBtn = isInitial ? '' : '<button class="dpv-del-rec-btn" data-record-id="' + dvEscape(r.id) + '" title="Delete this entry">&#x2715;</button>';
 
         return '<div class="dpv-record-item">'
           + '<div class="dpv-record-icon" style="background:' + rColor + '18;border:1px solid ' + rColor + '30">' + rIcon + '</div>'
@@ -13398,6 +13410,13 @@
           + delBtn
           + '</div></div>';
       }).join('');
+      rl.querySelectorAll('.dpv-del-rec-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rid = btn.getAttribute('data-record-id');
+          if (rid) deleteDebtRecord(rid);
+        });
+      });
     }
 
     function togglePersonMenu() {
@@ -13432,20 +13451,22 @@
       if (_settlingDebtPerson) return;
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
-      if (p.status === 'settled' && (!p.currentBalance || p.currentBalance <= 0)) {
+      if (p.status === 'settled' && (!p.currentBalance || p.currentBalance <= 0) && !p.settlementSyncPending) {
         alert(p.name + ' is already completely settled.');
         return;
       }
       _settlingDebtPerson = true;
       try {
-        if (!confirm('Mark ' + p.name + ' as completely settled?')) {
+        const confirmMsg = p.settlementSyncPending
+          ? 'Retry syncing settlement for ' + p.name + ' to the cloud?'
+          : 'Mark ' + p.name + ' as completely settled?';
+        if (!confirm(confirmMsg)) {
           _settlingDebtPerson = false;
           return;
         }
         const settleAmount = p.currentBalance || 0;
-        // Establish whether a settlement repayment record was already created/accepted
-        let rec = (p.settlementRecordId && debtRecords.find(r => r.id === p.settlementRecordId)) ||
-          debtRecords.find(r => r.personId === p.id && r.type === 'repayment' && r.note === 'Full settlement' && r.runningBalance === 0);
+        // Establish whether a settlement repayment record was already created/accepted for this settlement attempt
+        let rec = p.settlementRecordId ? debtRecords.find(r => r.id === p.settlementRecordId) : null;
 
         if (!rec && settleAmount > 0) {
           // Deterministic ID for this settlement state ensures idempotency in Firestore and local array
@@ -13475,6 +13496,7 @@
         p.status = 'settled';
         p.currentBalance = 0;
         p.updatedAt = Date.now();
+        delete p.settlementSyncPending;
         saveDebtLocal();
 
         if (rec) {
@@ -13487,6 +13509,11 @@
         checkDebtOverdueBadge();
       } catch (err) {
         console.warn('[Debt] Settlement cloud write failed:', err);
+        p.settlementSyncPending = true;
+        if (typeof queueFailedSync === 'function') {
+          if (rec) queueFailedSync('setDoc', 'debt_records', rec.id, rec);
+          queueFailedSync('setDoc', 'debt_persons', p.id, p);
+        }
         // Recover local state and debtRecords to a completely consistent state
         const pRecs = debtRecords.filter(r => r.personId === p.id);
         const extraLent = pRecs.filter(r => r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
@@ -13514,10 +13541,22 @@
       if (!confirm("Delete " + p.name + "'s account and all ledger records? This cannot be undone.")) return;
       const recs = debtRecords.filter(r => r.personId === p.id);
       for (const r of recs) {
-        await deleteDebtRecordCloud(r.id);
+        try {
+          await deleteDebtRecordCloud(r.id);
+        } catch (err) {
+          if (typeof queueFailedSync === 'function') {
+            queueFailedSync('deleteDoc', 'debt_records', r.id, null);
+          }
+        }
       }
       debtRecords = debtRecords.filter(r => r.personId !== p.id);
-      await deleteDebtPersonCloud(p.id);
+      try {
+        await deleteDebtPersonCloud(p.id);
+      } catch (err) {
+        if (typeof queueFailedSync === 'function') {
+          queueFailedSync('deleteDoc', 'debt_persons', p.id, null);
+        }
+      }
       debtPersons = debtPersons.filter(x => x.id !== p.id);
       saveDebtLocal();
       backToDebtMain();
@@ -13674,6 +13713,7 @@
       if (p.status === 'settled') {
         p.status = 'active';
         delete p.settlementRecordId;
+        delete p.settlementSyncPending;
       }
       p.updatedAt = Date.now();
       debtPersons[idx] = p;
@@ -13702,13 +13742,21 @@
       }
       if (!confirm('Delete this transaction record?')) return;
       const pid = rec.personId;
-      await deleteDebtRecordCloud(recordId);
+      try {
+        await deleteDebtRecordCloud(recordId);
+      } catch (err) {
+        console.warn('[Debt] Cloud record deletion failed, queuing for retry:', err);
+        if (typeof queueFailedSync === 'function') {
+          queueFailedSync('deleteDoc', 'debt_records', recordId, null);
+        }
+      }
       debtRecords = debtRecords.filter(r => r.id !== recordId);
       
       const p = debtPersons.find(x => x.id === pid);
       if (p) {
         if (p.settlementRecordId === recordId) {
           delete p.settlementRecordId;
+          delete p.settlementSyncPending;
         }
         // Recalculate running balance in transaction order (chronological)
         const pRecsChronological = debtRecords
@@ -13719,17 +13767,15 @@
         const modifiedRecs = [];
         for (const r of pRecsChronological) {
           if (r.type === 'repayment') {
-            runBal = Math.max(0, runBal - (r.amount || 0));
+            runBal = runBal - (r.amount || 0);
           } else {
             runBal = runBal + (r.amount || 0);
           }
-          if (r.runningBalance !== runBal) {
-            r.runningBalance = runBal;
+          const displayBal = Math.max(0, runBal);
+          if (r.runningBalance !== displayBal) {
+            r.runningBalance = displayBal;
             modifiedRecs.push(r);
           }
-        }
-        for (const r of modifiedRecs) {
-          await saveDebtRecordCloud(r);
         }
 
         const extraLent = pRecsChronological.filter(r => r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
@@ -13740,9 +13786,36 @@
         p.repaidAmount = repaid;
         p.currentBalance = Math.max(0, total - repaid);
         if (p.currentBalance === 0 && p.repaidAmount > 0) p.status = 'settled';
-        else if (p.currentBalance > 0 && p.status === 'settled') p.status = 'active';
+        else if (p.currentBalance > 0) {
+          if (p.status === 'settled') p.status = 'active';
+          delete p.settlementRecordId;
+          delete p.settlementSyncPending;
+        }
         p.updatedAt = Date.now();
-        await saveDebtPersonCloud(p);
+        saveDebtLocal();
+
+        for (let i = 0; i < modifiedRecs.length; i++) {
+          const modRec = modifiedRecs[i];
+          try {
+            await saveDebtRecordCloud(modRec);
+          } catch (err) {
+            console.warn('[Debt] Cloud save record failed, retaining unfinished for retry:', err);
+            for (let j = i; j < modifiedRecs.length; j++) {
+              if (typeof queueFailedSync === 'function') {
+                queueFailedSync('setDoc', 'debt_records', modifiedRecs[j].id, modifiedRecs[j]);
+              }
+            }
+            break;
+          }
+        }
+        try {
+          await saveDebtPersonCloud(p);
+        } catch (err) {
+          console.warn('[Debt] Cloud save person failed, retaining for retry:', err);
+          if (typeof queueFailedSync === 'function') {
+            queueFailedSync('setDoc', 'debt_persons', p.id, p);
+          }
+        }
       }
       saveDebtLocal();
       renderPersonLedger(pid);

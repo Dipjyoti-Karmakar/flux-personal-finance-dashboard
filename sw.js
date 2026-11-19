@@ -1,6 +1,6 @@
 // Flux Service Worker - Offline-first caching strategy
-// V55: Enforce reload cache validation on pre-cache and scope fetch handlers to active cache
-const CACHE_NAME = 'flux-v55';
+// V56: Fallback to direct network on cache rejection, resilient debt sync
+const CACHE_NAME = 'flux-v56';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './?v=39',
@@ -80,13 +80,13 @@ self.addEventListener('fetch', (event) => {
           .then((response) => {
             // Cache the latest version
             const clone = response.clone();
-            cache.put(event.request, clone);
+            cache.put(event.request, clone).catch(() => {});
             return response;
           })
           .catch(() =>
             cache.match(event.request).then((r) => r || cache.match('./index.html', { ignoreSearch: true }) || cache.match('./index.html'))
           );
-      })
+      }).catch(() => fetch(event.request))
     );
     return;
   }
@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event) => {
             // Only cache successful GET responses
             if (response && response.status === 200 && event.request.method === 'GET') {
               const clone = response.clone();
-              cache.put(event.request, clone);
+              cache.put(event.request, clone).catch(() => {});
             }
             return response;
           })
@@ -111,6 +111,6 @@ self.addEventListener('fetch', (event) => {
 
         return cached || fetchPromise;
       });
-    })
+    }).catch(() => fetch(event.request))
   );
 });
