@@ -1,6 +1,6 @@
 // Flux Service Worker - Offline-first caching strategy
-// V54: Fixed debt navigation, 2-view ledger architecture and global exports
-const CACHE_NAME = 'flux-v54';
+// V55: Enforce reload cache validation on pre-cache and scope fetch handlers to active cache
+const CACHE_NAME = 'flux-v55';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './?v=39',
@@ -20,11 +20,22 @@ const PRE_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRE_CACHE).catch((err) => {
+      // Force network revalidation for pre-cached assets to prevent stale HTTP cache entries
+      const requests = PRE_CACHE.map((url) => new Request(url, { cache: 'reload' }));
+      return cache.addAll(requests).catch((err) => {
         // If any CDN asset fails to cache during install, continue gracefully
         console.warn('[SW] Pre-cache partial failure:', err);
-        // At minimum, cache the local files
-        return cache.addAll(['./', './index.html', './style.css?v=2', './manifest.json?v=7', './icon.svg?v=7', './icon-192.png?v=7', './icon-512.png?v=7']);
+        // At minimum, cache the local files with forced revalidation
+        const fallback = [
+          './',
+          './index.html',
+          './style.css?v=2',
+          './manifest.json?v=7',
+          './icon.svg?v=7',
+          './icon-192.png?v=7',
+          './icon-512.png?v=7'
+        ].map((url) => new Request(url, { cache: 'reload' }));
+        return cache.addAll(fallback);
       });
     })
   );
@@ -64,36 +75,42 @@ self.addEventListener('fetch', (event) => {
   // For HTML navigation requests: network-first, fall back to cache
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Cache the latest version
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          return response;
-        })
-        .catch(() => caches.match(event.request).then((r) => r || caches.match('./index.html')))
+      caches.open(CACHE_NAME).then((cache) => {
+        return fetch(event.request)
+          .then((response) => {
+            // Cache the latest version
+            const clone = response.clone();
+            cache.put(event.request, clone);
+            return response;
+          })
+          .catch(() =>
+            cache.match(event.request).then((r) => r || cache.match('./index.html', { ignoreSearch: true }) || cache.match('./index.html'))
+          );
+      })
     );
     return;
   }
 
   // For everything else (CDN scripts, fonts, CSS): cache-first, update in background
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      // Return cache immediately if available
-      const fetchPromise = fetch(event.request)
-        .then((response) => {
-          // Only cache successful GET responses
-          if (response && response.status === 200 && event.request.method === 'GET') {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        // FIXED: 503 Service Unavailable is semantically correct for offline fallback
-        // (was 408 Request Timeout which is semantically wrong)
-        .catch(() => cached || new Response('Service Unavailable', { status: 503, headers: { 'Content-Type': 'text/plain' } }));
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(event.request).then((cached) => {
+        // Return cache immediately if available
+        const fetchPromise = fetch(event.request)
+          .then((response) => {
+            // Only cache successful GET responses
+            if (response && response.status === 200 && event.request.method === 'GET') {
+              const clone = response.clone();
+              cache.put(event.request, clone);
+            }
+            return response;
+          })
+          // FIXED: 503 Service Unavailable is semantically correct for offline fallback
+          // (was 408 Request Timeout which is semantically wrong)
+          .catch(() => cached || new Response('Service Unavailable', { status: 503, headers: { 'Content-Type': 'text/plain' } }));
 
-      return cached || fetchPromise;
+        return cached || fetchPromise;
+      });
     })
   );
 });

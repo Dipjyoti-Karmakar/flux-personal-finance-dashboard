@@ -1002,12 +1002,11 @@
           <span>Personal Accounts</span>
           <span class="dv-section-count" id="dvAccountsCount">0 accounts</span>
         </div>
-        <div id="debtAccountsList">
-          <div class="dv-empty" id="debtAccountsEmpty" style="display:flex;">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="dv-empty" id="debtAccountsEmpty" style="display:flex;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             <p>No debt accounts yet.<br>Tap <strong>+</strong> to add a person.</p>
-          </div>
         </div>
+        <div id="debtAccountsList"></div>
 
         <!-- Upcoming Due Dates Timeline -->
         <div class="dv-upcoming-header">
@@ -13094,6 +13093,15 @@
       const d = new Date(isoDate + 'T00:00:00');
       return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
     }
+    function dvEscape(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
     function openDebtSection() {
       switchTab('debts');
@@ -13189,11 +13197,29 @@
       if (countEl) countEl.textContent = filtered.length + ' account' + (filtered.length !== 1 ? 's' : '');
 
       const listEl = document.getElementById('debtAccountsList');
-      const emptyEl = document.getElementById('debtAccountsEmpty');
+      let emptyEl = document.getElementById('debtAccountsEmpty');
       if (listEl) {
         if (!filtered.length) {
           listEl.innerHTML = '';
-          if (emptyEl) { listEl.appendChild(emptyEl); emptyEl.style.display = 'flex'; }
+          if (!emptyEl) {
+            emptyEl = document.createElement('div');
+            emptyEl.className = 'dv-empty';
+            emptyEl.id = 'debtAccountsEmpty';
+            emptyEl.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+              + '<p>No debt accounts yet.<br>Tap <strong>+</strong> to add a person.</p>';
+            if (listEl.parentNode) {
+              listEl.parentNode.insertBefore(emptyEl, listEl);
+            } else {
+              listEl.appendChild(emptyEl);
+            }
+          } else if (!emptyEl.parentElement || emptyEl.parentElement === listEl) {
+            if (listEl.parentNode) {
+              listEl.parentNode.insertBefore(emptyEl, listEl);
+            } else {
+              listEl.appendChild(emptyEl);
+            }
+          }
+          emptyEl.style.display = 'flex';
         } else {
           if (emptyEl) emptyEl.style.display = 'none';
           listEl.innerHTML = filtered.map(p => {
@@ -13208,12 +13234,12 @@
             const progPct = totalPrincipal > 0 ? Math.min(100, Math.round(((p.repaidAmount || 0) / totalPrincipal) * 100)) : 0;
             const roleLabel = isSettled ? 'Settled' : (isOwed ? 'Borrower (Owes you)' : 'Creditor (You owe)');
 
-            return '<div class="dva-card" onclick="openPersonLedger(\'' + p.id + '\')">'
+            return '<div class="dva-card" onclick="openPersonLedger(\'' + dvEscape(p.id) + '\')">'
               + '<div class="dva-card-left">'
               + '<div class="dva-avatar" style="border-color:' + color + '">' + dvInitials(p.name) + '</div>'
-              + '<div><div class="dva-card-name">' + p.name + '</div>'
+              + '<div><div class="dva-card-name">' + dvEscape(p.name) + '</div>'
               + '<div class="dva-card-meta">' + roleLabel + ' &middot; ' + recs + ' record' + (recs !== 1 ? 's' : '') + '</div>'
-              + (p.phone ? '<div class="dva-card-meta">' + p.phone + '</div>' : '')
+              + (p.phone ? '<div class="dva-card-meta">' + dvEscape(p.phone) + '</div>' : '')
               + '</div></div>'
               + '<div class="dva-card-right">'
               + '<div class="dva-card-bal" style="color:' + color + '">' + (isSettled ? 'Settled' : dvFmt(p.currentBalance)) + '</div>'
@@ -13239,11 +13265,12 @@
             const d = new Date(p.dueDate + 'T00:00:00');
             const dateDay = d.getDate();
             const dateMonth = d.toLocaleString('en', { month: 'short' }).toUpperCase();
-            const noteText = overdue > 0
+            const noteRaw = overdue > 0
               ? ('Overdue ' + overdue + ' day' + (overdue > 1 ? 's' : '') + (p.note ? ', ' + p.note : ''))
               : (p.note || (isOwed ? 'Payment expected' : 'Payment due'));
+            const noteText = dvEscape(noteRaw);
 
-            return '<div class="dv-tl-item" onclick="openPersonLedger(\'' + p.id + '\')">'
+            return '<div class="dv-tl-item" onclick="openPersonLedger(\'' + dvEscape(p.id) + '\')">'
               + '<div class="dv-tl-date" style="color:' + (overdue > 0 ? '#ef968e' : '#8e887d') + '">'
               + '<div class="dv-tl-day">' + dateDay + '</div>'
               + '<div class="dv-tl-mon">' + dateMonth + '</div>'
@@ -13251,7 +13278,7 @@
               + '<div class="dv-tl-line-col"><div class="dv-tl-node" style="background:' + color + ';box-shadow:0 0 8px ' + color + '44;"></div></div>'
               + '<div class="dv-tl-card">'
               + '<div class="dv-tl-card-top">'
-              + '<div><div class="dv-tl-name">' + p.name + '</div>'
+              + '<div><div class="dv-tl-name">' + dvEscape(p.name) + '</div>'
               + '<div class="dv-tl-note">' + noteText + '</div></div>'
               + '<div class="dv-tl-amount" style="color:' + color + '">' + sign + dvFmt(p.currentBalance)
               + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>'
@@ -13357,16 +13384,18 @@
         const arrowOutward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
         const rIcon  = isInward ? arrowInward : arrowOutward;
         const rTitle = r.type === 'repayment' ? (isOwed ? 'Repayment received' : 'Repayment paid')
-          : r.type === 'lend_more' ? 'Lent more — ' + (r.note || 'additional')
-          : r.type === 'borrow_more' ? 'Borrowed more — ' + (r.note || 'additional')
-          : (r.note || (isOwed ? 'Initial loan given' : 'Initial loan taken'));
-        const modeLabel = r.mode ? (' · ' + r.mode.toUpperCase()) : '';
+          : r.type === 'lend_more' ? 'Lent more — ' + dvEscape(r.note || 'additional')
+          : r.type === 'borrow_more' ? 'Borrowed more — ' + dvEscape(r.note || 'additional')
+          : dvEscape(r.note || (isOwed ? 'Initial loan given' : 'Initial loan taken'));
+        const modeLabel = r.mode ? (' · ' + dvEscape(r.mode.toUpperCase())) : '';
+        const isInitial = r.type === 'initial_loan' || r.type === 'initial_borrow';
+        const delBtn = isInitial ? '' : '<button class="dpv-del-rec-btn" onclick="deleteDebtRecord(\'' + dvEscape(r.id) + '\')" title="Delete this entry">&#x2715;</button>';
 
         return '<div class="dpv-record-item">'
           + '<div class="dpv-record-icon" style="background:' + rColor + '18;border:1px solid ' + rColor + '30">' + rIcon + '</div>'
-          + '<div class="dpv-record-mid"><div class="dpv-record-title">' + rTitle + '</div><div class="dpv-record-date">' + dvFormatDate(r.date) + modeLabel + (r.note && r.type === 'repayment' ? ' · ' + r.note : '') + '</div></div>'
+          + '<div class="dpv-record-mid"><div class="dpv-record-title">' + rTitle + '</div><div class="dpv-record-date">' + dvFormatDate(r.date) + modeLabel + (r.note && r.type === 'repayment' ? ' · ' + dvEscape(r.note) : '') + '</div></div>'
           + '<div class="dpv-record-right"><div class="dpv-record-amt" style="color:' + rColor + '">' + rSign + dvFmt(r.amount) + '</div><div class="dpv-record-bal">Balance ' + dvFmt(r.runningBalance) + '</div>'
-          + '<button class="dpv-del-rec-btn" onclick="deleteDebtRecord(\'' + r.id + '\')" title="Delete this entry">&#x2715;</button>'
+          + delBtn
           + '</div></div>';
       }).join('');
     }
@@ -13397,27 +13426,86 @@
       document.getElementById('debtPersonModal').style.display = 'flex';
     }
 
+    let _settlingDebtPerson = false;
+
     async function settleDebtPerson() {
+      if (_settlingDebtPerson) return;
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
-      if (!confirm('Mark ' + p.name + ' as completely settled?')) return;
-      if (p.currentBalance > 0) {
-        const rec = {
-          id: dvId(), personId: p.id, personName: p.name, type: 'repayment', amount: p.currentBalance,
-          date: new Date().toISOString().split('T')[0], note: 'Full settlement', mode: 'other', runningBalance: 0, createdAt: Date.now()
-        };
-        debtRecords.push(rec);
-        await saveDebtRecordCloud(rec);
-        p.repaidAmount = (p.repaidAmount || 0) + p.currentBalance;
+      if (p.status === 'settled' && (!p.currentBalance || p.currentBalance <= 0)) {
+        alert(p.name + ' is already completely settled.');
+        return;
       }
-      p.status = 'settled';
-      p.currentBalance = 0;
-      p.updatedAt = Date.now();
-      saveDebtLocal();
-      await saveDebtPersonCloud(p);
-      renderPersonLedger(p.id);
-      refreshDebtViews();
-      checkDebtOverdueBadge();
+      _settlingDebtPerson = true;
+      try {
+        if (!confirm('Mark ' + p.name + ' as completely settled?')) {
+          _settlingDebtPerson = false;
+          return;
+        }
+        const settleAmount = p.currentBalance || 0;
+        // Establish whether a settlement repayment record was already created/accepted
+        let rec = (p.settlementRecordId && debtRecords.find(r => r.id === p.settlementRecordId)) ||
+          debtRecords.find(r => r.personId === p.id && r.type === 'repayment' && r.note === 'Full settlement' && r.runningBalance === 0);
+
+        if (!rec && settleAmount > 0) {
+          // Deterministic ID for this settlement state ensures idempotency in Firestore and local array
+          const settleRecId = 'settle_' + p.id + '_' + (p.updatedAt || p.createdAt || Date.now());
+          rec = {
+            id: settleRecId,
+            personId: p.id,
+            personName: p.name,
+            type: 'repayment',
+            amount: settleAmount,
+            date: new Date().toISOString().split('T')[0],
+            note: 'Full settlement',
+            mode: 'other',
+            runningBalance: 0,
+            createdAt: Date.now()
+          };
+          debtRecords.push(rec);
+          p.settlementRecordId = settleRecId;
+          p.repaidAmount = (p.repaidAmount || 0) + settleAmount;
+        } else if (rec) {
+          p.settlementRecordId = rec.id;
+          if (p.currentBalance > 0) {
+            p.repaidAmount = (p.repaidAmount || 0) + p.currentBalance;
+          }
+        }
+
+        p.status = 'settled';
+        p.currentBalance = 0;
+        p.updatedAt = Date.now();
+        saveDebtLocal();
+
+        if (rec) {
+          await saveDebtRecordCloud(rec);
+        }
+        await saveDebtPersonCloud(p);
+
+        renderPersonLedger(p.id);
+        refreshDebtViews();
+        checkDebtOverdueBadge();
+      } catch (err) {
+        console.warn('[Debt] Settlement cloud write failed:', err);
+        // Recover local state and debtRecords to a completely consistent state
+        const pRecs = debtRecords.filter(r => r.personId === p.id);
+        const extraLent = pRecs.filter(r => r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
+        const extraBorrowed = pRecs.filter(r => r.type === 'borrow_more').reduce((s, r) => s + r.amount, 0);
+        const repaid = pRecs.filter(r => r.type === 'repayment').reduce((s, r) => s + r.amount, 0);
+        const isOwed = p.role === 'borrower';
+        const total = (p.initialAmount || 0) + (isOwed ? extraLent : extraBorrowed);
+        p.repaidAmount = repaid;
+        p.currentBalance = Math.max(0, total - repaid);
+        if (p.currentBalance === 0 && p.repaidAmount > 0) p.status = 'settled';
+        else if (p.currentBalance > 0 && p.status === 'settled') p.status = 'active';
+        saveDebtLocal();
+        renderPersonLedger(p.id);
+        refreshDebtViews();
+        checkDebtOverdueBadge();
+        alert('Settlement saved locally, but cloud sync encountered an error: ' + (err.message || 'Network issue') + '. Your records are consistent; retrying will safely sync without duplicate repayments.');
+      } finally {
+        _settlingDebtPerson = false;
+      }
     }
 
     async function deleteDebtPerson() {
@@ -13583,7 +13671,10 @@
       p.currentBalance = (p.currentBalance || 0) + amt;
       const nd = document.getElementById('lendDueDate').value;
       if (nd) p.dueDate = nd;
-      if (p.status === 'settled') p.status = 'active';
+      if (p.status === 'settled') {
+        p.status = 'active';
+        delete p.settlementRecordId;
+      }
       p.updatedAt = Date.now();
       debtPersons[idx] = p;
       const rec = {
@@ -13603,19 +13694,47 @@
     }
 
     async function deleteDebtRecord(recordId) {
-      if (!confirm('Delete this transaction record?')) return;
       const rec = debtRecords.find(r => r.id === recordId);
       if (!rec) return;
+      if (rec.type === 'initial_loan' || rec.type === 'initial_borrow') {
+        alert('Initial loan entries cannot be deleted. Edit or delete the person account instead.');
+        return;
+      }
+      if (!confirm('Delete this transaction record?')) return;
       const pid = rec.personId;
       await deleteDebtRecordCloud(recordId);
       debtRecords = debtRecords.filter(r => r.id !== recordId);
       
       const p = debtPersons.find(x => x.id === pid);
       if (p) {
-        const pRecs = debtRecords.filter(r => r.personId === pid);
-        const extraLent = pRecs.filter(r => r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
-        const extraBorrowed = pRecs.filter(r => r.type === 'borrow_more').reduce((s, r) => s + r.amount, 0);
-        const repaid = pRecs.filter(r => r.type === 'repayment').reduce((s, r) => s + r.amount, 0);
+        if (p.settlementRecordId === recordId) {
+          delete p.settlementRecordId;
+        }
+        // Recalculate running balance in transaction order (chronological)
+        const pRecsChronological = debtRecords
+          .filter(r => r.personId === pid)
+          .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+
+        let runBal = 0;
+        const modifiedRecs = [];
+        for (const r of pRecsChronological) {
+          if (r.type === 'repayment') {
+            runBal = Math.max(0, runBal - (r.amount || 0));
+          } else {
+            runBal = runBal + (r.amount || 0);
+          }
+          if (r.runningBalance !== runBal) {
+            r.runningBalance = runBal;
+            modifiedRecs.push(r);
+          }
+        }
+        for (const r of modifiedRecs) {
+          await saveDebtRecordCloud(r);
+        }
+
+        const extraLent = pRecsChronological.filter(r => r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
+        const extraBorrowed = pRecsChronological.filter(r => r.type === 'borrow_more').reduce((s, r) => s + r.amount, 0);
+        const repaid = pRecsChronological.filter(r => r.type === 'repayment').reduce((s, r) => s + r.amount, 0);
         const isOwed = p.role === 'borrower';
         const total = (p.initialAmount || 0) + (isOwed ? extraLent : extraBorrowed);
         p.repaidAmount = repaid;
