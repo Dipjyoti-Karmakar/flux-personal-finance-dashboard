@@ -1,6 +1,6 @@
 // Flux Service Worker - Offline-first caching strategy
-// V53: Added 3-tab Debts management system with personal accounts
-const CACHE_NAME = 'flux-v53';
+// V54: Fixed debt navigation, 2-view ledger architecture and global exports
+const CACHE_NAME = 'flux-v54';
 // Assets to pre-cache on install
 const PRE_CACHE = [
   './?v=39',
