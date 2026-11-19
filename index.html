@@ -13457,10 +13457,7 @@
       }
       _settlingDebtPerson = true;
       try {
-        const confirmMsg = p.settlementSyncPending
-          ? 'Retry syncing settlement for ' + p.name + ' to the cloud?'
-          : 'Mark ' + p.name + ' as completely settled?';
-        if (!confirm(confirmMsg)) {
+        if (!p.settlementSyncPending && !confirm('Mark ' + p.name + ' as completely settled?')) {
           _settlingDebtPerson = false;
           return;
         }
@@ -13510,10 +13507,6 @@
       } catch (err) {
         console.warn('[Debt] Settlement cloud write failed:', err);
         p.settlementSyncPending = true;
-        if (typeof queueFailedSync === 'function') {
-          if (rec) queueFailedSync('setDoc', 'debt_records', rec.id, rec);
-          queueFailedSync('setDoc', 'debt_persons', p.id, p);
-        }
         // Recover local state and debtRecords to a completely consistent state
         const pRecs = debtRecords.filter(r => r.personId === p.id);
         const extraLent = pRecs.filter(r => r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
@@ -13541,22 +13534,10 @@
       if (!confirm("Delete " + p.name + "'s account and all ledger records? This cannot be undone.")) return;
       const recs = debtRecords.filter(r => r.personId === p.id);
       for (const r of recs) {
-        try {
-          await deleteDebtRecordCloud(r.id);
-        } catch (err) {
-          if (typeof queueFailedSync === 'function') {
-            queueFailedSync('deleteDoc', 'debt_records', r.id, null);
-          }
-        }
+        await deleteDebtRecordCloud(r.id);
       }
       debtRecords = debtRecords.filter(r => r.personId !== p.id);
-      try {
-        await deleteDebtPersonCloud(p.id);
-      } catch (err) {
-        if (typeof queueFailedSync === 'function') {
-          queueFailedSync('deleteDoc', 'debt_persons', p.id, null);
-        }
-      }
+      await deleteDebtPersonCloud(p.id);
       debtPersons = debtPersons.filter(x => x.id !== p.id);
       saveDebtLocal();
       backToDebtMain();
@@ -13786,11 +13767,7 @@
         p.repaidAmount = repaid;
         p.currentBalance = Math.max(0, total - repaid);
         if (p.currentBalance === 0 && p.repaidAmount > 0) p.status = 'settled';
-        else if (p.currentBalance > 0) {
-          if (p.status === 'settled') p.status = 'active';
-          delete p.settlementRecordId;
-          delete p.settlementSyncPending;
-        }
+        else if (p.currentBalance > 0 && p.status === 'settled') p.status = 'active';
         p.updatedAt = Date.now();
         saveDebtLocal();
 
