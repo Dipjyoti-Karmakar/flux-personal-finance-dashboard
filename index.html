@@ -1252,8 +1252,8 @@
 
         <!-- Actions -->
         <div class="dpv-actions">
-          <button class="dpv-btn-primary" onclick="openRecordPaymentModal()">Record Payment</button>
-          <button class="dpv-btn-secondary" id="dpvLendMoreBtn" onclick="openLendMoreModal()">Lend More</button>
+          <button class="dpv-btn-primary" id="dpvAddTxBtn" onclick="openLendMoreModal()">+ Add Transaction</button>
+          <button class="dpv-btn-secondary" onclick="openRecordPaymentModal()">Record Payment</button>
         </div>
 
         <!-- Transactions Ledger Feed -->
@@ -1283,12 +1283,6 @@
           <input type="hidden" id="debtPersonId">
           <label class="dv-label">Full Name <span style="color:#ef968e">*</span></label>
           <input type="text" id="debtPersonName" class="dv-input" placeholder="e.g. Priya Sharma">
-          <label class="dv-label">Role</label>
-          <div class="dv-role-toggle">
-            <button class="dv-role-btn dv-role-act" id="dvrBorrower" onclick="setDebtRole('borrower')">They owe
-              me</button>
-            <button class="dv-role-btn" id="dvrLender" onclick="setDebtRole('lender')">I owe them</button>
-          </div>
           <label class="dv-label">Note / Reason</label>
           <input type="text" id="debtPersonNote" class="dv-input" placeholder="e.g. Trip share, Laptop repair">
           <label class="dv-label">Due Date</label>
@@ -1329,22 +1323,27 @@
         </div>
       </div>
 
-      <!-- Modal: Lend / Borrow More -->
+      <!-- Modal: Add Transaction -->
       <div class="dv-modal-backdrop" id="debtLendModal" style="display:none;"
         onclick="if(event.target===this)closeLendMoreModal()">
         <div class="dv-modal">
-          <div class="dv-modal-title" id="debtLendModalTitle">Lend More</div>
+          <div class="dv-modal-title" id="debtLendModalTitle">Add Transaction</div>
+          <label class="dv-label">Type</label>
+          <div class="dv-role-toggle" style="margin-bottom:12px;">
+            <button type="button" class="dv-role-btn dv-role-act" id="lendTypeGive" onclick="setLendTxType('give')">I gave (They owe me)</button>
+            <button type="button" class="dv-role-btn" id="lendTypeTake" onclick="setLendTxType('take')">I took (I owe them)</button>
+          </div>
           <label class="dv-label">Amount (&#8377;) <span style="color:#ef968e">*</span></label>
           <input type="number" id="lendAmount" class="dv-input" placeholder="0.00" min="0.01" step="0.01">
           <label class="dv-label">Date</label>
           <input type="date" id="lendDate" class="dv-input">
-          <label class="dv-label">Revised Due Date (optional)</label>
+          <label class="dv-label">Due Date (optional)</label>
           <input type="date" id="lendDueDate" class="dv-input">
-          <label class="dv-label">Note / Reason</label>
-          <input type="text" id="lendNote" class="dv-input" placeholder="e.g. Emergency, medical">
+          <label class="dv-label">Note / Description</label>
+          <input type="text" id="lendNote" class="dv-input" placeholder="e.g. Lunch split, Trip, Loan">
           <div class="dv-modal-actions">
             <button class="dv-btn-cancel" onclick="closeLendMoreModal()">Cancel</button>
-            <button class="dv-btn-save" onclick="saveLendMore()">Save</button>
+            <button class="dv-btn-save" onclick="saveLendMore()">Save Transaction</button>
           </div>
         </div>
       </div>
@@ -13625,7 +13624,8 @@
       if (!p) return;
       const isOwed = p.role === 'borrower';
       const isSettled = p.status === 'settled';
-      const color = isSettled ? '#8e887d' : (isOwed ? '#52d6a4' : '#ef968e');
+      const hasRole = Boolean(p.role);
+      const color = isSettled ? '#8e887d' : (!hasRole ? '#8e887d' : (isOwed ? '#52d6a4' : '#ef968e'));
       const records = debtRecords.filter(r => r.personId === personId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       const overdue = dvDaysOverdue(p.dueDate);
       const extraLent = debtRecords.filter(r => r.personId === personId && r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
@@ -13641,9 +13641,14 @@
       const nameEl = document.getElementById('dpvName');
       if (nameEl) nameEl.textContent = p.name;
       const roleEl = document.getElementById('dpvRole');
-      if (roleEl) roleEl.textContent = (isOwed ? 'Borrower (Owes you)' : 'Creditor (You owe)') + ' · ' + records.length + ' record' + (records.length !== 1 ? 's' : '');
+      if (roleEl) {
+        const roleText = isSettled ? 'Settled' : (!hasRole || !records.length ? 'Personal Account' : (isOwed ? 'Debtor (Owes you)' : 'Creditor (You owe)'));
+        roleEl.textContent = roleText + ' · ' + records.length + ' record' + (records.length !== 1 ? 's' : '');
+      }
       const subEl = document.getElementById('dpvBalanceSub');
-      if (subEl) subEl.textContent = isSettled ? 'All settled up' : (isOwed ? p.name + ' owes you' : 'You owe ' + p.name);
+      if (subEl) {
+        subEl.textContent = isSettled ? 'All settled up' : (!hasRole || !records.length ? 'No active debt' : (isOwed ? p.name + ' owes you' : 'You owe ' + p.name));
+      }
       const balEl = document.getElementById('dpvBalanceAmount');
       if (balEl) {
         balEl.textContent = isSettled ? '₹0 (Settled)' : dvFmt(p.currentBalance || 0);
@@ -13738,9 +13743,6 @@
       document.getElementById('debtPersonDue').value = p.dueDate || '';
       document.getElementById('debtPersonPhone').value = p.phone || '';
       document.getElementById('debtPersonSaveBtn').textContent = 'Save Changes';
-      _debtRole = p.role;
-      document.getElementById('dvrBorrower').classList.toggle('dv-role-act', p.role === 'borrower');
-      document.getElementById('dvrLender').classList.toggle('dv-role-act', p.role === 'lender');
       document.getElementById('debtPersonModal').style.display = 'flex';
     }
 
@@ -13844,6 +13846,15 @@
       checkDebtOverdueBadge();
     }
 
+    let _lendTxType = 'give';
+    function setLendTxType(t) {
+      _lendTxType = t;
+      const g = document.getElementById('lendTypeGive');
+      const k = document.getElementById('lendTypeTake');
+      if (g) g.classList.toggle('dv-role-act', t === 'give');
+      if (k) k.classList.toggle('dv-role-act', t === 'take');
+    }
+
     function openDebtPersonModal() {
       document.getElementById('debtPersonModalTitle').textContent = 'Add Person';
       document.getElementById('debtPersonId').value = '';
@@ -13852,9 +13863,6 @@
       document.getElementById('debtPersonDue').value = '';
       document.getElementById('debtPersonPhone').value = '';
       document.getElementById('debtPersonSaveBtn').textContent = 'Create Account';
-      _debtRole = 'borrower';
-      document.getElementById('dvrBorrower').classList.add('dv-role-act');
-      document.getElementById('dvrLender').classList.remove('dv-role-act');
       document.getElementById('debtPersonModal').style.display = 'flex';
     }
     function closeDebtPersonModal() {
@@ -13862,8 +13870,10 @@
     }
     function setDebtRole(r) {
       _debtRole = r;
-      document.getElementById('dvrBorrower').classList.toggle('dv-role-act', r === 'borrower');
-      document.getElementById('dvrLender').classList.toggle('dv-role-act', r === 'lender');
+      const b = document.getElementById('dvrBorrower');
+      const l = document.getElementById('dvrLender');
+      if (b) b.classList.toggle('dv-role-act', r === 'borrower');
+      if (l) l.classList.toggle('dv-role-act', r === 'lender');
     }
 
     async function saveDebtPerson() {
@@ -13877,7 +13887,6 @@
         const idx = debtPersons.findIndex(x => x.id === existingId);
         if (idx >= 0) {
           debtPersons[idx].name = name;
-          debtPersons[idx].role = _debtRole;
           debtPersons[idx].note = document.getElementById('debtPersonNote').value.trim();
           debtPersons[idx].dueDate = document.getElementById('debtPersonDue').value;
           debtPersons[idx].phone = document.getElementById('debtPersonPhone').value.trim();
@@ -13888,7 +13897,7 @@
       } else {
         const id = dvId();
         const person = {
-          id: id, name: name, role: _debtRole, initialAmount: 0, currentBalance: 0, repaidAmount: 0,
+          id: id, name: name, role: '', initialAmount: 0, currentBalance: 0, repaidAmount: 0,
           dueDate: document.getElementById('debtPersonDue').value,
           note: document.getElementById('debtPersonNote').value.trim(),
           phone: document.getElementById('debtPersonPhone').value.trim(),
@@ -13960,14 +13969,15 @@
       checkDebtOverdueBadge();
     }
 
-    function openLendMoreModal() {
+    function openLendMoreModal(defaultType) {
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
-      document.getElementById('debtLendModalTitle').textContent = p.role === 'borrower' ? 'Lend More' : 'Borrow More';
+      document.getElementById('debtLendModalTitle').textContent = 'Add Transaction';
       document.getElementById('lendAmount').value = '';
       document.getElementById('lendDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('lendDueDate').value = '';
       document.getElementById('lendNote').value = '';
+      setLendTxType(defaultType || (p.role === 'lender' ? 'take' : 'give'));
       document.getElementById('debtLendModal').style.display = 'flex';
     }
     function closeLendMoreModal() {
@@ -13980,6 +13990,13 @@
       const idx = debtPersons.findIndex(x => x.id === pid);
       if (idx < 0) return;
       const p = debtPersons[idx];
+      const isGive = _lendTxType === 'give';
+
+      // Set debtor/creditor role when adding transaction
+      if (!p.role || p.currentBalance === 0) {
+        p.role = isGive ? 'borrower' : 'lender';
+      }
+
       p.currentBalance = (p.currentBalance || 0) + amt;
       const nd = document.getElementById('lendDueDate').value;
       if (nd) p.dueDate = nd;
@@ -13992,7 +14009,7 @@
       debtPersons[idx] = p;
       const rec = {
         id: dvId(), personId: pid, personName: p.name,
-        type: p.role === 'borrower' ? 'lend_more' : 'borrow_more',
+        type: isGive ? 'lend_more' : 'borrow_more',
         amount: amt, date: document.getElementById('lendDate').value,
         note: document.getElementById('lendNote').value.trim(),
         mode: 'other', runningBalance: p.currentBalance, createdAt: Date.now()
@@ -14004,6 +14021,7 @@
       closeLendMoreModal();
       renderPersonLedger(pid);
       refreshDebtViews();
+      checkDebtOverdueBadge();
     }
 
     async function deleteDebtRecord(recordId) {
@@ -14147,6 +14165,7 @@
     window.openDebtPersonModal = openDebtPersonModal;
     window.closeDebtPersonModal = closeDebtPersonModal;
     window.setDebtRole = setDebtRole;
+    window.setLendTxType = setLendTxType;
     window.saveDebtPerson = saveDebtPerson;
     window.openRecordPaymentModal = openRecordPaymentModal;
     window.closePaymentModal = closePaymentModal;
