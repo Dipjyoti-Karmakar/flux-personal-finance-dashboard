@@ -9494,10 +9494,6 @@
           return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
         });
 
-          const dd = (b.date || '').localeCompare(a.date || '');
-          return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
-        });
-
       // Build a set of IDs in this history for quick lookup
       const historyIds = new Set(subTxs.map(t => t.id));
 
