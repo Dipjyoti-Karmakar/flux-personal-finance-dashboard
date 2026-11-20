@@ -1283,10 +1283,6 @@
           <input type="hidden" id="debtPersonId">
           <label class="dv-label">Full Name <span style="color:#ef968e">*</span></label>
           <input type="text" id="debtPersonName" class="dv-input" placeholder="e.g. Priya Sharma">
-          <label class="dv-label">Note / Reason</label>
-          <input type="text" id="debtPersonNote" class="dv-input" placeholder="e.g. Trip share, Laptop repair">
-          <label class="dv-label">Due Date</label>
-          <input type="date" id="debtPersonDue" class="dv-input">
           <label class="dv-label">Phone / UPI (optional)</label>
           <input type="tel" id="debtPersonPhone" class="dv-input" placeholder="+91 &#8230;">
           <div class="dv-modal-actions">
@@ -13739,8 +13735,6 @@
       document.getElementById('debtPersonModalTitle').textContent = 'Edit Person';
       document.getElementById('debtPersonId').value = p.id;
       document.getElementById('debtPersonName').value = p.name;
-      document.getElementById('debtPersonNote').value = p.note || '';
-      document.getElementById('debtPersonDue').value = p.dueDate || '';
       document.getElementById('debtPersonPhone').value = p.phone || '';
       document.getElementById('debtPersonSaveBtn').textContent = 'Save Changes';
       document.getElementById('debtPersonModal').style.display = 'flex';
@@ -13859,8 +13853,6 @@
       document.getElementById('debtPersonModalTitle').textContent = 'Add Person';
       document.getElementById('debtPersonId').value = '';
       document.getElementById('debtPersonName').value = '';
-      document.getElementById('debtPersonNote').value = '';
-      document.getElementById('debtPersonDue').value = '';
       document.getElementById('debtPersonPhone').value = '';
       document.getElementById('debtPersonSaveBtn').textContent = 'Create Account';
       document.getElementById('debtPersonModal').style.display = 'flex';
@@ -13887,8 +13879,6 @@
         const idx = debtPersons.findIndex(x => x.id === existingId);
         if (idx >= 0) {
           debtPersons[idx].name = name;
-          debtPersons[idx].note = document.getElementById('debtPersonNote').value.trim();
-          debtPersons[idx].dueDate = document.getElementById('debtPersonDue').value;
           debtPersons[idx].phone = document.getElementById('debtPersonPhone').value.trim();
           debtPersons[idx].updatedAt = Date.now();
           saveDebtLocal();
@@ -13898,8 +13888,8 @@
         const id = dvId();
         const person = {
           id: id, name: name, role: '', initialAmount: 0, currentBalance: 0, repaidAmount: 0,
-          dueDate: document.getElementById('debtPersonDue').value,
-          note: document.getElementById('debtPersonNote').value.trim(),
+          dueDate: '',
+          note: '',
           phone: document.getElementById('debtPersonPhone').value.trim(),
           status: 'active', createdAt: Date.now(), updatedAt: Date.now()
         };
