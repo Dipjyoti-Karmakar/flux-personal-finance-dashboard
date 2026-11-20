@@ -24,7 +24,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css"
+    crossorigin="anonymous">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"
     integrity="sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw"
@@ -44,8 +45,10 @@
   <div id="offlineBanner"
     style="display:none; position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:9999; white-space:nowrap;"
     aria-live="assertive" role="alert">
-    <div style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:color-mix(in srgb, var(--ex) 12%, var(--sf)); border:1px solid color-mix(in srgb, var(--ex) 40%, transparent); border-radius:50px; box-shadow:0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); color:var(--ex); font-family:'DM Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase;">
-      <span style="width:7px;height:7px;border-radius:50%;background:var(--ex);box-shadow:0 0 8px var(--ex);flex-shrink:0;display:inline-block;"></span>
+    <div
+      style="display:flex; align-items:center; gap:8px; padding:10px 20px; background:color-mix(in srgb, var(--ex) 12%, var(--sf)); border:1px solid color-mix(in srgb, var(--ex) 40%, transparent); border-radius:50px; box-shadow:0 8px 24px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); color:var(--ex); font-family:'DM Mono',monospace; font-size:11px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase;">
+      <span
+        style="width:7px;height:7px;border-radius:50%;background:var(--ex);box-shadow:0 0 8px var(--ex);flex-shrink:0;display:inline-block;"></span>
       Offline — changes saved locally
     </div>
   </div>
@@ -141,7 +144,8 @@
           <div class="sidebar-logo">Flu<span>x</span></div>
           <div class="sidebar-sub">Personal Finance</div>
         </div>
-        <button class="debt-menu-trigger" id="debtMenuTriggerDesktop" onclick="openDebtSection()" aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
+        <button class="debt-menu-trigger" id="debtMenuTriggerDesktop" onclick="openDebtSection()"
+          aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
           <span class="dmt-bar"></span>
           <span class="dmt-bar"></span>
           <span class="dmt-bar"></span>
@@ -153,7 +157,8 @@
     <!-- Quick Add Transaction Hero Button -->
     <button class="sidebar-add-btn" id="sideAddBtn" onclick="scrollToForm()" aria-label="Add New Transaction">
       <span class="sidebar-add-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round">
           <line x1="12" y1="5" x2="12" y2="19"></line>
           <line x1="5" y1="12" x2="19" y2="12"></line>
         </svg>
@@ -163,7 +168,8 @@
 
     <!-- Navigation Items matching Mobile's 4 Tabs -->
     <nav class="sidebar-nav">
-      <button class="sidebar-nav-item act" id="snDash" onclick="switchTab('dashboard')" style="--nav-col: #FFC55A;" aria-current="page">
+      <button class="sidebar-nav-item act" id="snDash" onclick="switchTab('dashboard')" style="--nav-col: #FFC55A;"
+        aria-current="page">
         <span class="sidebar-nav-icon">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -270,7 +276,8 @@
         <div class="header-brand-wrap">
           <div class="logo">Flu<span>x</span></div>
           <div class="logo-sub">Personal Finance</div>
-          <button class="debt-menu-trigger" id="debtMenuTrigger" onclick="openDebtSection()" aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
+          <button class="debt-menu-trigger" id="debtMenuTrigger" onclick="openDebtSection()"
+            aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
             <span class="dmt-bar"></span>
             <span class="dmt-bar"></span>
             <span class="dmt-bar"></span>
@@ -280,7 +287,8 @@
         <div class="desktop-header-title-wrap">
           <div style="display:flex;align-items:center;gap:12px;">
             <h1 class="desktop-view-title" id="desktopViewTitle">Dashboard</h1>
-            <button class="debt-menu-trigger" id="debtMenuTriggerHeader" onclick="openDebtSection()" aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
+            <button class="debt-menu-trigger" id="debtMenuTriggerHeader" onclick="openDebtSection()"
+              aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
               <span class="dmt-bar"></span>
               <span class="dmt-bar"></span>
               <span class="dmt-bar"></span>
@@ -293,9 +301,7 @@
         <div class="theme-toggle-desktop">
           <span class="thlbl thlbl-dark" aria-hidden="true">Dark</span>
           <span class="thlbl thlbl-light" aria-hidden="true">Light</span>
-          <button class="thtog" id="thtog_desktop"
-            role="switch"
-            aria-label="Toggle light/dark theme"
+          <button class="thtog" id="thtog_desktop" role="switch" aria-label="Toggle light/dark theme"
             aria-checked="false"></button>
         </div>
       </div>
@@ -357,7 +363,13 @@
         </div>
       </div>
       <div class="analysis-custom-dt" id="statsCustomDt" style="display:none;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
         <input type="date" id="statsFrom" onchange="updStatsDt()" class="analysis-date-input">
         <span class="analysis-date-sep">→</span>
         <input type="date" id="statsTo" onchange="updStatsDt()" class="analysis-date-input">
@@ -374,7 +386,13 @@
         </div>
       </div>
       <div class="analysis-custom-dt" id="analysisCustomDt" style="display:none;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
         <input type="date" id="analysisFrom" onchange="updAnalysisDt()" class="analysis-date-input">
         <span class="analysis-date-sep">→</span>
         <input type="date" id="analysisTo" onchange="updAnalysisDt()" class="analysis-date-input">
@@ -437,7 +455,8 @@
                     class="tb" id="bExp" onclick="setType('expense')">↓ Expense</button></div>
               </div>
               <div class="fd full-mob"><label>Mode</label>
-                <div class="tg"><button class="tb ao" id="bOnl" onclick="setMode('online')">Online</button><button class="tb" id="bOfl" onclick="setMode('offline')">Offline</button>
+                <div class="tg"><button class="tb ao" id="bOnl" onclick="setMode('online')">Online</button><button
+                    class="tb" id="bOfl" onclick="setMode('offline')">Offline</button>
                 </div>
               </div>
             </div>
@@ -463,29 +482,40 @@
               </div>
             </div>
             <div class="fr">
-              <div class="fd"><label>Amount</label><input type="number" id="txA" placeholder="0.00" min="0"
-                  step="0.01"></div>
+              <div class="fd"><label>Amount</label><input type="number" id="txA" placeholder="0.00" min="0" step="0.01">
+              </div>
               <div class="fd"><label>Date</label><input type="date" id="txDt"></div>
             </div>
             <div class="fd full-mob">
               <label>Event (Optional)</label>
               <div class="cs-wrap" id="cs-txEvent">
                 <input type="hidden" id="txEvent">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-txEvent')"><span class="cs-val">— No Event —</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-txEvent')"><span class="cs-val">— No Event
+                    —</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg></button>
                 <div class="cs-menu" id="cs-txEvent-menu"></div>
               </div>
             </div>
             <!-- Receipt Upload (Optional) -->
             <div class="fd full-mob">
-              <label>Receipt <span style="color:var(--mu);font-weight:400">(Optional — JPG, PNG, PDF, max 10 MB)</span></label>
+              <label>Receipt <span style="color:var(--mu);font-weight:400">(Optional — JPG, PNG, PDF, max 10
+                  MB)</span></label>
               <label class="receipt-drop" id="receiptAddDrop" for="receiptAddFile">
                 <span id="receiptAddLabel">Click or drag to attach receipt</span>
-                <input type="file" id="receiptAddFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="if(window.previewReceipt)window.previewReceipt('add',this)">
+                <input type="file" id="receiptAddFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none"
+                  onchange="if(window.previewReceipt)window.previewReceipt('add',this)">
               </label>
               <div class="receipt-prog-container" id="receiptAddProgContainer" style="display:none">
                 <div class="receipt-prog-header">
                   <div class="receipt-prog-status">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
                     <span id="receiptAddProgLabel">Uploading...</span>
                   </div>
                   <span class="receipt-prog-pct" id="receiptAddProgPct">0%</span>
@@ -567,15 +597,18 @@
                 <input type="hidden" id="evtTxFiltHidden" value="all">
                 <button class="cs-btn etf-cs-btn" type="button" onclick="toggleCS('cs-evtTxFilt')">
                   <span class="cs-val">All Events</span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
                 </button>
                 <div class="cs-menu" id="cs-evtTxFilt-menu"></div>
               </div>
             </div>
           </div>
           <div class="tx-search-wrap">
-            <input type="text" id="txSearch" class="tx-search-input" placeholder="Search transactions…" oninput="setTxSearch(this.value)"
-              aria-label="Search transactions by description or category">
+            <input type="text" id="txSearch" class="tx-search-input" placeholder="Search transactions…"
+              oninput="setTxSearch(this.value)" aria-label="Search transactions by description or category">
           </div>
           <div class="txl" id="txList">
             <div class="empty-state">
@@ -611,8 +644,8 @@
               <button class="st-btn act" id="stSplit" onclick="setSplitView('split')">Online/Offline</button>
               <button class="st-btn" id="stEvents" onclick="setSplitView('events')">Events</button>
             </div>
-            <button class="pb event-new-btn" id="eventNewBtn" onclick="showCreateEvent()"
-              style="display:none;">＋ New</button>
+            <button class="pb event-new-btn" id="eventNewBtn" onclick="showCreateEvent()" style="display:none;">＋
+              New</button>
           </div>
         </div>
         <div class="ca split-events-body">
@@ -638,15 +671,22 @@
         <div class="ph">
           <span class="pt">Insights</span>
           <div class="ph-actions" style="display:flex;align-items:center;gap:8px;">
-            <button id="insightFilterBtn" class="insight-filter-btn" onclick="toggleInsightFilter()" title="Filter Insights" aria-controls="insightFilterBox" aria-expanded="false"><svg class="sub-filter-btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg><span class="insight-filter-badge" id="insightFilterBadge" style="display:none">0</span></button>
+            <button id="insightFilterBtn" class="insight-filter-btn" onclick="toggleInsightFilter()"
+              title="Filter Insights" aria-controls="insightFilterBox" aria-expanded="false"><svg
+                class="sub-filter-btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+              </svg><span class="insight-filter-badge" id="insightFilterBadge" style="display:none">0</span></button>
             <span class="pb" id="insightPeriod"></span>
           </div>
         </div>
         <!-- Insight Filter Box -->
         <div class="insight-filter-box" id="insightFilterBox">
-          <button class="insight-filter-mob-trigger" id="insightFilterMobTrigger" onclick="toggleInsightFilter()" aria-expanded="false" title="Tap to toggle insight filters">
+          <button class="insight-filter-mob-trigger" id="insightFilterMobTrigger" onclick="toggleInsightFilter()"
+            aria-expanded="false" title="Tap to toggle insight filters">
             <div class="sub-filter-mob-left">
-              <svg class="sub-filter-mob-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="sub-filter-mob-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
               </svg>
               <span class="sub-filter-mob-title">Insight Filters</span>
@@ -654,7 +694,8 @@
             </div>
             <div class="sub-filter-mob-right">
               <span class="sub-filter-mob-status" id="insightFilterMobStatus">All</span>
-              <svg class="sub-filter-mob-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="sub-filter-mob-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
@@ -682,17 +723,28 @@
             <!-- Type filter pills -->
             <div class="sub-filter-pills" title="Filter by Type">
               <button class="sub-fpill act" data-ift="all" onclick="setInsightType(this,'all')">All</button>
-              <button class="sub-fpill sub-type-exp" data-ift="expense" onclick="setInsightType(this,'expense')">Expense</button>
-              <button class="sub-fpill sub-type-inc" data-ift="income" onclick="setInsightType(this,'income')">Income</button>
+              <button class="sub-fpill sub-type-exp" data-ift="expense"
+                onclick="setInsightType(this,'expense')">Expense</button>
+              <button class="sub-fpill sub-type-inc" data-ift="income"
+                onclick="setInsightType(this,'income')">Income</button>
             </div>
             <!-- Event filter cs-wrap -->
             <div class="insight-event-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;stroke:var(--mu);flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" style="width:11px;height:11px;stroke:var(--mu);flex-shrink:0">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+              </svg>
               <div class="cs-wrap insight-evt-cs" id="cs-insightEvt">
                 <input type="hidden" id="insightEvtHidden" value="all">
                 <button class="cs-btn insight-evt-btn" type="button" onclick="toggleCS('cs-insightEvt')">
                   <span class="cs-val">All Events</span>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
                 </button>
                 <div class="cs-menu" id="cs-insightEvt-menu"></div>
               </div>
@@ -724,9 +776,12 @@
       <div class="sub-header section-in">
         <div class="sub-title">Subscriptions</div>
         <div class="sub-header-actions">
-          <button id="subArchivedToggle" class="sub-archived-toggle" onclick="toggleArchivedView()" style="display:none">Archived (0)</button>
-          <button id="subFilterToggleBtn" class="sub-filter-toggle-btn" onclick="toggleSubFilters()" title="Filter Subscriptions" aria-controls="subFilterBox" aria-expanded="false">
-            <svg class="sub-filter-btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+          <button id="subArchivedToggle" class="sub-archived-toggle" onclick="toggleArchivedView()"
+            style="display:none">Archived (0)</button>
+          <button id="subFilterToggleBtn" class="sub-filter-toggle-btn" onclick="toggleSubFilters()"
+            title="Filter Subscriptions" aria-controls="subFilterBox" aria-expanded="false">
+            <svg class="sub-filter-btn-icon" width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
             </svg>
             <span>Filter</span>
@@ -761,9 +816,11 @@
       </div>
       <!-- Phase 2: Collapsible Search / Filter / Sort box -->
       <div class="sub-filter-box section-in" id="subFilterBox">
-        <button class="sub-filter-mobile-trigger" id="subFilterMobileTrigger" onclick="toggleSubFilters()" aria-expanded="false" title="Tap to toggle filters">
+        <button class="sub-filter-mobile-trigger" id="subFilterMobileTrigger" onclick="toggleSubFilters()"
+          aria-expanded="false" title="Tap to toggle filters">
           <div class="sub-filter-mob-left">
-            <svg class="sub-filter-mob-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="sub-filter-mob-icon" width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
             </svg>
             <span class="sub-filter-mob-title">Filters</span>
@@ -771,31 +828,46 @@
           </div>
           <div class="sub-filter-mob-right">
             <span class="sub-filter-mob-status" id="subFilterMobileStatus">All</span>
-            <svg class="sub-filter-mob-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg class="sub-filter-mob-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
         </button>
         <div class="sub-toolbar" id="subToolbar" inert>
           <div class="sub-search-wrap">
-            <svg class="sub-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" id="subSearchInput" class="sub-search-input" placeholder="Search subscriptions…" oninput="applySubFilters()" autocomplete="off" spellcheck="false">
-            <button class="sub-search-clear" id="subSearchClear" onclick="clearSubSearch()" title="Clear" style="display:none">✕</button>
+            <svg class="sub-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" id="subSearchInput" class="sub-search-input" placeholder="Search subscriptions…"
+              oninput="applySubFilters()" autocomplete="off" spellcheck="false">
+            <button class="sub-search-clear" id="subSearchClear" onclick="clearSubSearch()" title="Clear"
+              style="display:none">✕</button>
           </div>
           <div class="sub-filter-pills sub-type-pills" id="subTypePills" title="Filter by Type">
-            <button class="sub-fpill act" data-type="all"     onclick="setSubType(this,'all')"    >All Types</button>
-            <button class="sub-fpill sub-type-exp" data-type="expense" onclick="setSubType(this,'expense')" >Expense</button>
-            <button class="sub-fpill sub-type-inc" data-type="income"  onclick="setSubType(this,'income')"  >Income</button>
+            <button class="sub-fpill act" data-type="all" onclick="setSubType(this,'all')">All Types</button>
+            <button class="sub-fpill sub-type-exp" data-type="expense"
+              onclick="setSubType(this,'expense')">Expense</button>
+            <button class="sub-fpill sub-type-inc" data-type="income"
+              onclick="setSubType(this,'income')">Income</button>
           </div>
           <div class="sub-filter-pills" id="subFreqPills" title="Filter by Cadence">
-            <button class="sub-fpill act" data-freq="all"     onclick="setSubFreq(this,'all')"    >All</button>
-            <button class="sub-fpill"     data-freq="monthly" onclick="setSubFreq(this,'monthly')" >Monthly</button>
-            <button class="sub-fpill"     data-freq="yearly"  onclick="setSubFreq(this,'yearly')"  >Yearly</button>
-            <button class="sub-fpill"     data-freq="weekly"  onclick="setSubFreq(this,'weekly')"  >Weekly</button>
-            <button class="sub-fpill"     data-freq="daily"   onclick="setSubFreq(this,'daily')"   >Daily</button>
+            <button class="sub-fpill act" data-freq="all" onclick="setSubFreq(this,'all')">All</button>
+            <button class="sub-fpill" data-freq="monthly" onclick="setSubFreq(this,'monthly')">Monthly</button>
+            <button class="sub-fpill" data-freq="yearly" onclick="setSubFreq(this,'yearly')">Yearly</button>
+            <button class="sub-fpill" data-freq="weekly" onclick="setSubFreq(this,'weekly')">Weekly</button>
+            <button class="sub-fpill" data-freq="daily" onclick="setSubFreq(this,'daily')">Daily</button>
           </div>
           <div class="sub-select-wrap sub-due-wrap" id="subDueWrap">
-            <svg class="sub-select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <svg class="sub-select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
             <select id="subDueSelect" class="sub-sort-select" onchange="onSubDueChange()" title="Filter by Due Date">
               <option value="all">All Due Dates</option>
               <option value="overdue">Overdue</option>
@@ -804,10 +876,16 @@
               <option value="month">Due This Month</option>
               <option value="custom">Exact Date…</option>
             </select>
-            <input type="date" id="subDueDateInput" class="sub-due-date-input" style="display:none" onchange="applySubFilters()" title="Select due date">
+            <input type="date" id="subDueDateInput" class="sub-due-date-input" style="display:none"
+              onchange="applySubFilters()" title="Select due date">
           </div>
           <div class="sub-sort-wrap">
-            <svg class="sub-sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+            <svg class="sub-sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="6" y1="12" x2="18" y2="12" />
+              <line x1="9" y1="18" x2="15" y2="18" />
+            </svg>
             <select id="subSortSelect" class="sub-sort-select" onchange="applySubFilters()">
               <option value="due">Sort: Next Due</option>
               <option value="amount_desc">Amount: High → Low</option>
@@ -828,52 +906,124 @@
           <!-- Filter Dropdown -->
           <div class="log-filter-wrapper" id="logFilterWrapper">
             <button class="log-filter-btn" id="logFilterMainBtn" onclick="toggleLogFilterMenu()">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
               <span>All</span>
             </button>
             <div class="log-filter-menu" id="logFilterMenu" role="menu">
-              <button class="log-fpill act" data-fval="all" data-flabel="All" onclick="setLogFilter('all')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <button class="log-fpill act" data-fval="all" data-flabel="All" onclick="setLogFilter('all')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
                 All
               </button>
-              <button class="log-fpill" data-fval="ADD" data-flabel="Added" onclick="setLogFilter('ADD')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <button class="log-fpill" data-fval="ADD" data-flabel="Added" onclick="setLogFilter('ADD')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
                 Added
               </button>
-              <button class="log-fpill" data-fval="EDIT" data-flabel="Edited" onclick="setLogFilter('EDIT')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <button class="log-fpill" data-fval="EDIT" data-flabel="Edited" onclick="setLogFilter('EDIT')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
                 Edited
               </button>
-              <button class="log-fpill" data-fval="DELETE" data-flabel="Deleted" onclick="setLogFilter('DELETE')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+              <button class="log-fpill" data-fval="DELETE" data-flabel="Deleted" onclick="setLogFilter('DELETE')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                </svg>
                 Deleted
               </button>
-              <button class="log-fpill" data-fval="IMPORT" data-flabel="Import" onclick="setLogFilter('IMPORT')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <button class="log-fpill" data-fval="IMPORT" data-flabel="Import" onclick="setLogFilter('IMPORT')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
                 Import
               </button>
-              <button class="log-fpill" data-fval="subscription" data-flabel="Subscriptions" onclick="setLogFilter('subscription')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <button class="log-fpill" data-fval="subscription" data-flabel="Subscriptions"
+                onclick="setLogFilter('subscription')" role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
                 Subscriptions
               </button>
-              <button class="log-fpill" data-fval="event" data-flabel="Events" onclick="setLogFilter('event')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <button class="log-fpill" data-fval="event" data-flabel="Events" onclick="setLogFilter('event')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
                 Events
               </button>
-              <button class="log-fpill" data-fval="income" data-flabel="Income" onclick="setLogFilter('income')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              <button class="log-fpill" data-fval="income" data-flabel="Income" onclick="setLogFilter('income')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="19" x2="12" y2="5" />
+                  <polyline points="5 12 12 5 19 12" />
+                </svg>
                 Income
               </button>
-              <button class="log-fpill" data-fval="expense" data-flabel="Expense" onclick="setLogFilter('expense')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+              <button class="log-fpill" data-fval="expense" data-flabel="Expense" onclick="setLogFilter('expense')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <polyline points="19 12 12 19 5 12" />
+                </svg>
                 Expense
               </button>
-              <button class="log-fpill" data-fval="online" data-flabel="Online" onclick="setLogFilter('online')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <button class="log-fpill" data-fval="online" data-flabel="Online" onclick="setLogFilter('online')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path
+                    d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
                 Online
               </button>
-              <button class="log-fpill" data-fval="offline" data-flabel="Offline" onclick="setLogFilter('offline')" role="menuitem">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/></svg>
+              <button class="log-fpill" data-fval="offline" data-flabel="Offline" onclick="setLogFilter('offline')"
+                role="menuitem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                  <path
+                    d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" />
+                </svg>
                 Offline
               </button>
               <!-- Date range filter -->
@@ -883,13 +1033,20 @@
                   <input type="date" id="logDateFrom" onchange="setLogDateFilter()" title="From date">
                   <span class="log-filter-date-sep">–</span>
                   <input type="date" id="logDateTo" onchange="setLogDateFilter()" title="To date">
-                  <button class="log-filter-date-clear" onclick="clearLogDateFilter()" title="Clear dates">Clear</button>
+                  <button class="log-filter-date-clear" onclick="clearLogDateFilter()"
+                    title="Clear dates">Clear</button>
                 </div>
               </div>
             </div>
           </div>
-          <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()" title="Select logs to delete">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          <button class="log-clear-btn" id="btnToggleDeleteLogs" onclick="toggleLogSelectionMode()"
+            title="Select logs to delete">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              <path d="M10 11v6M14 11v6" />
+            </svg>
             Delete Logs
           </button>
         </div>
@@ -897,20 +1054,33 @@
 
       <!-- Search bar -->
       <div class="log-search-wrap">
-        <svg class="log-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="logSearch" class="log-search-input" placeholder="Search logs..." oninput="setLogSearch(this.value)" aria-label="Search logs">
+        <svg class="log-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input type="text" id="logSearch" class="log-search-input" placeholder="Search logs..."
+          oninput="setLogSearch(this.value)" aria-label="Search logs">
       </div>
 
       <!-- Delete action bar -->
       <div id="logDeleteAction">
         <div class="log-del-info">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ex)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ex)" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+          </svg>
           <span id="logSelectCount" class="log-select-count">0 selected</span>
         </div>
         <div class="log-del-actions">
           <button class="btn log-cancel-btn" onclick="toggleLogSelectionMode()">Cancel</button>
           <button class="btn pr log-del-btn" onclick="confirmDeleteSelectedLogs()">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            </svg>
             Delete
           </button>
         </div>
@@ -929,8 +1099,10 @@
       <div id="debtDashView">
         <div class="dv-brand-header">
           <div class="dv-header-left">
-            <button class="dv-back-btn" onclick="backToMainDashboard()" title="Back to Flux Dashboard" aria-label="Back to Dashboard">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <button class="dv-back-btn" onclick="backToMainDashboard()" title="Back to Flux Dashboard"
+              aria-label="Back to Dashboard">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
@@ -941,8 +1113,12 @@
               <h1 class="dv-title">Debts &amp; Loans</h1>
             </div>
           </div>
-          <button class="dv-add-btn" onclick="openDebtPersonModal()" aria-label="Add person account" title="Add person account">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <button class="dv-add-btn" onclick="openDebtPersonModal()" aria-label="Add person account"
+            title="Add person account">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
           </button>
         </div>
 
@@ -971,13 +1147,13 @@
           </div>
           <div class="dv-donut-wrap">
             <svg class="dv-donut" width="90" height="90" viewBox="0 0 90 90">
-              <circle class="dv-donut-bg" cx="45" cy="45" r="36" fill="none" stroke="#282620" stroke-width="8"/>
+              <circle class="dv-donut-bg" cx="45" cy="45" r="36" fill="none" stroke="#282620" stroke-width="8" />
               <circle class="dv-donut-coral" cx="45" cy="45" r="36" fill="none" stroke="#ef968e" stroke-width="8"
-                stroke-dasharray="226.2" stroke-dashoffset="0" stroke-linecap="round"
-                transform="rotate(-90 45 45)" id="dvDonutCoral"/>
+                stroke-dasharray="226.2" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 45 45)"
+                id="dvDonutCoral" />
               <circle class="dv-donut-green" cx="45" cy="45" r="36" fill="none" stroke="#52d6a4" stroke-width="8"
-                stroke-dasharray="226.2" stroke-dashoffset="226.2" stroke-linecap="round"
-                transform="rotate(-90 45 45)" id="dvDonutGreen"/>
+                stroke-dasharray="226.2" stroke-dashoffset="226.2" stroke-linecap="round" transform="rotate(-90 45 45)"
+                id="dvDonutGreen" />
               <text x="45" y="42" text-anchor="middle" class="dv-donut-pct" id="dvDonutPct">0%</text>
               <text x="45" y="55" text-anchor="middle" class="dv-donut-sub-txt">owed to</text>
               <text x="45" y="65" text-anchor="middle" class="dv-donut-sub-txt">you</text>
@@ -987,8 +1163,12 @@
 
         <!-- Search & Filter Controls -->
         <div class="dv-search-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="debtAccountSearch" class="dv-search-input" placeholder="Search people&#8230;" oninput="renderDebtDashboard()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input type="text" id="debtAccountSearch" class="dv-search-input" placeholder="Search people&#8230;"
+            oninput="renderDebtDashboard()">
         </div>
         <div class="dv-filter-row">
           <button class="dv-pill dv-pill-act" id="dvPillAll" onclick="setDebtFilter('all')">All Accounts</button>
@@ -1003,8 +1183,12 @@
           <span class="dv-section-count" id="dvAccountsCount">0 accounts</span>
         </div>
         <div class="dv-empty" id="debtAccountsEmpty" style="display:flex;">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <p>No debt accounts yet.<br>Tap <strong>+</strong> to add a person.</p>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          <p>No debt accounts yet.<br>Tap <strong>+</strong> to add a person.</p>
         </div>
         <div id="debtAccountsList"></div>
 
@@ -1019,7 +1203,8 @@
       <div id="debtPersonView" style="display:none; position:relative; min-height:100vh; padding-bottom:48px;">
         <div class="dpv-topbar">
           <button class="dpv-back-btn" onclick="backToDebtMain()" aria-label="Back to Debts" title="Back to Debts">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
@@ -1027,7 +1212,11 @@
           </button>
           <span class="dpv-topbar-title">PERSON ACCOUNT</span>
           <button class="dpv-menu-btn" id="dpvMenuBtn" onclick="togglePersonMenu()" aria-label="Options">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="12" cy="5" r="1" />
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="12" cy="19" r="1" />
+            </svg>
           </button>
           <div class="dpv-context-menu" id="dpvContextMenu" style="display:none;">
             <button onclick="editDebtPerson(); togglePersonMenu()">Edit Person</button>
@@ -1052,7 +1241,9 @@
             <span class="dpv-overdue-badge" id="dpvOverdueBadge" style="display:none;">Overdue</span>
           </div>
           <div class="dpv-balance-amount" id="dpvBalanceAmount">&#8377;0</div>
-          <div class="dpv-progress-bar"><div class="dpv-progress-fill" id="dpvProgressFill" style="width:0%"></div></div>
+          <div class="dpv-progress-bar">
+            <div class="dpv-progress-fill" id="dpvProgressFill" style="width:0%"></div>
+          </div>
           <div class="dpv-progress-labels">
             <span id="dpvRepaidLabel">Repaid &#8377;0</span>
             <span id="dpvTotalLabel">Lent &#8377;0</span>
@@ -1074,14 +1265,19 @@
 
         <div class="dpv-statement-wrap">
           <button class="dpv-statement-btn" onclick="shareDebtStatement()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <polyline points="16 6 12 2 8 6" />
+              <line x1="12" y1="2" x2="12" y2="15" />
+            </svg>
             Share Statement (WhatsApp)
           </button>
         </div>
       </div>
 
       <!-- Modal: Add/Edit Person -->
-      <div class="dv-modal-backdrop" id="debtPersonModal" style="display:none;" onclick="if(event.target===this)closeDebtPersonModal()">
+      <div class="dv-modal-backdrop" id="debtPersonModal" style="display:none;"
+        onclick="if(event.target===this)closeDebtPersonModal()">
         <div class="dv-modal">
           <div class="dv-modal-title" id="debtPersonModalTitle">Add Person</div>
           <input type="hidden" id="debtPersonId">
@@ -1089,7 +1285,8 @@
           <input type="text" id="debtPersonName" class="dv-input" placeholder="e.g. Priya Sharma">
           <label class="dv-label">Role</label>
           <div class="dv-role-toggle">
-            <button class="dv-role-btn dv-role-act" id="dvrBorrower" onclick="setDebtRole('borrower')">They owe me</button>
+            <button class="dv-role-btn dv-role-act" id="dvrBorrower" onclick="setDebtRole('borrower')">They owe
+              me</button>
             <button class="dv-role-btn" id="dvrLender" onclick="setDebtRole('lender')">I owe them</button>
           </div>
           <label class="dv-label">Note / Reason</label>
@@ -1106,7 +1303,8 @@
       </div>
 
       <!-- Modal: Record Payment -->
-      <div class="dv-modal-backdrop" id="debtPaymentModal" style="display:none;" onclick="if(event.target===this)closePaymentModal()">
+      <div class="dv-modal-backdrop" id="debtPaymentModal" style="display:none;"
+        onclick="if(event.target===this)closePaymentModal()">
         <div class="dv-modal">
           <div class="dv-modal-title" id="debtPaymentModalTitle">Record Payment</div>
           <label class="dv-label">Amount (&#8377;) <span style="color:#ef968e">*</span></label>
@@ -1120,7 +1318,8 @@
           </div>
           <label class="dv-label">Note</label>
           <input type="text" id="paymentNote" class="dv-input" placeholder="e.g. Google Pay partial">
-          <label class="dv-label" style="display:flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:0;font-size:12px;">
+          <label class="dv-label"
+            style="display:flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:0;font-size:12px;">
             <input type="checkbox" id="paymentSyncFlux"> Also add to Flux transactions
           </label>
           <div class="dv-modal-actions">
@@ -1131,7 +1330,8 @@
       </div>
 
       <!-- Modal: Lend / Borrow More -->
-      <div class="dv-modal-backdrop" id="debtLendModal" style="display:none;" onclick="if(event.target===this)closeLendMoreModal()">
+      <div class="dv-modal-backdrop" id="debtLendModal" style="display:none;"
+        onclick="if(event.target===this)closeLendMoreModal()">
         <div class="dv-modal">
           <div class="dv-modal-title" id="debtLendModalTitle">Lend More</div>
           <label class="dv-label">Amount (&#8377;) <span style="color:#ef968e">*</span></label>
@@ -1262,10 +1462,16 @@
               <label>Type</label>
               <div class="cs-wrap" id="cs-eTy">
                 <input type="hidden" id="eTy" value="expense" onchange="updECat(this.value)">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-eTy')"><span class="cs-val">Expense</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-eTy')"><span class="cs-val">Expense</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg></button>
                 <div class="cs-menu">
-                  <button type="button" class="cs-opt" data-val="expense" onclick="selCS('cs-eTy', 'expense', 'Expense')">Expense</button>
-                  <button type="button" class="cs-opt" data-val="income" onclick="selCS('cs-eTy', 'income', 'Income')">Income</button>
+                  <button type="button" class="cs-opt" data-val="expense"
+                    onclick="selCS('cs-eTy', 'expense', 'Expense')">Expense</button>
+                  <button type="button" class="cs-opt" data-val="income"
+                    onclick="selCS('cs-eTy', 'income', 'Income')">Income</button>
                 </div>
               </div>
             </div>
@@ -1273,10 +1479,16 @@
               <label>Mode</label>
               <div class="cs-wrap" id="cs-eMo">
                 <input type="hidden" id="eMo" value="online">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-eMo')"><span class="cs-val">Online</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-eMo')"><span class="cs-val">Online</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg></button>
                 <div class="cs-menu">
-                  <button type="button" class="cs-opt" data-val="online" onclick="selCS('cs-eMo', 'online', 'Online', '')">Online</button>
-                  <button type="button" class="cs-opt" data-val="offline" onclick="selCS('cs-eMo', 'offline', 'Offline', '')">Offline</button>
+                  <button type="button" class="cs-opt" data-val="online"
+                    onclick="selCS('cs-eMo', 'online', 'Online', '')">Online</button>
+                  <button type="button" class="cs-opt" data-val="offline"
+                    onclick="selCS('cs-eMo', 'offline', 'Offline', '')">Offline</button>
                 </div>
               </div>
             </div>
@@ -1284,13 +1496,18 @@
           <div class="fr">
             <div class="fd">
               <label>Amount (₹)</label>
-              <input type="number" id="eAmt" min="0" step="0.01" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
+              <input type="number" id="eAmt" min="0" step="0.01"
+                style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
             </div>
             <div class="fd">
               <label>Category</label>
               <div class="cs-wrap" id="cs-eCat">
                 <input type="hidden" id="eCat">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-eCat')"><span class="cs-val">Select Category</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-eCat')"><span class="cs-val">Select
+                    Category</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg></button>
                 <div class="cs-menu" id="cs-eCat-menu"></div>
               </div>
             </div>
@@ -1299,20 +1516,26 @@
             <div class="fd">
               <label>Description</label>
               <div class="desc-sugg-wrap">
-                <input type="text" id="eDesc" autocomplete="off" maxlength="50" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
+                <input type="text" id="eDesc" autocomplete="off" maxlength="50"
+                  style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
                 <div class="desc-sugg-menu" id="eDescSuggMenu"></div>
               </div>
             </div>
             <div class="fd">
               <label>Date</label>
-              <input type="date" id="eDt" style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
+              <input type="date" id="eDt"
+                style="padding:12px 14px;border-radius:12px;background:var(--sf);border:1.5px solid var(--bd);">
             </div>
           </div>
           <div class="fd">
             <label>Event (Optional)</label>
             <div class="cs-wrap" id="cs-eEvent">
               <input type="hidden" id="eEvent">
-              <button class="cs-btn" type="button" onclick="toggleCS('cs-eEvent')"><span class="cs-val">— No Event —</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+              <button class="cs-btn" type="button" onclick="toggleCS('cs-eEvent')"><span class="cs-val">— No Event
+                  —</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg></button>
               <div class="cs-menu" id="cs-eEvent-menu"></div>
             </div>
           </div>
@@ -1324,15 +1547,27 @@
           </div>
           <!-- Attach new receipt -->
           <div class="fd full-mob" id="eReceiptNewSection">
-            <label id="eReceiptNewLabel">Attach Receipt <span style="color:var(--mu);font-weight:400">(Optional)</span></label>
+            <label id="eReceiptNewLabel">Attach Receipt <span
+                style="color:var(--mu);font-weight:400">(Optional)</span></label>
             <label class="receipt-drop" id="eReceiptDrop" for="eReceiptFile">
-              <span id="eReceiptFileLabel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Click or drag to attach receipt</span>
-              <input type="file" id="eReceiptFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none" onchange="if(window.previewReceipt)window.previewReceipt('edit',this)">
+              <span id="eReceiptFileLabel"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  style="vertical-align:-1px;margin-right:4px">
+                  <path
+                    d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                </svg> Click or drag to attach receipt</span>
+              <input type="file" id="eReceiptFile" accept=".jpg,.jpeg,.png,.webp,.gif,.pdf" style="display:none"
+                onchange="if(window.previewReceipt)window.previewReceipt('edit',this)">
             </label>
             <div class="receipt-prog-container" id="eReceiptProgContainer" style="display:none">
               <div class="receipt-prog-header">
                 <div class="receipt-prog-status">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                  </svg>
                   <span id="eReceiptProgLabel">Uploading...</span>
                 </div>
                 <span class="receipt-prog-pct" id="eReceiptProgPct">0%</span>
@@ -1395,7 +1630,9 @@
           </div>
           <div class="fd full-mob" style="margin-bottom:14px;">
             <label
-              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Event Color <span id="evtColorAssignedLabel" style="margin-left:6px;font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(93,186,138,0.12);color:var(--in);border:1px solid rgba(93,186,138,0.25);display:none;">assigned</span></label>
+              style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:block;">Event
+              Color <span id="evtColorAssignedLabel"
+                style="margin-left:6px;font-size:9px;padding:2px 7px;border-radius:10px;background:rgba(93,186,138,0.12);color:var(--in);border:1px solid rgba(93,186,138,0.25);display:none;">assigned</span></label>
             <div class="evt-color-section">
               <div class="evt-color-palette" id="evtColorPalette">
                 <!-- Swatches injected by JS via buildEvtColorPalette() -->
@@ -1409,7 +1646,11 @@
                 <span class="evt-color-hex-pill" id="evtColorHex">#c8a96e</span>
               </div>
               <div class="evt-color-taken-warning" id="evtColorTakenWarning">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
                 This color is already used by another event
               </div>
             </div>
@@ -1449,7 +1690,12 @@
                 style="font-size:10px;color:var(--mu);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin-bottom:6px;display:block;">Category</label>
               <div class="cs-wrap" id="cs-recCat">
                 <input type="hidden" id="recCat">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-recCat')" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;"><span class="cs-val">Select Category</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-recCat')"
+                  style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;"><span
+                    class="cs-val">Select Category</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg></button>
                 <div class="cs-menu" id="cs-recCat-menu"></div>
               </div>
             </div>
@@ -1468,10 +1714,16 @@
               <label>Type</label>
               <div class="cs-wrap" id="cs-recTy">
                 <input type="hidden" id="recTy" value="expense" onchange="setRecType(this.value)">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-recTy')"><span class="cs-val">Expense</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-recTy')"><span class="cs-val">Expense</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg></button>
                 <div class="cs-menu">
-                  <button type="button" class="cs-opt" data-val="expense" onclick="selCS('cs-recTy', 'expense', 'Expense')">Expense</button>
-                  <button type="button" class="cs-opt" data-val="income" onclick="selCS('cs-recTy', 'income', 'Income')">Income</button>
+                  <button type="button" class="cs-opt" data-val="expense"
+                    onclick="selCS('cs-recTy', 'expense', 'Expense')">Expense</button>
+                  <button type="button" class="cs-opt" data-val="income"
+                    onclick="selCS('cs-recTy', 'income', 'Income')">Income</button>
                 </div>
               </div>
             </div>
@@ -1479,10 +1731,16 @@
               <label>Mode</label>
               <div class="cs-wrap" id="cs-recMo">
                 <input type="hidden" id="recMo" value="online" onchange="setRecMode(this.value)">
-                <button class="cs-btn" type="button" onclick="toggleCS('cs-recMo')"><span class="cs-val">Online</span> <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+                <button class="cs-btn" type="button" onclick="toggleCS('cs-recMo')"><span class="cs-val">Online</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg></button>
                 <div class="cs-menu">
-                  <button type="button" class="cs-opt" data-val="online" onclick="selCS('cs-recMo', 'online', 'Online', '')">Online</button>
-                  <button type="button" class="cs-opt" data-val="offline" onclick="selCS('cs-recMo', 'offline', 'Offline', '')">Offline</button>
+                  <button type="button" class="cs-opt" data-val="online"
+                    onclick="selCS('cs-recMo', 'online', 'Online', '')">Online</button>
+                  <button type="button" class="cs-opt" data-val="offline"
+                    onclick="selCS('cs-recMo', 'offline', 'Offline', '')">Offline</button>
                 </div>
               </div>
             </div>
@@ -1524,7 +1782,8 @@
               <span class="rec-autolog-title">Auto-log transaction when due</span>
               <span class="rec-autolog-sub" id="recAutoLogSub">Transaction is created automatically</span>
             </div>
-            <button class="thtog" id="recAutoLogToggle" onclick="toggleRecAutoLog()" aria-label="Toggle auto-log"></button>
+            <button class="thtog" id="recAutoLogToggle" onclick="toggleRecAutoLog()"
+              aria-label="Toggle auto-log"></button>
           </div>
         </div>
       </div>
@@ -1656,21 +1915,37 @@
   <div id="receiptViewerMod" onclick="if(event.target===this)closeReceiptViewer()">
     <div class="receipt-viewer-box">
       <div class="receipt-viewer-header">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
         <span class="receipt-viewer-title" id="rvTitle">Receipt</span>
         <div class="receipt-viewer-actions">
           <!-- Navigation: only visible when multiple receipts -->
           <div id="rvNav" style="display:none;align-items:center;gap:4px;margin-right:6px">
-            <button class="receipt-viewer-btn" onclick="rvNav(-1)" aria-label="Previous receipt" style="padding:4px 8px">&#8249;</button>
+            <button class="receipt-viewer-btn" onclick="rvNav(-1)" aria-label="Previous receipt"
+              style="padding:4px 8px">&#8249;</button>
             <span id="rvNavLabel" style="font-size:11px;color:var(--mu);white-space:nowrap">1 / 1</span>
-            <button class="receipt-viewer-btn" onclick="rvNav(1)" aria-label="Next receipt" style="padding:4px 8px">&#8250;</button>
+            <button class="receipt-viewer-btn" onclick="rvNav(1)" aria-label="Next receipt"
+              style="padding:4px 8px">&#8250;</button>
           </div>
           <a id="rvDownloadBtn" href="#" class="receipt-viewer-btn pr">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             Download
           </a>
           <a id="rvOpenBtn" href="#" target="_blank" rel="noopener" class="receipt-viewer-btn">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
             Open
           </a>
           <button class="receipt-viewer-close" onclick="closeReceiptViewer()" aria-label="Close viewer">&times;</button>
@@ -1686,7 +1961,11 @@
       <div class="cropper-header">
         <h3>Adjust Receipt</h3>
         <button type="button" class="cropper-close" id="cropCancelTop" aria-label="Close">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
         </button>
       </div>
       <div class="cropper-container-wrapper">
@@ -1699,10 +1978,18 @@
           <span>Rotation</span>
           <div class="cropper-tool-btns">
             <button type="button" id="cropRotateLeft" aria-label="Rotate Left">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
             </button>
             <button type="button" id="cropRotateRight" aria-label="Rotate Right">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+              </svg>
             </button>
           </div>
         </div>
@@ -1722,8 +2009,8 @@
     const CLOUDINARY_CLOUD = 'wuzhyarc';
     const CLOUDINARY_PRESET = 'flux_receipts';
     // Images use /image/upload; PDFs use /raw/upload (avoids 401 from image-only presets)
-    const CLOUDINARY_IMG_URL  = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
-    const CLOUDINARY_RAW_URL  = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/raw/upload`;
+    const CLOUDINARY_IMG_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
+    const CLOUDINARY_RAW_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/raw/upload`;
     // Keep the old name as a fallback alias used elsewhere
     const CLOUDINARY_UPLOAD_URL = CLOUDINARY_IMG_URL;
 
@@ -1818,11 +2105,11 @@
     const _openSubHistPanels = new Set(); // Track open history panels across DOM rebuilds
     // Phase 2: toolbar state
     let _subSearchQuery = '';
-    let _subFreqFilter  = 'all';  // 'all' | 'monthly' | 'yearly' | 'weekly' | 'daily'
-    let _subTypeFilter  = 'all';  // 'all' | 'expense' | 'income'
-    let _subDueFilter   = 'all';  // 'all' | 'overdue' | 'today' | 'soon' | 'month' | 'custom'
-    let _subDueDateVal  = '';     // YYYY-MM-DD
-    let _subSortMode    = 'due';  // 'due' | 'amount_desc' | 'amount_asc' | 'name'
+    let _subFreqFilter = 'all';  // 'all' | 'monthly' | 'yearly' | 'weekly' | 'daily'
+    let _subTypeFilter = 'all';  // 'all' | 'expense' | 'income'
+    let _subDueFilter = 'all';  // 'all' | 'overdue' | 'today' | 'soon' | 'month' | 'custom'
+    let _subDueDateVal = '';     // YYYY-MM-DD
+    let _subSortMode = 'due';  // 'due' | 'amount_desc' | 'amount_asc' | 'name'
 
     let _subFilterBoxOpen = false;
 
@@ -1963,7 +2250,7 @@
     function getCycleProgress(rec, today) {
       if (!rec.nextDue) return null;
       const nextDue = new Date(rec.nextDue + 'T00:00:00');
-      const todayD  = new Date(today + 'T00:00:00');
+      const todayD = new Date(today + 'T00:00:00');
       let cycleMs;
       if (rec.freq === 'monthly') {
         const prev = new Date(nextDue); prev.setMonth(prev.getMonth() - 1);
@@ -2007,9 +2294,9 @@
     // ── Phase 5: Preset Quick-Fill ───────────────────────────────────────────
     function applyRecPreset(name, cat, freq, amt) {
       const nameEl = document.getElementById('recName');
-      const amtEl  = document.getElementById('recAmount');
+      const amtEl = document.getElementById('recAmount');
       if (nameEl) nameEl.value = name;
-      if (amtEl)  amtEl.value = amt;
+      if (amtEl) amtEl.value = amt;
       if (typeof selCS === 'function') {
         const catName = cat.charAt(0).toUpperCase() + cat.slice(1);
         const catIcon = (typeof CICO !== 'undefined' && CICO[cat]) || '✦';
@@ -2431,7 +2718,7 @@
             const tx = txs.find(t => t.id === txId);
             // patch is either a single rMeta object (add flow) or a full receipts array (edit flow)
             const patchArr = Array.isArray(patch) ? patch : [patch];
-            const allUrls  = patchArr.map(r => r.url);
+            const allUrls = patchArr.map(r => r.url);
             if (tx && !allUrls.every(url => (tx.receipts || []).some(r => r.url === url))) {
               // Not all receipts confirmed yet — re-apply the full patch set optimistically
               const merged = [...(tx.receipts || []).filter(r => !allUrls.includes(r.url)), ...patchArr];
@@ -2891,7 +3178,7 @@
 
     // ── Receipt helpers ─────────────────────────────────────────────────────
     const RECEIPT_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
-    const RECEIPT_ACCEPT_TYPES = ['image/jpeg','image/png','image/webp','image/gif','application/pdf'];
+    const RECEIPT_ACCEPT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf'];
 
     async function uploadReceipt(file, txId, prefix) {
       if (!file) return null;
@@ -2899,8 +3186,10 @@
       let effectiveType = file.type;
       if (!effectiveType || effectiveType === 'application/octet-stream') {
         const ext = file.name.split('.').pop().toLowerCase();
-        const extMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-                         webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf' };
+        const extMap = {
+          jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+          webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf'
+        };
         effectiveType = extMap[ext] || '';
       }
       if (!RECEIPT_ACCEPT_TYPES.includes(effectiveType))
@@ -2926,11 +3215,11 @@
           const pct = Math.round(e.loaded / e.total * 100);
           if (prefix) {
             const b = document.getElementById(prefix + 'ProgBar');
-            if(b) b.style.width = pct + '%';
+            if (b) b.style.width = pct + '%';
             const l = document.getElementById(prefix + 'ProgLabel');
-            if(l) l.textContent = pct < 100 ? 'Uploading...' : 'Processing...';
+            if (l) l.textContent = pct < 100 ? 'Uploading...' : 'Processing...';
             const p = document.getElementById(prefix + 'ProgPct');
-            if(p) p.textContent = pct + '%';
+            if (p) p.textContent = pct + '%';
           }
         };
         xhr.onload = () => {
@@ -2939,7 +3228,7 @@
             resolve({ url: res.secure_url, publicId: res.public_id, name: safeName, size: file.size, type: effectiveType });
           } else {
             let errMsg = xhr.statusText || 'Upload failed';
-            try { const r = JSON.parse(xhr.responseText); if (r.error?.message) errMsg = r.error.message; } catch (_) {}
+            try { const r = JSON.parse(xhr.responseText); if (r.error?.message) errMsg = r.error.message; } catch (_) { }
             reject(new Error(errMsg));
           }
         };
@@ -2961,15 +3250,15 @@
     let _cropperFile = null;
 
     // Wire file inputs for receipt upload (programmatic — avoids window.previewReceipt timing issues)
-    document.getElementById('receiptAddFile').addEventListener('change', function() { previewReceipt('add', this); });
-    document.getElementById('eReceiptFile').addEventListener('change', function() { previewReceipt('edit', this); });
+    document.getElementById('receiptAddFile').addEventListener('change', function () { previewReceipt('add', this); });
+    document.getElementById('eReceiptFile').addEventListener('change', function () { previewReceipt('edit', this); });
 
     function closeCropper() {
       document.getElementById('cropperModal').classList.remove('vis');
       if (_cropperInput) _cropperInput.value = '';
       if (_cropper) { _cropper.destroy(); _cropper = null; }
     }
-    
+
     document.getElementById('cropCancel').addEventListener('click', closeCropper);
     document.getElementById('cropCancelTop').addEventListener('click', closeCropper);
 
@@ -3008,7 +3297,7 @@
           maxHeight: 2000,
           fillColor: '#fff',
         });
-        
+
         if (!canvas) {
           showToast("Error: getCroppedCanvas returned null.", "er");
           return;
@@ -3018,15 +3307,15 @@
           if (!blob) { showToast('Could not process image blob.', 'er'); return; }
           const newFile = new File([blob], _cropperFile.name, { type: 'image/jpeg' });
           if (newFile.size > RECEIPT_MAX_BYTES) { showToast('Cropped image exceeds 10 MB limit.', 'er'); return; }
-          
+
           try {
             const dt = new DataTransfer();
             dt.items.add(newFile);
             if (_cropperInput) _cropperInput.files = dt.files;
-          } catch(err) {
+          } catch (err) {
             showToast("Error setting files: " + err.message, "er");
           }
-          
+
           const labelId = _cropperCtx === 'add' ? 'receiptAddLabel' : 'eReceiptFileLabel';
           const dropId = _cropperCtx === 'add' ? 'receiptAddDrop' : 'eReceiptDrop';
           const label = document.getElementById(labelId);
@@ -3044,10 +3333,10 @@
 
     function previewReceipt(ctx, input) {
       const file = input.files[0];
-      const labelId  = ctx === 'add' ? 'receiptAddLabel'  : 'eReceiptFileLabel';
-      const dropId   = ctx === 'add' ? 'receiptAddDrop'   : 'eReceiptDrop';
+      const labelId = ctx === 'add' ? 'receiptAddLabel' : 'eReceiptFileLabel';
+      const dropId = ctx === 'add' ? 'receiptAddDrop' : 'eReceiptDrop';
       const label = document.getElementById(labelId);
-      const drop  = document.getElementById(dropId);
+      const drop = document.getElementById(dropId);
       if (file) {
         // Pre-validate size and type before the user even clicks Save
         if (file.size > RECEIPT_MAX_BYTES) {
@@ -3060,8 +3349,10 @@
         let effectiveType = file.type;
         if (!effectiveType || effectiveType === 'application/octet-stream') {
           const ext = file.name.split('.').pop().toLowerCase();
-          const extMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-                           webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf' };
+          const extMap = {
+            jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+            webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf'
+          };
           effectiveType = extMap[ext] || '';
         }
         if (!RECEIPT_ACCEPT_TYPES.includes(effectiveType)) {
@@ -3077,22 +3368,22 @@
           _cropperCtx = ctx;
           _cropperFile = file;
           const reader = new FileReader();
-          reader.onload = function(e) {
+          reader.onload = function (e) {
             const image = document.getElementById('cropperImage');
             if (_cropper) { _cropper.destroy(); _cropper = null; }
-            image.onload = function() {
-              _cropper = new Cropper(image, { 
-                viewMode: 1, 
+            image.onload = function () {
+              _cropper = new Cropper(image, {
+                viewMode: 1,
                 dragMode: 'move',
-                autoCropArea: 1, 
-                responsive: true, 
-                restore: false 
+                autoCropArea: 1,
+                responsive: true,
+                restore: false
               });
             };
             image.src = e.target.result;
             document.getElementById('cropperModal').classList.add('vis');
           };
-          reader.onerror = function() { showToast('Could not read image file.', 'er'); input.value = ''; };
+          reader.onerror = function () { showToast('Could not read image file.', 'er'); input.value = ''; };
           reader.readAsDataURL(file);
           return;
         }
@@ -3137,24 +3428,24 @@
 
       // Map MIME type -> correct file extension
       const mimeToExt = {
-        'application/pdf':   'pdf',
-        'image/jpeg':        'jpg',
-        'image/jpg':         'jpg',   // non-standard but reported by some Android browsers
-        'image/png':         'png',
-        'image/webp':        'webp',
-        'image/gif':         'gif',
-        'image/bmp':         'bmp',
-        'image/tiff':        'tiff',
-        'image/heic':        'heic',
-        'image/heif':        'heif',
-        'image/svg+xml':     'svg',
+        'application/pdf': 'pdf',
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',   // non-standard but reported by some Android browsers
+        'image/png': 'png',
+        'image/webp': 'webp',
+        'image/gif': 'gif',
+        'image/bmp': 'bmp',
+        'image/tiff': 'tiff',
+        'image/heic': 'heic',
+        'image/heif': 'heif',
+        'image/svg+xml': 'svg',
       };
 
       // Use the original uploaded filename, but validate the extension.
       // If the name has a truncated/invalid extension (e.g. ".p" instead of ".pdf"),
       // replace ONLY the extension while keeping the base name intact.
       const rawName = receipt.name || 'receipt';
-      const knownExts = new Set(['pdf','jpg','jpeg','png','webp','gif','bmp','tiff','tif','heic','heif','svg']);
+      const knownExts = new Set(['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'tif', 'heic', 'heif', 'svg']);
       const dotIdx = rawName.lastIndexOf('.');
       const rawExt = dotIdx !== -1 ? rawName.slice(dotIdx + 1).toLowerCase() : '';
       const correctExt = mimeToExt[receipt.type || ''] || 'bin';
@@ -3208,30 +3499,32 @@
 
     // ── Receipt Viewer ───────────────────────────────────────────────────
     let _rvReceipts = [];  // current array being viewed
-    let _rvIndex   = 0;   // current position
+    let _rvIndex = 0;   // current position
 
     function _rvRenderSlide(receipt) {
-      const body    = document.getElementById('rvBody');
-      const title   = document.getElementById('rvTitle');
-      const dlBtn   = document.getElementById('rvDownloadBtn');
+      const body = document.getElementById('rvBody');
+      const title = document.getElementById('rvTitle');
+      const dlBtn = document.getElementById('rvDownloadBtn');
       const openBtn = document.getElementById('rvOpenBtn');
       if (!body) return;
-      if (title)   title.textContent = receipt.name || 'Receipt';
-      if (dlBtn)   dlBtn.onclick = (e) => { e.preventDefault(); downloadReceipt(receipt); };
+      if (title) title.textContent = receipt.name || 'Receipt';
+      if (dlBtn) dlBtn.onclick = (e) => { e.preventDefault(); downloadReceipt(receipt); };
       if (openBtn) openBtn.href = receipt.url || '#';
 
       // Detect type: use stored type, or fall back to URL extension
       let rType = receipt.type || '';
       if (!rType) {
         const ext = (receipt.url || '').split('?')[0].split('.').pop().toLowerCase();
-        const extMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
-                         webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf',
-                         bmp: 'image/bmp', tiff: 'image/tiff', tif: 'image/tiff' };
+        const extMap = {
+          jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+          webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf',
+          bmp: 'image/bmp', tiff: 'image/tiff', tif: 'image/tiff'
+        };
         rType = extMap[ext] || '';
       }
 
       const isImage = rType.startsWith('image/');
-      const isPDF   = rType === 'application/pdf';
+      const isPDF = rType === 'application/pdf';
       // Old PDFs uploaded to /image/upload/ return 401 — detect and warn
       const isBrokenPDF = isPDF && receipt.url && receipt.url.includes('/image/upload/');
 
@@ -3380,7 +3673,7 @@
 
       // B6: Cloudinary uses publicId not .path; deleteReceiptFromStorage is a no-op for now
       if (logData?._receiptPublicId) {
-        deleteReceiptFromStorage(logData._receiptPublicId).catch(() => {});
+        deleteReceiptFromStorage(logData._receiptPublicId).catch(() => { });
       }
 
       try {
@@ -4319,16 +4612,16 @@
     }
 
     // --- Custom Select Logic ---
-    window.toggleCS = function(id) {
-      document.querySelectorAll('.cs-wrap.open').forEach(w => { if(w.id !== id) w.classList.remove('open') });
+    window.toggleCS = function (id) {
+      document.querySelectorAll('.cs-wrap.open').forEach(w => { if (w.id !== id) w.classList.remove('open') });
       const w = document.getElementById(id);
-      if(w) w.classList.toggle('open');
+      if (w) w.classList.toggle('open');
     };
-    window.selCS = function(id, val, text, iconHtml) {
+    window.selCS = function (id, val, text, iconHtml) {
       const w = document.getElementById(id);
-      if(!w) return;
+      if (!w) return;
       const hidden = document.getElementById(id.replace('cs-', ''));
-      if(hidden) {
+      if (hidden) {
         hidden.value = val;
         hidden.dispatchEvent(new Event('change'));
       }
@@ -4343,35 +4636,35 @@
       }
       w.classList.remove('open');
       w.querySelectorAll('.cs-opt').forEach(opt => opt.classList.toggle('act', opt.dataset.val === val));
-      
+
       const btn = w.querySelector('.cs-btn');
       if (btn) {
-         if (id === 'cs-eTy' || id === 'cs-recTy') {
-            btn.style.backgroundColor = val === 'expense' ? 'color-mix(in srgb, var(--ex) 15%, transparent)' : 'color-mix(in srgb, var(--in) 15%, transparent)';
-            btn.style.borderColor = val === 'expense' ? 'var(--ex)' : 'var(--in)';
-         } else if (id === 'cs-eCat' || id === 'cs-recCat') {
-            btn.style.backgroundColor = 'var(--ib)';
+        if (id === 'cs-eTy' || id === 'cs-recTy') {
+          btn.style.backgroundColor = val === 'expense' ? 'color-mix(in srgb, var(--ex) 15%, transparent)' : 'color-mix(in srgb, var(--in) 15%, transparent)';
+          btn.style.borderColor = val === 'expense' ? 'var(--ex)' : 'var(--in)';
+        } else if (id === 'cs-eCat' || id === 'cs-recCat') {
+          btn.style.backgroundColor = 'var(--ib)';
+          btn.style.borderColor = 'var(--bd)';
+          // Pop animation
+          btn.style.transform = 'scale(0.96)';
+          setTimeout(() => btn.style.transform = 'none', 120);
+        } else if (id === 'cs-eMo' || id === 'cs-recMo') {
+          const color = val === 'online' ? 'var(--on)' : 'var(--of)';
+          btn.style.backgroundColor = `color-mix(in srgb, ${color} 15%, transparent)`;
+          btn.style.borderColor = color;
+        } else if (id === 'cs-eEvent') {
+          if (val) {
+            btn.style.backgroundColor = 'color-mix(in srgb, var(--ac) 15%, transparent)';
+            btn.style.borderColor = 'var(--ac)';
+          } else {
+            btn.style.backgroundColor = 'var(--sf)';
             btn.style.borderColor = 'var(--bd)';
-            // Pop animation
-            btn.style.transform = 'scale(0.96)';
-            setTimeout(() => btn.style.transform = 'none', 120);
-         } else if (id === 'cs-eMo' || id === 'cs-recMo') {
-            const color = val === 'online' ? 'var(--on)' : 'var(--of)';
-            btn.style.backgroundColor = `color-mix(in srgb, ${color} 15%, transparent)`;
-            btn.style.borderColor = color;
-         } else if (id === 'cs-eEvent') {
-            if (val) {
-               btn.style.backgroundColor = 'color-mix(in srgb, var(--ac) 15%, transparent)';
-               btn.style.borderColor = 'var(--ac)';
-            } else {
-               btn.style.backgroundColor = 'var(--sf)';
-               btn.style.borderColor = 'var(--bd)';
-            }
-         }
+          }
+        }
       }
     };
     document.addEventListener('click', e => {
-      if(!e.target.closest('.cs-wrap')) {
+      if (!e.target.closest('.cs-wrap')) {
         document.querySelectorAll('.cs-wrap.open').forEach(w => w.classList.remove('open'));
       }
     });
@@ -4380,36 +4673,36 @@
     function updECat(type) {
       const menu = document.getElementById('cs-eCat-menu');
       if (!menu) return;
-      const cats = type === 'income' ? 
-        ['salary','freelance','investment','other'] : 
-        ['food','transport','housing','entertainment','health','shopping','utilities','occasions','stationery','other'];
+      const cats = type === 'income' ?
+        ['salary', 'freelance', 'investment', 'other'] :
+        ['food', 'transport', 'housing', 'entertainment', 'health', 'shopping', 'utilities', 'occasions', 'stationery', 'other'];
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
         return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-eCat', '${c}', '${name}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;line-height:1;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
       }).join('');
-      
+
       const hidden = document.getElementById('eCat');
       if (hidden && hidden.value && !cats.includes(hidden.value)) {
-         selCS('cs-eCat', cats[0], cats[0].charAt(0).toUpperCase() + cats[0].slice(1), CICO[cats[0]] || '✦');
+        selCS('cs-eCat', cats[0], cats[0].charAt(0).toUpperCase() + cats[0].slice(1), CICO[cats[0]] || '✦');
       }
     }
 
     function updRecCat(type) {
       const menu = document.getElementById('cs-recCat-menu');
       if (!menu) return;
-      const cats = type === 'income' ? 
-        ['salary','freelance','investment','other'] : 
-        ['food','transport','housing','entertainment','health','shopping','utilities','occasions','stationery','other'];
+      const cats = type === 'income' ?
+        ['salary', 'freelance', 'investment', 'other'] :
+        ['food', 'transport', 'housing', 'entertainment', 'health', 'shopping', 'utilities', 'occasions', 'stationery', 'other'];
       menu.innerHTML = cats.map(c => {
         const name = c.charAt(0).toUpperCase() + c.slice(1);
         const icon = CICO[c] || '✦';
         return `<button type="button" class="cs-opt" data-val="${c}" onclick="selCS('cs-recCat', '${c}', '${name}')"><span class="bg ct" data-cat="${c}" style="margin:0;font-size:12px;padding:4px 10px;display:inline-flex;align-items:center;line-height:1;box-shadow:none;">${icon} <span style="margin-left:4px;">${name}</span></span></button>`;
       }).join('');
-      
+
       const hidden = document.getElementById('recCat');
       if (hidden && hidden.value && !cats.includes(hidden.value)) {
-         selCS('cs-recCat', cats[0], cats[0].charAt(0).toUpperCase() + cats[0].slice(1), CICO[cats[0]] || '✦');
+        selCS('cs-recCat', cats[0], cats[0].charAt(0).toUpperCase() + cats[0].slice(1), CICO[cats[0]] || '✦');
       }
     }
 
@@ -4424,7 +4717,7 @@
 
       selCS('cs-eTy', tx.type, tx.type === 'income' ? 'Income' : 'Expense');
       updECat(tx.type);
-      
+
       const catName = tx.cat ? tx.cat.charAt(0).toUpperCase() + tx.cat.slice(1) : 'Other';
       selCS('cs-eCat', tx.cat || 'other', catName, CICO[tx.cat] || '✦');
 
@@ -4449,8 +4742,8 @@
       _editRemovedIdxs = new Set();
       const existingReceipts = tx.receipts || (tx.receipt ? [tx.receipt] : []);
       const listSection = document.getElementById('eReceiptListSection');
-      const listEl      = document.getElementById('eReceiptList');
-      const eNewLabel   = document.getElementById('eReceiptNewLabel');
+      const listEl = document.getElementById('eReceiptList');
+      const eNewLabel = document.getElementById('eReceiptNewLabel');
       if (existingReceipts.length > 0 && listSection && listEl) {
         listEl.innerHTML = existingReceipts.map((r, i) => {
           const isPDF = r.type === 'application/pdf';
@@ -4481,9 +4774,9 @@
       const eFile = document.getElementById('eReceiptFile');
       const eFileLabel = document.getElementById('eReceiptFileLabel');
       const eDrop = document.getElementById('eReceiptDrop');
-      if (eFile)  eFile.value = '';
+      if (eFile) eFile.value = '';
       if (eFileLabel) eFileLabel.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Click or drag to attach receipt';
-      if (eDrop)  eDrop.classList.remove('has-file');
+      if (eDrop) eDrop.classList.remove('has-file');
 
       document.getElementById('editMod').classList.add('op');
     }
@@ -4492,14 +4785,14 @@
       document.getElementById('editMod').classList.remove('op');
       // Reset multi-receipt edit state
       _editRemovedIdxs = new Set();
-      const ef        = document.getElementById('eReceiptFile');
-      const eLabel    = document.getElementById('eReceiptFileLabel');
-      const eDrop     = document.getElementById('eReceiptDrop');
-      if (ef)     ef.value = '';
+      const ef = document.getElementById('eReceiptFile');
+      const eLabel = document.getElementById('eReceiptFileLabel');
+      const eDrop = document.getElementById('eReceiptDrop');
+      if (ef) ef.value = '';
       if (eLabel) eLabel.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:4px"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg> Click or drag to attach receipt';
-      if (eDrop)  eDrop.classList.remove('has-file');
+      if (eDrop) eDrop.classList.remove('has-file');
       const progC = document.getElementById('eReceiptProgContainer');
-      if (progC)  progC.style.display = 'none';
+      if (progC) progC.style.display = 'none';
       editingTxId = null;
     }
 
@@ -4530,10 +4823,10 @@
           const b = window._editSnapshot;
           const oldEvtId = b.eventId || '';
           const noFileChosen = !document.getElementById('eReceiptFile')?.files[0];
-          const prevReceipts  = b.receipts || (b.receipt ? [b.receipt] : []);
+          const prevReceipts = b.receipts || (b.receipt ? [b.receipt] : []);
           const noReceiptChange = _editRemovedIdxs.size === 0 && noFileChosen;
           if (b.desc === desc && b.amount === amt && (b.cat || 'other') === (cat || 'other') &&
-              b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId && noReceiptChange) {
+            b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId && noReceiptChange) {
             closeEditMod();
             return;
           }
@@ -4557,8 +4850,8 @@
         }
 
         // ── Receipt handling in edit flow (array model) ──────────────────────────
-        const eReceiptFile  = document.getElementById('eReceiptFile')?.files[0];
-        const prevReceipts  = (window._editSnapshot?.receipts || (window._editSnapshot?.receipt ? [window._editSnapshot.receipt] : []));
+        const eReceiptFile = document.getElementById('eReceiptFile')?.files[0];
+        const prevReceipts = (window._editSnapshot?.receipts || (window._editSnapshot?.receipt ? [window._editSnapshot.receipt] : []));
         // Filter out indices the user removed
         let nextReceipts = prevReceipts.filter((_, i) => !_editRemovedIdxs.has(i));
         // Append new upload if selected
@@ -4591,10 +4884,10 @@
         // Write to Firestore; always remove legacy single-receipt field
         if (nextReceipts.length > 0) {
           updatedTx.receipts = nextReceipts;
-          updatedTx.receipt  = deleteField();
+          updatedTx.receipt = deleteField();
         } else if (prevReceipts.length > 0) {
           updatedTx.receipts = deleteField();
-          updatedTx.receipt  = deleteField();
+          updatedTx.receipt = deleteField();
         }
 
         let saved = false;
@@ -5477,20 +5770,20 @@
     }
 
     // -- Insight Filter State & Controls --
-    let _insightTypeFilt  = 'all';   // 'all' | 'expense' | 'income'
-    let _insightDateFilt  = 'month'; // 'month' | 'year' | 'all' | 'custom'
+    let _insightTypeFilt = 'all';   // 'all' | 'expense' | 'income'
+    let _insightDateFilt = 'month'; // 'month' | 'year' | 'all' | 'custom'
     let _insightEventFilt = 'all';   // 'all' | eventId
     let _insightFilterBoxOpen = false;
 
     function toggleInsightFilter() {
       _insightFilterBoxOpen = !_insightFilterBoxOpen;
-      const box     = document.getElementById('insightFilterBox');
-      const dBtn    = document.getElementById('insightFilterBtn');
-      const mTrig   = document.getElementById('insightFilterMobTrigger');
+      const box = document.getElementById('insightFilterBox');
+      const dBtn = document.getElementById('insightFilterBtn');
+      const mTrig = document.getElementById('insightFilterMobTrigger');
       const toolbar = document.getElementById('insightFilterToolbar');
-      if (box)     box.classList.toggle('open', _insightFilterBoxOpen);
-      if (dBtn)    { dBtn.classList.toggle('act', _insightFilterBoxOpen); dBtn.setAttribute('aria-expanded', _insightFilterBoxOpen ? 'true' : 'false'); }
-      if (mTrig)   mTrig.setAttribute('aria-expanded', _insightFilterBoxOpen ? 'true' : 'false');
+      if (box) box.classList.toggle('open', _insightFilterBoxOpen);
+      if (dBtn) { dBtn.classList.toggle('act', _insightFilterBoxOpen); dBtn.setAttribute('aria-expanded', _insightFilterBoxOpen ? 'true' : 'false'); }
+      if (mTrig) mTrig.setAttribute('aria-expanded', _insightFilterBoxOpen ? 'true' : 'false');
       if (toolbar) {
         toolbar.inert = !_insightFilterBoxOpen;
         if (_insightFilterBoxOpen) toolbar.removeAttribute('inert');
@@ -5504,22 +5797,22 @@
       if (isEvt) {
         count = 1;
       } else {
-        if (_insightTypeFilt !== 'all')   count++;
+        if (_insightTypeFilt !== 'all') count++;
         if (_insightDateFilt !== 'month') count++;
       }
-      const badge   = document.getElementById('insightFilterBadge');
-      const mBadge  = document.getElementById('insightFilterMobBadge');
+      const badge = document.getElementById('insightFilterBadge');
+      const mBadge = document.getElementById('insightFilterMobBadge');
       const mStatus = document.getElementById('insightFilterMobStatus');
-      const dBtn    = document.getElementById('insightFilterBtn');
-      const mTrig   = document.getElementById('insightFilterMobTrigger');
-      if (badge)   { badge.textContent = count;  badge.style.display  = count > 0 ? 'inline-flex' : 'none'; }
-      if (mBadge)  { mBadge.textContent = count; mBadge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+      const dBtn = document.getElementById('insightFilterBtn');
+      const mTrig = document.getElementById('insightFilterMobTrigger');
+      if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+      if (mBadge) { mBadge.textContent = count; mBadge.style.display = count > 0 ? 'inline-flex' : 'none'; }
       if (mStatus) mStatus.textContent = isEvt ? events[_insightEventFilt].name : (count > 0 ? (count + ' active') : 'All');
-      if (dBtn)    dBtn.classList.toggle('has-active', count > 0);
-      if (mTrig)   mTrig.classList.toggle('has-active', count > 0);
+      if (dBtn) dBtn.classList.toggle('has-active', count > 0);
+      if (mTrig) mTrig.classList.toggle('has-active', count > 0);
     }
 
-    window.setInsightType = function(btn, type) {
+    window.setInsightType = function (btn, type) {
       if (_insightEventFilt !== 'all') {
         _insightEventFilt = 'all';
         const toolbar = document.getElementById('insightFilterToolbar');
@@ -5537,7 +5830,7 @@
       renderInsights();
     };
 
-    window.setInsightDate = function(btn, period) {
+    window.setInsightDate = function (btn, period) {
       if (_insightEventFilt !== 'all') {
         _insightEventFilt = 'all';
         const toolbar = document.getElementById('insightFilterToolbar');
@@ -5557,7 +5850,7 @@
       renderInsights();
     };
 
-    window.setInsightEventFilt = function(eventId) {
+    window.setInsightEventFilt = function (eventId) {
       _insightEventFilt = eventId || 'all';
       const isEvt = Boolean(_insightEventFilt !== 'all' && events[_insightEventFilt]);
       const toolbar = document.getElementById('insightFilterToolbar');
@@ -5579,7 +5872,7 @@
       renderInsights();
     };
 
-    window.applyInsightFilters = function() {
+    window.applyInsightFilters = function () {
       if (_insightEventFilt !== 'all') {
         _insightEventFilt = 'all';
         const toolbar = document.getElementById('insightFilterToolbar');
@@ -5594,13 +5887,13 @@
       renderInsights();
     };
 
-    window.clearInsightCustomDt = function() {
+    window.clearInsightCustomDt = function () {
       const f = document.getElementById('insightDtFrom'), t = document.getElementById('insightDtTo');
       if (f) f.value = ''; if (t) t.value = '';
       applyInsightFilters();
     };
 
-    window.setEvtTxFilt = function(eventId) {
+    window.setEvtTxFilt = function (eventId) {
       cEventFilt = eventId || 'all';
       const menu = document.getElementById('cs-evtTxFilt-menu');
       if (menu) menu.querySelectorAll('.cs-opt').forEach(o => o.classList.toggle('act', o.dataset.val === cEventFilt));
@@ -5620,14 +5913,14 @@
     // ═════════════════════════════════════════════════════════════════════════
     // INSIGHT INTERACTIVE ACTION HANDLER
     // ═════════════════════════════════════════════════════════════════════════
-    window.triggerInsightAction = function(actionType, param, extra) {
+    window.triggerInsightAction = function (actionType, param, extra) {
       try {
         function syncInsightPeriodToTxFilter() {
           const df = _insightDateFilt || 'month';
           const isEvt = Boolean(_insightEventFilt && _insightEventFilt !== 'all' && events[_insightEventFilt]);
           if (isEvt) {
             if (typeof setEvtTxFilt === 'function') setEvtTxFilt(_insightEventFilt);
-            const evBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
+            const evBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function (b) {
               return b.textContent.trim().toLowerCase() === 'event' || b.classList.contains('mode-flt-ev');
             });
             if (actionType !== 'filter-mode' && evBtn && typeof setModeFilt === 'function') {
@@ -5638,14 +5931,14 @@
               setEvtTxFilt('all');
             }
             if (cModeFilt === 'event') {
-              const allModeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
+              const allModeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function (b) {
                 return b.textContent.trim().toLowerCase() === 'all' || b.classList.contains('mode-flt-all');
               });
               if (allModeBtn && typeof setModeFilt === 'function') setModeFilt('all', allModeBtn);
               else cModeFilt = 'all';
             }
             if ((df === 'month' || df === 'year' || df === 'all') && cDtFilt !== df) {
-              const targetBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function(b){
+              const targetBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function (b) {
                 const txt = b.textContent.trim().toLowerCase();
                 if (df === 'month') return txt.includes('month');
                 if (df === 'year') return txt.includes('year');
@@ -5660,7 +5953,7 @@
               const fTx = document.getElementById('cDtFrom'), tTx = document.getElementById('cDtTo');
               if (fIn && fTx) fTx.value = fIn.value;
               if (tIn && tTx) tTx.value = tIn.value;
-              const customBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function(b){
+              const customBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function (b) {
                 return b.textContent.trim().toLowerCase() === 'custom';
               });
               if (customBtn && typeof setDt === 'function') {
@@ -5689,7 +5982,7 @@
           if (sInput) { sInput.value = ''; sInput.placeholder = 'Search transactions…'; }
           // Reset mode filter to 'all' if it was set to something other than event/subscription
           if (cModeFilt !== 'all' && cModeFilt !== 'event' && cModeFilt !== 'subscription') {
-            const allModeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
+            const allModeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function (b) {
               return b.textContent.trim().toLowerCase() === 'all' || b.classList.contains('mode-flt-all');
             });
             if (allModeBtn && typeof setModeFilt === 'function') setModeFilt('all', allModeBtn);
@@ -5748,7 +6041,7 @@
             const f = document.getElementById('cDtFrom'), t = document.getElementById('cDtTo');
             if (f) f.value = param;
             if (t) t.value = param;
-            const customBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function(b){
+            const customBtn = Array.from(document.querySelectorAll('.ft.dt-flt')).find(function (b) {
               return b.textContent.trim().toLowerCase() === 'custom';
             });
             if (customBtn && typeof setDt === 'function') {
@@ -5777,7 +6070,7 @@
         } else if (actionType === 'open-add-sub') {
           if (typeof switchTab === 'function') switchTab('subscriptions');
           if (typeof openAddRecurring === 'function') {
-            setTimeout(function() {
+            setTimeout(function () {
               openAddRecurring();
               if (param) {
                 const nameInput = document.getElementById('recName');
@@ -5795,7 +6088,7 @@
           // Online vs Cash channel insights filter to expenses
           setTxType('expense');
           const modeVal = param || 'all';
-          const modeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function(b){
+          const modeBtn = Array.from(document.querySelectorAll('.ft.mode-flt')).find(function (b) {
             const txt = b.textContent.trim().toLowerCase();
             if (modeVal === 'online') return txt === 'online' || b.classList.contains('mode-flt-on');
             if (modeVal === 'offline') return txt === 'offline' || b.classList.contains('mode-flt-of');
@@ -5839,7 +6132,7 @@
 
       if (isEventActive) {
         const ev = events[_insightEventFilt];
-        curTxs = txs.filter(function(t){ return t.eventId === _insightEventFilt; });
+        curTxs = txs.filter(function (t) { return t.eventId === _insightEventFilt; });
         prevTxs = [];
         isAllMode = true;
         daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
@@ -5855,8 +6148,8 @@
           daysInMonth = new Date(cY, cM + 1, 0).getDate();
           daysLeft = daysInMonth - cD;
           monthProgress = Math.round((cD / daysInMonth) * 100);
-          curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(curPrefix); });
-          prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevPrefix); });
+          curTxs = txs.filter(function (t) { return (t.date || '').startsWith(curPrefix); });
+          prevTxs = txs.filter(function (t) { return (t.date || '').startsWith(prevPrefix); });
           periodLabel = MF[cM] + ' ' + cY;
         } else if (df === 'year') {
           isYearMode = true;
@@ -5864,26 +6157,26 @@
           const prevYearStr = String(cY - 1);
           const todayLastYear = (cY - 1) + '-' + String(cM + 1).padStart(2, '0') + '-' + String(cD).padStart(2, '0');
           const prevYearStart = prevYearStr + '-01-01';
-          curTxs  = txs.filter(function(t){ return (t.date || '').startsWith(yearStr) && t.date <= todayISO; });
-          prevTxs = txs.filter(function(t){ return (t.date || '').startsWith(prevYearStr) && t.date >= prevYearStart && t.date <= todayLastYear; });
+          curTxs = txs.filter(function (t) { return (t.date || '').startsWith(yearStr) && t.date <= todayISO; });
+          prevTxs = txs.filter(function (t) { return (t.date || '').startsWith(prevYearStr) && t.date >= prevYearStart && t.date <= todayLastYear; });
           const startOfYear = new Date(cY, 0, 1);
           const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
           daysInMonth = 365; daysLeft = 365 - dayOfYear; monthProgress = Math.round((dayOfYear / 365) * 100);
           pM = cM > 0 ? cM - 1 : 11;
-          periodLabel = 'YTD ' + cY + ' (vs ' + (cY-1) + ')';
+          periodLabel = 'YTD ' + cY + ' (vs ' + (cY - 1) + ')';
         } else if (df === 'custom') {
           isCustomMode = true;
           const rawFrom = (document.getElementById('insightDtFrom') || {}).value || '';
-          const rawTo   = (document.getElementById('insightDtTo')   || {}).value || todayISO;
-          const fromDt  = (rawFrom && rawTo && rawFrom > rawTo) ? rawTo : rawFrom;
-          const toDt    = (rawFrom && rawTo && rawFrom > rawTo) ? rawFrom : rawTo;
-          curTxs  = txs.filter(function(t){ return (!fromDt || t.date >= fromDt) && (!toDt || t.date <= toDt); });
+          const rawTo = (document.getElementById('insightDtTo') || {}).value || todayISO;
+          const fromDt = (rawFrom && rawTo && rawFrom > rawTo) ? rawTo : rawFrom;
+          const toDt = (rawFrom && rawTo && rawFrom > rawTo) ? rawFrom : rawTo;
+          curTxs = txs.filter(function (t) { return (!fromDt || t.date >= fromDt) && (!toDt || t.date <= toDt); });
           prevTxs = [];
           daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
           periodLabel = (fromDt || '?') + ' — ' + (toDt || '?');
         } else { // 'all'
           isAllMode = true;
-          curTxs  = txs.slice();
+          curTxs = txs.slice();
           prevTxs = [];
           daysInMonth = 30; daysLeft = 0; monthProgress = 100; pM = cM > 0 ? cM - 1 : 11;
           periodLabel = 'All Time';
@@ -5892,11 +6185,11 @@
         incomeOnly = _insightTypeFilt === 'income';
         expenseOnly = _insightTypeFilt === 'expense';
         if (expenseOnly) {
-          curTxs  = curTxs.filter(function(t){ return t.type !== 'income'; });
-          prevTxs = prevTxs.filter(function(t){ return t.type !== 'income'; });
+          curTxs = curTxs.filter(function (t) { return t.type !== 'income'; });
+          prevTxs = prevTxs.filter(function (t) { return t.type !== 'income'; });
         } else if (incomeOnly) {
-          curTxs  = curTxs.filter(function(t){ return t.type === 'income'; });
-          prevTxs = prevTxs.filter(function(t){ return t.type === 'income'; });
+          curTxs = curTxs.filter(function (t) { return t.type === 'income'; });
+          prevTxs = prevTxs.filter(function (t) { return t.type === 'income'; });
         }
       }
 
@@ -5952,7 +6245,7 @@
       let weekendTxCount = 0, weekdayTxCount = 0;
       let onlineTxCount = 0, offlineTxCount = 0;
 
-      curTxs.forEach(function(t) {
+      curTxs.forEach(function (t) {
         if (t.type === 'income') {
           curInc += t.amount;
           incTxs.push(t);
@@ -5996,7 +6289,7 @@
         }
       });
 
-      prevTxs.forEach(function(t) {
+      prevTxs.forEach(function (t) {
         if (t.type === 'income') prevInc += t.amount;
         else {
           prevExp += t.amount;
@@ -6008,17 +6301,17 @@
       // ── STAGE 2: STATISTICAL DERIVATIONS & DECOUPLED PACING ──
       const buffer = curInc - curExp;
       const savRate = curInc > 0 ? Math.round((buffer / curInc) * 100) : null;
-      const pastExp = expTxs.filter(function(t){ return includeAllDates ? true : t.date <= todayISO; }).reduce(function(s,t){ return s+t.amount; }, 0);
+      const pastExp = expTxs.filter(function (t) { return includeAllDates ? true : t.date <= todayISO; }).reduce(function (s, t) { return s + t.amount; }, 0);
       const remainingDays = Math.max(1, daysInMonth - cD + 1);
 
       // Committed Upcoming Subscriptions for this month
       let upcomingSubsAmt = 0;
       let upcomingSubsList = [];
       if (typeof recurringList !== 'undefined' && recurringList && recurringList.length > 0) {
-        upcomingSubsList = recurringList.filter(function(r){
+        upcomingSubsList = recurringList.filter(function (r) {
           return !r.archived && r.active && r.type !== 'income' && r.nextDue && r.nextDue >= todayISO && (!isMonthMode || r.nextDue.startsWith(curMonthPrefix));
         });
-        upcomingSubsAmt = upcomingSubsList.reduce(function(s, r){ return s + (r.amount || 0); }, 0);
+        upcomingSubsAmt = upcomingSubsList.reduce(function (s, r) { return s + (r.amount || 0); }, 0);
       }
 
       // Decoupled Pacing Math: Fixed commitments are not multiplied across 30 days!
@@ -6033,7 +6326,7 @@
       // Helper function to render action buttons
       function buildActions(actions) {
         if (!actions || !actions.length) return '';
-        const btns = actions.map(function(a) {
+        const btns = actions.map(function (a) {
           const icon = a.iconSvg || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>';
           const callJs = 'triggerInsightAction(' + JSON.stringify(a.action || '') + ',' + JSON.stringify(a.param || '') + ',' + JSON.stringify(a.extra || '') + ')';
           return '<button type="button" class="insight-action-btn" onclick="' + esc(callJs) + '">' + icon + '<span>' + esc(a.label) + '</span></button>';
@@ -6090,7 +6383,7 @@
 
         // 3. Peak Day
         if (curExpDays.size >= 2) {
-          const dayEntries = Object.entries(curDayExp).sort(function(a,b){ return b[1]-a[1]; });
+          const dayEntries = Object.entries(curDayExp).sort(function (a, b) { return b[1] - a[1]; });
           if (dayEntries.length > 0) {
             const topDay = dayEntries[0][0], topDayAmt = dayEntries[0][1];
             const peakPct = curExp > 0 ? Math.round((topDayAmt / curExp) * 100) : 0;
@@ -6174,7 +6467,7 @@
           }
 
           // Income Source Diversification
-          const srcEntries = Object.entries(incSources).sort(function(a,b){ return b[1]-a[1]; });
+          const srcEntries = Object.entries(incSources).sort(function (a, b) { return b[1] - a[1]; });
           if (srcEntries.length >= 2) {
             const topSrc = srcEntries[0][0], topAmt = srcEntries[0][1];
             const topPct = curInc > 0 ? Math.round((topAmt / curInc) * 100) : 100;
@@ -6199,7 +6492,7 @@
 
           // Top Inflow
           if (incTxs.length >= 2) {
-            const sortedInc = incTxs.slice().sort(function(a,b){ return b.amount - a.amount; });
+            const sortedInc = incTxs.slice().sort(function (a, b) { return b.amount - a.amount; });
             const topInc = sortedInc[0];
             const topIncPct = Math.round((topInc.amount / curInc) * 100);
             candidates.push({
@@ -6246,7 +6539,7 @@
                 badge: 'SAFE RUNWAY', badgeClass: 'badge-blue',
                 metric: fmtS(safeDailyDiscretionary) + '/day safe',
                 text: '<strong>Safe Pacing:</strong> Day <strong>' + cD + ' of ' + daysInMonth + '</strong>. ' + billsNote + ' can safely spend <strong style="color:var(--in)">' + fmtS(safeDailyDiscretionary) + '/day</strong> for the remaining ' + daysRemaining + ' day' + (daysRemaining === 1 ? '' : 's') + ' (projected surplus: <strong style="color:var(--in)">' + fmtS(surplusProj) + '</strong>).',
-                microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-in" style="width:' + Math.min(100, Math.round((cD/daysInMonth)*100)) + '%;"></div></div>'
+                microBar: '<div class="insight-micro-bar"><div class="insight-micro-bar-fill fill-in" style="width:' + Math.min(100, Math.round((cD / daysInMonth) * 100)) + '%;"></div></div>'
               });
             }
           } else if (curExp > 0) {
@@ -6265,12 +6558,12 @@
 
         // ── 2. MICRO-SPEND DRAIN ("LATTE FACTOR", Solves Finding 3) ──
         if (expTxs.length >= 6 && curExp >= 600) {
-          const discTxs = expTxs.filter(function(t){ return !isFixedTx(t); });
+          const discTxs = expTxs.filter(function (t) { return !isFixedTx(t); });
           if (discTxs.length >= 5) {
             const avgDiscTx = discExpPaid / Math.max(1, discTxs.length);
             const smallThresh = Math.min(300, Math.max(80, Math.round(avgDiscTx * 0.5)));
-            const smallTxs = discTxs.filter(function(t){ return t.amount <= smallThresh && t.amount > 0; });
-            const smallTotal = smallTxs.reduce(function(s, t){ return s + t.amount; }, 0);
+            const smallTxs = discTxs.filter(function (t) { return t.amount <= smallThresh && t.amount > 0; });
+            const smallTotal = smallTxs.reduce(function (s, t) { return s + t.amount; }, 0);
             const smallPct = curExp > 0 ? Math.round((smallTotal / curExp) * 100) : 0;
             if (smallTxs.length >= 4 && smallTotal >= 200 && smallPct >= 8) {
               candidates.push({
@@ -6311,14 +6604,14 @@
 
         // ── 4. CATEGORY-RELATIVE ANOMALIES & OUTLIERS ──
         let foundOutlier = false;
-        Object.keys(catTxMap).forEach(function(c) {
+        Object.keys(catTxMap).forEach(function (c) {
           if (foundOutlier) return;
           const cList = catTxMap[c];
           if (cList.length >= 3) {
-            const sortedC = cList.slice().sort(function(a,b){ return b.amount - a.amount; });
+            const sortedC = cList.slice().sort(function (a, b) { return b.amount - a.amount; });
             const topTx = sortedC[0];
             // Avg of remaining txs (exclude the outlier itself to avoid deflation)
-            const otherSum = sortedC.slice(1).reduce(function(s,t){ return s + t.amount; }, 0);
+            const otherSum = sortedC.slice(1).reduce(function (s, t) { return s + t.amount; }, 0);
             const otherAvg = otherSum / (sortedC.length - 1);
             const rawRatio = otherAvg > 0 ? (topTx.amount / otherAvg) : 1.0;
             if (rawRatio >= 2.8 && topTx.amount >= 350 && curExp > 0 && (topTx.amount / curExp) >= 0.12) {
@@ -6339,7 +6632,7 @@
 
         // Fallback: Largest Single Purchase (if not an outlier)
         if (!foundOutlier && expTxs.length >= 1) {
-          const sortedExp = expTxs.slice().sort(function(a,b){ return b.amount - a.amount; });
+          const sortedExp = expTxs.slice().sort(function (a, b) { return b.amount - a.amount; });
           const topTx = sortedExp[0];
           const topPct = curExp > 0 ? Math.round((topTx.amount / curExp) * 100) : 100;
           const catName = topTx.cat ? topTx.cat.charAt(0).toUpperCase() + topTx.cat.slice(1) : 'Other';
@@ -6433,14 +6726,14 @@
         if (!isEventActive && prevTxs.length > 0 && curExp > 0) {
           let bCat = null, bDiff = 0, bCur = 0, bPrev = 0, bPctChg = 0;
           const allC = new Set([...Object.keys(curCats), ...Object.keys(prevCats)]);
-          allC.forEach(function(cat) {
+          allC.forEach(function (cat) {
             const cur = curCats[cat] || 0, prev = prevCats[cat] || 0;
             const diff = cur - prev;
             if (Math.abs(diff) > Math.abs(bDiff) && prev > 0) {
               bDiff = diff; bCat = cat; bCur = cur; bPrev = prev; bPctChg = Math.round((diff / prev) * 100);
             }
           });
-          const compLabel = isYearMode ? (cY-1)+' YTD' : (isCustomMode || isAllMode ? 'prior period' : MN[pM]);
+          const compLabel = isYearMode ? (cY - 1) + ' YTD' : (isCustomMode || isAllMode ? 'prior period' : MN[pM]);
           if (bCat && Math.abs(bDiff) >= 150) {
             const cn = bCat.charAt(0).toUpperCase() + bCat.slice(1);
             const absPct = Math.abs(bPctChg);
@@ -6467,7 +6760,7 @@
         }
 
         // ── 9. TOP CATEGORY CONCENTRATION ──
-        const catEntries = Object.entries(curCats).sort(function(a,b){ return b[1]-a[1]; });
+        const catEntries = Object.entries(curCats).sort(function (a, b) { return b[1] - a[1]; });
         if (catEntries.length > 0) {
           const topCat = catEntries[0][0], topAmt = catEntries[0][1];
           const topPct = curExp > 0 ? Math.round((topAmt / curExp) * 100) : 100;
@@ -6497,11 +6790,11 @@
         // ── 10. REPEAT VENDOR / MERCHANT ──
         const shadowNameLc = foundShadow ? (foundShadow.name || '').toLowerCase() : '';
         const descEntries = Object.entries(descCount)
-          .filter(function(e){ return e[1] >= 3 && (!shadowNameLc || e[0] !== shadowNameLc); })
-          .sort(function(a,b){ return b[1]-a[1]; });
+          .filter(function (e) { return e[1] >= 3 && (!shadowNameLc || e[0] !== shadowNameLc); })
+          .sort(function (a, b) { return b[1] - a[1]; });
         if (descEntries.length > 0) {
           const topDesc = descEntries[0][0], topCnt = descEntries[0][1];
-          const totalForDesc = expTxs.filter(function(t){ return t.desc && t.desc.trim().toLowerCase() === topDesc; }).reduce(function(s,t){ return s+t.amount; }, 0);
+          const totalForDesc = expTxs.filter(function (t) { return t.desc && t.desc.trim().toLowerCase() === topDesc; }).reduce(function (s, t) { return s + t.amount; }, 0);
           const disp = topDesc.charAt(0).toUpperCase() + topDesc.slice(1);
           candidates.push({
             priority: 45, pillar: 'habit', topicKey: 'repeat_merchant',
@@ -6515,7 +6808,7 @@
 
         // ── 11. NO-SPEND STREAKS & SPIKE DAYS ──
         if (isMonthMode && curExpDays.size > 0) {
-          const sortedExpDays = Array.from(curExpDays).filter(function(d){ return d <= todayISO; }).sort().reverse();
+          const sortedExpDays = Array.from(curExpDays).filter(function (d) { return d <= todayISO; }).sort().reverse();
           const zeroDays = cD - curExpDays.size;
           if (sortedExpDays.length > 0) {
             const gap = Math.floor((new Date(todayISO + 'T00:00:00') - new Date(sortedExpDays[0] + 'T00:00:00')) / 86400000);
@@ -6542,9 +6835,9 @@
 
         // ── 12. LEDGER HYGIENE (Uncategorized Transactions) ──
         if (!isEventActive && expTxs.length >= 3) {
-          const otherTxs = expTxs.filter(function(t) { return (t.cat || 'other').toLowerCase() === 'other'; });
+          const otherTxs = expTxs.filter(function (t) { return (t.cat || 'other').toLowerCase() === 'other'; });
           if (otherTxs.length >= 2) {
-            const otherTotal = otherTxs.reduce(function(s, t) { return s + t.amount; }, 0);
+            const otherTotal = otherTxs.reduce(function (s, t) { return s + t.amount; }, 0);
             candidates.push({
               priority: 39, pillar: 'action', topicKey: 'audit_other',
               type: 'neu', icon: '&#x1F3F7;&#xFE0F;',
@@ -6570,10 +6863,10 @@
         const pillarOrder = ['risk', 'compass', 'habit', 'win', 'action'];
 
         // Pass 1: Ensure distinct pillar coverage
-        pillarOrder.forEach(function(pil) {
+        pillarOrder.forEach(function (pil) {
           const matching = allCandidates
-            .filter(function(c) { return c.pillar === pil && !usedTopics.has(c.topicKey); })
-            .sort(function(a, b) { return b.priority - a.priority; });
+            .filter(function (c) { return c.pillar === pil && !usedTopics.has(c.topicKey); })
+            .sort(function (a, b) { return b.priority - a.priority; });
           if (matching.length > 0) {
             selected.push(matching[0]);
             selectedSet.add(matching[0]);
@@ -6583,8 +6876,8 @@
 
         // Pass 2: Fill remaining slots by priority, enforcing topic uniqueness
         const remaining = allCandidates
-          .filter(function(c) { return !selectedSet.has(c) && !usedTopics.has(c.topicKey); })
-          .sort(function(a, b) { return b.priority - a.priority; });
+          .filter(function (c) { return !selectedSet.has(c) && !usedTopics.has(c.topicKey); })
+          .sort(function (a, b) { return b.priority - a.priority; });
 
         for (let i = 0; i < remaining.length; i++) {
           if (selected.length >= maxCount) break;
@@ -6593,7 +6886,7 @@
         }
 
         // Return sorted by priority descending
-        return selected.sort(function(a, b) { return b.priority - a.priority; });
+        return selected.sort(function (a, b) { return b.priority - a.priority; });
       }
 
       const insights = selectDiverseInsights(candidates, 6);
@@ -6605,7 +6898,7 @@
       }
 
       const itemAnimStyle = _initialAnimsDone ? 'animation:none;' : '';
-      const newInsightsHtml = insights.map(function(i) {
+      const newInsightsHtml = insights.map(function (i) {
         const badgeHtml = i.badge ? '<span class="insight-badge ' + (i.badgeClass || 'badge-gray') + '">' + esc(i.badge) + '</span>' : '';
         const metricHtml = i.metric ? '<span class="insight-metric">' + esc(i.metric) + '</span>' : '';
         const microBarHtml = i.microBar || '';
@@ -6614,12 +6907,12 @@
         return '<div class="insight-item ' + (i.type || 'neu') + '" style="' + itemAnimStyle + '">' +
           '<div class="insight-icon">' + i.icon + '</div>' +
           '<div class="insight-content">' +
-            '<div class="insight-top-row">' + badgeHtml + metricHtml + '</div>' +
-            '<div class="insight-text">' + i.text + '</div>' +
-            microBarHtml +
-            actionsHtml +
+          '<div class="insight-top-row">' + badgeHtml + metricHtml + '</div>' +
+          '<div class="insight-text">' + i.text + '</div>' +
+          microBarHtml +
+          actionsHtml +
           '</div>' +
-        '</div>';
+          '</div>';
       }).join('');
 
       const stableInsights = newInsightsHtml.replace(/style="animation:[^"]*"/g, 'style=""');
@@ -7066,10 +7359,10 @@
         return;
       }
 
-      const hasEvents   = exportTxs.some(t => t.eventId && events[t.eventId]);
+      const hasEvents = exportTxs.some(t => t.eventId && events[t.eventId]);
       const hasReceipts = exportTxs.some(t => Array.isArray(t.receipts) && t.receipts.some(r => r && typeof r.url === 'string' && r.url.trim().startsWith('http')));
       const headers = ['Date', 'Description', 'Amount', 'Type', 'Mode', 'Category'];
-      if (hasEvents)   headers.push('Event');
+      if (hasEvents) headers.push('Event');
       if (hasReceipts) headers.push('Receipt');
 
       const receiptColIdx = hasReceipts ? headers.indexOf('Receipt') : -1;
@@ -7088,11 +7381,11 @@
 
         const baseRow = [
           dateStr,
-          String(t.desc   || ''),
+          String(t.desc || ''),
           Number(t.amount) || 0,
-          String(t.type   || ''),
-          String(t.mode   || ''),
-          String(t.cat    || '')
+          String(t.type || ''),
+          String(t.mode || ''),
+          String(t.cat || '')
         ];
         if (hasEvents) {
           baseRow.push(t.eventId && events[t.eventId] ? events[t.eventId].name : '');
@@ -7139,8 +7432,8 @@
         const cellRef = XLSX.utils.encode_cell({ r: 0, c: colIdx });
         if (!ws[cellRef]) return;
         ws[cellRef].s = {
-          font:      { bold: true, color: { rgb: 'FFFFFF' } },
-          fill:      { fgColor: { rgb: '1A3A5C' } },
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '1A3A5C' } },
           alignment: { horizontal: 'center', vertical: 'center' }
         };
       });
@@ -7652,31 +7945,31 @@
         const safeName = esc(e.name).replace(/'/g, "\\'");
         return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-txEvent', '${e.id}', '${safeName}', '${iconEsc}')">${icon} <span>${esc(e.name)}</span></button>`;
       }).join('');
-      
+
       const csTxEventMenu = document.getElementById('cs-txEvent-menu');
       if (csTxEventMenu) {
-         csTxEventMenu.innerHTML = html;
-         const hiddenTx = document.getElementById('txEvent');
-         if(hiddenTx && hiddenTx.value && !events[hiddenTx.value]) {
-            selCS('cs-txEvent', '', '— No Event —');
-         }
+        csTxEventMenu.innerHTML = html;
+        const hiddenTx = document.getElementById('txEvent');
+        if (hiddenTx && hiddenTx.value && !events[hiddenTx.value]) {
+          selCS('cs-txEvent', '', '— No Event —');
+        }
       }
 
       const csEEventMenu = document.getElementById('cs-eEvent-menu');
       if (csEEventMenu) {
-         let htmlEdit = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-eEvent', '', '— No Event —')">— No Event —</button>`;
-         htmlEdit += evts.map(e => {
-            const c = getLegibleColor(e.color);
-            const icon = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};"></span>`;
-            const iconEsc = icon.replace(/"/g, '&quot;');
-            const safeName = esc(e.name).replace(/'/g, "\\'");
-            return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-eEvent', '${e.id}', '${safeName}', '${iconEsc}')">${icon} <span>${esc(e.name)}</span></button>`;
-         }).join('');
-         csEEventMenu.innerHTML = htmlEdit;
-         const hidden = document.getElementById('eEvent');
-         if(hidden && hidden.value && !events[hidden.value]) {
-            selCS('cs-eEvent', '', '— No Event —');
-         }
+        let htmlEdit = `<button type="button" class="cs-opt" data-val="" onclick="selCS('cs-eEvent', '', '— No Event —')">— No Event —</button>`;
+        htmlEdit += evts.map(e => {
+          const c = getLegibleColor(e.color);
+          const icon = `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${c};"></span>`;
+          const iconEsc = icon.replace(/"/g, '&quot;');
+          const safeName = esc(e.name).replace(/'/g, "\\'");
+          return `<button type="button" class="cs-opt" data-val="${e.id}" onclick="selCS('cs-eEvent', '${e.id}', '${safeName}', '${iconEsc}')">${icon} <span>${esc(e.name)}</span></button>`;
+        }).join('');
+        csEEventMenu.innerHTML = htmlEdit;
+        const hidden = document.getElementById('eEvent');
+        if (hidden && hidden.value && !events[hidden.value]) {
+          selCS('cs-eEvent', '', '— No Event —');
+        }
       }
 
       // Populate cs-wrap event filter for the transaction panel (replaces old plain select)
@@ -7841,8 +8134,8 @@
     // ── Event Color Swatch Picker helpers ──
 
     const EVT_PALETTE_COLORS = [
-      '#c8a96e','#e07070','#5dba8a','#6e9dc8','#9d7ac8',
-      '#f59e0b','#30cfd0','#fb923c','#e879f9','#34d399'
+      '#c8a96e', '#e07070', '#5dba8a', '#6e9dc8', '#9d7ac8',
+      '#f59e0b', '#30cfd0', '#fb923c', '#e879f9', '#34d399'
     ];
 
     /** Returns a Set of hex colors already claimed by other events (excluding the one being edited). */
@@ -7865,7 +8158,7 @@
           <div class="evt-color-swatch-taken-icon">
             <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </div>
-          <div class="evt-color-swatch-tooltip" id="tip-${color.replace('#','')}">Used by another event</div>
+          <div class="evt-color-swatch-tooltip" id="tip-${color.replace('#', '')}">Used by another event</div>
         </div>`;
       }).join('');
     }
@@ -8309,11 +8602,11 @@
       }
       if (action === 'UPDATE') {
         if (p.isRecPauseToggle) return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div>`;
-        if (p.isRecArchive)     return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div>`;
-        if (p.isRecRestore)     return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div>`;
-        if (p.isEventBulk)     return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div>`;
+        if (p.isRecArchive) return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div>`;
+        if (p.isRecRestore) return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div>`;
+        if (p.isEventBulk) return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div>`;
         if (p.isEarlyPay) return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div><div class="log-meta">Due date advanced${p.newNextDue ? ' to ' + fmtDt(p.newNextDue) : ''}</div>`;
-        if (p.isSkip)     return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div><div class="log-meta">Skipped — already manually paid</div>`;
+        if (p.isSkip) return `<div class="log-msg-desc">${esc(cleanDesc(p.desc))}</div><div class="log-meta">Skipped — already manually paid</div>`;
       }
       return `<div>${esc(cleanDesc(p.desc || ''))}</div>`;
     }
@@ -8405,25 +8698,25 @@
           if (filter === 'income' || filter === 'expense') {
             return inferTxType(l) === filter;
           }
-          
+
           let parsedData = {};
           const rawMsg = l.m || '';
           if (rawMsg.startsWith('{') || rawMsg.startsWith('[')) {
             try { parsedData = JSON.parse(rawMsg); } catch (e) { }
           }
-          
+
           if (filter === 'subscription') {
-            return parsedData.isAuto || parsedData.isNewRec || parsedData.isRecEdit || 
-                   parsedData.isRecPauseToggle || parsedData.isDelRec || 
-                   parsedData.isRecArchive || parsedData.isRecRestore || 
-                   parsedData.isDelRecPermanent || parsedData.isEarlyPay ||
-                   parsedData.isManualPay || parsedData.isSkip ||
-                   rawMsg.includes('isAuto') || rawMsg.includes('isNewRec');
+            return parsedData.isAuto || parsedData.isNewRec || parsedData.isRecEdit ||
+              parsedData.isRecPauseToggle || parsedData.isDelRec ||
+              parsedData.isRecArchive || parsedData.isRecRestore ||
+              parsedData.isDelRecPermanent || parsedData.isEarlyPay ||
+              parsedData.isManualPay || parsedData.isSkip ||
+              rawMsg.includes('isAuto') || rawMsg.includes('isNewRec');
           }
           if (filter === 'event') {
-            return parsedData.eventId || parsedData.isNewEvent || 
-                   parsedData.isEventEdit || parsedData.isDelEvent || 
-                   parsedData.isEventBulk;
+            return parsedData.eventId || parsedData.isNewEvent ||
+              parsedData.isEventEdit || parsedData.isDelEvent ||
+              parsedData.isEventBulk;
           }
           return false;
         });
@@ -8435,13 +8728,13 @@
       if (cLogDateFrom || cLogDateTo) {
         const from = cLogDateFrom ? new Date(cLogDateFrom + 'T00:00:00') : null;
         // Exclusive upper bound: start of next day, so all timestamps on the To date are included
-        const to   = cLogDateTo ? (() => { const d = new Date(cLogDateTo + 'T00:00:00'); d.setDate(d.getDate() + 1); return d; })() : null;
+        const to = cLogDateTo ? (() => { const d = new Date(cLogDateTo + 'T00:00:00'); d.setDate(d.getDate() + 1); return d; })() : null;
         logs = logs.filter(l => {
           const ts = l.ts || l.t;
           const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : null;
           if (!d) return false; // No timestamp — exclude from date-filtered results
           if (from && d < from) return false;
-          if (to   && d >= to)  return false;
+          if (to && d >= to) return false;
           return true;
         });
       }
@@ -8459,7 +8752,7 @@
       const renderedLogs = logs.map(l => {
         const ts = l.ts || l.t;
         const d = ts ? (ts.toDate ? ts.toDate() : new Date(ts)) : new Date();
-        
+
         const dateStr = `${d.getDate()}${getOrd(d.getDate())} ${d.toLocaleString('default', { month: 'short' })}, ${d.getFullYear()}`;
         let headerHtml = '';
         if (dateStr !== currentLogDate) {
@@ -8470,7 +8763,7 @@
         const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         const isAuto = l.a === 'ADD' && (l.m || '').includes('isAuto');
-        
+
         let msgHtml = esc(l.m || '');
         let parsedData = {};
         const rawMsg = l.m || '';
@@ -8586,7 +8879,7 @@
           </div>
         </div>`;
       }).join('');
-      
+
       listEl.innerHTML = `<div class="log-timeline">${renderedLogs}</div>`;
       // Defer twemoji parse to next frame — avoids forced reflow immediately after innerHTML write
       if (typeof twemoji !== 'undefined') requestAnimationFrame(() => twemoji.parse(listEl));
@@ -9167,8 +9460,8 @@
       // Search filter — name, category, notes (case-insensitive) (skip in archived view)
       if (!_showingArchivedSubs && _subSearchQuery) {
         displayList = displayList.filter(r => {
-          const name  = (r.name  || '').toLowerCase();
-          const cat   = (r.cat   || '').toLowerCase();
+          const name = (r.name || '').toLowerCase();
+          const cat = (r.cat || '').toLowerCase();
           const notes = (r.notes || '').toLowerCase();
           return name.includes(_subSearchQuery) || cat.includes(_subSearchQuery) || notes.includes(_subSearchQuery);
         });
@@ -9494,63 +9787,64 @@
           return dd !== 0 ? dd : ((b.createdAt || 0) - (a.createdAt || 0));
         });
 
-      // Build a set of IDs in this history for quick lookup
-      const historyIds = new Set(subTxs.map(t => t.id));
 
-      // Auto-tag: any transaction shown in history but missing _recurring/subId gets tagged.
-      // Register _pendingTxUpdates BEFORE batch.commit() so the onSnapshot rebuild
-      // preserves the tags — prevents the flickering appear/disappear cycle.
-      const untagged = subTxs.filter(t => (!t._recurring || t.subId !== recId) && !_txWriteLocks.has(t.id) && !_pendingTxUpdates.has(t.id));
-      if (untagged.length && userId) {
-        const opToken = ++_txOpSeq;
-        // Pre-register all pending updates + session markers BEFORE commit
+    // Build a set of IDs in this history for quick lookup
+    const historyIds = new Set(subTxs.map(t => t.id));
+
+    // Auto-tag: any transaction shown in history but missing _recurring/subId gets tagged.
+    // Register _pendingTxUpdates BEFORE batch.commit() so the onSnapshot rebuild
+    // preserves the tags — prevents the flickering appear/disappear cycle.
+    const untagged = subTxs.filter(t => (!t._recurring || t.subId !== recId) && !_txWriteLocks.has(t.id) && !_pendingTxUpdates.has(t.id));
+    if (untagged.length && userId) {
+      const opToken = ++_txOpSeq;
+      // Pre-register all pending updates + session markers BEFORE commit
+      untagged.forEach(t => {
+        _pendingTxUpdates.set(t.id, { _recurring: true, subId: recId });
+        _pendingTxTokens.set(t.id, opToken);
+        _sessionTaggedTxIds.add(t.id);
+        // Optimistic local update so the tag is visible immediately
+        t._recurring = true;
+        t.subId = recId;
+      });
+      // Safety clear pending entries after 15s
+      setTimeout(() => {
         untagged.forEach(t => {
-          _pendingTxUpdates.set(t.id, { _recurring: true, subId: recId });
-          _pendingTxTokens.set(t.id, opToken);
-          _sessionTaggedTxIds.add(t.id);
-          // Optimistic local update so the tag is visible immediately
-          t._recurring = true;
-          t.subId = recId;
+          if (_pendingTxTokens.get(t.id) === opToken) {
+            _pendingTxUpdates.delete(t.id);
+            _pendingTxTokens.delete(t.id);
+          }
         });
-        // Safety clear pending entries after 15s
-        setTimeout(() => {
-          untagged.forEach(t => {
-            if (_pendingTxTokens.get(t.id) === opToken) {
-              _pendingTxUpdates.delete(t.id);
-              _pendingTxTokens.delete(t.id);
-            }
-          });
-        }, 15000);
-        (async () => {
-          try {
-            for (let i = 0; i < untagged.length; i += 450) {
-              const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id));
-              if (!chunk.length) continue;
+      }, 15000);
+      (async () => {
+        try {
+          for (let i = 0; i < untagged.length; i += 450) {
+            const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id));
+            if (!chunk.length) continue;
 
-              const promises = chunk.map(t => {
-                return updateDoc(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId })
-                  .catch(e => {
-                    console.warn(`History auto-tag failed for ${t.id}:`, e);
-                    throw e;
-                  });
-              });
-              await Promise.allSettled(promises);
-            }
-          } catch (e) { console.error('History auto-tag failed:', e); }
-        })();
-      }
+            const promises = chunk.map(t => {
+              return updateDoc(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId })
+                .catch(e => {
+                  console.warn(`History auto-tag failed for ${t.id}:`, e);
+                  throw e;
+                });
+            });
+            await Promise.allSettled(promises);
+          }
+        } catch (e) { console.error('History auto-tag failed:', e); }
+      })();
+    }
 
-      const totalPaid = subTxs.reduce((s, t) => s + t.amount, 0);
-      const amtCls = rec.type === 'income' ? 'inc' : 'exp';
-      const sign = rec.type === 'income' ? '+' : '-';
-      let annualizedCost = 0;
-      if (rec.freq === 'monthly') annualizedCost = Math.abs(rec.amount) * 12;
-      else if (rec.freq === 'yearly') annualizedCost = Math.abs(rec.amount);
-      else if (rec.freq === 'weekly') annualizedCost = Math.abs(rec.amount) * 52;
-      else if (rec.freq === 'daily') annualizedCost = Math.abs(rec.amount) * 365;
-      else if (rec.freq === 'custom' && rec.customDays) annualizedCost = Math.abs(rec.amount) * 365 / rec.customDays;
+    const totalPaid = subTxs.reduce((s, t) => s + t.amount, 0);
+    const amtCls = rec.type === 'income' ? 'inc' : 'exp';
+    const sign = rec.type === 'income' ? '+' : '-';
+    let annualizedCost = 0;
+    if (rec.freq === 'monthly') annualizedCost = Math.abs(rec.amount) * 12;
+    else if (rec.freq === 'yearly') annualizedCost = Math.abs(rec.amount);
+    else if (rec.freq === 'weekly') annualizedCost = Math.abs(rec.amount) * 52;
+    else if (rec.freq === 'daily') annualizedCost = Math.abs(rec.amount) * 365;
+    else if (rec.freq === 'custom' && rec.customDays) annualizedCost = Math.abs(rec.amount) * 365 / rec.customDays;
 
-      const statsHtml = `<div class="sub-hist-stats">
+    const statsHtml = `<div class="sub-hist-stats">
     <div class="sub-hist-stat">
       <span class="sub-hist-stat-lbl">Total Paid</span>
       <span class="sub-hist-stat-val ${amtCls}" style="color:${amtCls === 'inc' ? 'var(--in)' : 'var(--ex)'}">${sign}${fmt(totalPaid)}</span>
@@ -9565,29 +9859,29 @@
     </div>
   </div>`;
 
-      let listHtml;
-      if (!subTxs.length) {
-        listHtml = '<div class="sub-hist-empty">No matched payments yet.<br>Payments will appear here once transactions are auto-added or matched.</div>';
-      } else {
-        const isCapped = subTxs.length > 500;
-        const rows = (isCapped ? subTxs.slice(0, 500) : subTxs).map(t => {
-          const d = t.desc || '';
-          return `<div class="sub-tx-row">
+    let listHtml;
+    if (!subTxs.length) {
+      listHtml = '<div class="sub-hist-empty">No matched payments yet.<br>Payments will appear here once transactions are auto-added or matched.</div>';
+    } else {
+      const isCapped = subTxs.length > 500;
+      const rows = (isCapped ? subTxs.slice(0, 500) : subTxs).map(t => {
+        const d = t.desc || '';
+        return `<div class="sub-tx-row">
         <div class="sub-tx-date">${fmtDt(t.date)}</div>
         <div class="sub-tx-desc" title="${esc(d)}"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d)}</span></div>
         <div class="sub-tx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${fmt(t.amount)}</div>
       </div>`;
-        }).join('');
-        listHtml = `<div class="sub-hist-list">${rows}${isCapped ? `<div class="sub-hist-cap">Showing latest 500 of ${subTxs.length} payments</div>` : ''
-          }</div>`;
-      }
+      }).join('');
+      listHtml = `<div class="sub-hist-list">${rows}${isCapped ? `<div class="sub-hist-cap">Showing latest 500 of ${subTxs.length} payments</div>` : ''
+        }</div>`;
+    }
 
-      const newHistHtml = statsHtml + listHtml;
-      // Content-hash guard: skip DOM rebuild when history data hasn't changed
-      // This prevents scroll position from resetting on every render cycle
-      if (_subHistLastHtml.get(recId) === newHistHtml) return;
-      _subHistLastHtml.set(recId, newHistHtml);
-      inner.innerHTML = newHistHtml;
+    const newHistHtml = statsHtml + listHtml;
+    // Content-hash guard: skip DOM rebuild when history data hasn't changed
+    // This prevents scroll position from resetting on every render cycle
+    if (_subHistLastHtml.get(recId) === newHistHtml) return;
+    _subHistLastHtml.set(recId, newHistHtml);
+    inner.innerHTML = newHistHtml;
     }
 
     // ── Alt Amounts (Secondary Prices) Management ──
@@ -9768,16 +10062,16 @@
             const oldAltStr = JSON.stringify(oldRec.altAmounts || []);
             const newAltStr = JSON.stringify(data.altAmounts || []);
             changed = (oldRec.name !== data.name ||
-                       oldRec.amount !== data.amount ||
-                       oldRec.cat !== data.cat ||
-                       oldRec.nextDue !== data.nextDue ||
-                       oldRec.type !== data.type ||
-                       oldRec.mode !== data.mode ||   // B10 FIX: mode was missing from change detection
-                       oldRec.freq !== data.freq ||
-                       oldRec.customDays !== data.customDays ||
-                       oldRec.paymentsLimit !== data.paymentsLimit ||
-                       oldAltStr !== newAltStr ||
-                       (oldRec.autoLog !== false) !== data.autoLog);
+              oldRec.amount !== data.amount ||
+              oldRec.cat !== data.cat ||
+              oldRec.nextDue !== data.nextDue ||
+              oldRec.type !== data.type ||
+              oldRec.mode !== data.mode ||   // B10 FIX: mode was missing from change detection
+              oldRec.freq !== data.freq ||
+              oldRec.customDays !== data.customDays ||
+              oldRec.paymentsLimit !== data.paymentsLimit ||
+              oldAltStr !== newAltStr ||
+              (oldRec.autoLog !== false) !== data.autoLog);
           }
           if (!changed) return; // No actual changes made, skip the network call and toast
           try {
@@ -10043,7 +10337,7 @@
     function askDeletePermanently(id) {
       const rec = recurringList.find(r => r.id === id);
       if (!rec) return;
-      
+
       showConfirm(
         'Delete Permanently (1/3)',
         `Permanently delete "${rec.name}"? This cannot be undone. The subscription card will be gone for good.`,
@@ -10319,8 +10613,8 @@
     }
     // Pre-cache asset rasterizations for instant PDF export
     setTimeout(() => {
-      getFluxBgDataUrl().catch(() => {});
-      getFluxLogoDataUrl().catch(() => {});
+      getFluxBgDataUrl().catch(() => { });
+      getFluxLogoDataUrl().catch(() => { });
     }, 1500);
 
     async function generatePDF() {
@@ -10798,14 +11092,14 @@
           const pPodH = 24;
 
           // Fixed vs Flexible
-          const fixedExpAmt = expTxs.filter(t => t.subId || t._recurring || t.cat === 'housing' || t.cat === 'utilities').reduce((s,t) => s + t.amount, 0);
+          const fixedExpAmt = expTxs.filter(t => t.subId || t._recurring || t.cat === 'housing' || t.cat === 'utilities').reduce((s, t) => s + t.amount, 0);
           const discExpAmt = Math.max(0, totalExp - fixedExpAmt);
           const discPct = totalExp > 0 ? Math.round((discExpAmt / totalExp) * 100) : 0;
 
           // Peak Spend Day
           const daySpendMap = {};
           expTxs.forEach(t => { daySpendMap[t.date] = (daySpendMap[t.date] || 0) + t.amount; });
-          const dayEntries = Object.entries(daySpendMap).sort((a,b) => b[1] - a[1]);
+          const dayEntries = Object.entries(daySpendMap).sort((a, b) => b[1] - a[1]);
           const peakDate = dayEntries.length ? dayEntries[0][0] : null;
           const peakAmt = dayEntries.length ? dayEntries[0][1] : 0;
           const peakPct = totalExp > 0 ? Math.round((peakAmt / totalExp) * 100) : 0;
@@ -10898,10 +11192,10 @@
           let outlierFound = false;
           Object.keys(catMap).forEach(cat => {
             if (outlierFound) return;
-            const cTxs = expTxs.filter(t => (t.cat || 'other') === cat).sort((a,b) => b.amount - a.amount);
+            const cTxs = expTxs.filter(t => (t.cat || 'other') === cat).sort((a, b) => b.amount - a.amount);
             if (cTxs.length >= 3) {
               const top = cTxs[0];
-              const restAvg = cTxs.slice(1).reduce((s,t) => s + t.amount, 0) / (cTxs.length - 1);
+              const restAvg = cTxs.slice(1).reduce((s, t) => s + t.amount, 0) / (cTxs.length - 1);
               if (restAvg > 0 && top.amount >= restAvg * 2.5 && top.amount >= 300) {
                 outlierFound = true;
                 const ratio = (top.amount / restAvg).toFixed(1);
@@ -11047,11 +11341,11 @@
               if (k) descCounts[k] = (descCounts[k] || 0) + 1;
             }
           });
-          const repeatEntries = Object.entries(descCounts).filter(e => e[1] >= 3).sort((a,b) => b[1] - a[1]);
+          const repeatEntries = Object.entries(descCounts).filter(e => e[1] >= 3).sort((a, b) => b[1] - a[1]);
           if (repeatEntries.length > 0) {
             const topDesc = repeatEntries[0][0];
             const count = repeatEntries[0][1];
-            const totalForDesc = expTxs.filter(t => (t.desc || '').trim().toLowerCase() === topDesc).reduce((s,t) => s + t.amount, 0);
+            const totalForDesc = expTxs.filter(t => (t.desc || '').trim().toLowerCase() === topDesc).reduce((s, t) => s + t.amount, 0);
             const dispName = topDesc.charAt(0).toUpperCase() + topDesc.slice(1);
             pdfInsightCandidates.push({
               priority: 8,
@@ -11094,8 +11388,8 @@
             checkBreak(cardRowH + 2);
 
             // Color scheme: pos=green, neg=red, neu=gold (matches PDF brand palette)
-            const insColor    = ins.type === 'pos' ? green        : ins.type === 'neg' ? red        : accentStripe;
-            const insBgLight  = ins.type === 'pos' ? greenBg      : ins.type === 'neg' ? redBg      : [255, 251, 240];
+            const insColor = ins.type === 'pos' ? green : ins.type === 'neg' ? red : accentStripe;
+            const insBgLight = ins.type === 'pos' ? greenBg : ins.type === 'neg' ? redBg : [255, 251, 240];
             const cardY = curY;
 
             // ── Card background (white with very light tint) ──
@@ -11704,7 +11998,7 @@
       if (mnYearly) mnYearly.classList.toggle('act', tab === 'yearly');
       const mnLog = document.getElementById('mnLog');
       if (mnLog) mnLog.classList.toggle('act', tab === 'log');
-      
+
       // Update Desktop Sidebar Nav Active States & Accessibility
       const snDash = document.getElementById('snDash');
       if (snDash) {
@@ -11730,7 +12024,7 @@
         snLog.classList.toggle('act', isAct);
         if (isAct) snLog.setAttribute('aria-current', 'page'); else snLog.removeAttribute('aria-current');
       }
-      
+
       // Update Desktop View Title Header
       const desktopViewTitle = document.getElementById('desktopViewTitle');
       const desktopViewSub = document.getElementById('desktopViewSub');
@@ -11952,25 +12246,25 @@
     window.loadMoreTx = loadMoreTx;
     window.setTxSearch = setTxSearch;
     window.setLogSearch = function (val) { cLogSearch = val.toLowerCase(); renderLogs(); };
-    window.setLogFilter = function(val) {
+    window.setLogFilter = function (val) {
       const hidden = document.getElementById('logFilter');
       if (hidden) hidden.value = val;
-      
+
       let selectedLabel = 'All';
       let selectedSvg = '';
 
       const activeMap = {
-        'all':          { cls: 'act',        btn: '' },
-        'ADD':          { cls: 'act act-add',    btn: 'flt-add' },
-        'EDIT':         { cls: 'act act-edit',   btn: 'flt-edit' },
-        'DELETE':       { cls: 'act act-del',    btn: 'flt-del' },
-        'IMPORT':       { cls: 'act act-import', btn: 'flt-import' },
-        'subscription': { cls: 'act act-sub',    btn: 'flt-sub' },
-        'event':        { cls: 'act act-evt',    btn: 'flt-evt' },
-        'income':       { cls: 'act act-inc',    btn: 'flt-inc' },
-        'expense':      { cls: 'act act-exp',    btn: 'flt-exp' },
-        'online':       { cls: 'act act-onl',    btn: 'flt-onl' },
-        'offline':      { cls: 'act act-ofl',    btn: 'flt-ofl' },
+        'all': { cls: 'act', btn: '' },
+        'ADD': { cls: 'act act-add', btn: 'flt-add' },
+        'EDIT': { cls: 'act act-edit', btn: 'flt-edit' },
+        'DELETE': { cls: 'act act-del', btn: 'flt-del' },
+        'IMPORT': { cls: 'act act-import', btn: 'flt-import' },
+        'subscription': { cls: 'act act-sub', btn: 'flt-sub' },
+        'event': { cls: 'act act-evt', btn: 'flt-evt' },
+        'income': { cls: 'act act-inc', btn: 'flt-inc' },
+        'expense': { cls: 'act act-exp', btn: 'flt-exp' },
+        'online': { cls: 'act act-onl', btn: 'flt-onl' },
+        'offline': { cls: 'act act-ofl', btn: 'flt-ofl' },
       };
 
       // Filter for online/offline happens in renderLogs via the filter value
@@ -11999,14 +12293,14 @@
       renderLogs();
     };
 
-    window.toggleLogFilterMenu = function() {
+    window.toggleLogFilterMenu = function () {
       const menu = document.getElementById('logFilterMenu');
       if (menu) menu.classList.toggle('show');
     };
 
-    window.setLogDateFilter = function() {
+    window.setLogDateFilter = function () {
       cLogDateFrom = (document.getElementById('logDateFrom') || {}).value || '';
-      cLogDateTo   = (document.getElementById('logDateTo')   || {}).value || '';
+      cLogDateTo = (document.getElementById('logDateTo') || {}).value || '';
       const mainBtn = document.getElementById('logFilterMainBtn');
       if (mainBtn) {
         const current = document.getElementById('logFilter').value;
@@ -12020,7 +12314,7 @@
       renderLogs();
     };
 
-    window.clearLogDateFilter = function() {
+    window.clearLogDateFilter = function () {
       cLogDateFrom = '';
       cLogDateTo = '';
       const f = document.getElementById('logDateFrom');
@@ -12091,22 +12385,22 @@
     window.toggleArchivedView = toggleArchivedView;
     window.toggleSubHistory = toggleSubHistory;
     // Phase 2 toolbar
-    window.toggleSubFilters     = toggleSubFilters;
-    window.toggleInsightFilter  = toggleInsightFilter;
+    window.toggleSubFilters = toggleSubFilters;
+    window.toggleInsightFilter = toggleInsightFilter;
     window.updateSubFilterBadges = updateSubFilterBadges;
-    window.setSubFreq      = setSubFreq;
-    window.setSubType      = setSubType;
-    window.onSubDueChange  = onSubDueChange;
+    window.setSubFreq = setSubFreq;
+    window.setSubType = setSubType;
+    window.onSubDueChange = onSubDueChange;
     window.applySubFilters = applySubFilters;
-    window.clearSubSearch  = clearSubSearch;
+    window.clearSubSearch = clearSubSearch;
     window.clearSubFilters = clearSubFilters;
     window.addAltAmount = addAltAmount;
     window.removeAltAmount = removeAltAmount;
     // Phase 4/5
-    window.openSubHistory         = openSubHistory;
-    window.closeSubHistoryDrawer  = closeSubHistoryDrawer;
-    window.applyRecPreset         = applyRecPreset;
-    window.markAsPaid             = markAsPaid;
+    window.openSubHistory = openSubHistory;
+    window.closeSubHistoryDrawer = closeSubHistoryDrawer;
+    window.applyRecPreset = applyRecPreset;
+    window.markAsPaid = markAsPaid;
 
     window.openReportMod = openReportMod;
     window.closeReportMod = closeReportMod;
@@ -12367,7 +12661,7 @@
           const when = isOverdue
             ? 'is overdue!'
             : rec.nextDue === today ? 'is due today'
-            : `is due on ${new Date(rec.nextDue + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+              : `is due on ${new Date(rec.nextDue + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
           try {
             new Notification('Flux \u2014 ' + rec.name, {
               body: `${rec.name} (${rec.type === 'income' ? '+' : '-'}\u20b9${Math.abs(rec.amount).toLocaleString('en-IN')}) ${when}`,
@@ -12402,7 +12696,7 @@
         const whenLabel = isOverdue
           ? `<span style="color:var(--ex);font-weight:700;">overdue</span>`
           : daysUntil === 0 ? `<span style="color:var(--ex);">today</span>`
-          : `<span class="dsb-when">in ${daysUntil}d</span>`;
+            : `<span class="dsb-when">in ${daysUntil}d</span>`;
         const payBtn = (rec.autoLog === false && isOverdue)
           ? `<button class="dsb-pay-btn" onclick="markAsPaid(${esc(JSON.stringify(rec.id))})">\u2705 Paid</button>`
           : '';
@@ -12816,21 +13110,21 @@
           const type = document.getElementById('eTy').value;
           const mode = document.getElementById('eMo').value;
           const eventId = document.getElementById('eEvent').value || '';
-          
+
           const b = window._editSnapshot;
           const oldEvtId = b.eventId || '';
           const noFileChosen = !document.getElementById('eReceiptFile')?.files[0];
           const noReceiptChange = (typeof _editRemovedIdxs !== 'undefined' ? _editRemovedIdxs.size === 0 : true) && noFileChosen;
-          
+
           if (b.desc === desc && b.amount === amt && (b.cat || 'other') === (cat || 'other') &&
-              b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId && noReceiptChange) {
+            b.date === date && b.mode === mode && b.type === type && oldEvtId === eventId && noReceiptChange) {
             btn.disabled = true;
           } else {
             btn.disabled = false;
           }
         }
       }
-      
+
       // 2. Recurring Edit
       if (document.getElementById('recurringMod').classList.contains('op') && editingRecurringId && window._editRecSnapshot) {
         const btn = document.getElementById('recurringModSaveBtn');
@@ -12845,23 +13139,23 @@
           const freq = currentRecFreq;
           const mode = currentRecMode;
           const autoLog = currentRecAutoLog;
-          
+
           const b = window._editRecSnapshot;
-          const sameAlt = b._alt.length === (typeof _editingAltAmounts !== 'undefined' ? _editingAltAmounts.length : 0) && 
-                          b._alt.every((v, i) => v === _editingAltAmounts[i]);
-          
+          const sameAlt = b._alt.length === (typeof _editingAltAmounts !== 'undefined' ? _editingAltAmounts.length : 0) &&
+            b._alt.every((v, i) => v === _editingAltAmounts[i]);
+
           if (b.name === name && b.amount === amount && (b.cat || 'other') === (cat || 'other') &&
-              (b.nextDue || '') === nextDue && (b.customDays || '') == (customDays || '') &&
-              (b.paymentsLimit || '') == (paymentsLimit || '') &&
-              (b.type || 'expense') === type && (b.freq || 'monthly') === freq &&
-              (b.mode || 'online') === mode && (b.autoLog !== false) === autoLog && sameAlt) {
+            (b.nextDue || '') === nextDue && (b.customDays || '') == (customDays || '') &&
+            (b.paymentsLimit || '') == (paymentsLimit || '') &&
+            (b.type || 'expense') === type && (b.freq || 'monthly') === freq &&
+            (b.mode || 'online') === mode && (b.autoLog !== false) === autoLog && sameAlt) {
             btn.disabled = true;
           } else {
             btn.disabled = false;
           }
         }
       }
-      
+
       // 3. Event Edit
       if (document.getElementById('eventMod').classList.contains('op') && editingEventId && window._editEvtSnapshot) {
         const btn = document.getElementById('eventModSaveBtn');
@@ -12870,7 +13164,7 @@
           const start = document.getElementById('evtStart').value;
           const end = document.getElementById('evtEnd').value;
           const color = document.getElementById('evtColor').value || '#c8a96e';
-          
+
           const b = window._editEvtSnapshot;
           if (b.name === name && b.start === start && b.end === end && (b.color || '#c8a96e') === color) {
             btn.disabled = true;
@@ -12898,7 +13192,7 @@
       return descCache;
     }
 
-    window.applyDescSuggestion = function(desc, cat, formType) {
+    window.applyDescSuggestion = function (desc, cat, formType) {
       if (formType === 'add') {
         const input = document.getElementById('txD');
         if (input) { input.value = desc; input.dispatchEvent(new Event('input')); }
@@ -12926,7 +13220,7 @@
         const input = document.getElementById(inputId);
         const menu = document.getElementById(menuId);
         if (!input || !menu) return;
-        
+
         let selIdx = -1;
 
         function show() {
@@ -12950,7 +13244,7 @@
             menu.classList.remove('open');
             return;
           }
-          
+
           selIdx = -1;
           menu.innerHTML = matches.map((m, i) => {
             const icon = (typeof CICO !== 'undefined' && CICO[m.cat]) ? CICO[m.cat] : '✦';
@@ -13020,13 +13314,13 @@
       try {
         localStorage.setItem(DEBT_PERSONS_KEY, JSON.stringify(debtPersons));
         localStorage.setItem(DEBT_RECORDS_KEY, JSON.stringify(debtRecords));
-      } catch(e) {}
+      } catch (e) { }
     }
     function loadDebtLocal() {
       try {
         debtPersons = JSON.parse(localStorage.getItem(DEBT_PERSONS_KEY) || '[]');
         debtRecords = JSON.parse(localStorage.getItem(DEBT_RECORDS_KEY) || '[]');
-      } catch(e) { debtPersons = []; debtRecords = []; }
+      } catch (e) { debtPersons = []; debtRecords = []; }
     }
 
     function loadDebtFromCloud() {
@@ -13152,7 +13446,7 @@
       const sentEl = document.getElementById('dvNetSentiment');
       if (sentEl) {
         sentEl.textContent = net > 0 ? 'You are in the green (owed to you)' : net < 0 ? 'You are in the red (you owe money)' : 'All settled up';
-        sentEl.style.color  = net > 0 ? '#52d6a4' : net < 0 ? '#ef968e' : '#8e887d';
+        sentEl.style.color = net > 0 ? '#52d6a4' : net < 0 ? '#ef968e' : '#8e887d';
       }
       const owedEl = document.getElementById('dvOwedToMe');
       if (owedEl) owedEl.textContent = dvFmt(owedToMe);
@@ -13390,22 +13684,22 @@
         const isInward = r.type === 'repayment';
         const isSettlementRec = r.type === 'settlement';
         const rColor = isInward ? '#52d6a4' : isSettlementRec ? '#52d6a4' : '#e7b849';
-        const rSign  = isInward ? '+' : '';
+        const rSign = isInward ? '+' : '';
         const arrowInward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>';
         const arrowOutward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
         const checkIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>';
-        const rIcon  = isSettlementRec ? checkIcon : (isInward ? arrowInward : arrowOutward);
+        const rIcon = isSettlementRec ? checkIcon : (isInward ? arrowInward : arrowOutward);
         const rTitle = r.type === 'repayment' ? (isOwed ? '💰 Repayment received' : '💸 Repayment paid')
           : r.type === 'lend_more' ? '📤 Given — ' + dvEscape(r.note || 'additional')
-          : r.type === 'borrow_more' ? '📥 Taken — ' + dvEscape(r.note || 'additional')
-          : r.type === 'settlement' ? '✅ Settled — marked as cleared'
-          : dvEscape(r.note || (isOwed ? '📤 Account opened — initial loan given' : '📥 Account opened — initial loan taken'));
+            : r.type === 'borrow_more' ? '📥 Taken — ' + dvEscape(r.note || 'additional')
+              : r.type === 'settlement' ? '✅ Settled — marked as cleared'
+                : dvEscape(r.note || (isOwed ? '📤 Account opened — initial loan given' : '📥 Account opened — initial loan taken'));
         const modeLabel = r.mode && r.mode !== 'other' ? (' · ' + dvEscape(r.mode.toUpperCase())) : '';
         const isInitial = r.type === 'initial_loan' || r.type === 'initial_borrow';
         const delBtn = isInitial ? '' : '<button class="dpv-del-rec-btn" data-record-id="' + dvEscape(r.id) + '" title="Delete this entry">&#x2715;</button>';
         // Activity log: when added by user (createdAt) vs the transaction date
         const addedAt = r.createdAt ? new Date(r.createdAt) : null;
-        const addedStr = addedAt ? ('Logged ' + addedAt.toLocaleString('en-IN', {day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true})) : '';
+        const addedStr = addedAt ? ('Logged ' + addedAt.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })) : '';
 
         return '<div class="dpv-record-item">'
           + '<div class="dpv-record-icon" style="background:' + rColor + '18;border:1px solid ' + rColor + '30">' + rIcon + '</div>'
@@ -13658,7 +13952,7 @@
           amount: amt,
           type: p.role === 'borrower' ? 'income' : 'expense',
           cat: 'Debt Repayment', mode: _payMode, date: rec.date, createdAt: Date.now()
-        }).catch(() => {});
+        }).catch(() => { });
       }
       closePaymentModal();
       renderPersonLedger(pid);
@@ -13730,7 +14024,7 @@
         }
       }
       debtRecords = debtRecords.filter(r => r.id !== recordId);
-      
+
       const p = debtPersons.find(x => x.id === pid);
       if (p) {
         if (p.settlementRecordId === recordId) {
