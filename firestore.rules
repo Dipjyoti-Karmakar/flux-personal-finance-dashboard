@@ -80,6 +80,18 @@ service cloud.firestore {
       match /debt_records/{recordId} {
         allow read, write, delete: if isOwner(userId);
       }
+
+      // Debt Activity Logs Collection
+      match /debt_activities/{actId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasAll(['a', 'm', 'ts'])
+          && request.resource.data.a in ['ADD', 'EDIT', 'DELETE', 'SETTLE']
+          && request.resource.data.ts is number;
+        allow update: if isOwner(userId)
+          && request.resource.data.a in ['ADD', 'EDIT', 'DELETE', 'SETTLE']
+          && request.resource.data.ts is number;
+      }
     }
   }
 }

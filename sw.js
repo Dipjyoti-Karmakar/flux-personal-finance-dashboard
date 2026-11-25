@@ -1,11 +1,11 @@
 // Flux Service Worker - Offline-first caching strategy
-// V57: Redesigned Debt Management UI/UX, unified confirmation dialogs, signed ledger math
-const CACHE_NAME = 'flux-v57';
+// V58: Debt Activity Log, active-cycle metrics, professional copy & statement polish
+const CACHE_NAME = 'flux-v58';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './?v=40',
-  './index.html?v=40',
-  './style.css?v=3',
+  './?v=41',
+  './index.html?v=41',
+  './style.css?v=4',
   './manifest.json?v=7',
   './icon.svg?v=7',
   './icon-192.png?v=7',

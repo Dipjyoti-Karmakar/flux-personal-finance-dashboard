@@ -37,7 +37,7 @@
     integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3"
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="./style.css?v=3">
+  <link rel="stylesheet" href="./style.css?v=4">
   <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 
@@ -1118,18 +1118,31 @@
             </button>
             <div class="dv-title-block">
               <div class="dv-flux-label">FLUX LEDGER</div>
-              <h1 class="dv-title">Debts &amp; Loans</h1>
+              <h1 class="dv-title">Receivables &amp; Payables</h1>
             </div>
           </div>
-          <button type="button" class="dv-add-btn" onclick="openDebtPersonModal()" aria-label="Add person account"
-            title="Add person account">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span class="dv-add-btn-txt">Add Person</span>
-          </button>
+          <div class="dv-header-actions">
+            <button type="button" class="dv-log-btn" onclick="openDebtActivityLog()" aria-label="Debt Activity Log"
+              title="Debt Activity Log">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="5" y="4" width="14" height="18" rx="3" />
+                <path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1H9z" />
+                <line x1="8" y1="10" x2="16" y2="10" />
+                <line x1="8" y1="14" x2="14" y2="14" />
+              </svg>
+              <span class="dv-log-btn-txt">Activity Log</span>
+            </button>
+            <button type="button" class="dv-add-btn" onclick="openDebtPersonModal()" aria-label="Add account"
+              title="Add account">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span class="dv-add-btn-txt">Add Account</span>
+            </button>
+          </div>
         </div>
 
         <!-- Net Position Hero Card -->
@@ -1140,19 +1153,19 @@
               <span class="dv-net-pill" id="dvNetPill">Settled</span>
             </div>
             <div class="dv-net-amount" id="dvNetAmount">&#8377;0</div>
-            <div class="dv-net-sentiment" id="dvNetSentiment">All settled up</div>
+            <div class="dv-net-sentiment" id="dvNetSentiment">All accounts are settled</div>
             <div class="dv-net-metrics">
               <div class="dv-metric dv-metric-owed">
                 <span class="dv-metric-dot dv-green"></span>
                 <div>
-                  <div class="dv-metric-label">Owed to me</div>
+                  <div class="dv-metric-label">Receivable</div>
                   <div class="dv-metric-val dv-green-txt" id="dvOwedToMe">&#8377;0</div>
                 </div>
               </div>
               <div class="dv-metric dv-metric-owe">
                 <span class="dv-metric-dot dv-coral"></span>
                 <div>
-                  <div class="dv-metric-label">I owe</div>
+                  <div class="dv-metric-label">Payable</div>
                   <div class="dv-metric-val dv-coral-txt" id="dvIOwe">&#8377;0</div>
                 </div>
               </div>
@@ -1177,16 +1190,16 @@
         <div class="dv-workspace">
           <div class="dv-accounts-col">
             <div class="dv-search-wrap">
-              <svg class="dv-search-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="dv-search-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
               <input type="text" id="debtAccountSearch" class="dv-search-input" placeholder="Search name, UPI, or note&#8230;"
-                oninput="onDebtSearchInput()" autocomplete="off" spellcheck="false" aria-label="Search debt accounts">
+                oninput="onDebtSearchInput()" autocomplete="off" spellcheck="false" aria-label="Search accounts">
               <button type="button" class="dv-search-clear" id="debtSearchClear" onclick="clearDebtSearch()"
                 style="display:none" aria-label="Clear search" title="Clear search">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                   stroke-linecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
@@ -1194,15 +1207,15 @@
               </button>
             </div>
 
-            <div class="dv-filter-row" role="tablist" aria-label="Filter debt accounts">
+            <div class="dv-filter-row" role="tablist" aria-label="Filter accounts">
               <button type="button" class="dv-pill dv-pill-act" id="dvPillAll" onclick="setDebtFilter('all')">
                 All <span class="dv-pill-cnt" id="dvCntAll">0</span>
               </button>
               <button type="button" class="dv-pill" id="dvPillOwed" onclick="setDebtFilter('owed')">
-                Owed to me <span class="dv-pill-cnt" id="dvCntOwed">0</span>
+                Receivable <span class="dv-pill-cnt" id="dvCntOwed">0</span>
               </button>
               <button type="button" class="dv-pill" id="dvPillIOwe" onclick="setDebtFilter('iowe')">
-                I owe <span class="dv-pill-cnt" id="dvCntIOwe">0</span>
+                Payable <span class="dv-pill-cnt" id="dvCntIOwe">0</span>
               </button>
               <button type="button" class="dv-pill" id="dvPillSettled" onclick="setDebtFilter('settled')">
                 Settled <span class="dv-pill-cnt" id="dvCntSettled">0</span>
@@ -1210,7 +1223,7 @@
             </div>
 
             <div class="dv-section-heading">
-              <span>Personal Accounts</span>
+              <span>Counterparty Accounts</span>
               <span class="dv-section-count" id="dvAccountsCount">0 accounts</span>
             </div>
 
@@ -1223,9 +1236,9 @@
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
               </div>
-              <p id="debtAccountsEmptyMsg">No debt accounts yet.<br>Add someone to track money lent or borrowed.</p>
+              <p id="debtAccountsEmptyMsg">No counterparty accounts yet.<br>Add a contact to track receivables and payables.</p>
               <button type="button" class="dv-empty-btn" id="debtAccountsEmptyBtn" onclick="openDebtPersonModal()">
-                + Add Person
+                + Add Account
               </button>
             </div>
             <div id="debtAccountsList"></div>
@@ -1248,8 +1261,8 @@
       <div id="debtPersonView" style="display:none; position:relative;">
         <div class="dpv-container">
           <div class="dpv-topbar">
-            <button type="button" class="dpv-back-btn" onclick="backToDebtMain()" aria-label="Back to Debts"
-              title="Back to Debts">
+            <button type="button" class="dpv-back-btn" onclick="backToDebtMain()" aria-label="Back to Accounts"
+              title="Back to Accounts">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
                 stroke-linecap="round" stroke-linejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
@@ -1274,7 +1287,7 @@
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
                   </svg>
-                  Edit Person
+                  Edit Account
                 </button>
                 <button type="button" role="menuitem" id="dpvMenuSettleBtn"
                   onclick="settleDebtPerson(); closePersonMenu()">
@@ -1291,7 +1304,7 @@
                     <polyline points="16 6 12 2 8 6" />
                     <line x1="12" y1="2" x2="12" y2="15" />
                   </svg>
-                  Share Statement
+                  Send WhatsApp Reminder
                 </button>
                 <div class="dpv-ctx-divider"></div>
                 <button type="button" role="menuitem" class="dpv-ctx-danger"
@@ -1312,9 +1325,9 @@
           <div class="dpv-profile">
             <div class="dpv-avatar" id="dpvAvatar">PS</div>
             <div class="dpv-profile-info">
-              <div class="dpv-name" id="dpvName">Person Name</div>
+              <div class="dpv-name" id="dpvName">Account Name</div>
               <div class="dpv-meta-row">
-                <span class="dpv-role" id="dpvRole">Personal Account</span>
+                <span class="dpv-role" id="dpvRole">Account</span>
                 <button type="button" class="dpv-contact-chip" id="dpvContactChip" onclick="copyDebtContact()"
                   style="display:none;" title="Click to copy"></button>
                 <button type="button" class="dpv-due-chip" id="dpvDueChip" onclick="editDebtPerson()"
@@ -1327,7 +1340,7 @@
           <!-- Balance Card -->
           <div class="dpv-balance-card" id="dpvBalanceCard">
             <div class="dpv-balance-header">
-              <span class="dpv-balance-sub" id="dpvBalanceSub">Owes you</span>
+              <span class="dpv-balance-sub" id="dpvBalanceSub">Receivable</span>
               <span class="dpv-overdue-badge" id="dpvOverdueBadge" style="display:none;">Overdue</span>
             </div>
             <div class="dpv-balance-amount" id="dpvBalanceAmount">&#8377;0</div>
@@ -1335,8 +1348,8 @@
               <div class="dpv-progress-fill" id="dpvProgressFill" style="width:0%"></div>
             </div>
             <div class="dpv-progress-labels">
-              <span id="dpvRepaidLabel">Cleared &#8377;0</span>
-              <span id="dpvTotalLabel">Total &#8377;0</span>
+              <span id="dpvRepaidLabel">Settled &#8377;0</span>
+              <span id="dpvTotalLabel">Principal &#8377;0</span>
             </div>
           </div>
 
@@ -1361,7 +1374,7 @@
 
           <!-- Transactions Ledger Feed -->
           <div class="dpv-records-header">
-            <span class="dpv-records-title">Activity Log</span>
+            <span class="dpv-records-title">Transaction Ledger</span>
             <span class="dpv-records-sort" id="dpvRecordsSort">Newest first</span>
           </div>
           <div id="dpvRecordsList"></div>
@@ -1374,7 +1387,7 @@
                 <polyline points="16 6 12 2 8 6" />
                 <line x1="12" y1="2" x2="12" y2="15" />
               </svg>
-              Share WhatsApp Statement
+              Send WhatsApp Reminder
             </button>
             <button type="button" class="dpv-statement-btn" onclick="copyDebtStatement()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
@@ -1388,16 +1401,206 @@
         </div>
       </div>
 
+      <!-- Screen 3: Debt Activity Log Screen -->
+      <div id="debtLogView" style="display:none; position:relative;">
+        <div class="dpv-container">
+          <div class="dv-brand-header dv-log-topbar">
+            <div class="dv-header-left">
+              <button type="button" class="dpv-back-btn" onclick="closeDebtActivityLog()" aria-label="Back to Accounts"
+                title="Back to Accounts">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                <span>Accounts</span>
+              </button>
+              <div>
+                <div class="dv-flux-label">AUDIT TRAIL</div>
+                <h2 class="dv-log-title">Debt Activity Log</h2>
+              </div>
+            </div>
+            <div class="log-header-actions">
+              <div class="log-filter-wrapper" id="debtLogFilterWrapper">
+                <button type="button" class="log-filter-btn" id="debtLogFilterMainBtn"
+                  onclick="toggleDebtLogFilterMenu()">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <line x1="3" y1="6" x2="3.01" y2="6" />
+                    <line x1="3" y1="12" x2="3.01" y2="12" />
+                    <line x1="3" y1="18" x2="3.01" y2="18" />
+                  </svg>
+                  <span>All</span>
+                </button>
+                <input type="hidden" id="debtLogFilter" value="all">
+                <div class="log-filter-menu" id="debtLogFilterMenu" role="menu">
+                  <button type="button" class="log-fpill act" data-dfval="all" data-dflabel="All"
+                    onclick="setDebtLogFilter('all')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="8" y1="6" x2="21" y2="6" />
+                      <line x1="8" y1="12" x2="21" y2="12" />
+                      <line x1="8" y1="18" x2="21" y2="18" />
+                      <line x1="3" y1="6" x2="3.01" y2="6" />
+                      <line x1="3" y1="12" x2="3.01" y2="12" />
+                      <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
+                    All
+                  </button>
+                  <button type="button" class="log-fpill" data-dfval="ADD" data-dflabel="Added"
+                    onclick="setDebtLogFilter('ADD')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Added
+                  </button>
+                  <button type="button" class="log-fpill" data-dfval="EDIT" data-dflabel="Edited"
+                    onclick="setDebtLogFilter('EDIT')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                    </svg>
+                    Edited
+                  </button>
+                  <button type="button" class="log-fpill" data-dfval="SETTLE" data-dflabel="Settled"
+                    onclick="setDebtLogFilter('SETTLE')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Settled
+                  </button>
+                  <button type="button" class="log-fpill" data-dfval="DELETE" data-dflabel="Deleted"
+                    onclick="setDebtLogFilter('DELETE')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    </svg>
+                    Deleted
+                  </button>
+                  <button type="button" class="log-fpill" data-dfval="lend" data-dflabel="Receivable"
+                    onclick="setDebtLogFilter('lend')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="7" y1="17" x2="17" y2="7" />
+                      <polyline points="7 7 17 7 17 17" />
+                    </svg>
+                    Receivable / Lent
+                  </button>
+                  <button type="button" class="log-fpill" data-dfval="borrow" data-dflabel="Payable"
+                    onclick="setDebtLogFilter('borrow')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="17" y1="7" x2="7" y2="17" />
+                      <polyline points="17 17 7 17 7 7" />
+                    </svg>
+                    Payable / Borrowed
+                  </button>
+                  <button type="button" class="log-fpill" data-dfval="payment" data-dflabel="Payments"
+                    onclick="setDebtLogFilter('payment')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="5" width="20" height="14" rx="2" />
+                      <line x1="2" y1="10" x2="22" y2="10" />
+                    </svg>
+                    Payments
+                  </button>
+                  <button type="button" class="log-fpill" data-dfval="person" data-dflabel="Accounts"
+                    onclick="setDebtLogFilter('person')" role="menuitem">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                    Accounts
+                  </button>
+                  <div class="log-filter-date-row">
+                    <div class="log-filter-date-label">Date Range</div>
+                    <div class="log-filter-date-inputs">
+                      <input type="date" id="debtLogDateFrom" onchange="setDebtLogDateFilter()" title="From date">
+                      <span class="log-filter-date-sep">–</span>
+                      <input type="date" id="debtLogDateTo" onchange="setDebtLogDateFilter()" title="To date">
+                      <button type="button" class="log-filter-date-clear" onclick="clearDebtLogDateFilter()"
+                        title="Clear dates">Clear</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="log-clear-btn" id="btnToggleDeleteDebtLogs"
+                onclick="toggleDebtLogSelectionMode()" title="Select logs to delete">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                </svg>
+                Delete Logs
+              </button>
+            </div>
+          </div>
+
+          <div class="dv-search-wrap" style="margin-bottom:14px;">
+            <svg class="dv-search-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" id="debtLogSearch" class="dv-search-input" placeholder="Search debt activity&#8230;"
+              oninput="setDebtLogSearch(this.value)" autocomplete="off" spellcheck="false"
+              aria-label="Search debt activity log">
+            <button type="button" class="dv-search-clear" id="debtLogSearchClear" onclick="clearDebtLogSearch()"
+              style="display:none" aria-label="Clear search" title="Clear search">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <div id="debtLogDeleteAction" class="debt-log-delete-action" style="display:none;">
+            <div class="log-del-info">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ex)" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              </svg>
+              <span id="debtLogSelectCount" class="log-select-count">0 selected</span>
+            </div>
+            <div class="log-del-actions">
+              <button type="button" class="btn log-cancel-btn" onclick="toggleDebtLogSelectionMode()">Cancel</button>
+              <button type="button" class="btn pr log-del-btn" onclick="confirmDeleteSelectedDebtLogs()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                </svg>
+                Delete Selected
+              </button>
+            </div>
+          </div>
+
+          <div id="debtLogList"></div>
+        </div>
+      </div>
+
       <!-- Modal: Add/Edit Person -->
       <div class="bk dv-modal-backdrop" id="debtPersonModal" onclick="if(event.target===this)closeDebtPersonModal()">
         <div class="mo dv-modal" role="dialog" aria-modal="true" aria-labelledby="debtPersonModalTitle">
           <div class="dv-modal-header">
-            <div class="dv-modal-title" id="debtPersonModalTitle">Add Person</div>
+            <div class="dv-modal-title" id="debtPersonModalTitle">Add Account</div>
             <button type="button" class="mc2" onclick="closeDebtPersonModal()" aria-label="Close">×</button>
           </div>
           <form onsubmit="event.preventDefault(); saveDebtPerson();" novalidate>
             <input type="hidden" id="debtPersonId">
-            <label class="dv-label" for="debtPersonName">Full Name <span class="dv-req">*</span></label>
+            <label class="dv-label" for="debtPersonName">Counterparty Name <span class="dv-req">*</span></label>
             <input type="text" id="debtPersonName" class="dv-input" placeholder="e.g. Priya Sharma" maxlength="80"
               autocomplete="name">
             <div class="dv-field-err" id="debtPersonNameErr" style="display:none;"></div>
@@ -1459,7 +1662,7 @@
             </div>
 
             <label class="dv-label" for="paymentNote">Note</label>
-            <input type="text" id="paymentNote" class="dv-input" placeholder="e.g. Google Pay partial" maxlength="120">
+            <input type="text" id="paymentNote" class="dv-input" placeholder="e.g. Partial settlement via UPI" maxlength="120">
 
             <label class="dv-check-row" id="paymentSyncFluxWrap">
               <input type="checkbox" id="paymentSyncFlux">
@@ -1483,12 +1686,12 @@
           </div>
           <form onsubmit="event.preventDefault(); saveLendMore();" novalidate>
             <input type="hidden" id="debtLendRecordId">
-            <label class="dv-label">Direction</label>
+            <label class="dv-label">Entry Type</label>
             <div class="dv-role-toggle" style="margin-bottom:4px;">
-              <button type="button" class="dv-role-btn dv-role-act" id="lendTypeGive" onclick="setLendTxType('give')">I
-                gave (They owe me)</button>
-              <button type="button" class="dv-role-btn" id="lendTypeTake" onclick="setLendTxType('take')">I took (I owe
-                them)</button>
+              <button type="button" class="dv-role-btn dv-role-act" id="lendTypeGive" onclick="setLendTxType('give')">Lent
+                (Receivable)</button>
+              <button type="button" class="dv-role-btn" id="lendTypeTake" onclick="setLendTxType('take')">Borrowed
+                (Payable)</button>
             </div>
 
             <label class="dv-label" for="lendAmount">Amount (&#8377;) <span class="dv-req">*</span></label>
@@ -2569,10 +2772,10 @@
           }
           else if (item.op === 'deleteDoc') await deleteDoc(doc(db, 'users', userId, item.col, item.id));
           // Only count user-facing operations (not activity log entries) for the toast
-          if (item.col !== 'activities') c++;
+          if (item.col !== 'activities' && item.col !== 'debt_activities') c++;
         } catch (e) {
           console.warn('Sync queue item failed, re-queuing:', e);
-          failed.push(item);
+          if (e?.code !== 'permission-denied') failed.push(item);
         }
       }
       // Re-queue any failed items so they aren't lost
@@ -2760,7 +2963,9 @@
         loadRecurring();
         if (_unsubDebtPersons) _unsubDebtPersons();
         if (_unsubDebtRecords) _unsubDebtRecords();
+        if (_unsubDebtLogs) _unsubDebtLogs();
         loadDebtFromCloud();
+        if (typeof loadDebtLogsFromCloud === 'function') loadDebtLogsFromCloud();
         // Kick off non-blocking feature initialisation
         requestBillNotifications();           // Soft notification permission nudge
         // Clear stale localStorage activity log (migrated to Firestore)
@@ -2776,18 +2981,34 @@
         if (unsubscribeRecurring) unsubscribeRecurring();
         if (_unsubDebtPersons) _unsubDebtPersons();
         if (_unsubDebtRecords) _unsubDebtRecords();
+        if (_unsubDebtLogs) _unsubDebtLogs();
         activityLogs = [];
         recurringList = [];
         if (_debtWasSignedIn) {
           _debtWasSignedIn = false;
           debtPersons = [];
           debtRecords = [];
+          if (typeof debtActivityLogs !== 'undefined') debtActivityLogs = [];
+          if (typeof saveDebtLocal === 'function') saveDebtLocal();
+          if (typeof saveDebtLogsLocal === 'function') saveDebtLogsLocal();
           if (typeof _currentDebtPersonId !== 'undefined' && _currentDebtPersonId && typeof backToDebtMain === 'function') {
             backToDebtMain();
           }
+          if (typeof closeDebtActivityLog === 'function') closeDebtActivityLog();
+        }
+        if (typeof debtLogSelectionMode !== 'undefined' && debtLogSelectionMode) {
+          debtLogSelectionMode = false;
+          if (typeof selectedDebtLogs !== 'undefined') selectedDebtLogs.clear();
+          const dab = document.getElementById('debtLogDeleteAction');
+          const dbb = document.getElementById('btnToggleDeleteDebtLogs');
+          const dfw = document.getElementById('debtLogFilterWrapper');
+          if (dab) dab.style.display = 'none';
+          if (dbb) dbb.style.display = 'inline-flex';
+          if (dfw) { dfw.style.opacity = ''; dfw.style.pointerEvents = ''; }
         }
         if (typeof refreshDebtViews === 'function') refreshDebtViews();
         if (typeof checkDebtOverdueBadge === 'function') checkDebtOverdueBadge();
+        if (typeof renderDebtLogs === 'function') renderDebtLogs();
         // Clear log selection mode if active
         if (logSelectionMode) { logSelectionMode = false; selectedLogs.clear(); const ab = document.getElementById('logDeleteAction'); const bb = document.getElementById('btnToggleDeleteLogs'); if (ab) ab.style.display = 'none'; if (bb) bb.style.display = 'inline-block'; }
         renderLogs();
@@ -5222,6 +5443,8 @@
       if (document.getElementById('debtPersonModal')?.classList.contains('op')) { closeDebtPersonModal(); return; }
       const dpvMenu = document.getElementById('dpvContextMenu');
       if (dpvMenu && dpvMenu.style.display === 'block') { if (typeof closePersonMenu === 'function') closePersonMenu(); return; }
+      const debtLogMenu = document.getElementById('debtLogFilterMenu');
+      if (debtLogMenu && debtLogMenu.classList.contains('show')) { debtLogMenu.classList.remove('show'); return; }
       if (document.getElementById('eventMod').classList.contains('op')) { closeEventMod(); return; }
       if (document.getElementById('editMod').classList.contains('op')) { closeEditMod(); return; }
       if (document.getElementById('impMod').classList.contains('op')) { closeMod(); return; }
@@ -12278,8 +12501,8 @@
           desktopViewTitle.textContent = 'Activity Log';
           if (desktopViewSub) desktopViewSub.textContent = 'Audit Trail & Transaction History';
         } else if (tab === 'debts') {
-          desktopViewTitle.textContent = 'Debts & Loans';
-          if (desktopViewSub) desktopViewSub.textContent = 'Manage Borrowers & Creditors';
+          desktopViewTitle.textContent = 'Receivables & Payables';
+          if (desktopViewSub) desktopViewSub.textContent = 'Counterparty Balances & Settlement Ledger';
         }
       }
 
@@ -12298,6 +12521,7 @@
         if (typeof closeDebtPersonModal === 'function') closeDebtPersonModal();
         if (typeof closePaymentModal === 'function') closePaymentModal();
         if (typeof closeLendMoreModal === 'function') closeLendMoreModal();
+        if (typeof closeDebtActivityLog === 'function') closeDebtActivityLog(true);
       }
 
       if (tab === 'yearly') {
@@ -12321,7 +12545,7 @@
       // Defer heavy renders to next frame so click handler completes fast
       if (tab === 'log') requestAnimationFrame(() => renderLogs());
       if (tab === 'subscriptions') requestAnimationFrame(() => renderRecurring());
-      if (tab === 'debts') requestAnimationFrame(() => renderDebtDashboard());
+      if (tab === 'debts') requestAnimationFrame(() => { if (typeof refreshDebtViews === 'function') refreshDebtViews(); else renderDebtDashboard(); });
 
       window.scrollTo(0, 0);
     }
@@ -12657,7 +12881,7 @@
     let _deferredPrompt = null;
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=40').then((reg) => {
+      navigator.serviceWorker.register('./sw.js?v=41').then((reg) => {
       }).catch((err) => {
         console.warn('[PWA] SW registration failed:', err);
       });
@@ -13547,6 +13771,7 @@
     // ═══════════════════════════════════════════════════════════════════
     let debtPersons = [];
     let debtRecords = [];
+    let debtActivityLogs = [];
     let _currentDebtPersonId = null;
     let _debtFilter = 'all';
     let _debtRole = 'borrower';
@@ -13554,12 +13779,20 @@
     let _lendTxType = 'give';
     let _unsubDebtPersons = null;
     let _unsubDebtRecords = null;
+    let _unsubDebtLogs = null;
     let _settlingDebtPerson = false;
     let _savingDebtPerson = false;
     let _savingDebtPayment = false;
     let _savingDebtLend = false;
+    let debtLogSelectionMode = false;
+    let selectedDebtLogs = new Set();
+    let cDebtLogSearch = '';
+    let cDebtLogDateFrom = '';
+    let cDebtLogDateTo = '';
     const DEBT_PERSONS_KEY = 'flux_debt_persons';
     const DEBT_RECORDS_KEY = 'flux_debt_records';
+    const DEBT_LOGS_KEY = 'flux_debt_activities';
+    const DEBT_ACTIVITY_LOG_LIMIT = 300;
 
     function dvRound2(n) {
       const num = Number(n);
@@ -13665,6 +13898,104 @@
         debtPersons = [];
         debtRecords = [];
       }
+    }
+
+    function saveDebtLogsLocal() {
+      try {
+        localStorage.setItem(DEBT_LOGS_KEY, JSON.stringify(debtActivityLogs.slice(0, DEBT_ACTIVITY_LOG_LIMIT)));
+      } catch (e) { }
+    }
+
+    function loadDebtLogsLocal() {
+      try {
+        const logs = JSON.parse(localStorage.getItem(DEBT_LOGS_KEY) || '[]');
+        debtActivityLogs = Array.isArray(logs) ? logs.slice(0, DEBT_ACTIVITY_LOG_LIMIT) : [];
+      } catch (e) {
+        debtActivityLogs = [];
+      }
+    }
+
+    function loadDebtLogsFromCloud() {
+      if (!userId || typeof collection === 'undefined' || typeof query === 'undefined' || typeof orderBy === 'undefined' || typeof limit === 'undefined') return;
+      if (_unsubDebtLogs) _unsubDebtLogs();
+      const q = query(collection(db, 'users', userId, 'debt_activities'), orderBy('ts', 'desc'), limit(DEBT_ACTIVITY_LOG_LIMIT));
+      _unsubDebtLogs = onSnapshot(q, snap => {
+        const cloudLogs = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+        const cloudIds = new Set(cloudLogs.map(x => x.id));
+        const localOnly = debtActivityLogs.filter(x => x && x._localOnly && !cloudIds.has(x.id));
+        debtActivityLogs = [...localOnly, ...cloudLogs]
+          .sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0))
+          .slice(0, DEBT_ACTIVITY_LOG_LIMIT);
+        saveDebtLogsLocal();
+        const dlv = document.getElementById('debtLogView');
+        if (dlv && dlv.style.display !== 'none' && typeof renderDebtLogs === 'function') {
+          renderDebtLogs();
+        }
+      }, err => {
+        console.warn('[Debt] Debt activity log snapshot error:', err?.code || err);
+      });
+    }
+
+    function dvBuildDiffs(comparisons) {
+      const diffs = [];
+      for (const [field, oldVal, newVal] of comparisons) {
+        const o = String(oldVal ?? '').trim();
+        const n = String(newVal ?? '').trim();
+        if (o !== n) diffs.push({ field, old: o || '\u2014', new: n || '\u2014' });
+      }
+      return diffs;
+    }
+
+    function writeDebtLog(action, data = {}) {
+      const entry = {
+        id: 'dl_' + dvId(),
+        a: action,
+        m: String(data.m || ''),
+        ts: Date.now(),
+        entity: String(data.entity || ''),
+        personId: String(data.personId || ''),
+        personName: String(data.personName || ''),
+        recordId: String(data.recordId || ''),
+        direction: String(data.direction || ''),
+        mode: String(data.mode || ''),
+        date: String(data.date || ''),
+        note: String(data.note || '')
+      };
+      if (data.amt !== undefined && data.amt !== null && Number.isFinite(Number(data.amt))) {
+        entry.amt = dvRound2(data.amt);
+      }
+      if (Array.isArray(data.diffs) && data.diffs.length) {
+        entry.diffs = data.diffs.map(d => ({
+          field: String(d.field || ''),
+          old: String(d.old ?? ''),
+          new: String(d.new ?? '')
+        }));
+      }
+
+      debtActivityLogs = [entry, ...debtActivityLogs.filter(x => x.id !== entry.id)].slice(0, DEBT_ACTIVITY_LOG_LIMIT);
+      saveDebtLogsLocal();
+
+      const dlv = document.getElementById('debtLogView');
+      if (dlv && dlv.style.display !== 'none' && typeof renderDebtLogs === 'function') {
+        renderDebtLogs();
+      }
+
+      if (userId && typeof doc !== 'undefined' && typeof setDoc !== 'undefined') {
+        setDoc(doc(db, 'users', userId, 'debt_activities', entry.id), entry).catch(err => {
+          const code = err?.code || '';
+          if (code === 'permission-denied') {
+            entry._localOnly = true;
+            saveDebtLogsLocal();
+            console.warn('[Debt] debt_activities permission denied — saved locally until Firestore rules are deployed.');
+          } else if (typeof queueFailedSync === 'function') {
+            queueFailedSync('setDoc', 'debt_activities', entry.id, entry, false, true);
+          }
+        });
+      } else {
+        entry._localOnly = true;
+        saveDebtLogsLocal();
+      }
+      return entry;
     }
 
     function loadDebtFromCloud() {
@@ -13844,26 +14175,76 @@
 
     function getDebtPersonMetrics(p, personRecs) {
       const recs = personRecs || debtRecords.filter(r => r.personId === p.id);
-      const hasInitialRec = recs.some(r => r.type === 'initial_loan' || r.type === 'initial_borrow');
+      const asc = sortDebtRecordsAsc(recs);
+      const hasInitialRec = asc.some(r => r.type === 'initial_loan' || r.type === 'initial_borrow');
       const legacyInit = (!hasInitialRec && Number(p.initialAmount) > 0) ? dvRound2(p.initialAmount) : 0;
 
-      const givenFromRecs = recs
+      const givenFromRecs = asc
         .filter(r => r.type === 'initial_loan' || r.type === 'lend_more')
         .reduce((s, r) => dvRound2(s + (r.amount || 0)), 0);
-      const takenFromRecs = recs
+      const takenFromRecs = asc
         .filter(r => r.type === 'initial_borrow' || r.type === 'borrow_more')
         .reduce((s, r) => dvRound2(s + (r.amount || 0)), 0);
 
       const givenTotal = dvRound2(givenFromRecs + (p.role !== 'lender' ? legacyInit : 0));
       const takenTotal = dvRound2(takenFromRecs + (p.role === 'lender' ? legacyInit : 0));
 
-      const isSettled = p.status === 'settled' && dvRound2(p.currentBalance || 0) === 0;
+      // Identify cycle boundaries wherever cumulative balance returns to zero
+      let net = legacyInit > 0 ? (p.role === 'lender' ? -legacyInit : legacyInit) : 0;
+      let openIdx = 0;
+      let lastSettledRange = [0, 0];
+      const cycleBreakIds = [];
+
+      for (let i = 0; i < asc.length; i++) {
+        const r = asc[i];
+        const amt = dvRound2(r.amount);
+        if (r.type === 'initial_loan' || r.type === 'lend_more') {
+          net = dvRound2(net + amt);
+        } else if (r.type === 'initial_borrow' || r.type === 'borrow_more') {
+          net = dvRound2(net - amt);
+        } else if (r.type === 'settlement') {
+          net = 0;
+        } else if (r.type === 'repayment') {
+          if (r.direction === 'received') net = dvRound2(net - amt);
+          else if (r.direction === 'paid') net = dvRound2(net + amt);
+          else net = net < 0 ? dvRound2(net + amt) : dvRound2(net - amt);
+        }
+
+        if (dvRound2(Math.abs(net)) === 0 && (legacyInit > 0 || i >= openIdx)) {
+          lastSettledRange = [openIdx, i + 1];
+          if (i < asc.length - 1) {
+            cycleBreakIds.push(r.id);
+            openIdx = i + 1;
+          }
+        }
+      }
+
+      const bal = dvRound2(p.currentBalance || 0);
+      const isSettled = p.status === 'settled' && bal === 0;
       const isOwed = p.role === 'borrower';
-      const rawSideTotal = isOwed ? givenTotal : takenTotal;
-      const sideTotal = Math.max(rawSideTotal, dvRound2(p.currentBalance || 0));
+      const activeCycleRecs = (isSettled && lastSettledRange[1] > lastSettledRange[0])
+        ? asc.slice(lastSettledRange[0], lastSettledRange[1])
+        : asc.slice(openIdx);
+      const applyLegacyToCycle = openIdx === 0 && legacyInit > 0 && (!isSettled || lastSettledRange[0] === 0);
+
+      const cycleGiven = dvRound2(
+        activeCycleRecs
+          .filter(r => r.type === 'initial_loan' || r.type === 'lend_more')
+          .reduce((s, r) => dvRound2(s + (r.amount || 0)), 0)
+        + (applyLegacyToCycle && p.role !== 'lender' ? legacyInit : 0)
+      );
+      const cycleTaken = dvRound2(
+        activeCycleRecs
+          .filter(r => r.type === 'initial_borrow' || r.type === 'borrow_more')
+          .reduce((s, r) => dvRound2(s + (r.amount || 0)), 0)
+        + (applyLegacyToCycle && p.role === 'lender' ? legacyInit : 0)
+      );
+
+      const rawSideTotal = isOwed ? cycleGiven : cycleTaken;
+      const sideTotal = Math.max(rawSideTotal, bal);
       const cleared = isSettled
         ? sideTotal
-        : Math.max(0, dvRound2(sideTotal - dvRound2(p.currentBalance || 0)));
+        : Math.max(0, dvRound2(sideTotal - bal));
       const progPct = isSettled && recs.length > 0
         ? 100
         : (sideTotal > 0 ? Math.min(100, Math.round((cleared / sideTotal) * 100)) : 0);
@@ -13872,11 +14253,15 @@
         recordCount: recs.length,
         givenTotal,
         takenTotal,
+        cycleGiven,
+        cycleTaken,
         sideTotal,
         cleared,
         progPct,
         isSettled,
-        isOwed
+        isOwed,
+        activeCycleRecs,
+        cycleBreakIds
       };
     }
 
@@ -13891,8 +14276,10 @@
     function backToDebtMain() {
       closePersonMenu();
       const dpv = document.getElementById('debtPersonView');
+      const dlv = document.getElementById('debtLogView');
       const ddv = document.getElementById('debtDashView');
       if (dpv) dpv.style.display = 'none';
+      if (dlv) dlv.style.display = 'none';
       if (ddv) ddv.style.display = 'block';
       _currentDebtPersonId = null;
       renderDebtDashboard();
@@ -13907,8 +14294,11 @@
       const debtV = document.getElementById('debtView');
       if (!debtV || debtV.style.display === 'none') return;
       const dpv = document.getElementById('debtPersonView');
+      const dlv = document.getElementById('debtLogView');
       if (dpv && dpv.style.display !== 'none' && _currentDebtPersonId) {
         renderPersonLedger(_currentDebtPersonId);
+      } else if (dlv && dlv.style.display !== 'none' && typeof renderDebtLogs === 'function') {
+        renderDebtLogs();
       } else {
         renderDebtDashboard();
       }
@@ -13972,7 +14362,7 @@
       if (pillEl) {
         pillEl.classList.toggle('is-positive', net > 0);
         pillEl.classList.toggle('is-negative', net < 0);
-        pillEl.textContent = net > 0 ? 'In your favor' : net < 0 ? 'Net payable' : 'Settled';
+        pillEl.textContent = net > 0 ? 'Net Receivable' : net < 0 ? 'Net Payable' : 'Settled';
       }
 
       const netEl = document.getElementById('dvNetAmount');
@@ -13984,10 +14374,10 @@
       const sentEl = document.getElementById('dvNetSentiment');
       if (sentEl) {
         sentEl.textContent = net > 0
-          ? 'Others owe you more than you owe'
+          ? 'Total receivables exceed payables'
           : net < 0
-            ? 'You owe more than others owe you'
-            : 'All balances are settled up';
+            ? 'Total payables exceed receivables'
+            : 'All counterparty balances are settled';
         sentEl.style.color = net > 0 ? 'var(--in)' : net < 0 ? 'var(--ex)' : 'var(--mu)';
       }
 
@@ -14026,7 +14416,7 @@
           dc.setAttribute('stroke-dashoffset', (-greenLen).toFixed(2));
         }
         if (dp) dp.textContent = pct + '%';
-        if (ds) ds.textContent = 'in favor';
+        if (ds) ds.textContent = 'receivable';
       }
 
       // Filter Pill Counts
@@ -14041,7 +14431,7 @@
         if (el) el.textContent = String(val);
       });
 
-      // Filter and Search People Accounts
+      // Filter and Search Counterparty Accounts
       const searchEl = document.getElementById('debtAccountSearch');
       const q = (searchEl ? searchEl.value : '').toLowerCase().trim();
       const filter = _debtFilter;
@@ -14085,8 +14475,8 @@
           if (emptyEl) {
             if (emptyMsgEl && emptyBtnEl) {
               if (debtPersons.length === 0) {
-                emptyMsgEl.innerHTML = 'No debt accounts yet.<br>Add someone to track money lent or borrowed.';
-                emptyBtnEl.textContent = '+ Add Person';
+                emptyMsgEl.innerHTML = 'No counterparty accounts yet.<br>Add a contact to track receivables and payables.';
+                emptyBtnEl.textContent = '+ Add Account';
                 emptyBtnEl.onclick = openDebtPersonModal;
               } else if (q) {
                 emptyMsgEl.innerHTML = 'No accounts match <strong>"' + dvEscape(q) + '"</strong>.';
@@ -14094,9 +14484,9 @@
                 emptyBtnEl.onclick = clearDebtSearch;
               } else {
                 const filterMsg = filter === 'owed'
-                  ? 'No one owes you money right now.'
+                  ? 'No active receivables right now.'
                   : filter === 'iowe'
-                    ? 'You don\u2019t owe anyone right now.'
+                    ? 'No active payables right now.'
                     : filter === 'settled'
                       ? 'No settled accounts yet.'
                       : 'No matching accounts.';
@@ -14122,7 +14512,7 @@
               : (!hasActiveBal ? 'var(--s2)' : (m.isOwed ? 'var(--ib)' : 'var(--eb)'));
             const roleBadge = m.isSettled
               ? 'Settled'
-              : (!hasActiveBal ? 'No balance' : (m.isOwed ? 'Owes you' : 'You owe'));
+              : (!hasActiveBal ? 'Zero Balance' : (m.isOwed ? 'Receivable' : 'Payable'));
             const overdue = !m.isSettled && hasActiveBal ? dvDaysOverdue(p.dueDate) : 0;
             const dueFormatted = !m.isSettled && hasActiveBal && p.dueDate ? dvFormatDate(p.dueDate) : '';
 
@@ -14143,7 +14533,7 @@
               + '<div class="dva-card-right">'
               + '<div class="dva-card-bal" style="color:' + color + '">' + (m.isSettled ? 'Settled' : dvFmt(bal)) + '</div>'
               + (overdue > 0 ? '<div class="dva-overdue-badge">Overdue ' + overdue + 'd</div>' : (dueFormatted ? '<div class="dva-due-tag">Due ' + dvEscape(dueFormatted) + '</div>' : ''))
-              + (!m.isSettled && m.sideTotal > 0 ? '<div class="dva-mini-prog"><div class="dva-mini-fill" style="width:' + m.progPct + '%;background:' + color + '"></div></div><div class="dva-mini-pct">' + m.progPct + '% cleared</div>' : '')
+              + (!m.isSettled && m.sideTotal > 0 ? '<div class="dva-mini-prog"><div class="dva-mini-fill" style="width:' + m.progPct + '%;background:' + color + '"></div></div><div class="dva-mini-pct">' + m.progPct + '% settled</div>' : '')
               + '</div></div>';
           }).join('');
 
@@ -14193,7 +14583,7 @@
             const yrSuffix = (d && d.getFullYear() !== new Date().getFullYear()) ? (' \'' + String(d.getFullYear()).slice(-2)) : '';
             const noteRaw = overdue > 0
               ? ('Overdue ' + overdue + ' day' + (overdue > 1 ? 's' : '') + (p.note ? ' \u00b7 ' + p.note : ''))
-              : (p.note || (isOwed ? 'Payment expected' : 'Payment due'));
+              : (p.note || (isOwed ? 'Collection due' : 'Payment due'));
 
             return '<div class="dv-tl-item" data-person-id="' + dvEscape(p.id) + '">'
               + '<div class="dv-tl-date" style="color:' + (overdue > 0 ? 'var(--ex)' : 'var(--mu)') + '">'
@@ -14242,8 +14632,10 @@
       closePersonMenu();
       renderPersonLedger(personId);
       const dpv = document.getElementById('debtPersonView');
+      const dlv = document.getElementById('debtLogView');
       const ddv = document.getElementById('debtDashView');
       if (dpv) dpv.style.display = 'block';
+      if (dlv) dlv.style.display = 'none';
       if (ddv) ddv.style.display = 'none';
       window.scrollTo(0, 0);
     }
@@ -14255,13 +14647,13 @@
     function formatDebtRecTitle(r, isOwed) {
       if (r.type === 'repayment') {
         const dir = r.direction || (isOwed ? 'received' : 'paid');
-        return dir === 'received' ? 'Repayment Received' : 'Repayment Made';
+        return dir === 'received' ? 'Payment Received' : 'Payment Made';
       }
-      if (r.type === 'lend_more') return 'Given';
-      if (r.type === 'borrow_more') return 'Taken';
+      if (r.type === 'lend_more') return 'Lent (Receivable)';
+      if (r.type === 'borrow_more') return 'Borrowed (Payable)';
       if (r.type === 'settlement') return 'Account Settled';
-      if (r.type === 'initial_loan') return 'Initial Loan Given';
-      if (r.type === 'initial_borrow') return 'Initial Loan Taken';
+      if (r.type === 'initial_loan') return 'Opening Receivable';
+      if (r.type === 'initial_borrow') return 'Opening Payable';
       return 'Transaction';
     }
 
@@ -14275,6 +14667,7 @@
       const rawRecs = debtRecords.filter(r => r.personId === personId);
       const records = sortDebtRecordsAsc(rawRecs).reverse(); // Newest first
       const m = getDebtPersonMetrics(p, rawRecs);
+      const breakSet = new Set(m.cycleBreakIds || []);
       const bal = dvRound2(p.currentBalance || 0);
       const hasRole = Boolean(p.role);
       const color = m.isSettled
@@ -14300,7 +14693,7 @@
       if (roleEl) {
         const roleText = m.isSettled
           ? 'Settled'
-          : (!hasRole || bal === 0 ? 'Personal Account' : (m.isOwed ? 'Debtor (Owes you)' : 'Creditor (You owe)'));
+          : (!hasRole || bal === 0 ? 'Counterparty Account' : (m.isOwed ? 'Receivable Account' : 'Payable Account'));
         roleEl.textContent = roleText + ' \u00b7 ' + records.length + ' entr' + (records.length === 1 ? 'y' : 'ies');
       }
 
@@ -14346,7 +14739,7 @@
       if (subEl) {
         subEl.textContent = m.isSettled
           ? 'All settled up'
-          : (!hasRole || bal === 0 ? 'No active balance' : (m.isOwed ? p.name + ' owes you' : 'You owe ' + p.name));
+          : (!hasRole || bal === 0 ? 'No active balance' : (m.isOwed ? 'Receivable from ' + p.name : 'Payable to ' + p.name));
       }
 
       const balEl = document.getElementById('dpvBalanceAmount');
@@ -14381,14 +14774,14 @@
       }
 
       const repaidEl = document.getElementById('dpvRepaidLabel');
-      if (repaidEl) repaidEl.textContent = 'Cleared ' + dvFmt(m.cleared) + (m.sideTotal > 0 ? ' (' + m.progPct + '%)' : '');
+      if (repaidEl) repaidEl.textContent = 'Settled ' + dvFmt(m.cleared) + (m.sideTotal > 0 ? ' (' + m.progPct + '%)' : '');
       const totalEl = document.getElementById('dpvTotalLabel');
-      if (totalEl) totalEl.textContent = (m.isOwed ? 'Total Given ' : 'Total Taken ') + dvFmt(m.sideTotal);
+      if (totalEl) totalEl.textContent = 'Principal ' + dvFmt(m.sideTotal);
 
       const recPayBtn = document.getElementById('dpvRecordPayBtn');
       if (recPayBtn) {
         recPayBtn.disabled = bal <= 0;
-        recPayBtn.title = bal <= 0 ? 'No outstanding balance to record payment against' : 'Record a repayment';
+        recPayBtn.title = bal <= 0 ? 'No active balance to record payment against' : 'Record a payment';
       }
 
       const sortEl = document.getElementById('dpvRecordsSort');
@@ -14397,7 +14790,7 @@
       const rl = document.getElementById('dpvRecordsList');
       if (!rl) return;
       if (!records.length) {
-        rl.innerHTML = '<div class="dv-empty" style="padding:28px 16px"><p>No transactions yet. Tap <strong>+ Add Transaction</strong> above to get started.</p></div>';
+        rl.innerHTML = '<div class="dv-empty" style="padding:28px 16px"><p>No transactions recorded yet. Select <strong>+ Add Transaction</strong> to log a receivable or payable entry.</p></div>';
         return;
       }
 
@@ -14438,8 +14831,11 @@
         const addedStr = (addedAt && !isNaN(addedAt.getTime()))
           ? ('Logged ' + addedAt.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }))
           : '';
+        const cycleBreakHtml = breakSet.has(r.id)
+          ? '<div class="dpv-cycle-divider"><span>Previous cycle settled</span></div>'
+          : '';
 
-        return '<div class="dpv-record-item">'
+        return cycleBreakHtml + '<div class="dpv-record-item">'
           + '<div class="dpv-record-icon" style="background:' + rBg + ';border:1px solid color-mix(in srgb, ' + rColor + ' 28%, transparent)">' + rIcon + '</div>'
           + '<div class="dpv-record-mid">'
           + '<div class="dpv-record-title-row"><span class="dpv-record-title">' + dvEscape(rTitle) + '</span>' + modePill + '</div>'
@@ -14449,7 +14845,7 @@
           + '</div>'
           + '<div class="dpv-record-right">'
           + '<div class="dpv-record-amt" style="color:' + rColor + '">' + rSign + dvFmt(r.amount) + '</div>'
-          + '<div class="dpv-record-bal">Bal ' + dvFmt(r.runningBalance) + '</div>'
+          + '<div class="dpv-record-bal">Balance ' + dvFmt(r.runningBalance) + '</div>'
           + '</div>'
           + ((editBtn || delBtn) ? '<div class="dpv-record-actions">' + editBtn + delBtn + '</div>' : '')
           + '</div>';
@@ -14563,7 +14959,7 @@
 
     function openDebtPersonModal() {
       clearDebtFieldError('debtPersonName', 'debtPersonNameErr');
-      document.getElementById('debtPersonModalTitle').textContent = 'Add Person';
+      document.getElementById('debtPersonModalTitle').textContent = 'Add Account';
       document.getElementById('debtPersonId').value = '';
       document.getElementById('debtPersonName').value = '';
       document.getElementById('debtPersonPhone').value = '';
@@ -14579,7 +14975,7 @@
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
       clearDebtFieldError('debtPersonName', 'debtPersonNameErr');
-      document.getElementById('debtPersonModalTitle').textContent = 'Edit Person';
+      document.getElementById('debtPersonModalTitle').textContent = 'Edit Account';
       document.getElementById('debtPersonId').value = p.id;
       document.getElementById('debtPersonName').value = p.name;
       document.getElementById('debtPersonPhone').value = p.phone || '';
@@ -14605,7 +15001,7 @@
 
       const name = document.getElementById('debtPersonName').value.trim();
       if (!name) {
-        setDebtFieldError('debtPersonName', 'debtPersonNameErr', 'Please enter a name.');
+        setDebtFieldError('debtPersonName', 'debtPersonNameErr', 'Enter a counterparty name.');
         return;
       }
 
@@ -14626,9 +15022,17 @@
 
       try {
         let targetPerson = null;
+        let editDiffs = [];
         if (existingId) {
           const idx = debtPersons.findIndex(x => x.id === existingId);
           if (idx >= 0) {
+            const oldP = debtPersons[idx];
+            editDiffs = dvBuildDiffs([
+              ['Name', oldP.name, name],
+              ['Contact', oldP.phone, phone],
+              ['Due', oldP.dueDate ? dvFormatDate(oldP.dueDate) : '', dueDate ? dvFormatDate(dueDate) : ''],
+              ['Note', oldP.note, note]
+            ]);
             debtPersons[idx].name = name;
             debtPersons[idx].phone = phone;
             debtPersons[idx].dueDate = dueDate;
@@ -14656,6 +15060,26 @@
 
         if (targetPerson) {
           saveDebtLocal();
+          if (existingId) {
+            if (editDiffs.length > 0) {
+              writeDebtLog('EDIT', {
+                entity: 'person',
+                personId: targetPerson.id,
+                personName: targetPerson.name,
+                m: 'Updated counterparty account "' + targetPerson.name + '"',
+                diffs: editDiffs
+              });
+            }
+          } else {
+            writeDebtLog('ADD', {
+              entity: 'person',
+              personId: targetPerson.id,
+              personName: targetPerson.name,
+              note: phone,
+              m: 'Created counterparty account "' + targetPerson.name + '"'
+            });
+          }
+
           const synced = await syncDebtPersonCloud(targetPerson);
           closeDebtPersonModal();
           refreshDebtViews();
@@ -14663,7 +15087,7 @@
           dvToast(
             existingId
               ? (synced ? 'Account updated' : 'Updated locally \u2014 will sync when online')
-              : (synced ? 'Added ' + name : 'Added locally \u2014 will sync when online'),
+              : (synced ? 'Created account for ' + name : 'Saved locally \u2014 will sync when online'),
             'ok'
           );
         }
@@ -14684,12 +15108,12 @@
       }
 
       const directionText = p.role === 'borrower'
-        ? (p.name + ' owes you ' + dvFmt(bal))
-        : ('You owe ' + p.name + ' ' + dvFmt(bal));
+        ? ('Receivable from ' + p.name + ': ' + dvFmt(bal))
+        : ('Payable to ' + p.name + ': ' + dvFmt(bal));
 
       showConfirm(
         'Mark as Settled',
-        'This will log a full settlement entry of ' + dvFmt(bal) + ' and clear the remaining balance for ' + p.name + '.',
+        'Record a full settlement of ' + dvFmt(bal) + ' to bring ' + p.name + '\u2019s balance to \u20b90?',
         () => _executeSettleDebtPerson(p.id),
         false,
         {
@@ -14709,13 +15133,14 @@
 
       _settlingDebtPerson = true;
       try {
+        const dir = p.role === 'lender' ? 'paid' : 'received';
         const settleRecId = 'settle_' + p.id + '_' + Date.now();
         const rec = {
           id: settleRecId,
           personId: p.id,
           personName: p.name,
           type: 'repayment',
-          direction: p.role === 'lender' ? 'paid' : 'received',
+          direction: dir,
           amount: settleAmount,
           date: dvTodayISO(),
           note: 'Full settlement',
@@ -14727,6 +15152,19 @@
 
         const { modifiedRecs } = recomputeDebtPersonState(p.id);
         saveDebtLocal();
+
+        writeDebtLog('SETTLE', {
+          entity: 'payment',
+          personId: p.id,
+          personName: p.name,
+          recordId: rec.id,
+          direction: dir,
+          amt: settleAmount,
+          mode: 'other',
+          date: rec.date,
+          note: rec.note,
+          m: 'Marked ' + p.name + ' as settled (' + dvFmt(settleAmount) + ' ' + (dir === 'received' ? 'received' : 'paid') + ')'
+        });
 
         let allSynced = await syncDebtRecordCloud(rec);
         for (const mr of modifiedRecs) {
@@ -14775,10 +15213,20 @@
       const p = debtPersons.find(x => x.id === personId);
       if (!p) return;
       const recs = debtRecords.filter(r => r.personId === personId);
+      const bal = dvRound2(p.currentBalance || 0);
 
       debtRecords = debtRecords.filter(r => r.personId !== personId);
       debtPersons = debtPersons.filter(x => x.id !== personId);
       saveDebtLocal();
+
+      writeDebtLog('DELETE', {
+        entity: 'person',
+        personId: p.id,
+        personName: p.name,
+        amt: bal > 0 ? bal : undefined,
+        note: recs.length + ' ledger entr' + (recs.length === 1 ? 'y' : 'ies'),
+        m: 'Deleted counterparty account "' + p.name + '"'
+      });
 
       backToDebtMain();
       refreshDebtViews();
@@ -14826,15 +15274,15 @@
 
       const rec = editRecordId ? debtRecords.find(r => r.id === editRecordId && r.personId === p.id) : null;
       if (!rec && dvRound2(p.currentBalance || 0) <= 0) {
-        dvToast('No outstanding balance \u2014 use + Add Transaction instead.', 'ok');
+        dvToast('No active balance \u2014 use + Add Transaction instead.', 'ok');
         return;
       }
 
       document.getElementById('debtPaymentRecordId').value = rec ? rec.id : '';
       const dir = rec ? (rec.direction || (p.role === 'lender' ? 'paid' : 'received')) : (p.role === 'lender' ? 'paid' : 'received');
       document.getElementById('debtPaymentModalTitle').textContent = rec
-        ? (dir === 'received' ? 'Edit Repayment Received' : 'Edit Repayment Made')
-        : (dir === 'received' ? 'Record Repayment Received' : 'Record Repayment Made');
+        ? (dir === 'received' ? 'Edit Payment Received' : 'Edit Payment Made')
+        : (dir === 'received' ? 'Record Payment Received' : 'Record Payment Made');
       document.getElementById('debtPaymentSaveBtn').textContent = rec ? 'Update Payment' : 'Record Payment';
 
       document.getElementById('paymentAmount').value = rec ? String(rec.amount) : '';
@@ -14887,9 +15335,16 @@
 
       try {
         let targetRec = null;
+        let editDiffs = [];
         if (editId) {
           targetRec = debtRecords.find(r => r.id === editId && r.personId === pid);
           if (!targetRec) return;
+          editDiffs = dvBuildDiffs([
+            ['Amount', dvFmt(targetRec.amount), dvFmt(amt)],
+            ['Date', dvFormatDate(targetRec.date), dvFormatDate(dateVal)],
+            ['Mode', targetRec.mode === 'cash' ? 'Cash' : 'UPI / Online', _payMode === 'cash' ? 'Cash' : 'UPI / Online'],
+            ['Note', targetRec.note, noteVal]
+          ]);
           targetRec.amount = amt;
           targetRec.date = dateVal;
           targetRec.note = noteVal;
@@ -14918,6 +15373,50 @@
         const { modifiedRecs } = recomputeDebtPersonState(pid);
         saveDebtLocal();
 
+        if (editId) {
+          if (editDiffs.length > 0) {
+            writeDebtLog('EDIT', {
+              entity: 'payment',
+              personId: pid,
+              personName: p.name,
+              recordId: targetRec.id,
+              direction: targetRec.direction,
+              amt,
+              mode: _payMode,
+              date: dateVal,
+              note: noteVal,
+              m: 'Updated payment entry for ' + p.name,
+              diffs: editDiffs
+            });
+          }
+        } else if (p.status === 'settled' && p.currentBalance === 0) {
+          writeDebtLog('SETTLE', {
+            entity: 'payment',
+            personId: pid,
+            personName: p.name,
+            recordId: targetRec.id,
+            direction: targetRec.direction,
+            amt,
+            mode: _payMode,
+            date: dateVal,
+            note: noteVal,
+            m: (targetRec.direction === 'received' ? 'Received ' : 'Made ') + dvFmt(amt) + ' final payment \u2014 ' + p.name + ' settled'
+          });
+        } else {
+          writeDebtLog('ADD', {
+            entity: 'payment',
+            personId: pid,
+            personName: p.name,
+            recordId: targetRec.id,
+            direction: targetRec.direction,
+            amt,
+            mode: _payMode,
+            date: dateVal,
+            note: noteVal,
+            m: (targetRec.direction === 'received' ? 'Payment received ' : 'Payment made ') + dvFmt(amt) + (targetRec.direction === 'received' ? ' from ' : ' to ') + p.name
+          });
+        }
+
         const recToSyncMap = new Map();
         recToSyncMap.set(targetRec.id, targetRec);
         modifiedRecs.forEach(r => recToSyncMap.set(r.id, r));
@@ -14934,7 +15433,7 @@
           if (userId && typeof addDoc !== 'undefined') {
             const txDir = targetRec.direction === 'received' ? 'income' : 'expense';
             addDoc(collection(db, 'users', userId, 'transactions'), {
-              desc: (txDir === 'income' ? 'Repayment from ' : 'Repayment to ') + p.name,
+              desc: (txDir === 'income' ? 'Settlement received from ' : 'Settlement paid to ') + p.name,
               amount: amt,
               type: txDir,
               cat: 'Debt Repayment',
@@ -14943,7 +15442,7 @@
               createdAt: Date.now()
             }).catch(() => { });
           } else {
-            dvToast('Saved repayment, but Flux transaction sync requires Sign In.', 'er');
+            dvToast('Saved payment, but Flux transaction sync requires Sign In.', 'er');
           }
         }
 
@@ -15027,9 +15526,16 @@
 
       try {
         let targetRec = null;
+        let editDiffs = [];
         if (editId) {
           targetRec = debtRecords.find(r => r.id === editId && r.personId === pid);
           if (!targetRec) return;
+          editDiffs = dvBuildDiffs([
+            ['Type', targetRec.type === 'borrow_more' ? 'Borrowed (Payable)' : 'Lent (Receivable)', isGive ? 'Lent (Receivable)' : 'Borrowed (Payable)'],
+            ['Amount', dvFmt(targetRec.amount), dvFmt(amt)],
+            ['Date', dvFormatDate(targetRec.date), dvFormatDate(dateVal)],
+            ['Note', targetRec.note, noteVal]
+          ]);
           targetRec.type = isGive ? 'lend_more' : 'borrow_more';
           targetRec.amount = amt;
           targetRec.date = dateVal;
@@ -15057,6 +15563,33 @@
         }
 
         saveDebtLocal();
+
+        if (editId) {
+          if (editDiffs.length > 0) {
+            writeDebtLog('EDIT', {
+              entity: isGive ? 'lend' : 'borrow',
+              personId: pid,
+              personName: p.name,
+              recordId: targetRec.id,
+              amt,
+              date: dateVal,
+              note: noteVal,
+              m: 'Updated ' + (isGive ? 'receivable' : 'payable') + ' entry with ' + p.name,
+              diffs: editDiffs
+            });
+          }
+        } else {
+          writeDebtLog('ADD', {
+            entity: isGive ? 'lend' : 'borrow',
+            personId: pid,
+            personName: p.name,
+            recordId: targetRec.id,
+            amt,
+            date: dateVal,
+            note: noteVal,
+            m: (isGive ? 'Lent ' : 'Borrowed ') + dvFmt(amt) + (isGive ? ' to ' : ' from ') + p.name
+          });
+        }
 
         const recToSyncMap = new Map();
         recToSyncMap.set(targetRec.id, targetRec);
@@ -15103,7 +15636,7 @@
       const rec = debtRecords.find(r => r.id === recordId);
       if (!rec) return;
       if (rec.type === 'initial_loan' || rec.type === 'initial_borrow') {
-        dvToast('Initial loan entries cannot be deleted. Delete the person account instead.', 'er');
+        dvToast('Opening entries cannot be deleted directly. Delete the account instead.', 'er');
         return;
       }
 
@@ -15129,10 +15662,31 @@
       const rec = debtRecords.find(r => r.id === recordId);
       if (!rec) return;
       const pid = rec.personId;
+      const pBefore = debtPersons.find(x => x.id === pid);
+      const isOwedBefore = pBefore ? pBefore.role === 'borrower' : true;
+      const deletedLabel = formatDebtRecTitle(rec, isOwedBefore);
+      const deletedEntity = rec.type === 'settlement'
+        ? 'settlement'
+        : (rec.type === 'repayment'
+          ? 'payment'
+          : ((rec.type === 'borrow_more' || rec.type === 'initial_borrow') ? 'borrow' : 'lend'));
 
       debtRecords = debtRecords.filter(r => r.id !== recordId);
       const { person: p, modifiedRecs } = recomputeDebtPersonState(pid);
       saveDebtLocal();
+
+      writeDebtLog('DELETE', {
+        entity: deletedEntity,
+        personId: pid,
+        personName: pBefore ? pBefore.name : (rec.personName || ''),
+        recordId: rec.id,
+        direction: rec.direction || '',
+        amt: rec.amount,
+        mode: rec.mode || '',
+        date: rec.date || '',
+        note: rec.note || '',
+        m: 'Deleted "' + deletedLabel + '" (' + dvFmt(rec.amount) + ') from ' + (pBefore ? pBefore.name : 'account')
+      });
 
       refreshDebtViews();
       checkDebtOverdueBadge();
@@ -15167,29 +15721,64 @@
     }
 
     function buildDebtStatementText(p) {
-      const records = sortDebtRecordsAsc(debtRecords.filter(r => r.personId === p.id));
-      const isOwed = p.role === 'borrower';
+      const m = getDebtPersonMetrics(p);
+      const records = (m.activeCycleRecs && m.activeCycleRecs.length)
+        ? m.activeCycleRecs
+        : sortDebtRecordsAsc(debtRecords.filter(r => r.personId === p.id));
       const bal = dvRound2(p.currentBalance || 0);
-      const statusText = (p.status === 'settled' && bal === 0)
-        ? 'Settled'
-        : (bal === 0 ? 'No active balance' : (isOwed ? 'Owes me ' + dvFmt(bal) : 'I owe ' + dvFmt(bal)));
+      const isOwed = p.role === 'borrower';
+      const isSettled = (p.status === 'settled' && bal === 0) || bal === 0;
+      const overdue = !isSettled ? dvDaysOverdue(p.dueDate) : 0;
 
-      const lines = [
-        '*Debt Statement \u2014 ' + p.name + '*',
-        'Status: ' + statusText,
-        ''
-      ];
-      if (records.length) {
-        lines.push('*Ledger History:*');
-        records.forEach(r => {
-          const prefix = (r.type === 'repayment' || r.type === 'settlement') ? '[Repaid]' : (r.type === 'borrow_more' || r.type === 'initial_borrow' ? '[Taken]' : '[Given]');
-          const notePart = r.note ? (' (' + r.note + ')') : '';
-          lines.push((r.date || '') + ' | ' + prefix + ' ' + dvFmt(r.amount) + notePart + ' | Bal: ' + dvFmt(r.runningBalance));
-        });
+      const lines = ['Hi ' + p.name + ',', ''];
+
+      if (isSettled) {
+        lines.push('Sharing a confirmation of our account summary \u2014 all balances between us are settled up (\u20b90 due).');
+      } else if (isOwed) {
+        lines.push('Hope you\u2019re doing well. Sharing a brief summary of our open balance for your reference:');
         lines.push('');
+        lines.push('\u2022 *Pending Receivable:* ' + dvFmt(bal));
+        if (p.dueDate && dvParseISO(p.dueDate)) {
+          lines.push('\u2022 *Due Date:* ' + dvFormatDate(p.dueDate) + (overdue > 0 ? ' (' + overdue + ' day' + (overdue > 1 ? 's' : '') + ' overdue)' : ''));
+        }
+      } else {
+        lines.push('Hope you\u2019re doing well. Sharing a quick summary of our account to stay aligned:');
+        lines.push('');
+        lines.push('\u2022 *Balance Payable by Me:* ' + dvFmt(bal));
+        if (p.dueDate && dvParseISO(p.dueDate)) {
+          lines.push('\u2022 *Target Date:* ' + dvFormatDate(p.dueDate) + (overdue > 0 ? ' (' + overdue + ' day' + (overdue > 1 ? 's' : '') + ' past due)' : ''));
+        }
       }
-      lines.push('Generated by Flux Personal Finance');
-      return lines.join(String.fromCharCode(10));
+
+      if (records.length) {
+        lines.push('');
+        lines.push('*Recent Entries:*');
+        records.forEach(r => {
+          let label;
+          if (r.type === 'settlement') {
+            label = 'Account settled';
+          } else if (r.type === 'repayment') {
+            const dir = r.direction || (isOwed ? 'received' : 'paid');
+            label = dir === 'received' ? 'Payment received' : 'Payment sent';
+          } else if (r.type === 'borrow_more' || r.type === 'initial_borrow') {
+            label = 'Borrowed from you';
+          } else {
+            label = 'Lent to you';
+          }
+          const notePart = r.note ? (' \u2014 ' + r.note) : '';
+          lines.push('\u2022 ' + dvFormatDate(r.date) + ' \u00b7 ' + label + ': ' + dvFmt(r.amount) + notePart + ' (Bal: ' + dvFmt(r.runningBalance) + ')');
+        });
+      }
+
+      lines.push('');
+      if (isSettled) {
+        lines.push('Thank you!');
+      } else if (isOwed) {
+        lines.push('Please let me know whenever it\u2019s convenient for you to settle this, or reply if any entry needs updating. Thank you!');
+      } else {
+        lines.push('Just keeping our records aligned \u2014 I\u2019ll arrange to clear this shortly. Please let me know if any entry needs updating. Thank you!');
+      }
+      return lines.join('\n');
     }
 
     function shareDebtStatement() {
@@ -15203,8 +15792,437 @@
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
       const msg = buildDebtStatementText(p);
-      dvCopyText(msg, 'Statement copied to clipboard');
+      dvCopyText(msg, 'Summary copied to clipboard');
     }
+
+    // ── Debt Activity Log UI & Interactions ──
+    function dvFormatLogDateHeader(ts) {
+      const d = new Date(Number(ts) || Date.now());
+      if (isNaN(d.getTime())) return 'Recent';
+      const day = d.getDate();
+      const mod100 = day % 100;
+      const ord = (mod100 >= 11 && mod100 <= 13) ? 'th' : (['th', 'st', 'nd', 'rd'][day % 10] || 'th');
+      const mon = d.toLocaleString('en-US', { month: 'short' });
+      return day + ord + ' ' + mon + ', ' + d.getFullYear();
+    }
+
+    function dvToLocalISO(ts) {
+      const d = new Date(Number(ts) || Date.now());
+      if (isNaN(d.getTime())) return '';
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function openDebtActivityLog() {
+      closePersonMenu();
+      const dlv = document.getElementById('debtLogView');
+      const ddv = document.getElementById('debtDashView');
+      const dpv = document.getElementById('debtPersonView');
+      if (ddv) ddv.style.display = 'none';
+      if (dpv) dpv.style.display = 'none';
+      if (dlv) dlv.style.display = 'block';
+      _currentDebtPersonId = null;
+      if (debtLogSelectionMode) toggleDebtLogSelectionMode(true);
+      renderDebtLogs();
+      window.scrollTo(0, 0);
+    }
+
+    function closeDebtActivityLog(silent) {
+      const menu = document.getElementById('debtLogFilterMenu');
+      if (menu) menu.classList.remove('show');
+      if (debtLogSelectionMode) toggleDebtLogSelectionMode(true);
+      const dlv = document.getElementById('debtLogView');
+      const wasOpen = dlv && dlv.style.display !== 'none';
+      if (dlv) dlv.style.display = 'none';
+      if (!silent && wasOpen) {
+        const ddv = document.getElementById('debtDashView');
+        if (ddv) ddv.style.display = 'block';
+        renderDebtDashboard();
+        window.scrollTo(0, 0);
+      } else if (silent && wasOpen) {
+        const ddv = document.getElementById('debtDashView');
+        if (ddv) ddv.style.display = 'block';
+      }
+    }
+
+    function toggleDebtLogFilterMenu() {
+      const menu = document.getElementById('debtLogFilterMenu');
+      if (menu) menu.classList.toggle('show');
+    }
+
+    function setDebtLogFilter(val) {
+      const hidden = document.getElementById('debtLogFilter');
+      if (hidden) hidden.value = val;
+
+      let selectedLabel = 'All';
+      let selectedSvg = '';
+
+      const activeMap = {
+        all: { cls: 'act', btn: '' },
+        ADD: { cls: 'act act-add', btn: 'flt-add' },
+        EDIT: { cls: 'act act-edit', btn: 'flt-edit' },
+        SETTLE: { cls: 'act act-settle', btn: 'flt-settle' },
+        DELETE: { cls: 'act act-del', btn: 'flt-del' },
+        lend: { cls: 'act act-inc', btn: 'flt-inc' },
+        borrow: { cls: 'act act-exp', btn: 'flt-exp' },
+        payment: { cls: 'act act-onl', btn: 'flt-onl' },
+        person: { cls: 'act act-sub', btn: 'flt-sub' }
+      };
+
+      document.querySelectorAll('#debtLogFilterMenu .log-fpill[data-dfval]').forEach(btn => {
+        const isActive = btn.dataset.dfval === val;
+        const entry = activeMap[val] || { cls: 'act', btn: '' };
+        btn.className = 'log-fpill' + (isActive ? ' ' + entry.cls : '');
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        if (isActive) {
+          selectedLabel = btn.dataset.dflabel || 'All';
+          const svg = btn.querySelector('svg');
+          selectedSvg = svg ? svg.outerHTML : '';
+        }
+      });
+
+      const mainBtn = document.getElementById('debtLogFilterMainBtn');
+      if (mainBtn) {
+        mainBtn.innerHTML = selectedSvg + '<span>' + dvEscape(selectedLabel) + '</span>';
+        const btnCls = (activeMap[val] || {}).btn || '';
+        const hasDateRange = !!(cDebtLogDateFrom || cDebtLogDateTo);
+        const dateCls = (val === 'all' && hasDateRange) ? ' flt-date' : '';
+        mainBtn.className = 'log-filter-btn' + (btnCls ? ' ' + btnCls : '') + dateCls;
+      }
+
+      const menu = document.getElementById('debtLogFilterMenu');
+      if (menu) menu.classList.remove('show');
+      renderDebtLogs();
+    }
+
+    function setDebtLogDateFilter() {
+      cDebtLogDateFrom = (document.getElementById('debtLogDateFrom') || {}).value || '';
+      cDebtLogDateTo = (document.getElementById('debtLogDateTo') || {}).value || '';
+      const mainBtn = document.getElementById('debtLogFilterMainBtn');
+      if (mainBtn) {
+        const current = (document.getElementById('debtLogFilter') || {}).value || 'all';
+        if (current === 'all' && (cDebtLogDateFrom || cDebtLogDateTo)) {
+          mainBtn.classList.add('flt-date');
+        } else {
+          mainBtn.classList.remove('flt-date');
+        }
+      }
+      renderDebtLogs();
+    }
+
+    function clearDebtLogDateFilter() {
+      cDebtLogDateFrom = '';
+      cDebtLogDateTo = '';
+      const f = document.getElementById('debtLogDateFrom');
+      const t = document.getElementById('debtLogDateTo');
+      if (f) f.value = '';
+      if (t) t.value = '';
+      const mainBtn = document.getElementById('debtLogFilterMainBtn');
+      if (mainBtn) mainBtn.classList.remove('flt-date');
+      renderDebtLogs();
+    }
+
+    function setDebtLogSearch(val) {
+      cDebtLogSearch = String(val || '').toLowerCase();
+      const clearBtn = document.getElementById('debtLogSearchClear');
+      if (clearBtn) clearBtn.style.display = val && val.length > 0 ? 'inline-flex' : 'none';
+      renderDebtLogs();
+    }
+
+    function clearDebtLogSearch() {
+      const inp = document.getElementById('debtLogSearch');
+      if (inp) inp.value = '';
+      cDebtLogSearch = '';
+      const clearBtn = document.getElementById('debtLogSearchClear');
+      if (clearBtn) clearBtn.style.display = 'none';
+      renderDebtLogs();
+    }
+
+    function toggleDebtLogSelectionMode(forceOff) {
+      debtLogSelectionMode = forceOff === true ? false : !debtLogSelectionMode;
+      selectedDebtLogs.clear();
+
+      const countEl = document.getElementById('debtLogSelectCount');
+      if (countEl) countEl.textContent = '0 selected';
+
+      const btn = document.getElementById('btnToggleDeleteDebtLogs');
+      const actionDiv = document.getElementById('debtLogDeleteAction');
+      const filterWrapper = document.getElementById('debtLogFilterWrapper');
+
+      if (debtLogSelectionMode) {
+        if (btn) btn.style.display = 'none';
+        if (filterWrapper) { filterWrapper.style.opacity = '0.4'; filterWrapper.style.pointerEvents = 'none'; }
+        if (actionDiv) actionDiv.style.display = 'flex';
+      } else {
+        if (btn) btn.style.display = 'inline-flex';
+        if (filterWrapper) { filterWrapper.style.opacity = ''; filterWrapper.style.pointerEvents = ''; }
+        if (actionDiv) actionDiv.style.display = 'none';
+      }
+      if (forceOff !== true) renderDebtLogs();
+    }
+
+    function toggleDebtLogSelection(id) {
+      if (!debtLogSelectionMode) return;
+      if (selectedDebtLogs.has(id)) selectedDebtLogs.delete(id);
+      else selectedDebtLogs.add(id);
+
+      const el = document.querySelector('[data-dlogid="' + CSS.escape(id) + '"]');
+      if (el) {
+        const isSel = selectedDebtLogs.has(id);
+        el.classList.toggle('is-selected', isSel);
+        const cb = el.querySelector('.debt-log-cb');
+        if (cb) cb.checked = isSel;
+      }
+
+      const countEl = document.getElementById('debtLogSelectCount');
+      if (countEl) countEl.textContent = selectedDebtLogs.size + ' selected';
+    }
+
+    function confirmDeleteSelectedDebtLogs() {
+      const n = selectedDebtLogs.size;
+      if (!n) {
+        dvToast('Select at least one log entry to delete.', 'er');
+        return;
+      }
+      showConfirm(
+        'Delete Debt Logs',
+        'Permanently remove ' + n + ' selected activity log entr' + (n === 1 ? 'y' : 'ies') + '? Ledger balances and accounts will not be affected.',
+        () => _executeDeleteDebtLogs(),
+        true,
+        {
+          confirmLabel: 'Delete ' + n + ' Log' + (n === 1 ? '' : 's'),
+          icon: 'trash',
+          metaText: n + ' entr' + (n === 1 ? 'y' : 'ies') + ' selected'
+        }
+      );
+    }
+
+    async function _executeDeleteDebtLogs() {
+      const ids = new Set(selectedDebtLogs);
+      if (!ids.size) return;
+
+      debtActivityLogs = debtActivityLogs.filter(x => !ids.has(x.id));
+      saveDebtLogsLocal();
+      toggleDebtLogSelectionMode(true);
+      renderDebtLogs();
+
+      let cloudOk = true;
+      if (userId && typeof doc !== 'undefined' && typeof writeBatch !== 'undefined') {
+        try {
+          const idArr = Array.from(ids);
+          for (let i = 0; i < idArr.length; i += 400) {
+            const batch = writeBatch(db);
+            idArr.slice(i, i + 400).forEach(id => {
+              batch.delete(doc(db, 'users', userId, 'debt_activities', id));
+            });
+            await batch.commit();
+          }
+        } catch (err) {
+          cloudOk = false;
+          if (err?.code !== 'permission-denied') {
+            console.warn('[Debt] Failed deleting debt logs from cloud:', err);
+          }
+        }
+      }
+      dvToast(cloudOk ? ('Deleted ' + ids.size + ' log entr' + (ids.size === 1 ? 'y' : 'ies')) : 'Removed locally', 'ok');
+    }
+
+    function renderParsedDebtLog(l) {
+      const actionMap = {
+        ADD: { item: 'log-item-add', badge: 'log-badge-add', label: 'Added' },
+        EDIT: { item: 'log-item-edit', badge: 'log-badge-edit', label: 'Edited' },
+        SETTLE: { item: 'log-item-settle', badge: 'log-badge-settle', label: 'Settled' },
+        DELETE: { item: 'log-item-delete', badge: 'log-badge-delete', label: 'Deleted' }
+      };
+      const meta = actionMap[l.a] || actionMap.ADD;
+
+      const svgBadge = l.a === 'DELETE'
+        ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>'
+        : (l.a === 'EDIT'
+          ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+          : (l.a === 'SETTLE'
+            ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+            : '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>'));
+
+      let iconSvg;
+      if (l.entity === 'person') {
+        iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+      } else if (l.entity === 'lend') {
+        iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--in)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
+      } else if (l.entity === 'borrow') {
+        iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ex)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>';
+      } else if (l.a === 'SETTLE' || l.entity === 'settlement') {
+        iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--in)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      } else {
+        iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--on)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>';
+      }
+
+      const dObj = new Date(Number(l.ts) || Date.now());
+      const timeStr = isNaN(dObj.getTime()) ? '' : dObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const msgClass = 'log-msg' + (l.a === 'DELETE' ? ' tx-deleted-text' : '');
+
+      const diffsHtml = (Array.isArray(l.diffs) && l.diffs.length)
+        ? ('<div class="diff-container">' + l.diffs.map(d =>
+          '<div class="diff-row">'
+          + '<span class="diff-label">' + dvEscape(d.field) + '</span>'
+          + '<span class="diff-values">'
+          + '<span class="diff-old">' + dvEscape(d.old) + '</span>'
+          + '<span class="diff-arrow"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>'
+          + '<span class="diff-new">' + dvEscape(d.new) + '</span>'
+          + '</span></div>'
+        ).join('') + '</div>')
+        : '';
+
+      const pills = [];
+      if (l.entity === 'lend') pills.push('<span class="log-pill log-pill-income">Receivable</span>');
+      else if (l.entity === 'borrow') pills.push('<span class="log-pill log-pill-expense">Payable</span>');
+      else if (l.entity === 'payment' || l.entity === 'settlement') {
+        if (l.a === 'SETTLE') pills.push('<span class="log-pill log-pill-income">Settled</span>');
+        else if (l.direction === 'paid') pills.push('<span class="log-pill log-pill-expense">Payment Made</span>');
+        else pills.push('<span class="log-pill log-pill-income">Payment Received</span>');
+      } else if (l.entity === 'person') {
+        pills.push('<span class="log-pill log-pill-sub">Account</span>');
+      }
+
+      if (l.mode === 'upi') pills.push('<span class="log-pill log-pill-online">UPI / Online</span>');
+      else if (l.mode === 'cash') pills.push('<span class="log-pill log-pill-offline">Cash</span>');
+      if (l.date) pills.push('<span class="log-pill">' + dvEscape(dvFormatDate(l.date)) + '</span>');
+
+      if (l.personName) {
+        const accountExists = l.personId && debtPersons.some(x => x.id === l.personId);
+        if (accountExists && !debtLogSelectionMode) {
+          pills.push('<button type="button" class="log-pill debt-log-person-pill" data-open-person="' + dvEscape(l.personId) + '" title="Open counterparty ledger">' + dvEscape(l.personName) + ' \u2192</button>');
+        } else {
+          pills.push('<span class="log-pill">' + dvEscape(l.personName) + '</span>');
+        }
+      }
+
+      const isSelected = debtLogSelectionMode && selectedDebtLogs.has(l.id);
+      const safeId = dvEscape(l.id);
+      const cbHtml = debtLogSelectionMode
+        ? '<input type="checkbox" class="debt-log-cb" aria-label="Select log entry"' + (isSelected ? ' checked' : '') + '>'
+        : '';
+
+      return '<div class="log-item debt-log-item ' + meta.item + (debtLogSelectionMode ? ' is-selectable' : '') + (isSelected ? ' is-selected' : '') + '" data-dlogid="' + safeId + '">'
+        + '<div class="log-cat-icon">' + iconSvg + '</div>'
+        + '<div class="log-content">'
+        + '<div class="log-header-row">'
+        + '<div class="log-title-wrap">'
+        + '<span class="log-action-badge ' + meta.badge + '">' + svgBadge + '</span>'
+        + '<span class="log-action-label">' + meta.label + '</span>'
+        + '<div class="' + msgClass + '">' + dvEscape(l.m) + '</div>'
+        + (l.note && !diffsHtml ? '<div class="log-msg-desc">' + dvEscape(l.note) + '</div>' : '')
+        + diffsHtml
+        + '</div>'
+        + cbHtml
+        + '</div>'
+        + '<div class="log-meta">'
+        + '<span class="log-time-wrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="log-time">' + dvEscape(timeStr) + '</span></span>'
+        + (pills.length ? '<div class="log-meta-pills">' + pills.join('') + '</div>' : '')
+        + '</div></div></div>';
+    }
+
+    function renderDebtLogs() {
+      const listEl = document.getElementById('debtLogList');
+      if (!listEl) return;
+
+      const filterVal = (document.getElementById('debtLogFilter') || {}).value || 'all';
+      const q = (cDebtLogSearch || '').toLowerCase().trim();
+      const from = cDebtLogDateFrom || '';
+      const to = cDebtLogDateTo || '';
+
+      const filtered = debtActivityLogs.filter(l => {
+        if (!l) return false;
+        if (filterVal === 'ADD' || filterVal === 'EDIT' || filterVal === 'SETTLE' || filterVal === 'DELETE') {
+          if (l.a !== filterVal) return false;
+        } else if (filterVal === 'lend') {
+          if (l.entity !== 'lend') return false;
+        } else if (filterVal === 'borrow') {
+          if (l.entity !== 'borrow') return false;
+        } else if (filterVal === 'payment') {
+          if (l.entity !== 'payment' && l.entity !== 'settlement' && l.a !== 'SETTLE') return false;
+        } else if (filterVal === 'person') {
+          if (l.entity !== 'person') return false;
+        }
+
+        if (from || to) {
+          const iso = dvToLocalISO(l.ts);
+          if (from && iso && iso < from) return false;
+          if (to && iso && iso > to) return false;
+        }
+
+        if (q) {
+          const diffText = Array.isArray(l.diffs)
+            ? l.diffs.map(d => (d.field || '') + ' ' + (d.old || '') + ' ' + (d.new || '')).join(' ')
+            : '';
+          const haystack = [
+            l.m,
+            l.personName,
+            l.note,
+            l.entity,
+            l.a,
+            l.amt != null ? (dvFmt(l.amt) + ' ' + l.amt) : '',
+            diffText
+          ].join(' ').toLowerCase();
+          if (!haystack.includes(q)) return false;
+        }
+        return true;
+      });
+
+      if (!filtered.length) {
+        const hasFilters = filterVal !== 'all' || !!q || !!from || !!to;
+        listEl.innerHTML = '<div class="log-empty">'
+          + '<div class="log-empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="18" rx="3"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1H9z"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div>'
+          + '<div class="log-empty-title">' + (hasFilters ? 'No matching activity logs' : 'No debt activity logged yet') + '</div>'
+          + '<div class="log-empty-sub">' + (hasFilters ? 'Try clearing filters or broadening your search.' : 'Account updates, loans, payments, and settlements will appear here automatically.') + '</div>'
+          + '</div>';
+        return;
+      }
+
+      const groups = [];
+      let currentKey = null;
+      let currentItems = [];
+      filtered.forEach(l => {
+        const key = dvFormatLogDateHeader(l.ts);
+        if (key !== currentKey) {
+          if (currentItems.length) groups.push({ key: currentKey, items: currentItems });
+          currentKey = key;
+          currentItems = [l];
+        } else {
+          currentItems.push(l);
+        }
+      });
+      if (currentItems.length) groups.push({ key: currentKey, items: currentItems });
+
+      listEl.innerHTML = groups.map(g =>
+        '<div class="log-date-header">' + dvEscape(g.key) + '</div>'
+        + '<div class="log-timeline">' + g.items.map(renderParsedDebtLog).join('') + '</div>'
+      ).join('');
+
+      listEl.querySelectorAll('.debt-log-person-pill[data-open-person]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const pid = btn.getAttribute('data-open-person');
+          if (pid) openPersonLedger(pid);
+        });
+      });
+
+      if (debtLogSelectionMode) {
+        listEl.querySelectorAll('.debt-log-item[data-dlogid]').forEach(item => {
+          item.addEventListener('click', () => {
+            const id = item.getAttribute('data-dlogid');
+            if (id) toggleDebtLogSelection(id);
+          });
+        });
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      const wrapper = document.getElementById('debtLogFilterWrapper');
+      const menu = document.getElementById('debtLogFilterMenu');
+      if (wrapper && menu && menu.classList.contains('show') && !wrapper.contains(e.target)) {
+        menu.classList.remove('show');
+      }
+    });
 
     // Explicit global window bindings for all inline HTML onclick handlers
     window.openDebtSection = openDebtSection;
@@ -15245,10 +16263,27 @@
     window.checkDebtOverdueBadge = checkDebtOverdueBadge;
     window.shareDebtStatement = shareDebtStatement;
     window.copyDebtStatement = copyDebtStatement;
+    window.openDebtActivityLog = openDebtActivityLog;
+    window.closeDebtActivityLog = closeDebtActivityLog;
+    window.toggleDebtLogFilterMenu = toggleDebtLogFilterMenu;
+    window.setDebtLogFilter = setDebtLogFilter;
+    window.setDebtLogDateFilter = setDebtLogDateFilter;
+    window.clearDebtLogDateFilter = clearDebtLogDateFilter;
+    window.setDebtLogSearch = setDebtLogSearch;
+    window.clearDebtLogSearch = clearDebtLogSearch;
+    window.toggleDebtLogSelectionMode = toggleDebtLogSelectionMode;
+    window.toggleDebtLogSelection = toggleDebtLogSelection;
+    window.confirmDeleteSelectedDebtLogs = confirmDeleteSelectedDebtLogs;
+    window.renderDebtLogs = renderDebtLogs;
+    window.loadDebtLogsFromCloud = loadDebtLogsFromCloud;
+    window.loadDebtLogsLocal = loadDebtLogsLocal;
+    window.saveDebtLogsLocal = saveDebtLogsLocal;
+    window.writeDebtLog = writeDebtLog;
 
     // Init: load local debt data immediately
     (function initDebtSystem() {
       loadDebtLocal();
+      loadDebtLogsLocal();
       checkDebtOverdueBadge();
       [['debtPersonName', 'debtPersonNameErr'], ['paymentAmount', 'debtPaymentAmtErr'], ['lendAmount', 'debtLendAmtErr']].forEach(([inpId, errId]) => {
         const el = document.getElementById(inpId);
