@@ -1195,8 +1195,9 @@
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <input type="text" id="debtAccountSearch" class="dv-search-input" placeholder="Search name, UPI, or note&#8230;"
-                oninput="onDebtSearchInput()" autocomplete="off" spellcheck="false" aria-label="Search accounts">
+              <input type="text" id="debtAccountSearch" class="dv-search-input"
+                placeholder="Search name, UPI, or note&#8230;" oninput="onDebtSearchInput()" autocomplete="off"
+                spellcheck="false" aria-label="Search accounts">
               <button type="button" class="dv-search-clear" id="debtSearchClear" onclick="clearDebtSearch()"
                 style="display:none" aria-label="Clear search" title="Clear search">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -1236,7 +1237,8 @@
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
                 </svg>
               </div>
-              <p id="debtAccountsEmptyMsg">No counterparty accounts yet.<br>Add a contact to track receivables and payables.</p>
+              <p id="debtAccountsEmptyMsg">No counterparty accounts yet.<br>Add a contact to track receivables and
+                payables.</p>
               <button type="button" class="dv-empty-btn" id="debtAccountsEmptyBtn" onclick="openDebtPersonModal()">
                 + Add Account
               </button>
@@ -1616,7 +1618,8 @@
               </div>
               <div>
                 <label class="dv-label" for="debtPersonNote">Account Note (optional)</label>
-                <input type="text" id="debtPersonNote" class="dv-input" placeholder="e.g. Flatmate split" maxlength="100">
+                <input type="text" id="debtPersonNote" class="dv-input" placeholder="e.g. Flatmate split"
+                  maxlength="100">
               </div>
             </div>
 
@@ -1654,15 +1657,16 @@
               <div>
                 <label class="dv-label">Mode</label>
                 <div class="dv-role-toggle">
-                  <button type="button" class="dv-role-btn dv-role-act" id="payModeUPI"
-                    onclick="setPayMode('upi')">UPI / Online</button>
+                  <button type="button" class="dv-role-btn dv-role-act" id="payModeUPI" onclick="setPayMode('upi')">UPI
+                    / Online</button>
                   <button type="button" class="dv-role-btn" id="payModeCash" onclick="setPayMode('cash')">Cash</button>
                 </div>
               </div>
             </div>
 
             <label class="dv-label" for="paymentNote">Note</label>
-            <input type="text" id="paymentNote" class="dv-input" placeholder="e.g. Partial settlement via UPI" maxlength="120">
+            <input type="text" id="paymentNote" class="dv-input" placeholder="e.g. Partial settlement via UPI"
+              maxlength="120">
 
             <label class="dv-check-row" id="paymentSyncFluxWrap">
               <input type="checkbox" id="paymentSyncFlux">
@@ -1688,7 +1692,8 @@
             <input type="hidden" id="debtLendRecordId">
             <label class="dv-label">Entry Type</label>
             <div class="dv-role-toggle" style="margin-bottom:4px;">
-              <button type="button" class="dv-role-btn dv-role-act" id="lendTypeGive" onclick="setLendTxType('give')">Lent
+              <button type="button" class="dv-role-btn dv-role-act" id="lendTypeGive"
+                onclick="setLendTxType('give')">Lent
                 (Receivable)</button>
               <button type="button" class="dv-role-btn" id="lendTypeTake" onclick="setLendTxType('take')">Borrowed
                 (Payable)</button>
@@ -1711,7 +1716,8 @@
             </div>
 
             <label class="dv-label" for="lendNote">Note / Description</label>
-            <input type="text" id="lendNote" class="dv-input" placeholder="e.g. Lunch split, Trip, Loan" maxlength="120">
+            <input type="text" id="lendNote" class="dv-input" placeholder="e.g. Lunch split, Trip, Loan"
+              maxlength="120">
 
             <div class="dv-modal-actions">
               <button type="button" class="dv-btn-cancel" onclick="closeLendMoreModal()">Cancel</button>
@@ -1976,7 +1982,8 @@
         <div class="confirm-meta" id="confirmMeta" style="display:none;"></div>
       </div>
       <div class="confirm-actions">
-        <button type="button" class="btn confirm-cancel-btn" id="confirmCancelBtn" onclick="closeConfirm()">Cancel</button>
+        <button type="button" class="btn confirm-cancel-btn" id="confirmCancelBtn"
+          onclick="closeConfirm()">Cancel</button>
         <button type="button" class="btn pr btn-destructive confirm-ok-btn" id="confirmActionBtn">Confirm</button>
       </div>
     </div>
@@ -10247,63 +10254,63 @@
         });
 
 
-    // Build a set of IDs in this history for quick lookup
-    const historyIds = new Set(subTxs.map(t => t.id));
+      // Build a set of IDs in this history for quick lookup
+      const historyIds = new Set(subTxs.map(t => t.id));
 
-    // Auto-tag: any transaction shown in history but missing _recurring/subId gets tagged.
-    // Register _pendingTxUpdates BEFORE batch.commit() so the onSnapshot rebuild
-    // preserves the tags — prevents the flickering appear/disappear cycle.
-    const untagged = subTxs.filter(t => (!t._recurring || t.subId !== recId) && !_txWriteLocks.has(t.id) && !_pendingTxUpdates.has(t.id));
-    if (untagged.length && userId) {
-      const opToken = ++_txOpSeq;
-      // Pre-register all pending updates + session markers BEFORE commit
-      untagged.forEach(t => {
-        _pendingTxUpdates.set(t.id, { _recurring: true, subId: recId });
-        _pendingTxTokens.set(t.id, opToken);
-        _sessionTaggedTxIds.add(t.id);
-        // Optimistic local update so the tag is visible immediately
-        t._recurring = true;
-        t.subId = recId;
-      });
-      // Safety clear pending entries after 15s
-      setTimeout(() => {
+      // Auto-tag: any transaction shown in history but missing _recurring/subId gets tagged.
+      // Register _pendingTxUpdates BEFORE batch.commit() so the onSnapshot rebuild
+      // preserves the tags — prevents the flickering appear/disappear cycle.
+      const untagged = subTxs.filter(t => (!t._recurring || t.subId !== recId) && !_txWriteLocks.has(t.id) && !_pendingTxUpdates.has(t.id));
+      if (untagged.length && userId) {
+        const opToken = ++_txOpSeq;
+        // Pre-register all pending updates + session markers BEFORE commit
         untagged.forEach(t => {
-          if (_pendingTxTokens.get(t.id) === opToken) {
-            _pendingTxUpdates.delete(t.id);
-            _pendingTxTokens.delete(t.id);
-          }
+          _pendingTxUpdates.set(t.id, { _recurring: true, subId: recId });
+          _pendingTxTokens.set(t.id, opToken);
+          _sessionTaggedTxIds.add(t.id);
+          // Optimistic local update so the tag is visible immediately
+          t._recurring = true;
+          t.subId = recId;
         });
-      }, 15000);
-      (async () => {
-        try {
-          for (let i = 0; i < untagged.length; i += 450) {
-            const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id));
-            if (!chunk.length) continue;
+        // Safety clear pending entries after 15s
+        setTimeout(() => {
+          untagged.forEach(t => {
+            if (_pendingTxTokens.get(t.id) === opToken) {
+              _pendingTxUpdates.delete(t.id);
+              _pendingTxTokens.delete(t.id);
+            }
+          });
+        }, 15000);
+        (async () => {
+          try {
+            for (let i = 0; i < untagged.length; i += 450) {
+              const chunk = untagged.slice(i, i + 450).filter(t => !_txWriteLocks.has(t.id));
+              if (!chunk.length) continue;
 
-            const promises = chunk.map(t => {
-              return updateDoc(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId })
-                .catch(e => {
-                  console.warn(`History auto-tag failed for ${t.id}:`, e);
-                  throw e;
-                });
-            });
-            await Promise.allSettled(promises);
-          }
-        } catch (e) { console.error('History auto-tag failed:', e); }
-      })();
-    }
+              const promises = chunk.map(t => {
+                return updateDoc(doc(db, 'users', userId, 'transactions', t.id), { _recurring: true, subId: recId })
+                  .catch(e => {
+                    console.warn(`History auto-tag failed for ${t.id}:`, e);
+                    throw e;
+                  });
+              });
+              await Promise.allSettled(promises);
+            }
+          } catch (e) { console.error('History auto-tag failed:', e); }
+        })();
+      }
 
-    const totalPaid = subTxs.reduce((s, t) => s + t.amount, 0);
-    const amtCls = rec.type === 'income' ? 'inc' : 'exp';
-    const sign = rec.type === 'income' ? '+' : '-';
-    let annualizedCost = 0;
-    if (rec.freq === 'monthly') annualizedCost = Math.abs(rec.amount) * 12;
-    else if (rec.freq === 'yearly') annualizedCost = Math.abs(rec.amount);
-    else if (rec.freq === 'weekly') annualizedCost = Math.abs(rec.amount) * 52;
-    else if (rec.freq === 'daily') annualizedCost = Math.abs(rec.amount) * 365;
-    else if (rec.freq === 'custom' && rec.customDays) annualizedCost = Math.abs(rec.amount) * 365 / rec.customDays;
+      const totalPaid = subTxs.reduce((s, t) => s + t.amount, 0);
+      const amtCls = rec.type === 'income' ? 'inc' : 'exp';
+      const sign = rec.type === 'income' ? '+' : '-';
+      let annualizedCost = 0;
+      if (rec.freq === 'monthly') annualizedCost = Math.abs(rec.amount) * 12;
+      else if (rec.freq === 'yearly') annualizedCost = Math.abs(rec.amount);
+      else if (rec.freq === 'weekly') annualizedCost = Math.abs(rec.amount) * 52;
+      else if (rec.freq === 'daily') annualizedCost = Math.abs(rec.amount) * 365;
+      else if (rec.freq === 'custom' && rec.customDays) annualizedCost = Math.abs(rec.amount) * 365 / rec.customDays;
 
-    const statsHtml = `<div class="sub-hist-stats">
+      const statsHtml = `<div class="sub-hist-stats">
     <div class="sub-hist-stat">
       <span class="sub-hist-stat-lbl">Total Paid</span>
       <span class="sub-hist-stat-val ${amtCls}" style="color:${amtCls === 'inc' ? 'var(--in)' : 'var(--ex)'}">${sign}${fmt(totalPaid)}</span>
@@ -10318,29 +10325,29 @@
     </div>
   </div>`;
 
-    let listHtml;
-    if (!subTxs.length) {
-      listHtml = '<div class="sub-hist-empty">No matched payments yet.<br>Payments will appear here once transactions are auto-added or matched.</div>';
-    } else {
-      const isCapped = subTxs.length > 500;
-      const rows = (isCapped ? subTxs.slice(0, 500) : subTxs).map(t => {
-        const d = t.desc || '';
-        return `<div class="sub-tx-row">
+      let listHtml;
+      if (!subTxs.length) {
+        listHtml = '<div class="sub-hist-empty">No matched payments yet.<br>Payments will appear here once transactions are auto-added or matched.</div>';
+      } else {
+        const isCapped = subTxs.length > 500;
+        const rows = (isCapped ? subTxs.slice(0, 500) : subTxs).map(t => {
+          const d = t.desc || '';
+          return `<div class="sub-tx-row">
         <div class="sub-tx-date">${fmtDt(t.date)}</div>
         <div class="sub-tx-desc" title="${esc(d)}"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d)}</span></div>
         <div class="sub-tx-amt ${t.type === 'income' ? 'inc' : 'exp'}">${fmt(t.amount)}</div>
       </div>`;
-      }).join('');
-      listHtml = `<div class="sub-hist-list">${rows}${isCapped ? `<div class="sub-hist-cap">Showing latest 500 of ${subTxs.length} payments</div>` : ''
-        }</div>`;
-    }
+        }).join('');
+        listHtml = `<div class="sub-hist-list">${rows}${isCapped ? `<div class="sub-hist-cap">Showing latest 500 of ${subTxs.length} payments</div>` : ''
+          }</div>`;
+      }
 
-    const newHistHtml = statsHtml + listHtml;
-    // Content-hash guard: skip DOM rebuild when history data hasn't changed
-    // This prevents scroll position from resetting on every render cycle
-    if (_subHistLastHtml.get(recId) === newHistHtml) return;
-    _subHistLastHtml.set(recId, newHistHtml);
-    inner.innerHTML = newHistHtml;
+      const newHistHtml = statsHtml + listHtml;
+      // Content-hash guard: skip DOM rebuild when history data hasn't changed
+      // This prevents scroll position from resetting on every render cycle
+      if (_subHistLastHtml.get(recId) === newHistHtml) return;
+      _subHistLastHtml.set(recId, newHistHtml);
+      inner.innerHTML = newHistHtml;
     }
 
     // ── Alt Amounts (Secondary Prices) Management ──
