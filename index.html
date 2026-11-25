@@ -37,7 +37,7 @@
     integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3"
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="./style.css?v=2">
+  <link rel="stylesheet" href="./style.css?v=3">
   <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 
@@ -146,9 +146,11 @@
         </div>
         <button class="debt-menu-trigger" id="debtMenuTriggerDesktop" onclick="openDebtSection()"
           aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
-          <span class="dmt-bar"></span>
-          <span class="dmt-bar"></span>
-          <span class="dmt-bar"></span>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 10h14l-4-4"></path>
+            <path d="M17 14H3l4 4"></path>
+          </svg>
           <span class="dmt-badge" id="debtOverdueBadgeDesktop" style="display:none">!</span>
         </button>
       </div>
@@ -274,13 +276,17 @@
     <header>
       <div class="header-top">
         <div class="header-brand-wrap">
-          <div class="logo">Flu<span>x</span></div>
-          <div class="logo-sub">Personal Finance</div>
+          <div class="header-brand-text">
+            <div class="logo">Flu<span>x</span></div>
+            <div class="logo-sub">Personal Finance</div>
+          </div>
           <button class="debt-menu-trigger" id="debtMenuTrigger" onclick="openDebtSection()"
             aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
-            <span class="dmt-bar"></span>
-            <span class="dmt-bar"></span>
-            <span class="dmt-bar"></span>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 10h14l-4-4"></path>
+              <path d="M17 14H3l4 4"></path>
+            </svg>
             <span class="dmt-badge" id="debtOverdueBadge" style="display:none">!</span>
           </button>
         </div>
@@ -289,9 +295,11 @@
             <h1 class="desktop-view-title" id="desktopViewTitle">Dashboard</h1>
             <button class="debt-menu-trigger" id="debtMenuTriggerHeader" onclick="openDebtSection()"
               aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
-              <span class="dmt-bar"></span>
-              <span class="dmt-bar"></span>
-              <span class="dmt-bar"></span>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M7 10h14l-4-4"></path>
+                <path d="M17 14H3l4 4"></path>
+              </svg>
               <span class="dmt-badge" id="debtOverdueBadgeHeader" style="display:none">!</span>
             </button>
           </div>
@@ -1091,52 +1099,57 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════
-         DEBT MANAGEMENT SYSTEM (3-Tab Architecture)
+         DEBT MANAGEMENT SYSTEM
     ════════════════════════════════════════════════════════════════ -->
-    <div id="debtView" style="display:none; position:relative; min-height:100vh;">
+    <div id="debtView" style="display:none; position:relative;">
 
       <!-- Screen 1: Overall Debt Dashboard -->
       <div id="debtDashView">
         <div class="dv-brand-header">
           <div class="dv-header-left">
-            <button class="dv-back-btn" onclick="backToMainDashboard()" title="Back to Flux Dashboard"
+            <button type="button" class="dv-back-btn" onclick="backToMainDashboard()" title="Back to Flux Dashboard"
               aria-label="Back to Dashboard">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
                 stroke-linecap="round" stroke-linejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
               </svg>
               <span>Dashboard</span>
             </button>
-            <div>
-              <div class="dv-flux-label">FLUX</div>
+            <div class="dv-title-block">
+              <div class="dv-flux-label">FLUX LEDGER</div>
               <h1 class="dv-title">Debts &amp; Loans</h1>
             </div>
           </div>
-          <button class="dv-add-btn" onclick="openDebtPersonModal()" aria-label="Add person account"
+          <button type="button" class="dv-add-btn" onclick="openDebtPersonModal()" aria-label="Add person account"
             title="Add person account">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
+            <span class="dv-add-btn-txt">Add Person</span>
           </button>
         </div>
 
-        <!-- Net Position Hero Card (Me as Debtor & Creditor) -->
-        <div class="dv-net-card">
+        <!-- Net Position Hero Card -->
+        <div class="dv-net-card" id="dvNetCard">
           <div class="dv-net-left">
-            <div class="dv-net-label">Net Position</div>
-            <div class="dv-net-amount" id="dvNetAmount">+&#8377;0</div>
+            <div class="dv-net-header-row">
+              <span class="dv-net-label">Net Position</span>
+              <span class="dv-net-pill" id="dvNetPill">Settled</span>
+            </div>
+            <div class="dv-net-amount" id="dvNetAmount">&#8377;0</div>
             <div class="dv-net-sentiment" id="dvNetSentiment">All settled up</div>
             <div class="dv-net-metrics">
-              <div class="dv-metric">
+              <div class="dv-metric dv-metric-owed">
                 <span class="dv-metric-dot dv-green"></span>
                 <div>
                   <div class="dv-metric-label">Owed to me</div>
                   <div class="dv-metric-val dv-green-txt" id="dvOwedToMe">&#8377;0</div>
                 </div>
               </div>
-              <div class="dv-metric">
+              <div class="dv-metric dv-metric-owe">
                 <span class="dv-metric-dot dv-coral"></span>
                 <div>
                   <div class="dv-metric-label">I owe</div>
@@ -1145,202 +1158,363 @@
               </div>
             </div>
           </div>
-          <div class="dv-donut-wrap">
-            <svg class="dv-donut" width="90" height="90" viewBox="0 0 90 90">
-              <circle class="dv-donut-bg" cx="45" cy="45" r="36" fill="none" stroke="#282620" stroke-width="8" />
-              <circle class="dv-donut-coral" cx="45" cy="45" r="36" fill="none" stroke="#ef968e" stroke-width="8"
-                stroke-dasharray="226.2" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 45 45)"
+          <div class="dv-donut-wrap" aria-hidden="true">
+            <svg class="dv-donut" width="96" height="96" viewBox="0 0 96 96">
+              <circle class="dv-donut-bg" cx="48" cy="48" r="38" fill="none" stroke-width="8" />
+              <circle class="dv-donut-coral" cx="48" cy="48" r="38" fill="none" stroke-width="8"
+                stroke-dasharray="0 238.8" stroke-dashoffset="0" stroke-linecap="butt" transform="rotate(-90 48 48)"
                 id="dvDonutCoral" />
-              <circle class="dv-donut-green" cx="45" cy="45" r="36" fill="none" stroke="#52d6a4" stroke-width="8"
-                stroke-dasharray="226.2" stroke-dashoffset="226.2" stroke-linecap="round" transform="rotate(-90 45 45)"
+              <circle class="dv-donut-green" cx="48" cy="48" r="38" fill="none" stroke-width="8"
+                stroke-dasharray="0 238.8" stroke-dashoffset="0" stroke-linecap="butt" transform="rotate(-90 48 48)"
                 id="dvDonutGreen" />
-              <text x="45" y="42" text-anchor="middle" class="dv-donut-pct" id="dvDonutPct">0%</text>
-              <text x="45" y="55" text-anchor="middle" class="dv-donut-sub-txt">owed to</text>
-              <text x="45" y="65" text-anchor="middle" class="dv-donut-sub-txt">you</text>
+              <text x="48" y="46" text-anchor="middle" class="dv-donut-pct" id="dvDonutPct">—</text>
+              <text x="48" y="60" text-anchor="middle" class="dv-donut-sub-txt" id="dvDonutSub">settled</text>
             </svg>
           </div>
         </div>
 
-        <!-- Search & Filter Controls -->
-        <div class="dv-search-wrap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input type="text" id="debtAccountSearch" class="dv-search-input" placeholder="Search people&#8230;"
-            oninput="renderDebtDashboard()">
-        </div>
-        <div class="dv-filter-row">
-          <button class="dv-pill dv-pill-act" id="dvPillAll" onclick="setDebtFilter('all')">All Accounts</button>
-          <button class="dv-pill" id="dvPillOwed" onclick="setDebtFilter('owed')">Owed to me</button>
-          <button class="dv-pill" id="dvPillIOwe" onclick="setDebtFilter('iowe')">I owe</button>
-          <button class="dv-pill" id="dvPillSettled" onclick="setDebtFilter('settled')">Settled</button>
-        </div>
+        <!-- Responsive Workspace: Accounts (Left) + Upcoming Due Dates (Right) -->
+        <div class="dv-workspace">
+          <div class="dv-accounts-col">
+            <div class="dv-search-wrap">
+              <svg class="dv-search-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input type="text" id="debtAccountSearch" class="dv-search-input" placeholder="Search name, UPI, or note&#8230;"
+                oninput="onDebtSearchInput()" autocomplete="off" spellcheck="false" aria-label="Search debt accounts">
+              <button type="button" class="dv-search-clear" id="debtSearchClear" onclick="clearDebtSearch()"
+                style="display:none" aria-label="Clear search" title="Clear search">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
 
-        <!-- Personal Accounts / Ledgers Feed -->
-        <div class="dv-section-heading">
-          <span>Personal Accounts</span>
-          <span class="dv-section-count" id="dvAccountsCount">0 accounts</span>
-        </div>
-        <div class="dv-empty" id="debtAccountsEmpty" style="display:flex;">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-            <circle cx="9" cy="7" r="4" />
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-          </svg>
-          <p>No debt accounts yet.<br>Tap <strong>+</strong> to add a person.</p>
-        </div>
-        <div id="debtAccountsList"></div>
+            <div class="dv-filter-row" role="tablist" aria-label="Filter debt accounts">
+              <button type="button" class="dv-pill dv-pill-act" id="dvPillAll" onclick="setDebtFilter('all')">
+                All <span class="dv-pill-cnt" id="dvCntAll">0</span>
+              </button>
+              <button type="button" class="dv-pill" id="dvPillOwed" onclick="setDebtFilter('owed')">
+                Owed to me <span class="dv-pill-cnt" id="dvCntOwed">0</span>
+              </button>
+              <button type="button" class="dv-pill" id="dvPillIOwe" onclick="setDebtFilter('iowe')">
+                I owe <span class="dv-pill-cnt" id="dvCntIOwe">0</span>
+              </button>
+              <button type="button" class="dv-pill" id="dvPillSettled" onclick="setDebtFilter('settled')">
+                Settled <span class="dv-pill-cnt" id="dvCntSettled">0</span>
+              </button>
+            </div>
 
-        <!-- Upcoming Due Dates Timeline -->
-        <div class="dv-upcoming-header">
-          <span class="dv-upcoming-title">Upcoming Due Dates</span>
+            <div class="dv-section-heading">
+              <span>Personal Accounts</span>
+              <span class="dv-section-count" id="dvAccountsCount">0 accounts</span>
+            </div>
+
+            <div class="dv-empty" id="debtAccountsEmpty" style="display:flex;">
+              <div class="dv-empty-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </div>
+              <p id="debtAccountsEmptyMsg">No debt accounts yet.<br>Add someone to track money lent or borrowed.</p>
+              <button type="button" class="dv-empty-btn" id="debtAccountsEmptyBtn" onclick="openDebtPersonModal()">
+                + Add Person
+              </button>
+            </div>
+            <div id="debtAccountsList"></div>
+          </div>
+
+          <!-- Upcoming Due Dates Panel -->
+          <div class="dv-timeline-col">
+            <div class="dv-upcoming-panel">
+              <div class="dv-upcoming-header">
+                <span class="dv-upcoming-title">Upcoming Due Dates</span>
+                <span class="dv-upcoming-badge" id="dvUpcomingCount">0</span>
+              </div>
+              <div class="dv-timeline" id="dvTimeline"></div>
+            </div>
+          </div>
         </div>
-        <div class="dv-timeline" id="dvTimeline"></div>
       </div>
 
       <!-- Screen 2: Person's Debt Account / Ledger Screen -->
-      <div id="debtPersonView" style="display:none; position:relative; min-height:100vh; padding-bottom:48px;">
-        <div class="dpv-topbar">
-          <button class="dpv-back-btn" onclick="backToDebtMain()" aria-label="Back to Debts" title="Back to Debts">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-            <span>Debts</span>
-          </button>
-          <span class="dpv-topbar-title">PERSON ACCOUNT</span>
-          <button class="dpv-menu-btn" id="dpvMenuBtn" onclick="togglePersonMenu()" aria-label="Options">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <circle cx="12" cy="5" r="1" />
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="12" cy="19" r="1" />
-            </svg>
-          </button>
-          <div class="dpv-context-menu" id="dpvContextMenu" style="display:none;">
-            <button onclick="editDebtPerson(); togglePersonMenu()">Edit Person</button>
-            <button onclick="settleDebtPerson(); togglePersonMenu()">Mark as Settled</button>
-            <button class="dpv-ctx-danger" onclick="deleteDebtPerson(); togglePersonMenu()">Delete Account</button>
+      <div id="debtPersonView" style="display:none; position:relative;">
+        <div class="dpv-container">
+          <div class="dpv-topbar">
+            <button type="button" class="dpv-back-btn" onclick="backToDebtMain()" aria-label="Back to Debts"
+              title="Back to Debts">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+                stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+              </svg>
+              <span>All Accounts</span>
+            </button>
+            <span class="dpv-topbar-title">ACCOUNT LEDGER</span>
+            <div class="dpv-menu-wrap">
+              <button type="button" class="dpv-menu-btn" id="dpvMenuBtn" onclick="togglePersonMenu()"
+                aria-label="Account options" aria-expanded="false" aria-haspopup="menu">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="12" cy="5" r="1.2" fill="currentColor" />
+                  <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+                  <circle cx="12" cy="19" r="1.2" fill="currentColor" />
+                </svg>
+              </button>
+              <div class="dpv-context-menu" id="dpvContextMenu" role="menu" style="display:none;">
+                <button type="button" role="menuitem" onclick="editDebtPerson(); closePersonMenu()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                  </svg>
+                  Edit Person
+                </button>
+                <button type="button" role="menuitem" id="dpvMenuSettleBtn"
+                  onclick="settleDebtPerson(); closePersonMenu()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Mark as Settled
+                </button>
+                <button type="button" role="menuitem" onclick="shareDebtStatement(); closePersonMenu()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                  </svg>
+                  Share Statement
+                </button>
+                <div class="dpv-ctx-divider"></div>
+                <button type="button" role="menuitem" class="dpv-ctx-danger"
+                  onclick="deleteDebtPerson(); closePersonMenu()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                    <path d="M10 11v6M14 11v6" />
+                  </svg>
+                  Delete Account
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Person Profile Details -->
-        <div class="dpv-profile">
-          <div class="dpv-avatar" id="dpvAvatar">PS</div>
-          <div>
-            <div class="dpv-name" id="dpvName">Person Name</div>
-            <div class="dpv-role" id="dpvRole">Borrower</div>
+          <!-- Person Profile Details -->
+          <div class="dpv-profile">
+            <div class="dpv-avatar" id="dpvAvatar">PS</div>
+            <div class="dpv-profile-info">
+              <div class="dpv-name" id="dpvName">Person Name</div>
+              <div class="dpv-meta-row">
+                <span class="dpv-role" id="dpvRole">Personal Account</span>
+                <button type="button" class="dpv-contact-chip" id="dpvContactChip" onclick="copyDebtContact()"
+                  style="display:none;" title="Click to copy"></button>
+                <button type="button" class="dpv-due-chip" id="dpvDueChip" onclick="editDebtPerson()"
+                  style="display:none;" title="Edit due date"></button>
+              </div>
+              <div class="dpv-person-note" id="dpvPersonNote" style="display:none;"></div>
+            </div>
           </div>
-        </div>
 
-        <!-- Balance Card -->
-        <div class="dpv-balance-card">
-          <div class="dpv-balance-header">
-            <span class="dpv-balance-sub" id="dpvBalanceSub">Owes you</span>
-            <span class="dpv-overdue-badge" id="dpvOverdueBadge" style="display:none;">Overdue</span>
+          <!-- Balance Card -->
+          <div class="dpv-balance-card" id="dpvBalanceCard">
+            <div class="dpv-balance-header">
+              <span class="dpv-balance-sub" id="dpvBalanceSub">Owes you</span>
+              <span class="dpv-overdue-badge" id="dpvOverdueBadge" style="display:none;">Overdue</span>
+            </div>
+            <div class="dpv-balance-amount" id="dpvBalanceAmount">&#8377;0</div>
+            <div class="dpv-progress-bar">
+              <div class="dpv-progress-fill" id="dpvProgressFill" style="width:0%"></div>
+            </div>
+            <div class="dpv-progress-labels">
+              <span id="dpvRepaidLabel">Cleared &#8377;0</span>
+              <span id="dpvTotalLabel">Total &#8377;0</span>
+            </div>
           </div>
-          <div class="dpv-balance-amount" id="dpvBalanceAmount">&#8377;0</div>
-          <div class="dpv-progress-bar">
-            <div class="dpv-progress-fill" id="dpvProgressFill" style="width:0%"></div>
+
+          <!-- Actions -->
+          <div class="dpv-actions">
+            <button type="button" class="dpv-btn-primary" id="dpvAddTxBtn" onclick="openLendMoreModal()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add Transaction
+            </button>
+            <button type="button" class="dpv-btn-secondary" id="dpvRecordPayBtn" onclick="openRecordPaymentModal()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Record Payment
+            </button>
           </div>
-          <div class="dpv-progress-labels">
-            <span id="dpvRepaidLabel">Repaid &#8377;0</span>
-            <span id="dpvTotalLabel">Lent &#8377;0</span>
+
+          <!-- Transactions Ledger Feed -->
+          <div class="dpv-records-header">
+            <span class="dpv-records-title">Activity Log</span>
+            <span class="dpv-records-sort" id="dpvRecordsSort">Newest first</span>
           </div>
-        </div>
+          <div id="dpvRecordsList"></div>
 
-        <!-- Actions -->
-        <div class="dpv-actions">
-          <button class="dpv-btn-primary" id="dpvAddTxBtn" onclick="openLendMoreModal()">+ Add Transaction</button>
-          <button class="dpv-btn-secondary" onclick="openRecordPaymentModal()">Record Payment</button>
-        </div>
-
-        <!-- Transactions Ledger Feed -->
-        <div class="dpv-records-header">
-          <span class="dpv-records-title">Activity Log</span>
-          <span class="dpv-records-sort">Newest first</span>
-        </div>
-        <div id="dpvRecordsList"></div>
-
-        <div class="dpv-statement-wrap">
-          <button class="dpv-statement-btn" onclick="shareDebtStatement()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-              <polyline points="16 6 12 2 8 6" />
-              <line x1="12" y1="2" x2="12" y2="15" />
-            </svg>
-            Share Statement (WhatsApp)
-          </button>
+          <div class="dpv-statement-wrap">
+            <button type="button" class="dpv-statement-btn" onclick="shareDebtStatement()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              Share WhatsApp Statement
+            </button>
+            <button type="button" class="dpv-statement-btn" onclick="copyDebtStatement()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Copy Summary
+            </button>
+          </div>
         </div>
       </div>
 
       <!-- Modal: Add/Edit Person -->
-      <div class="dv-modal-backdrop" id="debtPersonModal" style="display:none;"
-        onclick="if(event.target===this)closeDebtPersonModal()">
-        <div class="dv-modal">
-          <div class="dv-modal-title" id="debtPersonModalTitle">Add Person</div>
-          <input type="hidden" id="debtPersonId">
-          <label class="dv-label">Full Name <span style="color:#ef968e">*</span></label>
-          <input type="text" id="debtPersonName" class="dv-input" placeholder="e.g. Priya Sharma">
-          <label class="dv-label">Phone / UPI (optional)</label>
-          <input type="tel" id="debtPersonPhone" class="dv-input" placeholder="+91 &#8230;">
-          <div class="dv-modal-actions">
-            <button class="dv-btn-cancel" onclick="closeDebtPersonModal()">Cancel</button>
-            <button class="dv-btn-save" onclick="saveDebtPerson()" id="debtPersonSaveBtn">Save</button>
+      <div class="bk dv-modal-backdrop" id="debtPersonModal" onclick="if(event.target===this)closeDebtPersonModal()">
+        <div class="mo dv-modal" role="dialog" aria-modal="true" aria-labelledby="debtPersonModalTitle">
+          <div class="dv-modal-header">
+            <div class="dv-modal-title" id="debtPersonModalTitle">Add Person</div>
+            <button type="button" class="mc2" onclick="closeDebtPersonModal()" aria-label="Close">×</button>
           </div>
+          <form onsubmit="event.preventDefault(); saveDebtPerson();" novalidate>
+            <input type="hidden" id="debtPersonId">
+            <label class="dv-label" for="debtPersonName">Full Name <span class="dv-req">*</span></label>
+            <input type="text" id="debtPersonName" class="dv-input" placeholder="e.g. Priya Sharma" maxlength="80"
+              autocomplete="name">
+            <div class="dv-field-err" id="debtPersonNameErr" style="display:none;"></div>
+
+            <label class="dv-label" for="debtPersonPhone">Phone or UPI ID (optional)</label>
+            <input type="text" id="debtPersonPhone" class="dv-input" placeholder="e.g. +91 98765 43210 or priya@upi"
+              maxlength="80" autocomplete="off">
+
+            <div class="dv-input-row" id="debtPersonEditExtras" style="display:none;">
+              <div>
+                <label class="dv-label" for="debtPersonDueDate">Due Date (optional)</label>
+                <input type="date" id="debtPersonDueDate" class="dv-input">
+              </div>
+              <div>
+                <label class="dv-label" for="debtPersonNote">Account Note (optional)</label>
+                <input type="text" id="debtPersonNote" class="dv-input" placeholder="e.g. Flatmate split" maxlength="100">
+              </div>
+            </div>
+
+            <div class="dv-modal-actions">
+              <button type="button" class="dv-btn-cancel" onclick="closeDebtPersonModal()">Cancel</button>
+              <button type="submit" class="dv-btn-save" id="debtPersonSaveBtn">Create Account</button>
+            </div>
+          </form>
         </div>
       </div>
 
-      <!-- Modal: Record Payment -->
-      <div class="dv-modal-backdrop" id="debtPaymentModal" style="display:none;"
-        onclick="if(event.target===this)closePaymentModal()">
-        <div class="dv-modal">
-          <div class="dv-modal-title" id="debtPaymentModalTitle">Record Payment</div>
-          <label class="dv-label">Amount (&#8377;) <span style="color:#ef968e">*</span></label>
-          <input type="number" id="paymentAmount" class="dv-input" placeholder="0.00" min="0.01" step="0.01">
-          <label class="dv-label">Date</label>
-          <input type="date" id="paymentDate" class="dv-input">
-          <label class="dv-label">Mode</label>
-          <div class="dv-role-toggle">
-            <button class="dv-role-btn dv-role-act" id="payModeUPI" onclick="setPayMode('upi')">UPI / Online</button>
-            <button class="dv-role-btn" id="payModeCash" onclick="setPayMode('cash')">Cash</button>
+      <!-- Modal: Record / Edit Payment -->
+      <div class="bk dv-modal-backdrop" id="debtPaymentModal" onclick="if(event.target===this)closePaymentModal()">
+        <div class="mo dv-modal" role="dialog" aria-modal="true" aria-labelledby="debtPaymentModalTitle">
+          <div class="dv-modal-header">
+            <div class="dv-modal-title" id="debtPaymentModalTitle">Record Payment</div>
+            <button type="button" class="mc2" onclick="closePaymentModal()" aria-label="Close">×</button>
           </div>
-          <label class="dv-label">Note</label>
-          <input type="text" id="paymentNote" class="dv-input" placeholder="e.g. Google Pay partial">
-          <label class="dv-label"
-            style="display:flex;align-items:center;gap:8px;cursor:pointer;letter-spacing:0;font-size:12px;">
-            <input type="checkbox" id="paymentSyncFlux"> Also add to Flux transactions
-          </label>
-          <div class="dv-modal-actions">
-            <button class="dv-btn-cancel" onclick="closePaymentModal()">Cancel</button>
-            <button class="dv-btn-save" onclick="savePayment()">Record</button>
-          </div>
+          <form onsubmit="event.preventDefault(); savePayment();" novalidate>
+            <input type="hidden" id="debtPaymentRecordId">
+            <div class="dv-label-row">
+              <label class="dv-label" for="paymentAmount">Amount (&#8377;) <span class="dv-req">*</span></label>
+              <button type="button" class="dv-quick-fill" id="paymentFullBtn" onclick="fillFullDebtPayment()"
+                style="display:none;">Full balance</button>
+            </div>
+            <input type="number" id="paymentAmount" class="dv-input" placeholder="0.00" min="0.01" step="0.01"
+              inputmode="decimal">
+            <div class="dv-field-err" id="debtPaymentAmtErr" style="display:none;"></div>
+
+            <div class="dv-input-row">
+              <div>
+                <label class="dv-label" for="paymentDate">Date</label>
+                <input type="date" id="paymentDate" class="dv-input">
+              </div>
+              <div>
+                <label class="dv-label">Mode</label>
+                <div class="dv-role-toggle">
+                  <button type="button" class="dv-role-btn dv-role-act" id="payModeUPI"
+                    onclick="setPayMode('upi')">UPI / Online</button>
+                  <button type="button" class="dv-role-btn" id="payModeCash" onclick="setPayMode('cash')">Cash</button>
+                </div>
+              </div>
+            </div>
+
+            <label class="dv-label" for="paymentNote">Note</label>
+            <input type="text" id="paymentNote" class="dv-input" placeholder="e.g. Google Pay partial" maxlength="120">
+
+            <label class="dv-check-row" id="paymentSyncFluxWrap">
+              <input type="checkbox" id="paymentSyncFlux">
+              <span>Also log in Flux transactions <span class="dv-check-hint" id="paymentSyncHint"></span></span>
+            </label>
+
+            <div class="dv-modal-actions">
+              <button type="button" class="dv-btn-cancel" onclick="closePaymentModal()">Cancel</button>
+              <button type="submit" class="dv-btn-save" id="debtPaymentSaveBtn">Record Payment</button>
+            </div>
+          </form>
         </div>
       </div>
 
-      <!-- Modal: Add Transaction -->
-      <div class="dv-modal-backdrop" id="debtLendModal" style="display:none;"
-        onclick="if(event.target===this)closeLendMoreModal()">
-        <div class="dv-modal">
-          <div class="dv-modal-title" id="debtLendModalTitle">Add Transaction</div>
-          <label class="dv-label">Type</label>
-          <div class="dv-role-toggle" style="margin-bottom:12px;">
-            <button type="button" class="dv-role-btn dv-role-act" id="lendTypeGive" onclick="setLendTxType('give')">I gave (They owe me)</button>
-            <button type="button" class="dv-role-btn" id="lendTypeTake" onclick="setLendTxType('take')">I took (I owe them)</button>
+      <!-- Modal: Add / Edit Transaction -->
+      <div class="bk dv-modal-backdrop" id="debtLendModal" onclick="if(event.target===this)closeLendMoreModal()">
+        <div class="mo dv-modal" role="dialog" aria-modal="true" aria-labelledby="debtLendModalTitle">
+          <div class="dv-modal-header">
+            <div class="dv-modal-title" id="debtLendModalTitle">Add Transaction</div>
+            <button type="button" class="mc2" onclick="closeLendMoreModal()" aria-label="Close">×</button>
           </div>
-          <label class="dv-label">Amount (&#8377;) <span style="color:#ef968e">*</span></label>
-          <input type="number" id="lendAmount" class="dv-input" placeholder="0.00" min="0.01" step="0.01">
-          <label class="dv-label">Date</label>
-          <input type="date" id="lendDate" class="dv-input">
-          <label class="dv-label">Due Date (optional)</label>
-          <input type="date" id="lendDueDate" class="dv-input">
-          <label class="dv-label">Note / Description</label>
-          <input type="text" id="lendNote" class="dv-input" placeholder="e.g. Lunch split, Trip, Loan">
-          <div class="dv-modal-actions">
-            <button class="dv-btn-cancel" onclick="closeLendMoreModal()">Cancel</button>
-            <button class="dv-btn-save" onclick="saveLendMore()">Save Transaction</button>
-          </div>
+          <form onsubmit="event.preventDefault(); saveLendMore();" novalidate>
+            <input type="hidden" id="debtLendRecordId">
+            <label class="dv-label">Direction</label>
+            <div class="dv-role-toggle" style="margin-bottom:4px;">
+              <button type="button" class="dv-role-btn dv-role-act" id="lendTypeGive" onclick="setLendTxType('give')">I
+                gave (They owe me)</button>
+              <button type="button" class="dv-role-btn" id="lendTypeTake" onclick="setLendTxType('take')">I took (I owe
+                them)</button>
+            </div>
+
+            <label class="dv-label" for="lendAmount">Amount (&#8377;) <span class="dv-req">*</span></label>
+            <input type="number" id="lendAmount" class="dv-input" placeholder="0.00" min="0.01" step="0.01"
+              inputmode="decimal">
+            <div class="dv-field-err" id="debtLendAmtErr" style="display:none;"></div>
+
+            <div class="dv-input-row">
+              <div>
+                <label class="dv-label" for="lendDate">Date</label>
+                <input type="date" id="lendDate" class="dv-input">
+              </div>
+              <div id="lendDueDateWrap">
+                <label class="dv-label" for="lendDueDate">Due Date (optional)</label>
+                <input type="date" id="lendDueDate" class="dv-input">
+              </div>
+            </div>
+
+            <label class="dv-label" for="lendNote">Note / Description</label>
+            <input type="text" id="lendNote" class="dv-input" placeholder="e.g. Lunch split, Trip, Loan" maxlength="120">
+
+            <div class="dv-modal-actions">
+              <button type="button" class="dv-btn-cancel" onclick="closeLendMoreModal()">Cancel</button>
+              <button type="submit" class="dv-btn-save" id="debtLendSaveBtn">Save Transaction</button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -1581,16 +1755,26 @@
     </div>
   </div>
 
-  <div class="bk" id="confirmMod" style="z-index: 2000;">
-    <div class="mo" style="max-width:400px; text-align:center">
-      <div class="mh" style="justify-content:center; border-bottom:none; padding-bottom:0;"><span class="mti"
-          id="confirmTitle" style="font-size:16px;">Confirm Action</span></div>
-      <div class="mb" id="confirmMsg" style="font-size:14px; color:var(--mu); padding:20px; line-height:1.5;">Are you
-        sure?</div>
-      <div class="mf" style="justify-content:center; gap:12px; border-top:none; padding-top:0; padding-bottom:20px;">
-        <button class="btn" onclick="closeConfirm()">Cancel</button>
-        <button class="btn pr" id="confirmActionBtn"
-          style="background:var(--ex); border-color:var(--ex); color:#fff">Confirm</button>
+  <div class="bk" id="confirmMod" style="z-index: 2000;" onclick="if(event.target===this)closeConfirm()">
+    <div class="mo confirm-mo" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle"
+      aria-describedby="confirmMsg">
+      <div class="confirm-body">
+        <div class="confirm-icon-wrap destructive" id="confirmIconWrap" aria-hidden="true">
+          <svg id="confirmIconSvg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            <path d="M10 11v6M14 11v6"></path>
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
+          </svg>
+        </div>
+        <h3 class="confirm-title" id="confirmTitle">Confirm Action</h3>
+        <div class="confirm-msg" id="confirmMsg">Are you sure?</div>
+        <div class="confirm-meta" id="confirmMeta" style="display:none;"></div>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="btn confirm-cancel-btn" id="confirmCancelBtn" onclick="closeConfirm()">Cancel</button>
+        <button type="button" class="btn pr btn-destructive confirm-ok-btn" id="confirmActionBtn">Confirm</button>
       </div>
     </div>
   </div>
@@ -2474,19 +2658,59 @@
       }
     });
 
-    function showConfirm(title, msg, actionFn, isDestructive = true) {
+    function showConfirm(title, msg, actionFn, isDestructive = true, opts = {}) {
       document.getElementById('confirmTitle').textContent = title;
       document.getElementById('confirmMsg').textContent = msg;
       const btn = document.getElementById('confirmActionBtn');
+      const cancelBtn = document.getElementById('confirmCancelBtn');
+      const iconWrap = document.getElementById('confirmIconWrap');
+      const iconSvg = document.getElementById('confirmIconSvg');
+      const metaEl = document.getElementById('confirmMeta');
 
-      if (isDestructive) {
-        btn.classList.add('btn-destructive');
-      } else {
-        btn.classList.remove('btn-destructive');
+      if (btn) {
+        btn.textContent = (opts && opts.confirmLabel) ? opts.confirmLabel : 'Confirm';
+        if (isDestructive) {
+          btn.classList.add('btn-destructive');
+        } else {
+          btn.classList.remove('btn-destructive');
+        }
+      }
+      if (cancelBtn) {
+        cancelBtn.textContent = (opts && opts.cancelLabel) ? opts.cancelLabel : 'Cancel';
+      }
+      if (iconWrap) {
+        iconWrap.classList.toggle('destructive', !!isDestructive);
+        iconWrap.classList.toggle('positive', !isDestructive);
+      }
+      if (iconSvg) {
+        const iconKind = (opts && opts.icon) || (isDestructive ? 'trash' : 'check');
+        if (iconKind === 'check') {
+          iconSvg.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+        } else if (iconKind === 'warn') {
+          iconSvg.innerHTML = '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>';
+        } else {
+          iconSvg.innerHTML = '<polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>';
+        }
+      }
+      if (metaEl) {
+        if (opts && opts.metaHtml) {
+          metaEl.innerHTML = opts.metaHtml;
+          metaEl.style.display = 'flex';
+        } else if (opts && opts.metaText) {
+          metaEl.textContent = opts.metaText;
+          metaEl.style.display = 'flex';
+        } else {
+          metaEl.innerHTML = '';
+          metaEl.style.display = 'none';
+        }
       }
 
       confirmActionCallback = actionFn;
       document.getElementById('confirmMod').classList.add('op');
+      requestAnimationFrame(() => {
+        if (isDestructive && cancelBtn) cancelBtn.focus();
+        else if (btn) btn.focus();
+      });
     }
 
     function closeConfirm() {
@@ -2495,8 +2719,9 @@
     }
 
     document.getElementById('confirmActionBtn').addEventListener('click', () => {
-      if (confirmActionCallback) confirmActionCallback();
+      const cb = confirmActionCallback;
       closeConfirm();
+      if (cb) cb();
     });
 
     async function toggleAuth() {
@@ -2517,8 +2742,11 @@
       }
     }
 
+    let _debtWasSignedIn = false;
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        _debtWasSignedIn = true;
         userId = user.uid;
         processSyncQueue();
         if (unsubscribeFirestore) unsubscribeFirestore();
@@ -2550,8 +2778,16 @@
         if (_unsubDebtRecords) _unsubDebtRecords();
         activityLogs = [];
         recurringList = [];
-        debtPersons = [];
-        debtRecords = [];
+        if (_debtWasSignedIn) {
+          _debtWasSignedIn = false;
+          debtPersons = [];
+          debtRecords = [];
+          if (typeof _currentDebtPersonId !== 'undefined' && _currentDebtPersonId && typeof backToDebtMain === 'function') {
+            backToDebtMain();
+          }
+        }
+        if (typeof refreshDebtViews === 'function') refreshDebtViews();
+        if (typeof checkDebtOverdueBadge === 'function') checkDebtOverdueBadge();
         // Clear log selection mode if active
         if (logSelectionMode) { logSelectionMode = false; selectedLogs.clear(); const ab = document.getElementById('logDeleteAction'); const bb = document.getElementById('btnToggleDeleteLogs'); if (ab) ab.style.display = 'none'; if (bb) bb.style.display = 'inline-block'; }
         renderLogs();
@@ -4981,6 +5217,11 @@
       if (e.key !== 'Escape') return;
       if (document.getElementById('receiptViewerMod')?.classList.contains('op')) { closeReceiptViewer(); return; }
       if (document.getElementById('confirmMod').classList.contains('op')) { closeConfirm(); return; }
+      if (document.getElementById('debtPaymentModal')?.classList.contains('op')) { closePaymentModal(); return; }
+      if (document.getElementById('debtLendModal')?.classList.contains('op')) { closeLendMoreModal(); return; }
+      if (document.getElementById('debtPersonModal')?.classList.contains('op')) { closeDebtPersonModal(); return; }
+      const dpvMenu = document.getElementById('dpvContextMenu');
+      if (dpvMenu && dpvMenu.style.display === 'block') { if (typeof closePersonMenu === 'function') closePersonMenu(); return; }
       if (document.getElementById('eventMod').classList.contains('op')) { closeEventMod(); return; }
       if (document.getElementById('editMod').classList.contains('op')) { closeEditMod(); return; }
       if (document.getElementById('impMod').classList.contains('op')) { closeMod(); return; }
@@ -4991,7 +5232,7 @@
     // Focus trap for open modals - keeps Tab/Shift+Tab inside the active modal
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Tab') return;
-      const modals = ['confirmMod', 'eventMod', 'editMod', 'impMod', 'recurringMod', 'reportMod'];
+      const modals = ['confirmMod', 'debtPaymentModal', 'debtLendModal', 'debtPersonModal', 'eventMod', 'editMod', 'impMod', 'recurringMod', 'reportMod'];
       let activeModal = null;
       for (const id of modals) {
         const el = document.getElementById(id);
@@ -12048,6 +12289,16 @@
       const debtV = document.getElementById('debtView');
       if (debtV) debtV.style.display = tab === 'debts' ? 'block' : 'none';
       document.body.classList.toggle('in-debts', tab === 'debts');
+      ['debtMenuTrigger', 'debtMenuTriggerDesktop', 'debtMenuTriggerHeader'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.setAttribute('aria-pressed', tab === 'debts' ? 'true' : 'false');
+      });
+      if (tab !== 'debts') {
+        if (typeof closePersonMenu === 'function') closePersonMenu();
+        if (typeof closeDebtPersonModal === 'function') closeDebtPersonModal();
+        if (typeof closePaymentModal === 'function') closePaymentModal();
+        if (typeof closeLendMoreModal === 'function') closeLendMoreModal();
+      }
 
       if (tab === 'yearly') {
         document.body.classList.add('mob-yearly-active');
@@ -12406,7 +12657,7 @@
     let _deferredPrompt = null;
 
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js?v=39').then((reg) => {
+      navigator.serviceWorker.register('./sw.js?v=40').then((reg) => {
       }).catch((err) => {
         console.warn('[PWA] SW registration failed:', err);
       });
@@ -13300,10 +13551,102 @@
     let _debtFilter = 'all';
     let _debtRole = 'borrower';
     let _payMode = 'upi';
+    let _lendTxType = 'give';
     let _unsubDebtPersons = null;
     let _unsubDebtRecords = null;
+    let _settlingDebtPerson = false;
+    let _savingDebtPerson = false;
+    let _savingDebtPayment = false;
+    let _savingDebtLend = false;
     const DEBT_PERSONS_KEY = 'flux_debt_persons';
     const DEBT_RECORDS_KEY = 'flux_debt_records';
+
+    function dvRound2(n) {
+      const num = Number(n);
+      if (!Number.isFinite(num)) return 0;
+      const val = Math.round(num * 100) / 100;
+      return Math.abs(val) < 0.005 ? 0 : val;
+    }
+
+    function dvTodayISO() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function dvParseISO(isoDate) {
+      if (!isoDate || typeof isoDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null;
+      const d = new Date(isoDate + 'T00:00:00');
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function dvId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function dvFmt(n) {
+      return '\u20b9' + Math.abs(dvRound2(n)).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    function dvInitials(name) {
+      return (name || '').trim().split(/\s+/).filter(w => w.length > 0).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '??';
+    }
+
+    function dvDaysOverdue(dueDate) {
+      const due = dvParseISO(dueDate);
+      if (!due) return 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diff = Math.floor((today - due) / 86400000);
+      return diff > 0 ? diff : 0;
+    }
+
+    function dvFormatDate(isoDate) {
+      const d = dvParseISO(isoDate);
+      if (!d) return isoDate || '';
+      const opts = { day: 'numeric', month: 'short' };
+      if (d.getFullYear() !== new Date().getFullYear()) opts.year = '2-digit';
+      return d.toLocaleDateString('en-IN', opts);
+    }
+
+    function dvCopyText(text, successMsg) {
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => dvToast(successMsg, 'ok')).catch(() => dvFallbackCopy(text, successMsg));
+      } else {
+        dvFallbackCopy(text, successMsg);
+      }
+    }
+
+    function dvFallbackCopy(text, successMsg) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        dvToast(ok ? successMsg : 'Could not copy to clipboard', ok ? 'ok' : 'er');
+      } catch (e) {
+        dvToast('Could not copy to clipboard', 'er');
+      }
+    }
+
+    function dvEscape(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function dvToast(msg, type) {
+      if (typeof showToast === 'function') showToast(msg, type || 'ok');
+    }
 
     function saveDebtLocal() {
       try {
@@ -13311,11 +13654,17 @@
         localStorage.setItem(DEBT_RECORDS_KEY, JSON.stringify(debtRecords));
       } catch (e) { }
     }
+
     function loadDebtLocal() {
       try {
-        debtPersons = JSON.parse(localStorage.getItem(DEBT_PERSONS_KEY) || '[]');
-        debtRecords = JSON.parse(localStorage.getItem(DEBT_RECORDS_KEY) || '[]');
-      } catch (e) { debtPersons = []; debtRecords = []; }
+        const p = JSON.parse(localStorage.getItem(DEBT_PERSONS_KEY) || '[]');
+        const r = JSON.parse(localStorage.getItem(DEBT_RECORDS_KEY) || '[]');
+        debtPersons = Array.isArray(p) ? p : [];
+        debtRecords = Array.isArray(r) ? r : [];
+      } catch (e) {
+        debtPersons = [];
+        debtRecords = [];
+      }
     }
 
     function loadDebtFromCloud() {
@@ -13336,6 +13685,7 @@
         debtRecords = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
         saveDebtLocal();
         refreshDebtViews();
+        checkDebtOverdueBadge();
       }, err => {
         console.warn('Debt records snapshot error:', err);
       });
@@ -13345,58 +13695,201 @@
       if (!userId || typeof doc === 'undefined') return Promise.resolve();
       return setDoc(doc(db, 'users', userId, 'debt_persons', person.id), person);
     }
+
     function saveDebtRecordCloud(record) {
       if (!userId || typeof doc === 'undefined') return Promise.resolve();
       return setDoc(doc(db, 'users', userId, 'debt_records', record.id), record);
     }
+
     function deleteDebtPersonCloud(id) {
       if (!userId || typeof doc === 'undefined') return Promise.resolve();
       return deleteDoc(doc(db, 'users', userId, 'debt_persons', id));
     }
+
     function deleteDebtRecordCloud(id) {
       if (!userId || typeof doc === 'undefined') return Promise.resolve();
       return deleteDoc(doc(db, 'users', userId, 'debt_records', id));
     }
 
-    function dvId() {
-      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    async function syncDebtPersonCloud(person) {
+      try {
+        await saveDebtPersonCloud(person);
+        return true;
+      } catch (err) {
+        console.warn('[Debt] Cloud save person failed:', err);
+        if (userId && typeof queueFailedSync === 'function') {
+          queueFailedSync('setDoc', 'debt_persons', person.id, person, false, true);
+        }
+        return false;
+      }
     }
-    function dvFmt(n) {
-      return '\u20b9' + Math.abs(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+    async function syncDebtRecordCloud(record) {
+      try {
+        await saveDebtRecordCloud(record);
+        return true;
+      } catch (err) {
+        console.warn('[Debt] Cloud save record failed:', err);
+        if (userId && typeof queueFailedSync === 'function') {
+          queueFailedSync('setDoc', 'debt_records', record.id, record, false, true);
+        }
+        return false;
+      }
     }
-    function dvInitials(name) {
-      return (name || '').trim().split(/\s+/).filter(w => w.length > 0).slice(0, 2).map(w => w[0].toUpperCase()).join('') || '??';
+
+    async function removeDebtPersonCloud(id) {
+      try {
+        await deleteDebtPersonCloud(id);
+        return true;
+      } catch (err) {
+        console.warn('[Debt] Cloud delete person failed:', err);
+        if (userId && typeof queueFailedSync === 'function') {
+          queueFailedSync('deleteDoc', 'debt_persons', id, null, false, true);
+        }
+        return false;
+      }
     }
-    function dvDaysOverdue(dueDate) {
-      if (!dueDate) return 0;
-      const due = new Date(dueDate + 'T00:00:00');
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const diff = Math.floor((today - due) / 86400000);
-      return diff > 0 ? diff : 0;
+
+    async function removeDebtRecordCloud(id) {
+      try {
+        await deleteDebtRecordCloud(id);
+        return true;
+      } catch (err) {
+        console.warn('[Debt] Cloud delete record failed:', err);
+        if (userId && typeof queueFailedSync === 'function') {
+          queueFailedSync('deleteDoc', 'debt_records', id, null, false, true);
+        }
+        return false;
+      }
     }
-    function dvFormatDate(isoDate) {
-      if (!isoDate) return '';
-      const d = new Date(isoDate + 'T00:00:00');
-      return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+    function sortDebtRecordsAsc(recs) {
+      return recs.slice().sort((a, b) => {
+        const da = (a.date || '').localeCompare(b.date || '');
+        if (da !== 0) return da;
+        const ca = (Number(a.createdAt) || 0) - (Number(b.createdAt) || 0);
+        if (ca !== 0) return ca;
+        return String(a.id || '').localeCompare(String(b.id || ''));
+      });
     }
-    function dvEscape(str) {
-      if (str === null || str === undefined) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+
+    /**
+     * Authoritative signed-ledger recompute for a person account.
+     * Positive net => borrower (they owe you); negative net => lender (you owe them).
+     */
+    function recomputeDebtPersonState(personId) {
+      const p = debtPersons.find(x => x.id === personId);
+      if (!p) return { person: null, modifiedRecs: [] };
+
+      const pRecs = sortDebtRecordsAsc(debtRecords.filter(r => r.personId === personId));
+      const hasInitialRec = pRecs.some(r => r.type === 'initial_loan' || r.type === 'initial_borrow');
+      const legacyInit = (!hasInitialRec && Number(p.initialAmount) > 0) ? dvRound2(p.initialAmount) : 0;
+
+      let net = legacyInit > 0 ? (p.role === 'lender' ? -legacyInit : legacyInit) : 0;
+      let repaidTotal = 0;
+      const modifiedRecs = [];
+
+      for (const r of pRecs) {
+        const amt = dvRound2(r.amount);
+        if (r.type === 'initial_loan' || r.type === 'lend_more') {
+          net = dvRound2(net + amt);
+        } else if (r.type === 'initial_borrow' || r.type === 'borrow_more') {
+          net = dvRound2(net - amt);
+        } else if (r.type === 'settlement') {
+          repaidTotal = dvRound2(repaidTotal + Math.abs(net));
+          net = 0;
+        } else if (r.type === 'repayment') {
+          if (r.direction === 'received') {
+            net = dvRound2(net - amt);
+          } else if (r.direction === 'paid') {
+            net = dvRound2(net + amt);
+          } else {
+            // Infer direction for legacy repayment records without explicit direction
+            net = net < 0 ? dvRound2(net + amt) : dvRound2(net - amt);
+          }
+          repaidTotal = dvRound2(repaidTotal + amt);
+        }
+
+        const displayBal = dvRound2(Math.abs(net));
+        if (r.runningBalance !== displayBal) {
+          r.runningBalance = displayBal;
+          modifiedRecs.push(r);
+        }
+      }
+
+      const absBal = dvRound2(Math.abs(net));
+      p.currentBalance = absBal;
+      p.repaidAmount = repaidTotal;
+
+      if (net > 0) {
+        p.role = 'borrower';
+      } else if (net < 0) {
+        p.role = 'lender';
+      } else if (pRecs.length === 0 && legacyInit === 0) {
+        p.role = '';
+      }
+
+      if (pRecs.length > 0 && absBal === 0) {
+        p.status = 'settled';
+        p.dueDate = '';
+      } else {
+        p.status = 'active';
+        delete p.settlementRecordId;
+        delete p.settlementSyncPending;
+      }
+
+      p.updatedAt = Date.now();
+      return { person: p, modifiedRecs };
+    }
+
+    function getDebtPersonMetrics(p, personRecs) {
+      const recs = personRecs || debtRecords.filter(r => r.personId === p.id);
+      const hasInitialRec = recs.some(r => r.type === 'initial_loan' || r.type === 'initial_borrow');
+      const legacyInit = (!hasInitialRec && Number(p.initialAmount) > 0) ? dvRound2(p.initialAmount) : 0;
+
+      const givenFromRecs = recs
+        .filter(r => r.type === 'initial_loan' || r.type === 'lend_more')
+        .reduce((s, r) => dvRound2(s + (r.amount || 0)), 0);
+      const takenFromRecs = recs
+        .filter(r => r.type === 'initial_borrow' || r.type === 'borrow_more')
+        .reduce((s, r) => dvRound2(s + (r.amount || 0)), 0);
+
+      const givenTotal = dvRound2(givenFromRecs + (p.role !== 'lender' ? legacyInit : 0));
+      const takenTotal = dvRound2(takenFromRecs + (p.role === 'lender' ? legacyInit : 0));
+
+      const isSettled = p.status === 'settled' && dvRound2(p.currentBalance || 0) === 0;
+      const isOwed = p.role === 'borrower';
+      const rawSideTotal = isOwed ? givenTotal : takenTotal;
+      const sideTotal = Math.max(rawSideTotal, dvRound2(p.currentBalance || 0));
+      const cleared = isSettled
+        ? sideTotal
+        : Math.max(0, dvRound2(sideTotal - dvRound2(p.currentBalance || 0)));
+      const progPct = isSettled && recs.length > 0
+        ? 100
+        : (sideTotal > 0 ? Math.min(100, Math.round((cleared / sideTotal) * 100)) : 0);
+
+      return {
+        recordCount: recs.length,
+        givenTotal,
+        takenTotal,
+        sideTotal,
+        cleared,
+        progPct,
+        isSettled,
+        isOwed
+      };
     }
 
     function openDebtSection() {
       switchTab('debts');
     }
+
     function backToMainDashboard() {
       switchTab('dashboard');
     }
+
     function backToDebtMain() {
+      closePersonMenu();
       const dpv = document.getElementById('debtPersonView');
       const ddv = document.getElementById('debtDashView');
       if (dpv) dpv.style.display = 'none';
@@ -13406,7 +13899,7 @@
       window.scrollTo(0, 0);
     }
 
-    function switchDebtTab(tab) {
+    function switchDebtTab() {
       renderDebtDashboard();
     }
 
@@ -13421,162 +13914,302 @@
       }
     }
 
+    function onDebtSearchInput() {
+      const input = document.getElementById('debtAccountSearch');
+      const clearBtn = document.getElementById('debtSearchClear');
+      if (clearBtn && input) {
+        clearBtn.style.display = input.value.length > 0 ? 'inline-flex' : 'none';
+      }
+      renderDebtDashboard();
+    }
+
+    function clearDebtSearch() {
+      const input = document.getElementById('debtAccountSearch');
+      const clearBtn = document.getElementById('debtSearchClear');
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.style.display = 'none';
+      renderDebtDashboard();
+    }
+
+    function resetDebtFilters() {
+      const input = document.getElementById('debtAccountSearch');
+      const clearBtn = document.getElementById('debtSearchClear');
+      if (input) input.value = '';
+      if (clearBtn) clearBtn.style.display = 'none';
+      setDebtFilter('all');
+    }
+
     function renderDebtDashboard() {
       let owedToMe = 0, iOwe = 0;
+      let cntOwed = 0, cntIOwe = 0, cntSettled = 0;
+
       debtPersons.forEach(p => {
-        if (p.status !== 'settled') {
-          if (p.role === 'borrower') owedToMe += (p.currentBalance || 0);
-          else iOwe += (p.currentBalance || 0);
+        const bal = dvRound2(p.currentBalance || 0);
+        if (p.status === 'settled' && bal === 0) {
+          cntSettled++;
+        } else if (bal > 0) {
+          if (p.role === 'borrower') {
+            owedToMe = dvRound2(owedToMe + bal);
+            cntOwed++;
+          } else if (p.role === 'lender') {
+            iOwe = dvRound2(iOwe + bal);
+            cntIOwe++;
+          }
         }
       });
-      const net = owedToMe - iOwe;
-      const total = owedToMe + iOwe;
+
+      const net = dvRound2(owedToMe - iOwe);
+      const total = dvRound2(owedToMe + iOwe);
       const pct = total > 0 ? Math.round((owedToMe / total) * 100) : 0;
+
+      const cardEl = document.getElementById('dvNetCard');
+      if (cardEl) {
+        cardEl.classList.toggle('is-positive', net > 0);
+        cardEl.classList.toggle('is-negative', net < 0);
+      }
+
+      const pillEl = document.getElementById('dvNetPill');
+      if (pillEl) {
+        pillEl.classList.toggle('is-positive', net > 0);
+        pillEl.classList.toggle('is-negative', net < 0);
+        pillEl.textContent = net > 0 ? 'In your favor' : net < 0 ? 'Net payable' : 'Settled';
+      }
 
       const netEl = document.getElementById('dvNetAmount');
       if (netEl) {
-        netEl.textContent = (net >= 0 ? '+' : '-') + dvFmt(net);
-        netEl.style.color = net >= 0 ? '#52d6a4' : '#ef968e';
+        netEl.textContent = net === 0 ? dvFmt(0) : ((net > 0 ? '+' : '-') + dvFmt(net));
+        netEl.style.color = net > 0 ? 'var(--in)' : net < 0 ? 'var(--ex)' : 'var(--tx)';
       }
+
       const sentEl = document.getElementById('dvNetSentiment');
       if (sentEl) {
-        sentEl.textContent = net > 0 ? 'You are in the green (owed to you)' : net < 0 ? 'You are in the red (you owe money)' : 'All settled up';
-        sentEl.style.color = net > 0 ? '#52d6a4' : net < 0 ? '#ef968e' : '#8e887d';
+        sentEl.textContent = net > 0
+          ? 'Others owe you more than you owe'
+          : net < 0
+            ? 'You owe more than others owe you'
+            : 'All balances are settled up';
+        sentEl.style.color = net > 0 ? 'var(--in)' : net < 0 ? 'var(--ex)' : 'var(--mu)';
       }
+
       const owedEl = document.getElementById('dvOwedToMe');
       if (owedEl) owedEl.textContent = dvFmt(owedToMe);
       const iOweEl = document.getElementById('dvIOwe');
       if (iOweEl) iOweEl.textContent = dvFmt(iOwe);
 
-      const circ = 2 * Math.PI * 36;
-      const greenDash = (pct / 100) * circ;
-      const greenOffset = circ - greenDash;
-      const coralOffset = greenDash;
+      // Donut SVG (radius 38 => circ = 238.76)
+      const circ = 2 * Math.PI * 38;
       const dg = document.getElementById('dvDonutGreen');
       const dc = document.getElementById('dvDonutCoral');
-      if (dg) dg.setAttribute('stroke-dashoffset', greenOffset.toFixed(1));
-      if (dc) dc.setAttribute('stroke-dashoffset', coralOffset.toFixed(1));
       const dp = document.getElementById('dvDonutPct');
-      if (dp) dp.textContent = pct + '%';
+      const ds = document.getElementById('dvDonutSub');
+
+      if (total <= 0) {
+        if (dg) {
+          dg.setAttribute('stroke-dasharray', '0 ' + circ.toFixed(2));
+          dg.setAttribute('stroke-dashoffset', '0');
+        }
+        if (dc) {
+          dc.setAttribute('stroke-dasharray', '0 ' + circ.toFixed(2));
+          dc.setAttribute('stroke-dashoffset', '0');
+        }
+        if (dp) dp.textContent = '—';
+        if (ds) ds.textContent = 'settled';
+      } else {
+        const greenLen = (owedToMe / total) * circ;
+        const coralLen = Math.max(0, circ - greenLen);
+        if (dg) {
+          dg.setAttribute('stroke-dasharray', greenLen.toFixed(2) + ' ' + circ.toFixed(2));
+          dg.setAttribute('stroke-dashoffset', '0');
+        }
+        if (dc) {
+          dc.setAttribute('stroke-dasharray', coralLen.toFixed(2) + ' ' + circ.toFixed(2));
+          dc.setAttribute('stroke-dashoffset', (-greenLen).toFixed(2));
+        }
+        if (dp) dp.textContent = pct + '%';
+        if (ds) ds.textContent = 'in favor';
+      }
+
+      // Filter Pill Counts
+      const cntMap = {
+        dvCntAll: debtPersons.length,
+        dvCntOwed: cntOwed,
+        dvCntIOwe: cntIOwe,
+        dvCntSettled: cntSettled
+      };
+      Object.entries(cntMap).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = String(val);
+      });
 
       // Filter and Search People Accounts
       const searchEl = document.getElementById('debtAccountSearch');
       const q = (searchEl ? searchEl.value : '').toLowerCase().trim();
       const filter = _debtFilter;
 
-      let filtered = debtPersons.filter(p => {
-        const matchQ = !q || p.name.toLowerCase().includes(q) || (p.note && p.note.toLowerCase().includes(q)) || (p.phone && p.phone.includes(q));
+      const filtered = debtPersons.filter(p => {
+        const matchQ = !q
+          || (p.name && p.name.toLowerCase().includes(q))
+          || (p.note && p.note.toLowerCase().includes(q))
+          || (p.phone && p.phone.toLowerCase().includes(q));
+        const bal = dvRound2(p.currentBalance || 0);
+        const isSettled = p.status === 'settled' && bal === 0;
         let matchF = true;
-        if (filter === 'owed') matchF = p.role === 'borrower' && p.status !== 'settled';
-        else if (filter === 'iowe') matchF = p.role === 'lender' && p.status !== 'settled';
-        else if (filter === 'settled') matchF = p.status === 'settled';
-        else matchF = true;
+        if (filter === 'owed') matchF = p.role === 'borrower' && !isSettled && bal > 0;
+        else if (filter === 'iowe') matchF = p.role === 'lender' && !isSettled && bal > 0;
+        else if (filter === 'settled') matchF = isSettled;
         return matchQ && matchF;
       });
 
+      // Sort: overdue first -> active by updatedAt/createdAt desc -> settled last
       filtered.sort((a, b) => {
-        const oa = dvDaysOverdue(a.dueDate) > 0 && a.status !== 'settled' ? -1 : 0;
-        const ob = dvDaysOverdue(b.dueDate) > 0 && b.status !== 'settled' ? -1 : 0;
-        return oa - ob || (new Date(b.createdAt) - new Date(a.createdAt));
+        const sa = a.status === 'settled' && dvRound2(a.currentBalance || 0) === 0 ? 1 : 0;
+        const sb = b.status === 'settled' && dvRound2(b.currentBalance || 0) === 0 ? 1 : 0;
+        if (sa !== sb) return sa - sb;
+        const oa = !sa && dvDaysOverdue(a.dueDate) > 0 ? 0 : 1;
+        const ob = !sb && dvDaysOverdue(b.dueDate) > 0 ? 0 : 1;
+        if (oa !== ob) return oa - ob;
+        return (Number(b.updatedAt || b.createdAt) || 0) - (Number(a.updatedAt || a.createdAt) || 0);
       });
 
       const countEl = document.getElementById('dvAccountsCount');
       if (countEl) countEl.textContent = filtered.length + ' account' + (filtered.length !== 1 ? 's' : '');
 
       const listEl = document.getElementById('debtAccountsList');
-      let emptyEl = document.getElementById('debtAccountsEmpty');
+      const emptyEl = document.getElementById('debtAccountsEmpty');
+      const emptyMsgEl = document.getElementById('debtAccountsEmptyMsg');
+      const emptyBtnEl = document.getElementById('debtAccountsEmptyBtn');
+
       if (listEl) {
         if (!filtered.length) {
           listEl.innerHTML = '';
-          if (!emptyEl) {
-            emptyEl = document.createElement('div');
-            emptyEl.className = 'dv-empty';
-            emptyEl.id = 'debtAccountsEmpty';
-            emptyEl.innerHTML = '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#8e887d" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
-              + '<p>No debt accounts yet.<br>Tap <strong>+</strong> to add a person.</p>';
-            if (listEl.parentNode) {
-              listEl.parentNode.insertBefore(emptyEl, listEl);
-            } else {
-              listEl.appendChild(emptyEl);
+          if (emptyEl) {
+            if (emptyMsgEl && emptyBtnEl) {
+              if (debtPersons.length === 0) {
+                emptyMsgEl.innerHTML = 'No debt accounts yet.<br>Add someone to track money lent or borrowed.';
+                emptyBtnEl.textContent = '+ Add Person';
+                emptyBtnEl.onclick = openDebtPersonModal;
+              } else if (q) {
+                emptyMsgEl.innerHTML = 'No accounts match <strong>"' + dvEscape(q) + '"</strong>.';
+                emptyBtnEl.textContent = 'Clear search';
+                emptyBtnEl.onclick = clearDebtSearch;
+              } else {
+                const filterMsg = filter === 'owed'
+                  ? 'No one owes you money right now.'
+                  : filter === 'iowe'
+                    ? 'You don\u2019t owe anyone right now.'
+                    : filter === 'settled'
+                      ? 'No settled accounts yet.'
+                      : 'No matching accounts.';
+                emptyMsgEl.textContent = filterMsg;
+                emptyBtnEl.textContent = 'Show All Accounts';
+                emptyBtnEl.onclick = resetDebtFilters;
+              }
             }
-          } else if (!emptyEl.parentElement || emptyEl.parentElement === listEl) {
-            if (listEl.parentNode) {
-              listEl.parentNode.insertBefore(emptyEl, listEl);
-            } else {
-              listEl.appendChild(emptyEl);
-            }
+            emptyEl.style.display = 'flex';
           }
-          emptyEl.style.display = 'flex';
         } else {
           if (emptyEl) emptyEl.style.display = 'none';
           listEl.innerHTML = filtered.map(p => {
-            const isOwed = p.role === 'borrower';
-            const isSettled = p.status === 'settled';
-            const color = isSettled ? '#8e887d' : (isOwed ? '#52d6a4' : '#ef968e');
-            const overdue = dvDaysOverdue(p.dueDate);
-            const recs = debtRecords.filter(r => r.personId === p.id).length;
-            const extraLent = debtRecords.filter(r => r.personId === p.id && r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
-            const extraBorrowed = debtRecords.filter(r => r.personId === p.id && r.type === 'borrow_more').reduce((s, r) => s + r.amount, 0);
-            const totalPrincipal = (p.initialAmount || 0) + (isOwed ? extraLent : extraBorrowed);
-            const progPct = totalPrincipal > 0 ? Math.min(100, Math.round(((p.repaidAmount || 0) / totalPrincipal) * 100)) : 0;
-            const roleLabel = isSettled ? 'Settled' : (isOwed ? 'Borrower (Owes you)' : 'Creditor (You owe)');
+            const pRecs = debtRecords.filter(r => r.personId === p.id);
+            const m = getDebtPersonMetrics(p, pRecs);
+            const bal = dvRound2(p.currentBalance || 0);
+            const hasActiveBal = bal > 0;
+            const color = m.isSettled
+              ? 'var(--mu)'
+              : (!hasActiveBal ? 'var(--mu)' : (m.isOwed ? 'var(--in)' : 'var(--ex)'));
+            const chipBg = m.isSettled
+              ? 'var(--s2)'
+              : (!hasActiveBal ? 'var(--s2)' : (m.isOwed ? 'var(--ib)' : 'var(--eb)'));
+            const roleBadge = m.isSettled
+              ? 'Settled'
+              : (!hasActiveBal ? 'No balance' : (m.isOwed ? 'Owes you' : 'You owe'));
+            const overdue = !m.isSettled && hasActiveBal ? dvDaysOverdue(p.dueDate) : 0;
+            const dueFormatted = !m.isSettled && hasActiveBal && p.dueDate ? dvFormatDate(p.dueDate) : '';
 
-            return '<div class="dva-card" data-person-id="' + dvEscape(p.id) + '">'
+            const metaParts = [m.recordCount + ' entr' + (m.recordCount === 1 ? 'y' : 'ies')];
+            if (p.phone) metaParts.push(dvEscape(p.phone));
+            else if (p.note) metaParts.push(dvEscape(p.note));
+
+            return '<div class="dva-card" data-person-id="' + dvEscape(p.id) + '" tabindex="0" role="button">'
               + '<div class="dva-card-left">'
-              + '<div class="dva-avatar" style="border-color:' + color + '">' + dvInitials(p.name) + '</div>'
-              + '<div><div class="dva-card-name">' + dvEscape(p.name) + '</div>'
-              + '<div class="dva-card-meta">' + roleLabel + ' &middot; ' + recs + ' record' + (recs !== 1 ? 's' : '') + '</div>'
-              + (p.phone ? '<div class="dva-card-meta">' + dvEscape(p.phone) + '</div>' : '')
+              + '<div class="dva-avatar" style="border-color:' + color + ';background:' + chipBg + ';color:' + color + '">' + dvInitials(p.name) + '</div>'
+              + '<div class="dva-card-info">'
+              + '<div class="dva-card-top">'
+              + '<div class="dva-card-name">' + dvEscape(p.name) + '</div>'
+              + '<span class="dva-role-chip" style="background:' + chipBg + ';color:' + color + '">' + roleBadge + '</span>'
+              + '</div>'
+              + '<div class="dva-card-meta">' + metaParts.join(' \u00b7 ') + '</div>'
               + '</div></div>'
               + '<div class="dva-card-right">'
-              + '<div class="dva-card-bal" style="color:' + color + '">' + (isSettled ? 'Settled' : dvFmt(p.currentBalance)) + '</div>'
-              + (overdue > 0 && !isSettled ? '<div class="dva-overdue-badge">Overdue ' + overdue + 'd</div>' : '')
-              + (!isSettled && totalPrincipal > 0 ? '<div class="dva-mini-prog"><div class="dva-mini-fill" style="width:' + progPct + '%;background:' + color + '"></div></div><div class="dva-mini-pct">' + progPct + '% repaid</div>' : '')
+              + '<div class="dva-card-bal" style="color:' + color + '">' + (m.isSettled ? 'Settled' : dvFmt(bal)) + '</div>'
+              + (overdue > 0 ? '<div class="dva-overdue-badge">Overdue ' + overdue + 'd</div>' : (dueFormatted ? '<div class="dva-due-tag">Due ' + dvEscape(dueFormatted) + '</div>' : ''))
+              + (!m.isSettled && m.sideTotal > 0 ? '<div class="dva-mini-prog"><div class="dva-mini-fill" style="width:' + m.progPct + '%;background:' + color + '"></div></div><div class="dva-mini-pct">' + m.progPct + '% cleared</div>' : '')
               + '</div></div>';
           }).join('');
+
           listEl.querySelectorAll('.dva-card').forEach(card => {
-            card.addEventListener('click', () => {
+            const openFn = () => {
               const pid = card.getAttribute('data-person-id');
               if (pid) openPersonLedger(pid);
+            };
+            card.addEventListener('click', openFn);
+            card.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                openFn();
+              }
             });
           });
         }
       }
 
-      // Render Upcoming Timeline
+      // Render Upcoming Due Dates Timeline
       const tl = document.getElementById('dvTimeline');
+      const upBadge = document.getElementById('dvUpcomingCount');
       if (tl) {
-        const upcomingPersons = debtPersons.filter(p => p.dueDate && p.status !== 'settled').sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        const upcomingPersons = debtPersons
+          .filter(p => dvParseISO(p.dueDate) && p.status !== 'settled' && dvRound2(p.currentBalance || 0) > 0)
+          .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+
+        if (upBadge) {
+          const overdueCnt = upcomingPersons.filter(p => dvDaysOverdue(p.dueDate) > 0).length;
+          upBadge.textContent = String(upcomingPersons.length);
+          upBadge.style.color = overdueCnt > 0 ? 'var(--ex)' : 'var(--mu)';
+          upBadge.style.background = overdueCnt > 0 ? 'var(--eb)' : 'var(--s2)';
+          upBadge.style.borderColor = overdueCnt > 0 ? 'color-mix(in srgb, var(--ex) 32%, transparent)' : 'var(--bd)';
+        }
+
         if (!upcomingPersons.length) {
-          tl.innerHTML = '<div style="font-size:12px;color:var(--mu);padding:12px 16px;font-style:italic;">No upcoming due dates scheduled.</div>';
+          tl.innerHTML = '<div class="dv-tl-empty">No upcoming due dates scheduled.</div>';
         } else {
           tl.innerHTML = upcomingPersons.map(p => {
             const overdue = dvDaysOverdue(p.dueDate);
             const isOwed = p.role === 'borrower';
-            const color = isOwed ? '#52d6a4' : '#ef968e';
+            const color = isOwed ? 'var(--in)' : 'var(--ex)';
             const sign = isOwed ? '+' : '-';
-            const d = new Date(p.dueDate + 'T00:00:00');
-            const dateDay = d.getDate();
-            const dateMonth = d.toLocaleString('en', { month: 'short' }).toUpperCase();
+            const d = dvParseISO(p.dueDate);
+            const dateDay = d ? d.getDate() : '--';
+            const dateMonth = d ? d.toLocaleString('en', { month: 'short' }).toUpperCase() : '';
+            const yrSuffix = (d && d.getFullYear() !== new Date().getFullYear()) ? (' \'' + String(d.getFullYear()).slice(-2)) : '';
             const noteRaw = overdue > 0
-              ? ('Overdue ' + overdue + ' day' + (overdue > 1 ? 's' : '') + (p.note ? ', ' + p.note : ''))
+              ? ('Overdue ' + overdue + ' day' + (overdue > 1 ? 's' : '') + (p.note ? ' \u00b7 ' + p.note : ''))
               : (p.note || (isOwed ? 'Payment expected' : 'Payment due'));
-            const noteText = dvEscape(noteRaw);
 
             return '<div class="dv-tl-item" data-person-id="' + dvEscape(p.id) + '">'
-              + '<div class="dv-tl-date" style="color:' + (overdue > 0 ? '#ef968e' : '#8e887d') + '">'
+              + '<div class="dv-tl-date" style="color:' + (overdue > 0 ? 'var(--ex)' : 'var(--mu)') + '">'
               + '<div class="dv-tl-day">' + dateDay + '</div>'
-              + '<div class="dv-tl-mon">' + dateMonth + '</div>'
+              + '<div class="dv-tl-mon">' + dateMonth + yrSuffix + '</div>'
               + '</div>'
-              + '<div class="dv-tl-line-col"><div class="dv-tl-node" style="background:' + color + ';box-shadow:0 0 8px ' + color + '44;"></div></div>'
+              + '<div class="dv-tl-line-col"><div class="dv-tl-node" style="background:' + color + ';box-shadow:0 0 0 3px color-mix(in srgb, ' + color + ' 22%, transparent);"></div></div>'
               + '<div class="dv-tl-card">'
               + '<div class="dv-tl-card-top">'
               + '<div><div class="dv-tl-name">' + dvEscape(p.name) + '</div>'
-              + '<div class="dv-tl-note">' + noteText + '</div></div>'
+              + '<div class="dv-tl-note">' + dvEscape(noteRaw) + '</div></div>'
               + '<div class="dv-tl-amount" style="color:' + color + '">' + sign + dvFmt(p.currentBalance)
               + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></div>'
               + '</div></div></div>';
           }).join('');
+
           tl.querySelectorAll('.dv-tl-item').forEach(item => {
             item.addEventListener('click', () => {
               const pid = item.getAttribute('data-person-id');
@@ -13603,7 +14236,10 @@
     }
 
     function openPersonLedger(personId) {
+      const exists = debtPersons.find(x => x.id === personId);
+      if (!exists) return;
       _currentDebtPersonId = personId;
+      closePersonMenu();
       renderPersonLedger(personId);
       const dpv = document.getElementById('debtPersonView');
       const ddv = document.getElementById('debtDashView');
@@ -13611,105 +14247,222 @@
       if (ddv) ddv.style.display = 'none';
       window.scrollTo(0, 0);
     }
+
     function closePersonLedger() {
       backToDebtMain();
     }
 
+    function formatDebtRecTitle(r, isOwed) {
+      if (r.type === 'repayment') {
+        const dir = r.direction || (isOwed ? 'received' : 'paid');
+        return dir === 'received' ? 'Repayment Received' : 'Repayment Made';
+      }
+      if (r.type === 'lend_more') return 'Given';
+      if (r.type === 'borrow_more') return 'Taken';
+      if (r.type === 'settlement') return 'Account Settled';
+      if (r.type === 'initial_loan') return 'Initial Loan Given';
+      if (r.type === 'initial_borrow') return 'Initial Loan Taken';
+      return 'Transaction';
+    }
+
     function renderPersonLedger(personId) {
       const p = debtPersons.find(x => x.id === personId);
-      if (!p) return;
-      const isOwed = p.role === 'borrower';
-      const isSettled = p.status === 'settled';
+      if (!p) {
+        backToDebtMain();
+        return;
+      }
+
+      const rawRecs = debtRecords.filter(r => r.personId === personId);
+      const records = sortDebtRecordsAsc(rawRecs).reverse(); // Newest first
+      const m = getDebtPersonMetrics(p, rawRecs);
+      const bal = dvRound2(p.currentBalance || 0);
       const hasRole = Boolean(p.role);
-      const color = isSettled ? '#8e887d' : (!hasRole ? '#8e887d' : (isOwed ? '#52d6a4' : '#ef968e'));
-      const records = debtRecords.filter(r => r.personId === personId).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      const overdue = dvDaysOverdue(p.dueDate);
-      const extraLent = debtRecords.filter(r => r.personId === personId && r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
-      const extraBorrowed = debtRecords.filter(r => r.personId === personId && r.type === 'borrow_more').reduce((s, r) => s + r.amount, 0);
-      const totalPrincipal = (p.initialAmount || 0) + (isOwed ? extraLent : extraBorrowed);
-      const progPct = totalPrincipal > 0 ? Math.min(100, Math.round(((p.repaidAmount || 0) / totalPrincipal) * 100)) : 0;
+      const color = m.isSettled
+        ? 'var(--mu)'
+        : ((!hasRole || bal === 0) ? 'var(--mu)' : (m.isOwed ? 'var(--in)' : 'var(--ex)'));
+      const chipBg = m.isSettled
+        ? 'var(--s2)'
+        : ((!hasRole || bal === 0) ? 'var(--s2)' : (m.isOwed ? 'var(--ib)' : 'var(--eb)'));
+      const overdue = !m.isSettled && bal > 0 ? dvDaysOverdue(p.dueDate) : 0;
 
       const avEl = document.getElementById('dpvAvatar');
       if (avEl) {
         avEl.textContent = dvInitials(p.name);
         avEl.style.borderColor = color;
+        avEl.style.background = chipBg;
+        avEl.style.color = color;
       }
+
       const nameEl = document.getElementById('dpvName');
       if (nameEl) nameEl.textContent = p.name;
+
       const roleEl = document.getElementById('dpvRole');
       if (roleEl) {
-        const roleText = isSettled ? 'Settled' : (!hasRole || !records.length ? 'Personal Account' : (isOwed ? 'Debtor (Owes you)' : 'Creditor (You owe)'));
-        roleEl.textContent = roleText + ' · ' + records.length + ' record' + (records.length !== 1 ? 's' : '');
+        const roleText = m.isSettled
+          ? 'Settled'
+          : (!hasRole || bal === 0 ? 'Personal Account' : (m.isOwed ? 'Debtor (Owes you)' : 'Creditor (You owe)'));
+        roleEl.textContent = roleText + ' \u00b7 ' + records.length + ' entr' + (records.length === 1 ? 'y' : 'ies');
       }
+
+      const contactChip = document.getElementById('dpvContactChip');
+      if (contactChip) {
+        if (p.phone) {
+          contactChip.textContent = p.phone;
+          contactChip.style.display = 'inline-flex';
+        } else {
+          contactChip.style.display = 'none';
+        }
+      }
+
+      const dueChip = document.getElementById('dpvDueChip');
+      if (dueChip) {
+        if (p.dueDate && dvParseISO(p.dueDate) && !m.isSettled && bal > 0) {
+          dueChip.textContent = overdue > 0
+            ? ('Overdue ' + overdue + 'd')
+            : ('Due ' + dvFormatDate(p.dueDate));
+          dueChip.classList.toggle('is-overdue', overdue > 0);
+          dueChip.style.display = 'inline-flex';
+        } else {
+          dueChip.style.display = 'none';
+        }
+      }
+
+      const noteEl = document.getElementById('dpvPersonNote');
+      if (noteEl) {
+        if (p.note) {
+          noteEl.textContent = p.note;
+          noteEl.style.display = 'block';
+        } else {
+          noteEl.style.display = 'none';
+        }
+      }
+
+      const settleMenuBtn = document.getElementById('dpvMenuSettleBtn');
+      if (settleMenuBtn) {
+        settleMenuBtn.style.display = (!m.isSettled && bal > 0) ? 'flex' : 'none';
+      }
+
       const subEl = document.getElementById('dpvBalanceSub');
       if (subEl) {
-        subEl.textContent = isSettled ? 'All settled up' : (!hasRole || !records.length ? 'No active debt' : (isOwed ? p.name + ' owes you' : 'You owe ' + p.name));
+        subEl.textContent = m.isSettled
+          ? 'All settled up'
+          : (!hasRole || bal === 0 ? 'No active balance' : (m.isOwed ? p.name + ' owes you' : 'You owe ' + p.name));
       }
+
       const balEl = document.getElementById('dpvBalanceAmount');
       if (balEl) {
-        balEl.textContent = isSettled ? '₹0 (Settled)' : dvFmt(p.currentBalance || 0);
-        balEl.style.color = color;
+        balEl.textContent = m.isSettled ? dvFmt(0) + ' (Settled)' : dvFmt(bal);
+        balEl.style.color = m.isSettled ? 'var(--in)' : color;
       }
+
       const ob = document.getElementById('dpvOverdueBadge');
       if (ob) {
-        if (overdue > 0 && !isSettled) {
+        if (overdue > 0) {
           ob.style.display = 'inline-block';
           ob.textContent = 'Overdue ' + overdue + ' day' + (overdue > 1 ? 's' : '');
-          ob.style.background = 'rgba(239,150,142,0.12)';
-          ob.style.color = '#ef968e';
-        } else if (isSettled) {
+          ob.style.background = 'var(--eb)';
+          ob.style.borderColor = 'color-mix(in srgb, var(--ex) 35%, transparent)';
+          ob.style.color = 'var(--ex)';
+        } else if (m.isSettled) {
           ob.style.display = 'inline-block';
           ob.textContent = 'Settled';
-          ob.style.background = 'rgba(82,214,164,0.12)';
-          ob.style.color = '#52d6a4';
+          ob.style.background = 'var(--ib)';
+          ob.style.borderColor = 'color-mix(in srgb, var(--in) 35%, transparent)';
+          ob.style.color = 'var(--in)';
         } else {
           ob.style.display = 'none';
         }
       }
+
       const fillEl = document.getElementById('dpvProgressFill');
-      if (fillEl) fillEl.style.width = progPct + '%';
+      if (fillEl) {
+        fillEl.style.width = m.progPct + '%';
+        fillEl.style.background = m.isSettled ? 'var(--in)' : 'var(--ac)';
+      }
+
       const repaidEl = document.getElementById('dpvRepaidLabel');
-      if (repaidEl) repaidEl.textContent = 'Repaid ' + dvFmt(p.repaidAmount || 0);
+      if (repaidEl) repaidEl.textContent = 'Cleared ' + dvFmt(m.cleared) + (m.sideTotal > 0 ? ' (' + m.progPct + '%)' : '');
       const totalEl = document.getElementById('dpvTotalLabel');
-      if (totalEl) totalEl.textContent = (isOwed ? 'Total Lent ' : 'Total Borrowed ') + dvFmt(totalPrincipal);
-      const lmBtn = document.getElementById('dpvLendMoreBtn');
-      if (lmBtn) lmBtn.textContent = isOwed ? 'Lend more' : 'Borrow more';
+      if (totalEl) totalEl.textContent = (m.isOwed ? 'Total Given ' : 'Total Taken ') + dvFmt(m.sideTotal);
+
+      const recPayBtn = document.getElementById('dpvRecordPayBtn');
+      if (recPayBtn) {
+        recPayBtn.disabled = bal <= 0;
+        recPayBtn.title = bal <= 0 ? 'No outstanding balance to record payment against' : 'Record a repayment';
+      }
+
+      const sortEl = document.getElementById('dpvRecordsSort');
+      if (sortEl) sortEl.textContent = records.length ? (records.length + ' entr' + (records.length === 1 ? 'y' : 'ies') + ' \u00b7 Newest first') : 'Newest first';
 
       const rl = document.getElementById('dpvRecordsList');
       if (!rl) return;
       if (!records.length) {
-        rl.innerHTML = '<div class="dv-empty" style="display:flex;padding:24px 16px"><p>No transactions yet.</p></div>';
+        rl.innerHTML = '<div class="dv-empty" style="padding:28px 16px"><p>No transactions yet. Tap <strong>+ Add Transaction</strong> above to get started.</p></div>';
         return;
       }
+
       rl.innerHTML = records.map(r => {
-        const isInward = r.type === 'repayment';
+        const isRepay = r.type === 'repayment';
         const isSettlementRec = r.type === 'settlement';
-        const rColor = isInward ? '#52d6a4' : isSettlementRec ? '#52d6a4' : '#e7b849';
-        const rSign = isInward ? '+' : '';
-        const arrowInward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>';
-        const arrowOutward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
-        const checkIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>';
-        const rIcon = isSettlementRec ? checkIcon : (isInward ? arrowInward : arrowOutward);
-        const rTitle = r.type === 'repayment' ? (isOwed ? '💰 Repayment received' : '💸 Repayment paid')
-          : r.type === 'lend_more' ? '📤 Given — ' + dvEscape(r.note || 'additional')
-            : r.type === 'borrow_more' ? '📥 Taken — ' + dvEscape(r.note || 'additional')
-              : r.type === 'settlement' ? '✅ Settled — marked as cleared'
-                : dvEscape(r.note || (isOwed ? '📤 Account opened — initial loan given' : '📥 Account opened — initial loan taken'));
-        const modeLabel = r.mode && r.mode !== 'other' ? (' · ' + dvEscape(r.mode.toUpperCase())) : '';
+        const isGiven = r.type === 'lend_more' || r.type === 'initial_loan';
+        const rColor = (isRepay || isSettlementRec)
+          ? 'var(--in)'
+          : (isGiven ? 'var(--ac)' : 'var(--ex)');
+        const rBg = (isRepay || isSettlementRec)
+          ? 'var(--ib)'
+          : (isGiven ? 'var(--ag)' : 'var(--eb)');
+        const repDir = r.direction || (m.isOwed ? 'received' : 'paid');
+        const rSign = (isRepay && repDir === 'received') ? '+' : '';
+
+        const arrowInward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="17" y1="7" x2="7" y2="17"/><polyline points="17 17 7 17 7 7"/></svg>';
+        const arrowOutward = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>';
+        const checkIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="' + rColor + '" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        const rIcon = isSettlementRec ? checkIcon : (isRepay ? arrowInward : arrowOutward);
+
+        const rTitle = formatDebtRecTitle(r, m.isOwed);
+        const modePill = r.mode && r.mode !== 'other' ? ('<span class="dpv-mode-pill">' + dvEscape(r.mode) + '</span>') : '';
         const isInitial = r.type === 'initial_loan' || r.type === 'initial_borrow';
-        const delBtn = isInitial ? '' : '<button class="dpv-del-rec-btn" data-record-id="' + dvEscape(r.id) + '" title="Delete this entry">&#x2715;</button>';
-        // Activity log: when added by user (createdAt) vs the transaction date
+
+        const editBtn = (isInitial || isSettlementRec) ? '' : (
+          '<button type="button" class="dpv-rec-act-btn dpv-edit-rec-btn" data-record-id="' + dvEscape(r.id) + '" title="Edit entry" aria-label="Edit entry">'
+          + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+          + '</button>'
+        );
+        const delBtn = isInitial ? '' : (
+          '<button type="button" class="dpv-rec-act-btn dpv-del-rec-btn" data-record-id="' + dvEscape(r.id) + '" title="Delete entry" aria-label="Delete entry">'
+          + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>'
+          + '</button>'
+        );
+
         const addedAt = r.createdAt ? new Date(r.createdAt) : null;
-        const addedStr = addedAt ? ('Logged ' + addedAt.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })) : '';
+        const addedStr = (addedAt && !isNaN(addedAt.getTime()))
+          ? ('Logged ' + addedAt.toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }))
+          : '';
 
         return '<div class="dpv-record-item">'
-          + '<div class="dpv-record-icon" style="background:' + rColor + '18;border:1px solid ' + rColor + '30">' + rIcon + '</div>'
-          + '<div class="dpv-record-mid"><div class="dpv-record-title">' + rTitle + '</div><div class="dpv-record-date">Date: ' + dvFormatDate(r.date) + modeLabel + (r.note && r.type === 'repayment' ? ' · ' + dvEscape(r.note) : '') + '</div>'
-          + (addedStr ? '<div class="dpv-record-added">' + addedStr + '</div>' : '') + '</div>'
-          + '<div class="dpv-record-right"><div class="dpv-record-amt" style="color:' + rColor + '">' + rSign + dvFmt(r.amount) + '</div><div class="dpv-record-bal">Bal ' + dvFmt(r.runningBalance) + '</div>'
-          + delBtn
-          + '</div></div>';
+          + '<div class="dpv-record-icon" style="background:' + rBg + ';border:1px solid color-mix(in srgb, ' + rColor + ' 28%, transparent)">' + rIcon + '</div>'
+          + '<div class="dpv-record-mid">'
+          + '<div class="dpv-record-title-row"><span class="dpv-record-title">' + dvEscape(rTitle) + '</span>' + modePill + '</div>'
+          + (r.note ? '<div class="dpv-record-note">' + dvEscape(r.note) + '</div>' : '')
+          + '<div class="dpv-record-date">' + dvEscape(dvFormatDate(r.date)) + '</div>'
+          + (addedStr ? '<div class="dpv-record-added">' + dvEscape(addedStr) + '</div>' : '')
+          + '</div>'
+          + '<div class="dpv-record-right">'
+          + '<div class="dpv-record-amt" style="color:' + rColor + '">' + rSign + dvFmt(r.amount) + '</div>'
+          + '<div class="dpv-record-bal">Bal ' + dvFmt(r.runningBalance) + '</div>'
+          + '</div>'
+          + ((editBtn || delBtn) ? '<div class="dpv-record-actions">' + editBtn + delBtn + '</div>' : '')
+          + '</div>';
       }).join('');
+
+      rl.querySelectorAll('.dpv-edit-rec-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const rid = btn.getAttribute('data-record-id');
+          if (rid) editDebtRecord(rid);
+        });
+      });
+
       rl.querySelectorAll('.dpv-del-rec-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -13719,128 +14472,501 @@
       });
     }
 
+    function closePersonMenu() {
+      const m = document.getElementById('dpvContextMenu');
+      const btn = document.getElementById('dpvMenuBtn');
+      if (m) m.style.display = 'none';
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+
     function togglePersonMenu() {
       const m = document.getElementById('dpvContextMenu');
-      if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+      const btn = document.getElementById('dpvMenuBtn');
+      if (!m) return;
+      const open = m.style.display !== 'block';
+      m.style.display = open ? 'block' : 'none';
+      if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
+
     document.addEventListener('click', e => {
       const m = document.getElementById('dpvContextMenu');
       const btn = document.getElementById('dpvMenuBtn');
-      if (m && m.style.display === 'block' && btn && !m.contains(e.target) && !btn.contains(e.target)) m.style.display = 'none';
+      if (m && m.style.display === 'block' && btn && !m.contains(e.target) && !btn.contains(e.target)) {
+        closePersonMenu();
+      }
     });
+
+    function copyDebtContact() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p || !p.phone) return;
+      dvCopyText(p.phone, 'Copied "' + p.phone + '"');
+    }
+
+    function dvParseValidAmount(inputId, errId) {
+      const inp = document.getElementById(inputId);
+      const raw = inp ? parseFloat(inp.value) : NaN;
+      if (!Number.isFinite(raw) || raw <= 0) {
+        setDebtFieldError(inputId, errId, 'Enter an amount greater than 0.');
+        return null;
+      }
+      if (raw > 1e11) {
+        setDebtFieldError(inputId, errId, 'Enter a smaller valid amount.');
+        return null;
+      }
+      const amt = dvRound2(raw);
+      if (amt <= 0) {
+        setDebtFieldError(inputId, errId, 'Minimum valid amount is \u20b90.01.');
+        return null;
+      }
+      return amt;
+    }
+
+    function clearDebtFieldError(inputId, errId) {
+      const inp = document.getElementById(inputId);
+      const err = document.getElementById(errId);
+      if (inp) inp.classList.remove('is-invalid');
+      if (err) {
+        err.textContent = '';
+        err.style.display = 'none';
+      }
+    }
+
+    function setDebtFieldError(inputId, errId, msg) {
+      const inp = document.getElementById(inputId);
+      const err = document.getElementById(errId);
+      if (inp) {
+        inp.classList.add('is-invalid');
+        inp.focus();
+      }
+      if (err) {
+        err.textContent = msg;
+        err.style.display = 'block';
+      }
+    }
+
+    function openDebtModal(modalId, focusId) {
+      const el = document.getElementById(modalId);
+      if (!el) return;
+      el.classList.add('op');
+      if (focusId) {
+        setTimeout(() => {
+          const f = document.getElementById(focusId);
+          if (f) f.focus();
+        }, 60);
+      }
+    }
+
+    function closeDebtModal(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.remove('op');
+    }
+
+    function openDebtPersonModal() {
+      clearDebtFieldError('debtPersonName', 'debtPersonNameErr');
+      document.getElementById('debtPersonModalTitle').textContent = 'Add Person';
+      document.getElementById('debtPersonId').value = '';
+      document.getElementById('debtPersonName').value = '';
+      document.getElementById('debtPersonPhone').value = '';
+      document.getElementById('debtPersonDueDate').value = '';
+      document.getElementById('debtPersonNote').value = '';
+      const extras = document.getElementById('debtPersonEditExtras');
+      if (extras) extras.style.display = 'none';
+      document.getElementById('debtPersonSaveBtn').textContent = 'Create Account';
+      openDebtModal('debtPersonModal', 'debtPersonName');
+    }
 
     function editDebtPerson() {
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
+      clearDebtFieldError('debtPersonName', 'debtPersonNameErr');
       document.getElementById('debtPersonModalTitle').textContent = 'Edit Person';
       document.getElementById('debtPersonId').value = p.id;
       document.getElementById('debtPersonName').value = p.name;
       document.getElementById('debtPersonPhone').value = p.phone || '';
+      document.getElementById('debtPersonDueDate').value = p.dueDate || '';
+      document.getElementById('debtPersonNote').value = p.note || '';
+      const extras = document.getElementById('debtPersonEditExtras');
+      if (extras) extras.style.display = 'grid';
       document.getElementById('debtPersonSaveBtn').textContent = 'Save Changes';
-      document.getElementById('debtPersonModal').style.display = 'flex';
+      openDebtModal('debtPersonModal', 'debtPersonName');
     }
 
-    let _settlingDebtPerson = false;
+    function closeDebtPersonModal() {
+      closeDebtModal('debtPersonModal');
+    }
 
-    async function settleDebtPerson() {
+    function setDebtRole(r) {
+      _debtRole = r;
+    }
+
+    async function saveDebtPerson() {
+      if (_savingDebtPerson) return;
+      clearDebtFieldError('debtPersonName', 'debtPersonNameErr');
+
+      const name = document.getElementById('debtPersonName').value.trim();
+      if (!name) {
+        setDebtFieldError('debtPersonName', 'debtPersonNameErr', 'Please enter a name.');
+        return;
+      }
+
+      const existingId = document.getElementById('debtPersonId').value;
+      const dupCheck = debtPersons.find(x => x.id !== existingId && (x.name || '').toLowerCase() === name.toLowerCase());
+      if (dupCheck) {
+        setDebtFieldError('debtPersonName', 'debtPersonNameErr', 'An account for "' + name + '" already exists.');
+        return;
+      }
+
+      const phone = document.getElementById('debtPersonPhone').value.trim();
+      const dueDate = existingId ? (document.getElementById('debtPersonDueDate').value || '') : '';
+      const note = existingId ? document.getElementById('debtPersonNote').value.trim() : '';
+
+      const btn = document.getElementById('debtPersonSaveBtn');
+      _savingDebtPerson = true;
+      if (btn) btn.disabled = true;
+
+      try {
+        let targetPerson = null;
+        if (existingId) {
+          const idx = debtPersons.findIndex(x => x.id === existingId);
+          if (idx >= 0) {
+            debtPersons[idx].name = name;
+            debtPersons[idx].phone = phone;
+            debtPersons[idx].dueDate = dueDate;
+            debtPersons[idx].note = note;
+            debtPersons[idx].updatedAt = Date.now();
+            targetPerson = debtPersons[idx];
+          }
+        } else {
+          targetPerson = {
+            id: dvId(),
+            name,
+            role: '',
+            initialAmount: 0,
+            currentBalance: 0,
+            repaidAmount: 0,
+            dueDate,
+            note,
+            phone,
+            status: 'active',
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          };
+          debtPersons.push(targetPerson);
+        }
+
+        if (targetPerson) {
+          saveDebtLocal();
+          const synced = await syncDebtPersonCloud(targetPerson);
+          closeDebtPersonModal();
+          refreshDebtViews();
+          checkDebtOverdueBadge();
+          dvToast(
+            existingId
+              ? (synced ? 'Account updated' : 'Updated locally \u2014 will sync when online')
+              : (synced ? 'Added ' + name : 'Added locally \u2014 will sync when online'),
+            'ok'
+          );
+        }
+      } finally {
+        _savingDebtPerson = false;
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    function settleDebtPerson() {
       if (_settlingDebtPerson) return;
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
-      if (p.status === 'settled' && (!p.currentBalance || p.currentBalance <= 0) && !p.settlementSyncPending) {
-        alert(p.name + ' is already completely settled.');
+      const bal = dvRound2(p.currentBalance || 0);
+      if ((p.status === 'settled' && bal === 0) || bal <= 0) {
+        dvToast(p.name + ' is already settled up.', 'ok');
         return;
       }
+
+      const directionText = p.role === 'borrower'
+        ? (p.name + ' owes you ' + dvFmt(bal))
+        : ('You owe ' + p.name + ' ' + dvFmt(bal));
+
+      showConfirm(
+        'Mark as Settled',
+        'This will log a full settlement entry of ' + dvFmt(bal) + ' and clear the remaining balance for ' + p.name + '.',
+        () => _executeSettleDebtPerson(p.id),
+        false,
+        {
+          confirmLabel: 'Mark Settled',
+          icon: 'check',
+          metaText: directionText
+        }
+      );
+    }
+
+    async function _executeSettleDebtPerson(personId) {
+      if (_settlingDebtPerson) return;
+      const p = debtPersons.find(x => x.id === personId);
+      if (!p) return;
+      const settleAmount = dvRound2(p.currentBalance || 0);
+      if (settleAmount <= 0) return;
+
       _settlingDebtPerson = true;
       try {
-        if (!p.settlementSyncPending && !confirm('Mark ' + p.name + ' as completely settled?')) {
-          _settlingDebtPerson = false;
-          return;
-        }
-        const settleAmount = p.currentBalance || 0;
-        // Establish whether a settlement repayment record was already created/accepted for this settlement attempt
-        let rec = p.settlementRecordId ? debtRecords.find(r => r.id === p.settlementRecordId) : null;
+        const settleRecId = 'settle_' + p.id + '_' + Date.now();
+        const rec = {
+          id: settleRecId,
+          personId: p.id,
+          personName: p.name,
+          type: 'repayment',
+          direction: p.role === 'lender' ? 'paid' : 'received',
+          amount: settleAmount,
+          date: dvTodayISO(),
+          note: 'Full settlement',
+          mode: 'other',
+          runningBalance: 0,
+          createdAt: Date.now()
+        };
+        debtRecords.push(rec);
 
-        if (!rec && settleAmount > 0) {
-          // Deterministic ID for this settlement state ensures idempotency in Firestore and local array
-          const settleRecId = 'settle_' + p.id + '_' + (p.updatedAt || p.createdAt || Date.now());
-          rec = {
-            id: settleRecId,
-            personId: p.id,
-            personName: p.name,
-            type: 'repayment',
-            amount: settleAmount,
-            date: new Date().toISOString().split('T')[0],
-            note: 'Full settlement',
-            mode: 'other',
-            runningBalance: 0,
-            createdAt: Date.now()
-          };
-          debtRecords.push(rec);
-          p.settlementRecordId = settleRecId;
-          p.repaidAmount = (p.repaidAmount || 0) + settleAmount;
-        } else if (rec) {
-          p.settlementRecordId = rec.id;
-          if (p.currentBalance > 0) {
-            p.repaidAmount = (p.repaidAmount || 0) + p.currentBalance;
+        const { modifiedRecs } = recomputeDebtPersonState(p.id);
+        saveDebtLocal();
+
+        let allSynced = await syncDebtRecordCloud(rec);
+        for (const mr of modifiedRecs) {
+          if (mr.id !== rec.id) {
+            const ok = await syncDebtRecordCloud(mr);
+            if (!ok) allSynced = false;
           }
         }
+        const pOk = await syncDebtPersonCloud(p);
+        if (!pOk) allSynced = false;
 
-        p.status = 'settled';
-        p.currentBalance = 0;
-        p.updatedAt = Date.now();
-        delete p.settlementSyncPending;
-        saveDebtLocal();
-
-        if (rec) {
-          await saveDebtRecordCloud(rec);
-        }
-        await saveDebtPersonCloud(p);
-
-        renderPersonLedger(p.id);
         refreshDebtViews();
         checkDebtOverdueBadge();
-      } catch (err) {
-        console.warn('[Debt] Settlement cloud write failed:', err);
-        p.settlementSyncPending = true;
-        // Recover local state and debtRecords to a completely consistent state
-        const pRecs = debtRecords.filter(r => r.personId === p.id);
-        const extraLent = pRecs.filter(r => r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
-        const extraBorrowed = pRecs.filter(r => r.type === 'borrow_more').reduce((s, r) => s + r.amount, 0);
-        const repaid = pRecs.filter(r => r.type === 'repayment').reduce((s, r) => s + r.amount, 0);
-        const isOwed = p.role === 'borrower';
-        const total = (p.initialAmount || 0) + (isOwed ? extraLent : extraBorrowed);
-        p.repaidAmount = repaid;
-        p.currentBalance = Math.max(0, total - repaid);
-        if (p.currentBalance === 0 && p.repaidAmount > 0) p.status = 'settled';
-        else if (p.currentBalance > 0 && p.status === 'settled') p.status = 'active';
-        saveDebtLocal();
-        renderPersonLedger(p.id);
-        refreshDebtViews();
-        checkDebtOverdueBadge();
-        alert('Settlement saved locally, but cloud sync encountered an error: ' + (err.message || 'Network issue') + '. Your records are consistent; retrying will safely sync without duplicate repayments.');
+        dvToast(
+          allSynced ? p.name + ' marked as settled' : 'Settled locally \u2014 will sync when online',
+          'ok'
+        );
       } finally {
         _settlingDebtPerson = false;
       }
     }
 
-    async function deleteDebtPerson() {
+    function deleteDebtPerson() {
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
-      if (!confirm("Delete " + p.name + "'s account and all ledger records? This cannot be undone.")) return;
       const recs = debtRecords.filter(r => r.personId === p.id);
-      for (const r of recs) {
-        await deleteDebtRecordCloud(r.id);
-      }
-      debtRecords = debtRecords.filter(r => r.personId !== p.id);
-      await deleteDebtPersonCloud(p.id);
-      debtPersons = debtPersons.filter(x => x.id !== p.id);
+      const bal = dvRound2(p.currentBalance || 0);
+      const metaParts = [p.name];
+      if (bal > 0) metaParts.push('Balance: ' + dvFmt(bal));
+      metaParts.push(recs.length + ' entr' + (recs.length === 1 ? 'y' : 'ies'));
+
+      showConfirm(
+        'Delete Account',
+        'Permanently delete ' + p.name + '\u2019s account and all associated ledger entries? This action cannot be undone.',
+        () => _executeDeleteDebtPerson(p.id),
+        true,
+        {
+          confirmLabel: 'Delete Account',
+          icon: 'trash',
+          metaText: metaParts.join(' \u00b7 ')
+        }
+      );
+    }
+
+    async function _executeDeleteDebtPerson(personId) {
+      const p = debtPersons.find(x => x.id === personId);
+      if (!p) return;
+      const recs = debtRecords.filter(r => r.personId === personId);
+
+      debtRecords = debtRecords.filter(r => r.personId !== personId);
+      debtPersons = debtPersons.filter(x => x.id !== personId);
       saveDebtLocal();
+
       backToDebtMain();
       refreshDebtViews();
       checkDebtOverdueBadge();
+
+      let allSynced = true;
+      for (const r of recs) {
+        const ok = await removeDebtRecordCloud(r.id);
+        if (!ok) allSynced = false;
+      }
+      const pOk = await removeDebtPersonCloud(personId);
+      if (!pOk) allSynced = false;
+
+      dvToast(
+        allSynced ? ('Deleted ' + p.name + '\u2019s account') : 'Deleted locally \u2014 will sync when online',
+        'ok'
+      );
     }
 
-    let _lendTxType = 'give';
+    function setPayMode(m) {
+      _payMode = m;
+      const u = document.getElementById('payModeUPI');
+      const c = document.getElementById('payModeCash');
+      if (u) u.classList.toggle('dv-role-act', m === 'upi');
+      if (c) c.classList.toggle('dv-role-act', m === 'cash');
+    }
+
+    function fillFullDebtPayment() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      const bal = dvRound2(p.currentBalance || 0);
+      if (bal > 0) {
+        const inp = document.getElementById('paymentAmount');
+        if (inp) {
+          inp.value = String(bal);
+          clearDebtFieldError('paymentAmount', 'debtPaymentAmtErr');
+        }
+      }
+    }
+
+    function openRecordPaymentModal(editRecordId) {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      clearDebtFieldError('paymentAmount', 'debtPaymentAmtErr');
+
+      const rec = editRecordId ? debtRecords.find(r => r.id === editRecordId && r.personId === p.id) : null;
+      if (!rec && dvRound2(p.currentBalance || 0) <= 0) {
+        dvToast('No outstanding balance \u2014 use + Add Transaction instead.', 'ok');
+        return;
+      }
+
+      document.getElementById('debtPaymentRecordId').value = rec ? rec.id : '';
+      const dir = rec ? (rec.direction || (p.role === 'lender' ? 'paid' : 'received')) : (p.role === 'lender' ? 'paid' : 'received');
+      document.getElementById('debtPaymentModalTitle').textContent = rec
+        ? (dir === 'received' ? 'Edit Repayment Received' : 'Edit Repayment Made')
+        : (dir === 'received' ? 'Record Repayment Received' : 'Record Repayment Made');
+      document.getElementById('debtPaymentSaveBtn').textContent = rec ? 'Update Payment' : 'Record Payment';
+
+      document.getElementById('paymentAmount').value = rec ? String(rec.amount) : '';
+      document.getElementById('paymentDate').value = (rec && rec.date) ? rec.date : dvTodayISO();
+      document.getElementById('paymentNote').value = rec ? (rec.note || '') : '';
+      document.getElementById('paymentSyncFlux').checked = false;
+      setPayMode(rec && rec.mode === 'cash' ? 'cash' : 'upi');
+
+      const fullBtn = document.getElementById('paymentFullBtn');
+      const bal = dvRound2(p.currentBalance || 0);
+      if (fullBtn) {
+        if (!rec && bal > 0) {
+          fullBtn.textContent = 'Full (' + dvFmt(bal) + ')';
+          fullBtn.style.display = 'inline-block';
+        } else {
+          fullBtn.style.display = 'none';
+        }
+      }
+
+      const syncWrap = document.getElementById('paymentSyncFluxWrap');
+      const syncHint = document.getElementById('paymentSyncHint');
+      if (syncWrap) syncWrap.style.display = rec ? 'none' : 'flex';
+      if (syncHint) syncHint.textContent = userId ? '' : '(requires Sign In)';
+
+      openDebtModal('debtPaymentModal', 'paymentAmount');
+    }
+
+    function closePaymentModal() {
+      closeDebtModal('debtPaymentModal');
+    }
+
+    async function savePayment() {
+      if (_savingDebtPayment) return;
+      clearDebtFieldError('paymentAmount', 'debtPaymentAmtErr');
+
+      const amt = dvParseValidAmount('paymentAmount', 'debtPaymentAmtErr');
+      if (amt === null) return;
+
+      const pid = _currentDebtPersonId;
+      const p = debtPersons.find(x => x.id === pid);
+      if (!p) return;
+
+      const editId = document.getElementById('debtPaymentRecordId').value;
+      const dateVal = document.getElementById('paymentDate').value || dvTodayISO();
+      const noteVal = document.getElementById('paymentNote').value.trim();
+
+      const btn = document.getElementById('debtPaymentSaveBtn');
+      _savingDebtPayment = true;
+      if (btn) btn.disabled = true;
+
+      try {
+        let targetRec = null;
+        if (editId) {
+          targetRec = debtRecords.find(r => r.id === editId && r.personId === pid);
+          if (!targetRec) return;
+          targetRec.amount = amt;
+          targetRec.date = dateVal;
+          targetRec.note = noteVal;
+          targetRec.mode = _payMode;
+          if (!targetRec.direction) {
+            targetRec.direction = p.role === 'lender' ? 'paid' : 'received';
+          }
+        } else {
+          const dir = p.role === 'lender' ? 'paid' : 'received';
+          targetRec = {
+            id: dvId(),
+            personId: pid,
+            personName: p.name,
+            type: 'repayment',
+            direction: dir,
+            amount: amt,
+            date: dateVal,
+            note: noteVal,
+            mode: _payMode,
+            runningBalance: 0,
+            createdAt: Date.now()
+          };
+          debtRecords.push(targetRec);
+        }
+
+        const { modifiedRecs } = recomputeDebtPersonState(pid);
+        saveDebtLocal();
+
+        const recToSyncMap = new Map();
+        recToSyncMap.set(targetRec.id, targetRec);
+        modifiedRecs.forEach(r => recToSyncMap.set(r.id, r));
+
+        let allSynced = true;
+        for (const r of recToSyncMap.values()) {
+          const ok = await syncDebtRecordCloud(r);
+          if (!ok) allSynced = false;
+        }
+        const pOk = await syncDebtPersonCloud(p);
+        if (!pOk) allSynced = false;
+
+        if (!editId && document.getElementById('paymentSyncFlux').checked) {
+          if (userId && typeof addDoc !== 'undefined') {
+            const txDir = targetRec.direction === 'received' ? 'income' : 'expense';
+            addDoc(collection(db, 'users', userId, 'transactions'), {
+              desc: (txDir === 'income' ? 'Repayment from ' : 'Repayment to ') + p.name,
+              amount: amt,
+              type: txDir,
+              cat: 'Debt Repayment',
+              mode: _payMode === 'cash' ? 'offline' : 'online',
+              date: targetRec.date,
+              createdAt: Date.now()
+            }).catch(() => { });
+          } else {
+            dvToast('Saved repayment, but Flux transaction sync requires Sign In.', 'er');
+          }
+        }
+
+        closePaymentModal();
+        refreshDebtViews();
+        checkDebtOverdueBadge();
+
+        if (!editId && p.status === 'settled' && p.currentBalance === 0) {
+          dvToast(allSynced ? 'Payment recorded \u00b7 Account settled!' : 'Settled locally \u2014 will sync when online', 'ok');
+        } else {
+          dvToast(
+            editId
+              ? (allSynced ? 'Payment updated' : 'Updated locally \u2014 will sync when online')
+              : (allSynced ? 'Payment recorded' : 'Recorded locally \u2014 will sync when online'),
+            'ok'
+          );
+        }
+      } finally {
+        _savingDebtPayment = false;
+        if (btn) btn.disabled = false;
+      }
+    }
+
     function setLendTxType(t) {
       _lendTxType = t;
       const g = document.getElementById('lendTypeGive');
@@ -13849,259 +14975,186 @@
       if (k) k.classList.toggle('dv-role-act', t === 'take');
     }
 
-    function openDebtPersonModal() {
-      document.getElementById('debtPersonModalTitle').textContent = 'Add Person';
-      document.getElementById('debtPersonId').value = '';
-      document.getElementById('debtPersonName').value = '';
-      document.getElementById('debtPersonPhone').value = '';
-      document.getElementById('debtPersonSaveBtn').textContent = 'Create Account';
-      document.getElementById('debtPersonModal').style.display = 'flex';
-    }
-    function closeDebtPersonModal() {
-      document.getElementById('debtPersonModal').style.display = 'none';
-    }
-    function setDebtRole(r) {
-      _debtRole = r;
-      const b = document.getElementById('dvrBorrower');
-      const l = document.getElementById('dvrLender');
-      if (b) b.classList.toggle('dv-role-act', r === 'borrower');
-      if (l) l.classList.toggle('dv-role-act', r === 'lender');
-    }
-
-    async function saveDebtPerson() {
-      const name = document.getElementById('debtPersonName').value.trim();
-      if (!name) { alert('Name is required.'); return; }
-      const existingId = document.getElementById('debtPersonId').value;
-      // Duplicate name check
-      const dupCheck = debtPersons.find(x => x.id !== existingId && x.name.toLowerCase() === name.toLowerCase());
-      if (dupCheck) { alert('An account for "' + name + '" already exists.'); return; }
-      if (existingId) {
-        const idx = debtPersons.findIndex(x => x.id === existingId);
-        if (idx >= 0) {
-          debtPersons[idx].name = name;
-          debtPersons[idx].phone = document.getElementById('debtPersonPhone').value.trim();
-          debtPersons[idx].updatedAt = Date.now();
-          saveDebtLocal();
-          await saveDebtPersonCloud(debtPersons[idx]);
-        }
-      } else {
-        const id = dvId();
-        const person = {
-          id: id, name: name, role: '', initialAmount: 0, currentBalance: 0, repaidAmount: 0,
-          dueDate: '',
-          note: '',
-          phone: document.getElementById('debtPersonPhone').value.trim(),
-          status: 'active', createdAt: Date.now(), updatedAt: Date.now()
-        };
-        debtPersons.push(person);
-        saveDebtLocal();
-        await saveDebtPersonCloud(person);
-      }
-      closeDebtPersonModal();
-      refreshDebtViews();
-      checkDebtOverdueBadge();
-    }
-
-    function openRecordPaymentModal() {
+    function openLendMoreModal(defaultType, editRecordId) {
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
-      document.getElementById('debtPaymentModalTitle').textContent = p.role === 'borrower' ? 'Record Repayment Received' : 'Record Repayment Made';
-      document.getElementById('paymentAmount').value = '';
-      document.getElementById('paymentDate').value = new Date().toISOString().split('T')[0];
-      document.getElementById('paymentNote').value = '';
-      document.getElementById('paymentSyncFlux').checked = false;
-      _payMode = 'upi';
-      document.getElementById('payModeUPI').classList.add('dv-role-act');
-      document.getElementById('payModeCash').classList.remove('dv-role-act');
-      document.getElementById('debtPaymentModal').style.display = 'flex';
-    }
-    function closePaymentModal() {
-      document.getElementById('debtPaymentModal').style.display = 'none';
-    }
-    function setPayMode(m) {
-      _payMode = m;
-      document.getElementById('payModeUPI').classList.toggle('dv-role-act', m === 'upi');
-      document.getElementById('payModeCash').classList.toggle('dv-role-act', m === 'cash');
-    }
-    async function savePayment() {
-      const amt = parseFloat(document.getElementById('paymentAmount').value);
-      if (isNaN(amt) || amt <= 0) { alert('Enter a valid amount.'); return; }
-      const pid = _currentDebtPersonId;
-      const idx = debtPersons.findIndex(x => x.id === pid);
-      if (idx < 0) return;
-      const p = debtPersons[idx];
-      p.repaidAmount = (p.repaidAmount || 0) + amt;
-      p.currentBalance = Math.max(0, (p.currentBalance || 0) - amt);
-      if (p.currentBalance === 0) p.status = 'settled';
-      p.updatedAt = Date.now();
-      debtPersons[idx] = p;
-      const rec = {
-        id: dvId(), personId: pid, personName: p.name, type: 'repayment', amount: amt,
-        date: document.getElementById('paymentDate').value,
-        note: document.getElementById('paymentNote').value.trim(),
-        mode: _payMode, runningBalance: p.currentBalance, createdAt: Date.now()
-      };
-      debtRecords.push(rec);
-      saveDebtLocal();
-      await saveDebtPersonCloud(p);
-      await saveDebtRecordCloud(rec);
-      if (document.getElementById('paymentSyncFlux').checked && userId && typeof addDoc !== 'undefined') {
-        addDoc(collection(db, 'users', userId, 'transactions'), {
-          desc: (p.role === 'borrower' ? 'Repayment from ' : 'Repayment to ') + p.name,
-          amount: amt,
-          type: p.role === 'borrower' ? 'income' : 'expense',
-          cat: 'Debt Repayment', mode: _payMode, date: rec.date, createdAt: Date.now()
-        }).catch(() => { });
-      }
-      closePaymentModal();
-      renderPersonLedger(pid);
-      refreshDebtViews();
-      checkDebtOverdueBadge();
+      clearDebtFieldError('lendAmount', 'debtLendAmtErr');
+
+      const rec = editRecordId ? debtRecords.find(r => r.id === editRecordId && r.personId === p.id) : null;
+      document.getElementById('debtLendRecordId').value = rec ? rec.id : '';
+      document.getElementById('debtLendModalTitle').textContent = rec ? 'Edit Transaction' : 'Add Transaction';
+      document.getElementById('debtLendSaveBtn').textContent = rec ? 'Update Transaction' : 'Save Transaction';
+
+      document.getElementById('lendAmount').value = rec ? String(rec.amount) : '';
+      document.getElementById('lendDate').value = (rec && rec.date) ? rec.date : dvTodayISO();
+      document.getElementById('lendDueDate').value = p.dueDate || '';
+      document.getElementById('lendNote').value = rec ? (rec.note || '') : '';
+
+      const dueWrap = document.getElementById('lendDueDateWrap');
+      if (dueWrap) dueWrap.style.display = rec ? 'none' : 'block';
+
+      const txType = rec
+        ? (rec.type === 'borrow_more' ? 'take' : 'give')
+        : (defaultType || (p.role === 'lender' ? 'take' : 'give'));
+      setLendTxType(txType);
+
+      openDebtModal('debtLendModal', 'lendAmount');
     }
 
-    function openLendMoreModal(defaultType) {
-      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
-      if (!p) return;
-      document.getElementById('debtLendModalTitle').textContent = 'Add Transaction';
-      document.getElementById('lendAmount').value = '';
-      document.getElementById('lendDate').value = new Date().toISOString().split('T')[0];
-      document.getElementById('lendDueDate').value = '';
-      document.getElementById('lendNote').value = '';
-      setLendTxType(defaultType || (p.role === 'lender' ? 'take' : 'give'));
-      document.getElementById('debtLendModal').style.display = 'flex';
-    }
     function closeLendMoreModal() {
-      document.getElementById('debtLendModal').style.display = 'none';
+      closeDebtModal('debtLendModal');
     }
+
     async function saveLendMore() {
-      const amt = parseFloat(document.getElementById('lendAmount').value);
-      if (isNaN(amt) || amt <= 0) { alert('Enter a valid amount.'); return; }
+      if (_savingDebtLend) return;
+      clearDebtFieldError('lendAmount', 'debtLendAmtErr');
+
+      const amt = dvParseValidAmount('lendAmount', 'debtLendAmtErr');
+      if (amt === null) return;
+
       const pid = _currentDebtPersonId;
-      const idx = debtPersons.findIndex(x => x.id === pid);
-      if (idx < 0) return;
-      const p = debtPersons[idx];
+      const p = debtPersons.find(x => x.id === pid);
+      if (!p) return;
+
+      const editId = document.getElementById('debtLendRecordId').value;
       const isGive = _lendTxType === 'give';
+      const dateVal = document.getElementById('lendDate').value || dvTodayISO();
+      const noteVal = document.getElementById('lendNote').value.trim();
 
-      // Set debtor/creditor role when adding transaction
-      if (!p.role || p.currentBalance === 0) {
-        p.role = isGive ? 'borrower' : 'lender';
-      }
+      const btn = document.getElementById('debtLendSaveBtn');
+      _savingDebtLend = true;
+      if (btn) btn.disabled = true;
 
-      p.currentBalance = (p.currentBalance || 0) + amt;
-      const nd = document.getElementById('lendDueDate').value;
-      if (nd) p.dueDate = nd;
-      if (p.status === 'settled') {
-        p.status = 'active';
-        delete p.settlementRecordId;
-        delete p.settlementSyncPending;
+      try {
+        let targetRec = null;
+        if (editId) {
+          targetRec = debtRecords.find(r => r.id === editId && r.personId === pid);
+          if (!targetRec) return;
+          targetRec.type = isGive ? 'lend_more' : 'borrow_more';
+          targetRec.amount = amt;
+          targetRec.date = dateVal;
+          targetRec.note = noteVal;
+        } else {
+          targetRec = {
+            id: dvId(),
+            personId: pid,
+            personName: p.name,
+            type: isGive ? 'lend_more' : 'borrow_more',
+            amount: amt,
+            date: dateVal,
+            note: noteVal,
+            mode: 'other',
+            runningBalance: 0,
+            createdAt: Date.now()
+          };
+          debtRecords.push(targetRec);
+        }
+
+        const { modifiedRecs } = recomputeDebtPersonState(pid);
+
+        if (!editId && p.status !== 'settled') {
+          p.dueDate = document.getElementById('lendDueDate').value || '';
+        }
+
+        saveDebtLocal();
+
+        const recToSyncMap = new Map();
+        recToSyncMap.set(targetRec.id, targetRec);
+        modifiedRecs.forEach(r => recToSyncMap.set(r.id, r));
+
+        let allSynced = true;
+        for (const r of recToSyncMap.values()) {
+          const ok = await syncDebtRecordCloud(r);
+          if (!ok) allSynced = false;
+        }
+        const pOk = await syncDebtPersonCloud(p);
+        if (!pOk) allSynced = false;
+
+        closeLendMoreModal();
+        refreshDebtViews();
+        checkDebtOverdueBadge();
+        dvToast(
+          editId
+            ? (allSynced ? 'Transaction updated' : 'Updated locally \u2014 will sync when online')
+            : (allSynced ? 'Transaction saved' : 'Saved locally \u2014 will sync when online'),
+          'ok'
+        );
+      } finally {
+        _savingDebtLend = false;
+        if (btn) btn.disabled = false;
       }
-      p.updatedAt = Date.now();
-      debtPersons[idx] = p;
-      const rec = {
-        id: dvId(), personId: pid, personName: p.name,
-        type: isGive ? 'lend_more' : 'borrow_more',
-        amount: amt, date: document.getElementById('lendDate').value,
-        note: document.getElementById('lendNote').value.trim(),
-        mode: 'other', runningBalance: p.currentBalance, createdAt: Date.now()
-      };
-      debtRecords.push(rec);
-      saveDebtLocal();
-      await saveDebtPersonCloud(p);
-      await saveDebtRecordCloud(rec);
-      closeLendMoreModal();
-      renderPersonLedger(pid);
-      refreshDebtViews();
-      checkDebtOverdueBadge();
     }
 
-    async function deleteDebtRecord(recordId) {
+    function editDebtRecord(recordId) {
+      const rec = debtRecords.find(r => r.id === recordId);
+      if (!rec) return;
+      if (rec.type === 'initial_loan' || rec.type === 'initial_borrow' || rec.type === 'settlement') {
+        dvToast('This system entry cannot be edited directly.', 'er');
+        return;
+      }
+      if (rec.type === 'repayment') {
+        openRecordPaymentModal(recordId);
+      } else {
+        openLendMoreModal(null, recordId);
+      }
+    }
+
+    function deleteDebtRecord(recordId) {
       const rec = debtRecords.find(r => r.id === recordId);
       if (!rec) return;
       if (rec.type === 'initial_loan' || rec.type === 'initial_borrow') {
-        alert('Initial loan entries cannot be deleted. Edit or delete the person account instead.');
+        dvToast('Initial loan entries cannot be deleted. Delete the person account instead.', 'er');
         return;
       }
-      if (!confirm('Delete this transaction record?')) return;
+
+      const p = debtPersons.find(x => x.id === rec.personId);
+      const isOwed = p ? p.role === 'borrower' : true;
+      const label = formatDebtRecTitle(rec, isOwed);
+      const summary = [label, dvFmt(rec.amount), dvFormatDate(rec.date)].filter(Boolean).join(' \u00b7 ');
+
+      showConfirm(
+        'Delete Entry',
+        'Remove this entry from ' + (p ? p.name + '\u2019s' : 'this') + ' ledger? Running balances will be recalculated automatically.',
+        () => _executeDeleteDebtRecord(recordId),
+        true,
+        {
+          confirmLabel: 'Delete Entry',
+          icon: 'trash',
+          metaText: summary
+        }
+      );
+    }
+
+    async function _executeDeleteDebtRecord(recordId) {
+      const rec = debtRecords.find(r => r.id === recordId);
+      if (!rec) return;
       const pid = rec.personId;
-      try {
-        await deleteDebtRecordCloud(recordId);
-      } catch (err) {
-        console.warn('[Debt] Cloud record deletion failed, queuing for retry:', err);
-        if (typeof queueFailedSync === 'function') {
-          queueFailedSync('deleteDoc', 'debt_records', recordId, null);
-        }
-      }
+
       debtRecords = debtRecords.filter(r => r.id !== recordId);
-
-      const p = debtPersons.find(x => x.id === pid);
-      if (p) {
-        if (p.settlementRecordId === recordId) {
-          delete p.settlementRecordId;
-          delete p.settlementSyncPending;
-        }
-        // Recalculate running balance in transaction order (chronological)
-        const pRecsChronological = debtRecords
-          .filter(r => r.personId === pid)
-          .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-
-        let runBal = 0;
-        const modifiedRecs = [];
-        for (const r of pRecsChronological) {
-          if (r.type === 'repayment') {
-            runBal = runBal - (r.amount || 0);
-          } else {
-            runBal = runBal + (r.amount || 0);
-          }
-          const displayBal = Math.max(0, runBal);
-          if (r.runningBalance !== displayBal) {
-            r.runningBalance = displayBal;
-            modifiedRecs.push(r);
-          }
-        }
-
-        const extraLent = pRecsChronological.filter(r => r.type === 'lend_more').reduce((s, r) => s + r.amount, 0);
-        const extraBorrowed = pRecsChronological.filter(r => r.type === 'borrow_more').reduce((s, r) => s + r.amount, 0);
-        const repaid = pRecsChronological.filter(r => r.type === 'repayment').reduce((s, r) => s + r.amount, 0);
-        const isOwed = p.role === 'borrower';
-        const total = (p.initialAmount || 0) + (isOwed ? extraLent : extraBorrowed);
-        p.repaidAmount = repaid;
-        p.currentBalance = Math.max(0, total - repaid);
-        if (p.currentBalance === 0 && p.repaidAmount > 0) p.status = 'settled';
-        else if (p.currentBalance > 0 && p.status === 'settled') p.status = 'active';
-        p.updatedAt = Date.now();
-        saveDebtLocal();
-
-        for (let i = 0; i < modifiedRecs.length; i++) {
-          const modRec = modifiedRecs[i];
-          try {
-            await saveDebtRecordCloud(modRec);
-          } catch (err) {
-            console.warn('[Debt] Cloud save record failed, retaining unfinished for retry:', err);
-            for (let j = i; j < modifiedRecs.length; j++) {
-              if (typeof queueFailedSync === 'function') {
-                queueFailedSync('setDoc', 'debt_records', modifiedRecs[j].id, modifiedRecs[j]);
-              }
-            }
-            break;
-          }
-        }
-        try {
-          await saveDebtPersonCloud(p);
-        } catch (err) {
-          console.warn('[Debt] Cloud save person failed, retaining for retry:', err);
-          if (typeof queueFailedSync === 'function') {
-            queueFailedSync('setDoc', 'debt_persons', p.id, p);
-          }
-        }
-      }
+      const { person: p, modifiedRecs } = recomputeDebtPersonState(pid);
       saveDebtLocal();
-      renderPersonLedger(pid);
+
       refreshDebtViews();
       checkDebtOverdueBadge();
+
+      let allSynced = await removeDebtRecordCloud(recordId);
+      for (const modRec of modifiedRecs) {
+        const ok = await syncDebtRecordCloud(modRec);
+        if (!ok) allSynced = false;
+      }
+      if (p) {
+        const pOk = await syncDebtPersonCloud(p);
+        if (!pOk) allSynced = false;
+      }
+
+      dvToast(
+        allSynced ? 'Entry deleted' : 'Deleted locally \u2014 will sync when online',
+        'ok'
+      );
     }
 
     function checkDebtOverdueBadge() {
-      const count = debtPersons.filter(p => dvDaysOverdue(p.dueDate) > 0 && p.status !== 'settled').length;
+      const count = debtPersons.filter(p => dvDaysOverdue(p.dueDate) > 0 && p.status !== 'settled' && dvRound2(p.currentBalance || 0) > 0).length;
       const text = count > 9 ? '9+' : String(count);
       const display = count > 0 ? 'flex' : 'none';
       ['debtOverdueBadge', 'debtOverdueBadgeDesktop', 'debtOverdueBadgeHeader'].forEach(id => {
@@ -14113,27 +15166,44 @@
       });
     }
 
+    function buildDebtStatementText(p) {
+      const records = sortDebtRecordsAsc(debtRecords.filter(r => r.personId === p.id));
+      const isOwed = p.role === 'borrower';
+      const bal = dvRound2(p.currentBalance || 0);
+      const statusText = (p.status === 'settled' && bal === 0)
+        ? 'Settled'
+        : (bal === 0 ? 'No active balance' : (isOwed ? 'Owes me ' + dvFmt(bal) : 'I owe ' + dvFmt(bal)));
+
+      const lines = [
+        '*Debt Statement \u2014 ' + p.name + '*',
+        'Status: ' + statusText,
+        ''
+      ];
+      if (records.length) {
+        lines.push('*Ledger History:*');
+        records.forEach(r => {
+          const prefix = (r.type === 'repayment' || r.type === 'settlement') ? '[Repaid]' : (r.type === 'borrow_more' || r.type === 'initial_borrow' ? '[Taken]' : '[Given]');
+          const notePart = r.note ? (' (' + r.note + ')') : '';
+          lines.push((r.date || '') + ' | ' + prefix + ' ' + dvFmt(r.amount) + notePart + ' | Bal: ' + dvFmt(r.runningBalance));
+        });
+        lines.push('');
+      }
+      lines.push('Generated by Flux Personal Finance');
+      return lines.join(String.fromCharCode(10));
+    }
+
     function shareDebtStatement() {
       const p = debtPersons.find(x => x.id === _currentDebtPersonId);
       if (!p) return;
-      const records = debtRecords.filter(r => r.personId === p.id).sort((a, b) => new Date(a.date) - new Date(b.date));
-      const isOwed = p.role === 'borrower';
-      const lines = [
-        '*Debt Statement — ' + p.name + '*',
-        'Role: ' + (isOwed ? 'Borrower (owes me)' : 'Creditor (I owe)'),
-        'Status: ' + (p.status === 'settled' ? 'Settled' : 'Active'),
-        'Current Balance: ' + dvFmt(p.currentBalance || 0),
-        '',
-        '*Transactions:*'
-      ];
-      records.forEach(r => {
-        const sign = r.type === 'repayment' ? '+' : '-';
-        lines.push(r.date + ' | ' + sign + dvFmt(r.amount) + ' | ' + (r.note || r.type) + ' | Bal: ' + dvFmt(r.runningBalance));
-      });
-      lines.push('');
-      lines.push('Generated by Flux Personal Finance');
-      const msg = lines.join(String.fromCharCode(10));
-      window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+      const msg = buildDebtStatementText(p);
+      window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank', 'noopener,noreferrer');
+    }
+
+    function copyDebtStatement() {
+      const p = debtPersons.find(x => x.id === _currentDebtPersonId);
+      if (!p) return;
+      const msg = buildDebtStatementText(p);
+      dvCopyText(msg, 'Statement copied to clipboard');
     }
 
     // Explicit global window bindings for all inline HTML onclick handlers
@@ -14144,11 +15214,16 @@
     window.refreshDebtViews = refreshDebtViews;
     window.renderDebtDashboard = renderDebtDashboard;
     window.setDebtFilter = setDebtFilter;
+    window.onDebtSearchInput = onDebtSearchInput;
+    window.clearDebtSearch = clearDebtSearch;
+    window.resetDebtFilters = resetDebtFilters;
     window.openPersonLedger = openPersonLedger;
     window.closePersonLedger = closePersonLedger;
     window.openDebtPersonView = openPersonLedger;
     window.renderPersonLedger = renderPersonLedger;
     window.togglePersonMenu = togglePersonMenu;
+    window.closePersonMenu = closePersonMenu;
+    window.copyDebtContact = copyDebtContact;
     window.editDebtPerson = editDebtPerson;
     window.settleDebtPerson = settleDebtPerson;
     window.deleteDebtPerson = deleteDebtPerson;
@@ -14160,18 +15235,25 @@
     window.openRecordPaymentModal = openRecordPaymentModal;
     window.closePaymentModal = closePaymentModal;
     window.setPayMode = setPayMode;
+    window.fillFullDebtPayment = fillFullDebtPayment;
     window.savePayment = savePayment;
     window.openLendMoreModal = openLendMoreModal;
     window.closeLendMoreModal = closeLendMoreModal;
     window.saveLendMore = saveLendMore;
+    window.editDebtRecord = editDebtRecord;
     window.deleteDebtRecord = deleteDebtRecord;
     window.checkDebtOverdueBadge = checkDebtOverdueBadge;
     window.shareDebtStatement = shareDebtStatement;
+    window.copyDebtStatement = copyDebtStatement;
 
     // Init: load local debt data immediately
     (function initDebtSystem() {
       loadDebtLocal();
       checkDebtOverdueBadge();
+      [['debtPersonName', 'debtPersonNameErr'], ['paymentAmount', 'debtPaymentAmtErr'], ['lendAmount', 'debtLendAmtErr']].forEach(([inpId, errId]) => {
+        const el = document.getElementById(inpId);
+        if (el) el.addEventListener('input', () => clearDebtFieldError(inpId, errId));
+      });
     })();
   </script>
 </body>

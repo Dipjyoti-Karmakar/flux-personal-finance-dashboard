@@ -1,11 +1,11 @@
 // Flux Service Worker - Offline-first caching strategy
-// V56: Fallback to direct network on cache rejection, resilient debt sync
-const CACHE_NAME = 'flux-v56';
+// V57: Redesigned Debt Management UI/UX, unified confirmation dialogs, signed ledger math
+const CACHE_NAME = 'flux-v57';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './?v=39',
-  './index.html?v=39',
-  './style.css?v=2',
+  './?v=40',
+  './index.html?v=40',
+  './style.css?v=3',
   './manifest.json?v=7',
   './icon.svg?v=7',
   './icon-192.png?v=7',
@@ -29,7 +29,7 @@ self.addEventListener('install', (event) => {
         const fallback = [
           './',
           './index.html',
-          './style.css?v=2',
+          './style.css?v=3',
           './manifest.json?v=7',
           './icon.svg?v=7',
           './icon-192.png?v=7',
