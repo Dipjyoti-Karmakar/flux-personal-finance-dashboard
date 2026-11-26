@@ -1,10 +1,10 @@
 // Flux Service Worker - Offline-first caching strategy
-// V60: Harden Debt Ledger offline sync, overpayment cycle math, Flux tx sync & log cleanup
-const CACHE_NAME = 'flux-v60';
+// V61: Remove duplicate desktop header Debt Ledger trigger button
+const CACHE_NAME = 'flux-v61';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './?v=43',
-  './index.html?v=43',
+  './?v=44',
+  './index.html?v=44',
   './style.css?v=6',
   './manifest.json?v=7',
   './icon.svg?v=7',

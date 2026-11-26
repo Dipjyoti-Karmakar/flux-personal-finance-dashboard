@@ -291,18 +291,7 @@
           </button>
         </div>
         <div class="desktop-header-title-wrap">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <h1 class="desktop-view-title" id="desktopViewTitle">Dashboard</h1>
-            <button class="debt-menu-trigger" id="debtMenuTriggerHeader" onclick="openDebtSection()"
-              aria-label="Debts &amp; Loans" title="Debts &amp; Loans">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M7 10h14l-4-4"></path>
-                <path d="M17 14H3l4 4"></path>
-              </svg>
-              <span class="dmt-badge" id="debtOverdueBadgeHeader" style="display:none">!</span>
-            </button>
-          </div>
+          <h1 class="desktop-view-title" id="desktopViewTitle">Dashboard</h1>
           <span class="desktop-view-sub" id="desktopViewSub">Overview & Quick Transactions</span>
         </div>
         <!-- Desktop and Mobile Theme Toggle -->
@@ -12517,7 +12506,7 @@
       const debtV = document.getElementById('debtView');
       if (debtV) debtV.style.display = tab === 'debts' ? 'block' : 'none';
       document.body.classList.toggle('in-debts', tab === 'debts');
-      ['debtMenuTrigger', 'debtMenuTriggerDesktop', 'debtMenuTriggerHeader'].forEach(id => {
+      ['debtMenuTrigger', 'debtMenuTriggerDesktop'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.setAttribute('aria-pressed', tab === 'debts' ? 'true' : 'false');
       });
@@ -15753,7 +15742,7 @@
       const count = debtPersons.filter(p => dvDaysOverdue(p.dueDate) > 0 && p.status !== 'settled' && dvRound2(p.currentBalance || 0) > 0).length;
       const text = count > 9 ? '9+' : String(count);
       const display = count > 0 ? 'flex' : 'none';
-      ['debtOverdueBadge', 'debtOverdueBadgeDesktop', 'debtOverdueBadgeHeader'].forEach(id => {
+      ['debtOverdueBadge', 'debtOverdueBadgeDesktop'].forEach(id => {
         const b = document.getElementById(id);
         if (b) {
           b.style.display = display;
