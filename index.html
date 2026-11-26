@@ -9519,16 +9519,6 @@
 
               const maxDateObj = new Date(dueD);
               maxDateObj.setDate(maxDateObj.getDate() + wDays);
-              const maxDTarget = getLocalIsoDateStr(maxDateObj);
-
-              const nextDueAfterThis = computeNextDue(currentDue, data.freq, data.customDays, data.billingDay);
-
-              // ── Stall guard ──
-              const maxDTarget = getLocalIsoDateStr(maxDateObj);
-
-              const nextDueAfterThis = computeNextDue(currentDue, data.freq, data.customDays, data.billingDay);
-
-              // ── Stall guard ──
               // If computeNextDue returns the same date (e.g. corrupted freq/customDays),
               // break immediately. Without this, the loop creates MAX_CYCLES duplicate
               // auto-transactions all dated on the same day.
