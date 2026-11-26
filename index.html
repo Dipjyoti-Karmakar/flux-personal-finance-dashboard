@@ -11211,6 +11211,49 @@
           curY += stripH + 5;
         };
 
+        // Editorial sub-page header (Pages 2–5) matching Flux navy & gold identity
+        const drawPageHeader = (eyebrow, title, subtitle, badgeTxt = '') => {
+          curY = 20;
+          // Left gold accent bar
+          doc.setFillColor(...accentStripe);
+          doc.roundedRect(pL, curY + 0.5, 2.2, 14.8, 1.1, 1.1, 'F');
+
+          // Eyebrow label
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(166, 124, 24);
+          doc.text(eyebrow, pL + 5.5, curY + 3.2);
+
+          // Main page heading
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(...darkText);
+          doc.text(title, pL + 5.5, curY + 10.4);
+
+          // Subtitle
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.2); doc.setTextColor(...muted);
+          doc.text(subtitle, pL + 5.5, curY + 15.2);
+
+          // Optional right-aligned summary badge
+          if (badgeTxt) {
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(6.2);
+            const bW = doc.getTextWidth(badgeTxt) + 7;
+            const bH = 5.4;
+            const bX = pR - bW;
+            const bY = curY + 5.4;
+            doc.setFillColor(249, 244, 232);
+            doc.roundedRect(bX, bY, bW, bH, 2.5, 2.5, 'F');
+            doc.setDrawColor(228, 214, 182); doc.setLineWidth(0.2);
+            doc.roundedRect(bX, bY, bW, bH, 2.5, 2.5, 'S');
+            doc.setTextColor(145, 108, 24);
+            doc.text(badgeTxt, bX + bW / 2, bY + 3.7, { align: 'center' });
+          }
+
+          // Clean divider rule with subtle gold lead-in
+          const ruleY = curY + 18.2;
+          doc.setDrawColor(228, 231, 240); doc.setLineWidth(0.2);
+          doc.line(pL, ruleY, pR, ruleY);
+          doc.setDrawColor(...accentStripe); doc.setLineWidth(0.5);
+          doc.line(pL, ruleY, pL + 18, ruleY);
+          curY = ruleY + 5;
+        };
+
         // ── ASSETS FOR HEADER & FOOTER ──────────────────────────────────────────
         let bgDataUrl = null;
         let logoDataUrl = null;
@@ -11825,18 +11868,12 @@
 
           if (totalSignals > 0) {
             doc.addPage();
-            curY = 22;
-
-            // Editorial Page 2 Heading
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...accentStripe);
-            doc.text(reportTitle.toUpperCase(), pL, curY);
-            curY += 6.5;
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...darkText);
-            doc.text('Key insights', pL, curY);
-            curY += 5;
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-            doc.text(`${totalSignals} signal${totalSignals === 1 ? '' : 's'} from ${txCount} transaction${txCount === 1 ? '' : 's'}`, pL, curY);
-            curY += 7;
+            drawPageHeader(
+              reportTitle.toUpperCase(),
+              'Key insights',
+              `${totalSignals} signal${totalSignals === 1 ? '' : 's'} from ${txCount} transaction${txCount === 1 ? '' : 's'}`,
+              `${totalSignals} SIGNAL${totalSignals === 1 ? '' : 'S'}`
+            );
 
             // Featured Full-Width Hero Insight Card
             if (featuredInsight) {
@@ -11990,19 +12027,15 @@
             }
           }
 
-          // Editorial Page 3 Heading
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...accentStripe);
-          doc.text(reportTitle.toUpperCase(), pL, curY);
-          curY += 6.5;
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...darkText);
-          doc.text('Income and expense trends', pL, curY);
-          curY += 5;
           const periodSub = isMonthlyMode
             ? `Month by month, ${pts[0]?.fullLabel || ''} to ${pts[pts.length - 1]?.fullLabel || ''}`
             : `Day by day, ${pts[0]?.fullLabel || fromDate} to ${pts[pts.length - 1]?.fullLabel || chartToDate}`;
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-          doc.text(periodSub, pL, curY);
-          curY += 7;
+          drawPageHeader(
+            reportTitle.toUpperCase(),
+            'Income and expense trends',
+            periodSub,
+            `${pts.length} ${isMonthlyMode ? 'MONTH' : 'DAY'}${pts.length === 1 ? '' : 'S'}`
+          );
 
           const formatPdfAmt = (v) => {
             const absV = Math.abs(v);
@@ -12281,18 +12314,12 @@
         // ── PAGE 4: SPENDING ANALYSIS (Concept Layout + 3 Top KPI Cards) ─────
         if (catEntries.length > 0 || totalExp > 0) {
           doc.addPage();
-          curY = 22;
-
-          // Editorial Page 4 Heading
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...accentStripe);
-          doc.text(reportTitle.toUpperCase(), pL, curY);
-          curY += 6.5;
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...darkText);
-          doc.text('Spending analysis', pL, curY);
-          curY += 5;
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-          doc.text('Where the money went', pL, curY);
-          curY += 7;
+          drawPageHeader(
+            reportTitle.toUpperCase(),
+            'Spending analysis',
+            'Where the money went',
+            `${catEntries.length} ${catEntries.length === 1 ? 'CATEGORY' : 'CATEGORIES'}`
+          );
 
           // ── TOP 3 KPI SUMMARY CARDS (Linked above Category Distribution) ────
           {
@@ -12547,21 +12574,17 @@
         // ── TRANSACTION LIST (Redesigned: Clean Ledger + Strict Column Widths) ─
         if (incList && filtered.length) {
           doc.addPage();
-          curY = 22;
+          const txStartPage = doc.internal.getNumberOfPages();
 
           const filtIncCount = filtered.filter(t => t.type === 'income').length;
           const filtExpCount = filtered.filter(t => t.type === 'expense').length;
 
-          // Editorial Transaction List Heading (matches Pages 2–4)
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...accentStripe);
-          doc.text(reportTitle.toUpperCase(), pL, curY);
-          curY += 6.5;
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...darkText);
-          doc.text('Transaction list', pL, curY);
-          curY += 5;
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
-          doc.text(`${filtered.length} transaction${filtered.length === 1 ? '' : 's'}, ${filtIncCount} income and ${filtExpCount} expense${filtExpCount === 1 ? '' : 's'}`, pL, curY);
-          curY += 6;
+          drawPageHeader(
+            reportTitle.toUpperCase(),
+            'Transaction list',
+            `${filtered.length} transaction${filtered.length === 1 ? '' : 's'}, ${filtIncCount} income and ${filtExpCount} expense${filtExpCount === 1 ? '' : 's'}`,
+            `${filtered.length} ENTR${filtered.length === 1 ? 'Y' : 'IES'}`
+          );
 
           const fmtTxAmt = (n, showSign = false) => {
             const hasDec = Math.abs(n % 1) >= 0.005;
@@ -12572,7 +12595,7 @@
 
           const hasEvents = filtered.some(t => t.eventId && events[t.eventId]);
           const headRow = hasEvents
-            ? ['DATE', 'DESCRIPTION', 'CATEGORY', 'MODE', 'EVENT', 'AMOUNT']
+            ? ['DATE', 'DESCRIPTION', 'CATEGORY', 'MODE', 'AMOUNT', 'EVENT']
             : ['DATE', 'DESCRIPTION', 'CATEGORY', 'MODE', 'AMOUNT'];
 
           const txRows = [];
@@ -12613,7 +12636,7 @@
             amtList.push(amtStr);
 
             const row = hasEvents
-              ? [dateStr, desc, catLabel, modeLabel, evName, amtStr]
+              ? [dateStr, desc, catLabel, modeLabel, amtStr, evName]
               : [dateStr, desc, catLabel, modeLabel, amtStr];
             txRows.push(row);
             rowMeta.push({
@@ -12647,7 +12670,7 @@
           let catColW = Math.ceil(Math.max(hCatW, maxCatW) + 7);
           const modeColW = Math.ceil(Math.max(hModeW, maxModeW) + 6);
           const amtColW = Math.ceil(Math.max(hAmtW, maxAmtW) + 7);
-          let eventColW = hasEvents ? 25 : 0;
+          let eventColW = hasEvents ? 26 : 0;
           const minDescW = 44;
           const maxAvailForFixed = tableW - minDescW;
           if (dateColW + catColW + modeColW + amtColW + eventColW > maxAvailForFixed) {
@@ -12657,18 +12680,18 @@
           const descColW = tableW - dateColW - catColW - modeColW - amtColW - eventColW;
 
           const modeColIdx = 3;
-          const eventColIdx = hasEvents ? 4 : -1;
-          const amtColIdx = hasEvents ? 5 : 4;
+          const amtColIdx = 4;
+          const eventColIdx = hasEvents ? 5 : -1;
 
           const colStyles = {
             0: { cellWidth: dateColW, halign: 'left', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 4, right: 2 } },
             1: { cellWidth: descColW, halign: 'left', overflow: 'linebreak', cellPadding: { top: 3.1, bottom: 3.1, left: 2.5, right: 3 } },
             2: { cellWidth: catColW, halign: 'left', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 2.5, right: 2.5 } },
             [modeColIdx]: { cellWidth: modeColW, halign: 'center', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 2, right: 2 } },
-            [amtColIdx]: { cellWidth: amtColW, halign: 'right', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 2, right: 4 } }
+            [amtColIdx]: { cellWidth: amtColW, halign: 'right', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 2, right: hasEvents ? 3.5 : 4 } }
           };
           if (hasEvents) {
-            colStyles[eventColIdx] = { cellWidth: eventColW, halign: 'center', overflow: 'linebreak', cellPadding: { top: 3.1, bottom: 3.1, left: 2, right: 2 } };
+            colStyles[eventColIdx] = { cellWidth: eventColW, halign: 'center', overflow: 'linebreak', cellPadding: { top: 3.1, bottom: 3.1, left: 2.5, right: 3.5 } };
           }
 
           const pageTableBounds = {};
@@ -12699,10 +12722,13 @@
               if (d.section === 'head') {
                 if (d.column.index === 0) d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 4, right: 2 };
                 if (d.column.index === modeColIdx) d.cell.styles.halign = 'center';
-                if (hasEvents && d.column.index === eventColIdx) d.cell.styles.halign = 'center';
                 if (d.column.index === amtColIdx) {
                   d.cell.styles.halign = 'right';
-                  d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 2, right: 4 };
+                  d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 2, right: hasEvents ? 3.5 : 4 };
+                }
+                if (hasEvents && d.column.index === eventColIdx) {
+                  d.cell.styles.halign = 'center';
+                  d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 2.5, right: 3.5 };
                 }
                 return;
               }
@@ -12759,7 +12785,10 @@
               }
             },
             didDrawCell: (d) => {
-              const pNum = d.pageNumber || (doc.internal.getCurrentPageInfo ? doc.internal.getCurrentPageInfo().pageNumber : doc.internal.getNumberOfPages());
+              const curDocPage = doc.internal.getCurrentPageInfo
+                ? doc.internal.getCurrentPageInfo().pageNumber
+                : (txStartPage + (d.pageNumber || 1) - 1);
+              const pNum = curDocPage >= txStartPage ? curDocPage : (txStartPage + (d.pageNumber || 1) - 1);
               if (!pageTableBounds[pNum]) {
                 pageTableBounds[pNum] = { minY: d.cell.y, maxY: d.cell.y + d.cell.height };
               } else {
@@ -12807,11 +12836,14 @@
             }
           });
 
-          // Draw crisp rounded card border around each page's Transaction List table segment
+          // Draw crisp rounded card border ONLY around Transaction List pages (>= txStartPage)
           Object.entries(pageTableBounds).forEach(([pStr, b]) => {
-            doc.setPage(Number(pStr));
-            doc.setDrawColor(...bd); doc.setLineWidth(0.25);
-            doc.roundedRect(pL, b.minY, tableW, b.maxY - b.minY, 3, 3, 'S');
+            const pIdx = Number(pStr);
+            if (pIdx >= txStartPage && pIdx <= doc.internal.getNumberOfPages()) {
+              doc.setPage(pIdx);
+              doc.setDrawColor(...bd); doc.setLineWidth(0.25);
+              doc.roundedRect(pL, b.minY, tableW, b.maxY - b.minY, 3, 3, 'S');
+            }
           });
         }
 
