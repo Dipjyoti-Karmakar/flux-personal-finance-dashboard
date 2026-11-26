@@ -9524,6 +9524,11 @@
               const nextDueAfterThis = computeNextDue(currentDue, data.freq, data.customDays, data.billingDay);
 
               // ── Stall guard ──
+              const maxDTarget = getLocalIsoDateStr(maxDateObj);
+
+              const nextDueAfterThis = computeNextDue(currentDue, data.freq, data.customDays, data.billingDay);
+
+              // ── Stall guard ──
               // If computeNextDue returns the same date (e.g. corrupted freq/customDays),
               // break immediately. Without this, the loop creates MAX_CYCLES duplicate
               // auto-transactions all dated on the same day.
@@ -12549,99 +12554,274 @@
           }
         }
 
-        // ── TRANSACTION LIST ─────────────────────────────────────────────────
+        // ── TRANSACTION LIST (Redesigned: Clean Ledger + Strict Column Widths) ─
         if (incList && filtered.length) {
           doc.addPage();
           curY = 22;
-          sectionTitle('TRANSACTION LIST');
+
+          const filtIncCount = filtered.filter(t => t.type === 'income').length;
+          const filtExpCount = filtered.filter(t => t.type === 'expense').length;
+
+          // Editorial Transaction List Heading (matches Pages 2–4)
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...accentStripe);
+          doc.text(reportTitle.toUpperCase(), pL, curY);
+          curY += 6.5;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...darkText);
+          doc.text('Transaction list', pL, curY);
+          curY += 5;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+          doc.text(`${filtered.length} transaction${filtered.length === 1 ? '' : 's'}, ${filtIncCount} income and ${filtExpCount} expense${filtExpCount === 1 ? '' : 's'}`, pL, curY);
+          curY += 6;
+
+          const fmtTxAmt = (n, showSign = false) => {
+            const hasDec = Math.abs(n % 1) >= 0.005;
+            const abs = Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: hasDec ? 2 : 0, maximumFractionDigits: 2 });
+            const sign = n < 0 ? '-' : (showSign && n > 0 ? '+' : '');
+            return `${sign}${curSym}${abs}`;
+          };
 
           const hasEvents = filtered.some(t => t.eventId && events[t.eventId]);
-          const headRow = hasEvents ? ['Date', 'Description', 'Category', 'Amount', 'Mode', 'Event'] : ['Date', 'Description', 'Category', 'Amount', 'Mode'];
+          const headRow = hasEvents
+            ? ['DATE', 'DESCRIPTION', 'CATEGORY', 'MODE', 'EVENT', 'AMOUNT']
+            : ['DATE', 'DESCRIPTION', 'CATEGORY', 'MODE', 'AMOUNT'];
 
-          const txRows = filtered.map(t => {
-            const d = new Date(t.date + 'T00:00:00');
-            // Use standard spaces for date; we remove fixed width so it won't wrap anyway
-            const day = String(d.getDate()).padStart(2, '0');
-            const mon = d.toLocaleString('default', { month: 'short' });
-            const yr = d.getFullYear();
-            const dateStr = `${day}-${mon}-${yr}`;
-            const amtStr = fmtPDF(t.type === 'income' ? t.amount : -t.amount, true);
-            // Format description: ensure natural word-breaking at whitespace & punctuation delimiters so whole words wrap to 2nd row
+          const txRows = [];
+          const rowMeta = [];
+          let lastMonthKey = null;
+
+          // Pre-measure column widths so Date, Category, Mode & Amount NEVER wrap to a 2nd line
+          let maxDateW = 0, maxCatW = 0, maxAmtW = 0;
+          const dateList = [], catList = [], amtList = [];
+
+          filtered.forEach(t => {
+            const d = new Date((t.date || getTodayStr()) + 'T00:00:00');
+            const validD = !isNaN(d.getTime());
+            const monthKey = validD ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : 'unknown';
+
+            if (monthKey !== lastMonthKey) {
+              lastMonthKey = monthKey;
+              const monthTitle = validD
+                ? `${d.toLocaleString('en-US', { month: 'long' }).toUpperCase()} ${d.getFullYear()}`
+                : 'UNDATED';
+              txRows.push([{ content: monthTitle, colSpan: headRow.length }]);
+              rowMeta.push({ isGroup: true });
+            }
+
+            const dateStr = validD
+              ? `${String(d.getDate()).padStart(2, '0')} ${d.toLocaleString('en-US', { month: 'short' })}`
+              : (t.date || '');
             const desc = (t.desc || '(no description)').replace(/([+,/_\-])(?=[^\s])/g, '$1 ').replace(/\s+/g, ' ').trim();
             const catLabel = (t.cat || 'other').charAt(0).toUpperCase() + (t.cat || 'other').slice(1);
+            const modeRaw = (t.mode || 'online').toString().toLowerCase();
+            const modeLabel = modeRaw === 'offline' ? 'Offline' : 'Online';
+            const amtStr = fmtTxAmt(t.type === 'income' ? t.amount : -t.amount, true);
+            const evName = t.eventId && events[t.eventId] ? events[t.eventId].name : '';
+            const evColor = t.eventId && events[t.eventId] ? (events[t.eventId].color || '') : '';
 
-            const row = [dateStr, desc, catLabel, amtStr, (t.mode || 'online')];
-            if (hasEvents) {
-              row.push(t.eventId && events[t.eventId] ? events[t.eventId].name : '');
-            }
-            // pass metadata for styling (id, type, event color)
-            row.push(t.id, t.type, (t.eventId && events[t.eventId] ? events[t.eventId].color : ''));
-            return row;
+            dateList.push(dateStr);
+            catList.push(catLabel);
+            amtList.push(amtStr);
+
+            const row = hasEvents
+              ? [dateStr, desc, catLabel, modeLabel, evName, amtStr]
+              : [dateStr, desc, catLabel, modeLabel, amtStr];
+            txRows.push(row);
+            rowMeta.push({
+              isGroup: false,
+              id: t.id,
+              type: t.type,
+              mode: modeRaw,
+              modeLabel,
+              evColor
+            });
           });
+
+          // Measure text widths using exact table fonts
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.8);
+          const hDateW = doc.getTextWidth('DATE');
+          const hCatW = doc.getTextWidth('CATEGORY');
+          const hModeW = doc.getTextWidth('MODE');
+          const hAmtW = doc.getTextWidth('AMOUNT');
+
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.2);
+          dateList.forEach(s => { maxDateW = Math.max(maxDateW, doc.getTextWidth(s)); });
+          catList.forEach(s => { maxCatW = Math.max(maxCatW, doc.getTextWidth(s)); });
+
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.2);
+          amtList.forEach(s => { maxAmtW = Math.max(maxAmtW, doc.getTextWidth(s)); });
+          doc.setFontSize(6.8);
+          const maxModeW = Math.max(doc.getTextWidth('Offline'), doc.getTextWidth('Online')) + 6;
+
+          const tableW = W - 30;
+          const dateColW = Math.ceil(Math.max(hDateW, maxDateW) + 7);
+          let catColW = Math.ceil(Math.max(hCatW, maxCatW) + 7);
+          const modeColW = Math.ceil(Math.max(hModeW, maxModeW) + 6);
+          const amtColW = Math.ceil(Math.max(hAmtW, maxAmtW) + 7);
+          let eventColW = hasEvents ? 25 : 0;
+          const minDescW = 44;
+          const maxAvailForFixed = tableW - minDescW;
+          if (dateColW + catColW + modeColW + amtColW + eventColW > maxAvailForFixed) {
+            if (hasEvents) eventColW = Math.max(18, eventColW - 4);
+            catColW = Math.max(20, maxAvailForFixed - dateColW - modeColW - amtColW - eventColW);
+          }
+          const descColW = tableW - dateColW - catColW - modeColW - amtColW - eventColW;
+
+          const modeColIdx = 3;
+          const eventColIdx = hasEvents ? 4 : -1;
+          const amtColIdx = hasEvents ? 5 : 4;
+
+          const colStyles = {
+            0: { cellWidth: dateColW, halign: 'left', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 4, right: 2 } },
+            1: { cellWidth: descColW, halign: 'left', overflow: 'linebreak', cellPadding: { top: 3.1, bottom: 3.1, left: 2.5, right: 3 } },
+            2: { cellWidth: catColW, halign: 'left', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 2.5, right: 2.5 } },
+            [modeColIdx]: { cellWidth: modeColW, halign: 'center', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 2, right: 2 } },
+            [amtColIdx]: { cellWidth: amtColW, halign: 'right', overflow: 'visible', cellPadding: { top: 3.1, bottom: 3.1, left: 2, right: 4 } }
+          };
+          if (hasEvents) {
+            colStyles[eventColIdx] = { cellWidth: eventColW, halign: 'center', overflow: 'linebreak', cellPadding: { top: 3.1, bottom: 3.1, left: 2, right: 2 } };
+          }
+
+          const pageTableBounds = {};
+
           doc.autoTable({
-            startY: curY, head: [headRow], body: txRows,
-            margin: { left: pL, right: 15, top: 22, bottom: 18 }, theme: 'grid',
-            headStyles: { fillColor: headerBg, textColor: accentStripe, fontStyle: 'bold', fontSize: 8.5, cellPadding: 4 },
-            bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 8.5, cellPadding: { top: 4, bottom: 4, left: 2.5, right: 2.5 }, valign: 'middle', overflow: 'linebreak' },
-            alternateRowStyles: { fillColor: [244, 246, 252] },
-            columnStyles: hasEvents
-              ? { 0: { cellWidth: 22, halign: 'left', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 1: { overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 3, right: 3 } }, 2: { cellWidth: 30, overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 3: { cellWidth: 'wrap', halign: 'right', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 4: { cellWidth: 20, halign: 'center', cellPadding: { top: 3.5, bottom: 3.5, left: 1, right: 1 } }, 5: { cellWidth: 24, overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } } }
-              : { 0: { cellWidth: 22, halign: 'left', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 1: { overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 3, right: 3 } }, 2: { cellWidth: 32, overflow: 'linebreak', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 3: { cellWidth: 'wrap', halign: 'right', cellPadding: { top: 4, bottom: 4, left: 2, right: 2 } }, 4: { cellWidth: 20, halign: 'center', cellPadding: { top: 3.5, bottom: 3.5, left: 1, right: 1 } } },
-            tableLineColor: bd, tableLineWidth: 0.15,
+            startY: curY,
+            head: [headRow],
+            body: txRows,
+            margin: { left: pL, right: 15, top: 22, bottom: 18 },
+            theme: 'plain',
+            headStyles: {
+              fillColor: panel,
+              textColor: [110, 118, 136],
+              fontStyle: 'bold',
+              fontSize: 6.8,
+              cellPadding: { top: 3.8, bottom: 3.5, left: 2.5, right: 2.5 },
+              valign: 'middle'
+            },
+            bodyStyles: {
+              fillColor: panel,
+              textColor: darkText,
+              fontSize: 8.2,
+              cellPadding: { top: 3.1, bottom: 3.1, left: 2.5, right: 2.5 },
+              valign: 'middle'
+            },
+            columnStyles: colStyles,
             didParseCell: (d) => {
+              if (d.section === 'head') {
+                if (d.column.index === 0) d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 4, right: 2 };
+                if (d.column.index === modeColIdx) d.cell.styles.halign = 'center';
+                if (hasEvents && d.column.index === eventColIdx) d.cell.styles.halign = 'center';
+                if (d.column.index === amtColIdx) {
+                  d.cell.styles.halign = 'right';
+                  d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 2, right: 4 };
+                }
+                return;
+              }
+
               if (d.section === 'body') {
-                const idIdx = hasEvents ? 6 : 5;
-                const typeIdx = hasEvents ? 7 : 6;
-                const colorIdx = hasEvents ? 8 : -1;
-                const modeIdx = 4;
+                const meta = rowMeta[d.row.index];
+                if (!meta) return;
 
-                const isLargest = largestTx && d.row.raw[idIdx] === largestTx.id;
-                const evHex = hasEvents ? d.row.raw[colorIdx] : '';
+                if (meta.isGroup) {
+                  d.cell.styles.fillColor = panel;
+                  d.cell.styles.textColor = [168, 122, 22];
+                  d.cell.styles.fontStyle = 'bold';
+                  d.cell.styles.fontSize = 7.4;
+                  d.cell.styles.cellPadding = { top: 4.5, bottom: 2, left: 4, right: 4 };
+                  return;
+                }
 
-                // Amount column: green for income, red for expense
-                if (d.column.index === 3) {
-                  d.cell.styles.textColor = d.row.raw[typeIdx] === 'income' ? green : red;
+                const isLargest = largestTx && meta.id === largestTx.id;
+
+                if (d.column.index === 0 || d.column.index === 2) {
+                  d.cell.styles.textColor = muted;
+                  d.cell.styles.fontSize = 8;
+                }
+                if (d.column.index === 1) {
+                  d.cell.styles.textColor = darkText;
+                }
+                if (d.column.index === amtColIdx) {
+                  d.cell.styles.textColor = meta.type === 'income' ? green : red;
                   d.cell.styles.fontStyle = 'bold';
                 }
 
-                // Mode column: use normal font weight and compact horizontal padding to prevent wrapping
-                if (d.column.index === modeIdx) {
-                  const modeVal = (d.cell.raw || '').toString().toLowerCase();
-                  d.cell.styles.fontStyle = 'normal';
-                  d.cell.styles.fontSize = 8;
-                  d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 1, right: 1 };
-                  if (modeVal === 'online') {
-                    d.cell.styles.fillColor = blueBg;
-                    d.cell.styles.textColor = blue;
-                  } else if (modeVal === 'offline') {
-                    d.cell.styles.fillColor = [237, 233, 254];
-                    d.cell.styles.textColor = [109, 40, 217];
-                  }
+                // Clear raw text for Mode so didDrawCell renders clean rounded pill badge
+                if (d.column.index === modeColIdx) {
+                  d.cell.text = [''];
                 }
 
-                // Event column: use event background color + auto-computed readable text color
-                if (hasEvents && d.column.index === 5 && evHex) {
-                  const rgb = hexToRgb(evHex);
+                // Event column keeps event color + readable contrast
+                if (hasEvents && d.column.index === eventColIdx && meta.evColor) {
+                  const rgb = hexToRgb(meta.evColor);
                   if (rgb) {
                     d.cell.styles.fillColor = rgb;
-                    d.cell.styles.textColor = getContrastColor(evHex);
+                    d.cell.styles.textColor = getContrastColor(meta.evColor);
                     d.cell.styles.fontStyle = 'bold';
+                    d.cell.styles.fontSize = 7.5;
                   }
                 }
 
-                // Highlight largest transaction row (golden highlight, skip event cell)
-                if (isLargest && (!hasEvents || d.column.index !== 5)) {
+                // Highlight largest transaction row (golden highlight, keep Mode pill & Event color distinct)
+                if (isLargest && (!hasEvents || d.column.index !== eventColIdx)) {
                   d.cell.styles.fillColor = goldLight;
-                  d.cell.styles.textColor = [100, 70, 5];
+                  if (d.column.index !== amtColIdx) d.cell.styles.textColor = [100, 70, 5];
                   d.cell.styles.fontStyle = 'bold';
                 }
               }
-              if (d.section === 'head') {
-                // Keep amount header aligned
-                if (d.column.index === 3) d.cell.styles.halign = 'right';
-                if (d.column.index === 4) d.cell.styles.halign = 'center';
+            },
+            didDrawCell: (d) => {
+              const pNum = d.pageNumber || (doc.internal.getCurrentPageInfo ? doc.internal.getCurrentPageInfo().pageNumber : doc.internal.getNumberOfPages());
+              if (!pageTableBounds[pNum]) {
+                pageTableBounds[pNum] = { minY: d.cell.y, maxY: d.cell.y + d.cell.height };
+              } else {
+                pageTableBounds[pNum].minY = Math.min(pageTableBounds[pNum].minY, d.cell.y);
+                pageTableBounds[pNum].maxY = Math.max(pageTableBounds[pNum].maxY, d.cell.y + d.cell.height);
+              }
+
+              // Draw horizontal divider lines (only once per row, triggered on column 0)
+              if (d.column.index === 0) {
+                const lineY = d.cell.y + d.cell.height;
+                if (d.section === 'head') {
+                  doc.setDrawColor(220, 224, 234); doc.setLineWidth(0.25);
+                  doc.line(pL, lineY, pR, lineY);
+                } else if (d.section === 'body') {
+                  const meta = rowMeta[d.row.index];
+                  if (meta && !meta.isGroup) {
+                    doc.setDrawColor(238, 240, 246); doc.setLineWidth(0.15);
+                    doc.line(pL + 3, lineY, pR - 3, lineY);
+                  }
+                }
+              }
+
+              // Draw rounded pill badge for Mode column
+              if (d.section === 'body' && d.column.index === modeColIdx) {
+                const meta = rowMeta[d.row.index];
+                if (meta && !meta.isGroup) {
+                  const isOnline = meta.mode !== 'offline';
+                  const pillBg = isOnline ? blueBg : [237, 233, 254];
+                  const pillTx = isOnline ? blue : [109, 40, 217];
+                  const label = meta.modeLabel;
+
+                  doc.setFont('helvetica', 'bold'); doc.setFontSize(6.6);
+                  const txtW = doc.getTextWidth(label);
+                  const pillW = txtW + 5;
+                  const pillH = 4.4;
+                  const px = d.cell.x + (d.cell.width - pillW) / 2;
+                  const py = d.cell.y + (d.cell.height - pillH) / 2;
+
+                  doc.setFillColor(...pillBg);
+                  doc.roundedRect(px, py, pillW, pillH, 2.2, 2.2, 'F');
+                  doc.setTextColor(...pillTx);
+                  doc.text(label, d.cell.x + d.cell.width / 2, py + 3.1, { align: 'center' });
+                }
               }
             }
+          });
+
+          // Draw crisp rounded card border around each page's Transaction List table segment
+          Object.entries(pageTableBounds).forEach(([pStr, b]) => {
+            doc.setPage(Number(pStr));
+            doc.setDrawColor(...bd); doc.setLineWidth(0.25);
+            doc.roundedRect(pL, b.minY, tableW, b.maxY - b.minY, 3, 3, 'S');
           });
         }
 
