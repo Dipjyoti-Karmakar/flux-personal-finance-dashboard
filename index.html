@@ -12602,6 +12602,14 @@
           const rowMeta = [];
           let lastMonthKey = null;
 
+          // Pre-count transactions per month so group separator rows show accurate counts
+          const monthCounts = {};
+          filtered.forEach(t => {
+            const d = new Date((t.date || getTodayStr()) + 'T00:00:00');
+            const mk = !isNaN(d.getTime()) ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` : 'unknown';
+            monthCounts[mk] = (monthCounts[mk] || 0) + 1;
+          });
+
           // Pre-measure column widths so Date, Category, Mode & Amount NEVER wrap to a 2nd line
           let maxDateW = 0, maxCatW = 0, maxAmtW = 0;
           const dateList = [], catList = [], amtList = [];
@@ -12617,7 +12625,7 @@
                 ? `${d.toLocaleString('en-US', { month: 'long' }).toUpperCase()} ${d.getFullYear()}`
                 : 'UNDATED';
               txRows.push([{ content: monthTitle, colSpan: headRow.length }]);
-              rowMeta.push({ isGroup: true });
+              rowMeta.push({ isGroup: true, monthCount: monthCounts[monthKey] || 0 });
             }
 
             const dateStr = validD
@@ -12703,11 +12711,11 @@
             margin: { left: pL, right: 15, top: 22, bottom: 18 },
             theme: 'plain',
             headStyles: {
-              fillColor: panel,
-              textColor: [110, 118, 136],
+              fillColor: false,
+              textColor: [232, 214, 168],
               fontStyle: 'bold',
               fontSize: 6.8,
-              cellPadding: { top: 3.8, bottom: 3.5, left: 2.5, right: 2.5 },
+              cellPadding: { top: 4.2, bottom: 4.2, left: 2.5, right: 2.5 },
               valign: 'middle'
             },
             bodyStyles: {
@@ -12720,15 +12728,15 @@
             columnStyles: colStyles,
             didParseCell: (d) => {
               if (d.section === 'head') {
-                if (d.column.index === 0) d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 4, right: 2 };
+                if (d.column.index === 0) d.cell.styles.cellPadding = { top: 4.2, bottom: 4.2, left: 4, right: 2 };
                 if (d.column.index === modeColIdx) d.cell.styles.halign = 'center';
                 if (d.column.index === amtColIdx) {
                   d.cell.styles.halign = 'right';
-                  d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 2, right: hasEvents ? 3.5 : 4 };
+                  d.cell.styles.cellPadding = { top: 4.2, bottom: 4.2, left: 2, right: hasEvents ? 3.5 : 4 };
                 }
                 if (hasEvents && d.column.index === eventColIdx) {
                   d.cell.styles.halign = 'center';
-                  d.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 2.5, right: 3.5 };
+                  d.cell.styles.cellPadding = { top: 4.2, bottom: 4.2, left: 2.5, right: 3.5 };
                 }
                 return;
               }
@@ -12738,11 +12746,11 @@
                 if (!meta) return;
 
                 if (meta.isGroup) {
-                  d.cell.styles.fillColor = panel;
-                  d.cell.styles.textColor = [168, 122, 22];
+                  d.cell.styles.fillColor = [246, 243, 234];
+                  d.cell.styles.textColor = [34, 42, 64];
                   d.cell.styles.fontStyle = 'bold';
-                  d.cell.styles.fontSize = 7.4;
-                  d.cell.styles.cellPadding = { top: 4.5, bottom: 2, left: 4, right: 4 };
+                  d.cell.styles.fontSize = 7.5;
+                  d.cell.styles.cellPadding = { top: 3.4, bottom: 3.2, left: 6, right: 4 };
                   return;
                 }
 
@@ -12784,6 +12792,16 @@
                 }
               }
             },
+            willDrawCell: (d) => {
+              // Draw distinct rounded-top Flux navy header bar before head cell texts render
+              if (d.section === 'head' && d.column.index === 0) {
+                doc.setFillColor(24, 30, 48);
+                doc.roundedRect(pL, d.cell.y, tableW, d.cell.height, 2.8, 2.8, 'F');
+                doc.rect(pL, d.cell.y + d.cell.height / 2, tableW, d.cell.height / 2, 'F');
+                doc.setFillColor(...accentStripe);
+                doc.rect(pL, d.cell.y + d.cell.height - 0.6, tableW, 0.6, 'F');
+              }
+            },
             didDrawCell: (d) => {
               const curDocPage = doc.internal.getCurrentPageInfo
                 ? doc.internal.getCurrentPageInfo().pageNumber
@@ -12796,15 +12814,28 @@
                 pageTableBounds[pNum].maxY = Math.max(pageTableBounds[pNum].maxY, d.cell.y + d.cell.height);
               }
 
-              // Draw horizontal divider lines (only once per row, triggered on column 0)
+              // Draw horizontal divider lines & distinct month separator accents
               if (d.column.index === 0) {
                 const lineY = d.cell.y + d.cell.height;
-                if (d.section === 'head') {
-                  doc.setDrawColor(220, 224, 234); doc.setLineWidth(0.25);
-                  doc.line(pL, lineY, pR, lineY);
-                } else if (d.section === 'body') {
+                if (d.section === 'body') {
                   const meta = rowMeta[d.row.index];
-                  if (meta && !meta.isGroup) {
+                  if (meta && meta.isGroup) {
+                    // Left gold accent bar + top/bottom subtle rules + right-aligned month count
+                    doc.setFillColor(...accentStripe);
+                    doc.rect(pL, d.cell.y, 2.2, d.cell.height, 'F');
+                    doc.setDrawColor(226, 220, 204); doc.setLineWidth(0.2);
+                    doc.line(pL, d.cell.y, pR, d.cell.y);
+                    doc.line(pL, lineY, pR, lineY);
+                    if (meta.monthCount > 0) {
+                      doc.setFont('helvetica', 'normal'); doc.setFontSize(6.6); doc.setTextColor(...muted);
+                      doc.text(
+                        `${meta.monthCount} transaction${meta.monthCount === 1 ? '' : 's'}`,
+                        pR - 4,
+                        d.cell.y + d.cell.height / 2 + 1.1,
+                        { align: 'right' }
+                      );
+                    }
+                  } else if (meta && !meta.isGroup) {
                     doc.setDrawColor(238, 240, 246); doc.setLineWidth(0.15);
                     doc.line(pL + 3, lineY, pR - 3, lineY);
                   }
