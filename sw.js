@@ -1,11 +1,11 @@
 // Flux Service Worker - Offline-first caching strategy
-// V59: Fix Debt Activity Log clock alignment, date+time formatting, badge placement & README update
-const CACHE_NAME = 'flux-v59';
+// V60: Harden Debt Ledger offline sync, overpayment cycle math, Flux tx sync & log cleanup
+const CACHE_NAME = 'flux-v60';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './?v=42',
-  './index.html?v=42',
-  './style.css?v=5',
+  './?v=43',
+  './index.html?v=43',
+  './style.css?v=6',
   './manifest.json?v=7',
   './icon.svg?v=7',
   './icon-192.png?v=7',
@@ -29,7 +29,7 @@ self.addEventListener('install', (event) => {
         const fallback = [
           './',
           './index.html',
-          './style.css?v=5',
+          './style.css?v=6',
           './manifest.json?v=7',
           './icon.svg?v=7',
           './icon-192.png?v=7',

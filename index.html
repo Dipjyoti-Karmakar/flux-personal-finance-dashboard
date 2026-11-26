@@ -37,7 +37,7 @@
     integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3"
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="./style.css?v=5">
+  <link rel="stylesheet" href="./style.css?v=6">
   <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 
@@ -14103,6 +14103,25 @@
       }
     }
 
+    async function finishDebtCloudSync(tasksFactory, onlineMsg, offlineMsg) {
+      if (!userId) {
+        dvToast(onlineMsg, 'ok');
+        return;
+      }
+      const syncAll = Promise.all(tasksFactory()).then(results => results.every(Boolean));
+      if (!navigator.onLine) {
+        dvToast(offlineMsg, 'ok');
+        return;
+      }
+      let timerId;
+      const outcome = await Promise.race([
+        syncAll.then(ok => (ok ? 'ok' : 'err')),
+        new Promise(resolve => { timerId = setTimeout(() => resolve('timeout'), 3000); })
+      ]);
+      clearTimeout(timerId);
+      dvToast(outcome === 'ok' ? onlineMsg : offlineMsg, 'ok');
+    }
+
     function sortDebtRecordsAsc(recs) {
       return recs.slice().sort((a, b) => {
         const da = (a.date || '').localeCompare(b.date || '');
@@ -14200,6 +14219,10 @@
 
       // Identify cycle boundaries wherever cumulative balance returns to zero
       let net = legacyInit > 0 ? (p.role === 'lender' ? -legacyInit : legacyInit) : 0;
+      let cyclePos = (legacyInit > 0 && p.role !== 'lender') ? legacyInit : 0;
+      let cycleNeg = (legacyInit > 0 && p.role === 'lender') ? legacyInit : 0;
+      let lastSettledPos = cyclePos;
+      let lastSettledNeg = cycleNeg;
       let openIdx = 0;
       let lastSettledRange = [0, 0];
       const cycleBreakIds = [];
@@ -14207,6 +14230,7 @@
       for (let i = 0; i < asc.length; i++) {
         const r = asc[i];
         const amt = dvRound2(r.amount);
+        const prevNet = net;
         if (r.type === 'initial_loan' || r.type === 'lend_more') {
           net = dvRound2(net + amt);
         } else if (r.type === 'initial_borrow' || r.type === 'borrow_more') {
@@ -14219,11 +14243,31 @@
           else net = net < 0 ? dvRound2(net + amt) : dvRound2(net - amt);
         }
 
+        if (net > 0) {
+          if (prevNet <= 0) {
+            cyclePos = net;
+            cycleNeg = 0;
+          } else if (net > prevNet) {
+            cyclePos = dvRound2(cyclePos + (net - prevNet));
+          }
+        } else if (net < 0) {
+          if (prevNet >= 0) {
+            cycleNeg = dvRound2(-net);
+            cyclePos = 0;
+          } else if (net < prevNet) {
+            cycleNeg = dvRound2(cycleNeg + (prevNet - net));
+          }
+        }
+
         if (dvRound2(Math.abs(net)) === 0 && (legacyInit > 0 || i >= openIdx)) {
           lastSettledRange = [openIdx, i + 1];
+          lastSettledPos = cyclePos;
+          lastSettledNeg = cycleNeg;
           if (i < asc.length - 1) {
             cycleBreakIds.push(r.id);
             openIdx = i + 1;
+            cyclePos = 0;
+            cycleNeg = 0;
           }
         }
       }
@@ -14249,7 +14293,9 @@
         + (applyLegacyToCycle && p.role === 'lender' ? legacyInit : 0)
       );
 
-      const rawSideTotal = isOwed ? cycleGiven : cycleTaken;
+      const trackedPos = isSettled ? lastSettledPos : cyclePos;
+      const trackedNeg = isSettled ? lastSettledNeg : cycleNeg;
+      const rawSideTotal = isOwed ? Math.max(cycleGiven, trackedPos) : Math.max(cycleTaken, trackedNeg);
       const sideTotal = Math.max(rawSideTotal, bal);
       const cleared = isSettled
         ? sideTotal
@@ -15089,15 +15135,16 @@
             });
           }
 
-          const synced = await syncDebtPersonCloud(targetPerson);
           closeDebtPersonModal();
           refreshDebtViews();
           checkDebtOverdueBadge();
-          dvToast(
-            existingId
-              ? (synced ? 'Account updated' : 'Updated locally \u2014 will sync when online')
-              : (synced ? 'Created account for ' + name : 'Saved locally \u2014 will sync when online'),
-            'ok'
+          _savingDebtPerson = false;
+          if (btn) btn.disabled = false;
+
+          await finishDebtCloudSync(
+            () => [syncDebtPersonCloud(targetPerson)],
+            existingId ? 'Account updated' : 'Created account for ' + name,
+            existingId ? 'Updated locally \u2014 will sync when online' : 'Saved locally \u2014 will sync when online'
           );
         }
       } finally {
@@ -15175,21 +15222,21 @@
           m: 'Marked ' + p.name + ' as settled (' + dvFmt(settleAmount) + ' ' + (dir === 'received' ? 'received' : 'paid') + ')'
         });
 
-        let allSynced = await syncDebtRecordCloud(rec);
-        for (const mr of modifiedRecs) {
-          if (mr.id !== rec.id) {
-            const ok = await syncDebtRecordCloud(mr);
-            if (!ok) allSynced = false;
-          }
-        }
-        const pOk = await syncDebtPersonCloud(p);
-        if (!pOk) allSynced = false;
-
         refreshDebtViews();
         checkDebtOverdueBadge();
-        dvToast(
-          allSynced ? p.name + ' marked as settled' : 'Settled locally \u2014 will sync when online',
-          'ok'
+        _settlingDebtPerson = false;
+
+        await finishDebtCloudSync(
+          () => {
+            const tasks = [syncDebtRecordCloud(rec)];
+            modifiedRecs.forEach(mr => {
+              if (mr.id !== rec.id) tasks.push(syncDebtRecordCloud(mr));
+            });
+            tasks.push(syncDebtPersonCloud(p));
+            return tasks;
+          },
+          p.name + ' marked as settled',
+          'Settled locally \u2014 will sync when online'
         );
       } finally {
         _settlingDebtPerson = false;
@@ -15241,17 +15288,10 @@
       refreshDebtViews();
       checkDebtOverdueBadge();
 
-      let allSynced = true;
-      for (const r of recs) {
-        const ok = await removeDebtRecordCloud(r.id);
-        if (!ok) allSynced = false;
-      }
-      const pOk = await removeDebtPersonCloud(personId);
-      if (!pOk) allSynced = false;
-
-      dvToast(
-        allSynced ? ('Deleted ' + p.name + '\u2019s account') : 'Deleted locally \u2014 will sync when online',
-        'ok'
+      await finishDebtCloudSync(
+        () => [...recs.map(r => removeDebtRecordCloud(r.id)), removeDebtPersonCloud(personId)],
+        'Deleted ' + p.name + '\u2019s account',
+        'Deleted locally \u2014 will sync when online'
       );
     }
 
@@ -15429,27 +15469,34 @@
         const recToSyncMap = new Map();
         recToSyncMap.set(targetRec.id, targetRec);
         modifiedRecs.forEach(r => recToSyncMap.set(r.id, r));
-
-        let allSynced = true;
-        for (const r of recToSyncMap.values()) {
-          const ok = await syncDebtRecordCloud(r);
-          if (!ok) allSynced = false;
-        }
-        const pOk = await syncDebtPersonCloud(p);
-        if (!pOk) allSynced = false;
+        const isNowSettled = !editId && p.status === 'settled' && p.currentBalance === 0;
 
         if (!editId && document.getElementById('paymentSyncFlux').checked) {
-          if (userId && typeof addDoc !== 'undefined') {
+          if (userId && typeof setDoc !== 'undefined' && typeof doc !== 'undefined') {
+            const txId = typeof uid === 'function' ? uid() : dvId();
             const txDir = targetRec.direction === 'received' ? 'income' : 'expense';
-            addDoc(collection(db, 'users', userId, 'transactions'), {
+            const fluxTx = {
               desc: (txDir === 'income' ? 'Settlement received from ' : 'Settlement paid to ') + p.name,
               amount: amt,
               type: txDir,
-              cat: 'Debt Repayment',
+              cat: 'other',
               mode: _payMode === 'cash' ? 'offline' : 'online',
               date: targetRec.date,
               createdAt: Date.now()
-            }).catch(() => { });
+            };
+            if (typeof txs !== 'undefined' && Array.isArray(txs)) {
+              txs.unshift({ id: txId, ...fluxTx });
+              if (typeof descCache !== 'undefined') descCache = null;
+              if (typeof debouncedRender === 'function') debouncedRender();
+            }
+            if (typeof writeLog === 'function') {
+              writeLog('ADD', { desc: fluxTx.desc, amt, cat: fluxTx.cat, date: fluxTx.date, mode: fluxTx.mode, type: txDir, eventId: '', receipts: 0 }, txDir);
+            }
+            setDoc(doc(db, 'users', userId, 'transactions', txId), fluxTx).catch(() => {
+              if (typeof queueFailedSync === 'function') {
+                queueFailedSync('setDoc', 'transactions', txId, fluxTx, false, true);
+              }
+            });
           } else {
             dvToast('Saved payment, but Flux transaction sync requires Sign In.', 'er');
           }
@@ -15458,17 +15505,14 @@
         closePaymentModal();
         refreshDebtViews();
         checkDebtOverdueBadge();
+        _savingDebtPayment = false;
+        if (btn) btn.disabled = false;
 
-        if (!editId && p.status === 'settled' && p.currentBalance === 0) {
-          dvToast(allSynced ? 'Payment recorded \u00b7 Account settled!' : 'Settled locally \u2014 will sync when online', 'ok');
-        } else {
-          dvToast(
-            editId
-              ? (allSynced ? 'Payment updated' : 'Updated locally \u2014 will sync when online')
-              : (allSynced ? 'Payment recorded' : 'Recorded locally \u2014 will sync when online'),
-            'ok'
-          );
-        }
+        await finishDebtCloudSync(
+          () => [...Array.from(recToSyncMap.values()).map(r => syncDebtRecordCloud(r)), syncDebtPersonCloud(p)],
+          isNowSettled ? 'Payment recorded \u00b7 Account settled!' : (editId ? 'Payment updated' : 'Payment recorded'),
+          isNowSettled ? 'Settled locally \u2014 will sync when online' : (editId ? 'Updated locally \u2014 will sync when online' : 'Recorded locally \u2014 will sync when online')
+        );
       } finally {
         _savingDebtPayment = false;
         if (btn) btn.disabled = false;
@@ -15604,22 +15648,16 @@
         recToSyncMap.set(targetRec.id, targetRec);
         modifiedRecs.forEach(r => recToSyncMap.set(r.id, r));
 
-        let allSynced = true;
-        for (const r of recToSyncMap.values()) {
-          const ok = await syncDebtRecordCloud(r);
-          if (!ok) allSynced = false;
-        }
-        const pOk = await syncDebtPersonCloud(p);
-        if (!pOk) allSynced = false;
-
         closeLendMoreModal();
         refreshDebtViews();
         checkDebtOverdueBadge();
-        dvToast(
-          editId
-            ? (allSynced ? 'Transaction updated' : 'Updated locally \u2014 will sync when online')
-            : (allSynced ? 'Transaction saved' : 'Saved locally \u2014 will sync when online'),
-          'ok'
+        _savingDebtLend = false;
+        if (btn) btn.disabled = false;
+
+        await finishDebtCloudSync(
+          () => [...Array.from(recToSyncMap.values()).map(r => syncDebtRecordCloud(r)), syncDebtPersonCloud(p)],
+          editId ? 'Transaction updated' : 'Transaction saved',
+          editId ? 'Updated locally \u2014 will sync when online' : 'Saved locally \u2014 will sync when online'
         );
       } finally {
         _savingDebtLend = false;
@@ -15700,19 +15738,14 @@
       refreshDebtViews();
       checkDebtOverdueBadge();
 
-      let allSynced = await removeDebtRecordCloud(recordId);
-      for (const modRec of modifiedRecs) {
-        const ok = await syncDebtRecordCloud(modRec);
-        if (!ok) allSynced = false;
-      }
-      if (p) {
-        const pOk = await syncDebtPersonCloud(p);
-        if (!pOk) allSynced = false;
-      }
-
-      dvToast(
-        allSynced ? 'Entry deleted' : 'Deleted locally \u2014 will sync when online',
-        'ok'
+      await finishDebtCloudSync(
+        () => {
+          const tasks = [removeDebtRecordCloud(recordId), ...modifiedRecs.map(modRec => syncDebtRecordCloud(modRec))];
+          if (p) tasks.push(syncDebtPersonCloud(p));
+          return tasks;
+        },
+        'Entry deleted',
+        'Deleted locally \u2014 will sync when online'
       );
     }
 
@@ -16025,10 +16058,14 @@
       toggleDebtLogSelectionMode(true);
       renderDebtLogs();
 
-      let cloudOk = true;
-      if (userId && typeof doc !== 'undefined' && typeof writeBatch !== 'undefined') {
+      if (!userId || typeof doc === 'undefined' || typeof writeBatch === 'undefined') {
+        dvToast('Deleted ' + ids.size + ' log entr' + (ids.size === 1 ? 'y' : 'ies'), 'ok');
+        return;
+      }
+
+      const idArr = Array.from(ids);
+      const runBatchDeletes = async () => {
         try {
-          const idArr = Array.from(ids);
           for (let i = 0; i < idArr.length; i += 400) {
             const batch = writeBatch(db);
             idArr.slice(i, i + 400).forEach(id => {
@@ -16036,14 +16073,23 @@
             });
             await batch.commit();
           }
+          return true;
         } catch (err) {
-          cloudOk = false;
           if (err?.code !== 'permission-denied') {
             console.warn('[Debt] Failed deleting debt logs from cloud:', err);
+            if (typeof queueFailedSync === 'function') {
+              idArr.forEach(id => queueFailedSync('deleteDoc', 'debt_activities', id, null, false, true));
+            }
           }
+          return false;
         }
-      }
-      dvToast(cloudOk ? ('Deleted ' + ids.size + ' log entr' + (ids.size === 1 ? 'y' : 'ies')) : 'Removed locally', 'ok');
+      };
+
+      await finishDebtCloudSync(
+        () => [runBatchDeletes()],
+        'Deleted ' + ids.size + ' log entr' + (ids.size === 1 ? 'y' : 'ies'),
+        'Removed locally \u2014 will sync when online'
+      );
     }
 
     function renderParsedDebtLog(l) {
@@ -16153,6 +16199,15 @@
     function renderDebtLogs() {
       const listEl = document.getElementById('debtLogList');
       if (!listEl) return;
+
+      if (debtLogSelectionMode && selectedDebtLogs.size) {
+        const validIds = new Set(debtActivityLogs.map(x => x && x.id).filter(Boolean));
+        for (const id of selectedDebtLogs) {
+          if (!validIds.has(id)) selectedDebtLogs.delete(id);
+        }
+        const countEl = document.getElementById('debtLogSelectCount');
+        if (countEl) countEl.textContent = selectedDebtLogs.size + ' selected';
+      }
 
       const filterVal = (document.getElementById('debtLogFilter') || {}).value || 'all';
       const q = (cDebtLogSearch || '').toLowerCase().trim();
