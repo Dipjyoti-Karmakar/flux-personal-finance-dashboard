@@ -2257,10 +2257,6 @@
                 <span class="flux-checkbox-label">Expense transactions</span>
               </label>
               <label class="flux-checkbox-wrap">
-                <input type="checkbox" id="rptCatBreakdown" class="flux-checkbox" checked>
-                <span class="flux-checkbox-label">Category breakdown</span>
-              </label>
-              <label class="flux-checkbox-wrap">
                 <input type="checkbox" id="rptTxList" class="flux-checkbox" checked>
                 <span class="flux-checkbox-label">Full transaction list</span>
               </label>
@@ -11078,13 +11074,15 @@
         const hasVFS = typeof pdfMake !== 'undefined' && pdfMake.vfs && pdfMake.vfs['Roboto-Regular.ttf'];
         const curSym = hasVFS ? '₹' : 'INR';
         // Helper: format amount without rupee symbol (jsPDF helvetica doesn't support Unicode Rs.)
-        const fmtPDF = (n) => {
+        const fmtPDF = (n, showSign = false) => {
           const abs = Math.abs(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          return `${curSym} ${abs}`;
+          const sign = n < 0 ? '- ' : (showSign && n > 0 ? '+ ' : '');
+          return `${sign}${curSym} ${abs}`;
         };
-        const fmtPDFS = (n) => {
+        const fmtPDFS = (n, showSign = false) => {
           const abs = Math.abs(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
-          return (n < 0 ? '- ' : '') + `${curSym} ` + abs;
+          const sign = n < 0 ? '- ' : (showSign && n > 0 ? '+ ' : '');
+          return `${sign}${curSym} ${abs}`;
         };
 
         const reportData = getReportData();
@@ -11095,13 +11093,14 @@
         }
         const { fromDate, toDate, reportTitle, allInPeriod, filtered } = reportData;
 
-        const incCat = document.getElementById('rptCatBreakdown').checked;
         const incList = document.getElementById('rptTxList').checked;
 
         const totalInc = allInPeriod.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
         const totalExp = allInPeriod.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
         const netBal = totalInc - totalExp;
-        const savRate = totalInc > 0 ? ((netBal / totalInc) * 100).toFixed(0) : '0';
+        const hasNoIncomeWithExp = totalInc === 0 && totalExp > 0;
+        const savRateNum = totalInc > 0 ? Math.round((netBal / totalInc) * 100) : (hasNoIncomeWithExp ? -100 : 0);
+        const savRate = String(savRateNum);
         const txCount = allInPeriod.length;
 
         // Category & statistical aggregations
@@ -11227,7 +11226,8 @@
         }
 
         // ── PAGE 1: HEADER BANNER ──────────────────────────────────────────────
-        // Header background (using the image background across full width)
+        const genDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
         if (bgDataUrl) {
           doc.addImage(bgDataUrl, 'PNG', 0, 0, W, 50, 'FLUX_BG', 'FAST');
         } else {
@@ -11244,11 +11244,10 @@
         // Brand logo & FLUX typography (Page 1 main header only)
         if (logoDataUrl) {
           const logoH = 26;
-          const logoW = logoH * (736 / 216); // ~88.59 mm
-          const logoY = 10.5; // vertically centered in 47mm header
+          const logoW = logoH * (736 / 216);
+          const logoY = 10.5;
           doc.addImage(logoDataUrl, 'PNG', pL, logoY, logoW, logoH, undefined, 'FAST');
         } else {
-          // Brand mark fallback — vertical accent bar + FLUX
           doc.setFillColor(...accentStripe);
           doc.rect(pL, 10, 3, 24, 'F');
           doc.setFont('helvetica', 'bold'); doc.setFontSize(28); doc.setTextColor(...accentStripe);
@@ -11260,388 +11259,492 @@
         // Report title (right-aligned in header)
         doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...headerText);
         doc.text(reportTitle, pR, 22, { align: 'right' });
-        const genDate = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...headerMuted);
         doc.text(`Generated: ${genDate}`, pR, 30, { align: 'right' });
         curY = 57;
 
-        // ── HERO SUMMARY CARDS — Executive Financial Redesign (2x2 grid) ─────
-        const cardW = (W - 30 - 7) / 2;
-        const cardH = 39;
-        const cardGap = 7;
+        // ─────────────────────────────────────────────────────────────────────
+        // PAGE 1 REDESIGN: Concept Executive Summary + Adverse State Handling
+        // ─────────────────────────────────────────────────────────────────────
         const incEntriesCount = allInPeriod.filter(t => t.type === 'income').length;
         const expEntriesCount = expTxs.length;
+        const concPct = topCat && totalExp > 0 ? Math.round((topCat[1] / totalExp) * 100) : 0;
 
-        const summaryCards = [
-          {
-            label: 'NET CASH BALANCE',
-            tag: netBal >= 0 ? 'NET SURPLUS' : 'NET DEFICIT',
-            val: fmtPDF(netBal, true),
-            color: netBal >= 0 ? green : red,
-            bgColor: netBal >= 0 ? greenBg : redBg,
-            sub: netBal >= 0 ? 'Retained cash buffer after all expenditures' : 'Expenditure exceeded total period incoming funds'
-          },
-          {
-            label: 'TOTAL PERIOD INFLOW',
-            tag: `${incEntriesCount} ${incEntriesCount === 1 ? 'CREDIT' : 'CREDITS'}`,
-            val: fmtPDFS(totalInc),
-            color: green,
-            bgColor: greenBg,
-            sub: totalInc > 0 ? `Avg credit: ${fmtPDFS(Math.round(totalInc / Math.max(1, incEntriesCount)))} per transaction` : 'Zero incoming funds logged'
-          },
-          {
-            label: 'TOTAL PERIOD OUTFLOW',
-            tag: `${expEntriesCount} ${expEntriesCount === 1 ? 'DEBIT' : 'DEBITS'}`,
-            val: fmtPDFS(totalExp),
-            color: red,
-            bgColor: redBg,
-            sub: totalExp > 0 ? `Avg debit: ${fmtPDFS(Math.round(totalExp / Math.max(1, expEntriesCount)))} across ${expEntriesCount} purchases` : 'Zero outgoing expenses recorded'
-          },
-          {
-            label: 'CAPITAL RETENTION RATE',
-            tag: parseFloat(savRate) >= 20 ? 'HEALTHY' : (parseFloat(savRate) >= 0 ? 'SUB-OPTIMAL' : 'DEFICIT'),
-            val: `${savRate}%`,
-            color: parseFloat(savRate) >= 20 ? green : (parseFloat(savRate) >= 0 ? [184, 134, 11] : red),
-            bgColor: parseFloat(savRate) >= 20 ? greenBg : (parseFloat(savRate) >= 0 ? [254, 243, 199] : redBg),
-            sub: parseFloat(savRate) >= 20 ? 'Exceeds standard 20% savings threshold' : (parseFloat(savRate) >= 0 ? 'Below recommended 20% retention benchmark' : 'Negative retention • Outflows exceed earnings')
-          },
-        ];
+        // Solid dark hero palette (adapts to positive, break-even, and adverse states)
+        const heroGreen = [16, 61, 41];
+        const heroRed = [138, 26, 26];
+        const heroAmber = [146, 64, 14];
+        const heroSlate = [30, 41, 59];
 
-        summaryCards.forEach((c, i) => {
-          const row = Math.floor(i / 2), col = i % 2;
-          const cx = pL + col * (cardW + cardGap);
-          const cy = curY + row * (cardH + cardGap);
+        // Compute Financial Health Score (penalizes deficits & zero-income outflows properly)
+        const savBonus = hasNoIncomeWithExp || netBal < 0
+          ? 0
+          : (savRateNum >= 25 ? 40 : savRateNum >= 15 ? 30 : savRateNum >= 5 ? 20 : 10);
+        const divBonus = totalExp === 0
+          ? (totalInc > 0 ? 30 : 10)
+          : (concPct <= 40 ? 30 : concPct <= 60 ? 20 : 10);
+        const actBonus = txCount >= 8 ? 30 : (txCount >= 3 ? 20 : 10);
+        let healthScore = txCount === 0 ? 0 : Math.min(100, Math.max(10, savBonus + divBonus + actBonus));
+        if (netBal < 0) healthScore = Math.min(healthScore, hasNoIncomeWithExp ? 30 : 42);
 
-          // Card background — pure crisp white
+        const scoreColor = txCount === 0 ? muted : (healthScore >= 75 ? green : (healthScore >= 50 ? gold : red));
+        const scoreLabel = txCount === 0
+          ? 'No Period Activity'
+          : (healthScore >= 75 ? 'Strong Financial Posture' : (healthScore >= 50 ? 'Moderate Health' : (netBal < 0 ? 'Deficit Posture' : 'Needs Optimization')));
+
+        // ── ROW 1: NET CASH BALANCE (60%) + FINANCIAL HEALTH INDEX (40%) ─────
+        {
+          const row1Gap = 6;
+          const row1H = 42;
+          const netW = (W - 30 - row1Gap) * 0.60;
+          const hiW = (W - 30 - row1Gap) * 0.40;
+          const netX = pL;
+          const hiX = pL + netW + row1Gap;
+
+          const isDeficit = netBal < 0;
+          const isZeroNet = netBal === 0;
+          const heroFill = isDeficit ? heroRed : (isZeroNet && txCount === 0 ? heroSlate : heroGreen);
+          const heroTag = isDeficit ? 'NET DEFICIT' : (isZeroNet ? 'BALANCED' : 'NET SURPLUS');
+          const heroPillBg = isDeficit ? [254, 226, 226] : (isZeroNet && txCount === 0 ? [226, 232, 240] : [215, 240, 224]);
+          const heroPillText = isDeficit ? heroRed : (isZeroNet && txCount === 0 ? heroSlate : heroGreen);
+          const heroSubColor = isDeficit ? [252, 205, 205] : (isZeroNet && txCount === 0 ? [203, 213, 225] : [186, 218, 200]);
+          const heroLabelColor = isDeficit ? [254, 215, 215] : (isZeroNet && txCount === 0 ? [203, 213, 225] : [196, 226, 208]);
+          const heroSub = isDeficit
+            ? (hasNoIncomeWithExp ? 'Outflows logged with zero period inflows' : 'Expenditure exceeded total period incoming funds')
+            : (isZeroNet ? 'Inflows matched expenditures for this period' : 'Retained cash buffer after all expenditures');
+
+          // Solid dark hero card (Net Cash Balance)
+          doc.setFillColor(...heroFill);
+          doc.roundedRect(netX, curY, netW, row1H, 3.5, 3.5, 'F');
+
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...heroLabelColor);
+          doc.text('NET CASH BALANCE', netX + 7, curY + 9);
+
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5);
+          const pillW = doc.getTextWidth(heroTag) + 6;
+          doc.setFillColor(...heroPillBg);
+          doc.roundedRect(netX + netW - pillW - 6, curY + 5.2, pillW, 4.5, 2, 2, 'F');
+          doc.setTextColor(...heroPillText);
+          doc.text(heroTag, netX + netW - pillW / 2 - 6, curY + 8.3, { align: 'center' });
+
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(255, 255, 255);
+          doc.text(fmtPDFS(netBal), netX + 7, curY + 25.5);
+
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8); doc.setTextColor(...heroSubColor);
+          const hSubLines = doc.splitTextToSize(heroSub, netW - 14);
+          doc.text(hSubLines[0], netX + 7, curY + 35.5);
+
+          // Financial Health Index card (with circular ring gauge)
           doc.setFillColor(...panel);
-          doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'F');
+          doc.roundedRect(hiX, curY, hiW, row1H, 3.5, 3.5, 'F');
+          doc.setDrawColor(...(isDeficit ? [239, 180, 180] : bd)); doc.setLineWidth(isDeficit ? 0.3 : 0.2);
+          doc.roundedRect(hiX, curY, hiW, row1H, 3.5, 3.5, 'S');
 
-          // Subtle elegant border
-          doc.setDrawColor(...bd);
-          doc.setLineWidth(0.25);
-          doc.roundedRect(cx, cy, cardW, cardH, 3, 3, 'S');
+          const ringCX = hiX + 15;
+          const ringCY = curY + row1H / 2;
+          const ringR = 10;
 
-          // Left primary accent bar
-          doc.setFillColor(...c.color);
-          doc.roundedRect(cx, cy, 3.5, cardH, 1.5, 1.5, 'F');
-          doc.rect(cx + 2, cy, 1.5, cardH, 'F');
+          // Ring background track
+          doc.setDrawColor(230, 233, 240); doc.setLineWidth(2.4);
+          doc.circle(ringCX, ringCY, ringR, 'S');
 
-          // Top micro accent strip (matching card color)
-          doc.setFillColor(...c.bgColor);
-          doc.roundedRect(cx + 3.5, cy, cardW - 3.5, 2.5, 1, 1, 'F');
-          doc.rect(cx + 3.5, cy + 1, cardW - 3.5, 1.5, 'F');
+          // Ring progress arc
+          if (healthScore > 0) {
+            const pctArc = healthScore / 100;
+            doc.setDrawColor(...scoreColor); doc.setLineWidth(2.4);
+            if (pctArc >= 0.999) {
+              doc.circle(ringCX, ringCY, ringR, 'S');
+            } else {
+              const steps = Math.max(8, Math.round(pctArc * 64));
+              const startDeg = -90;
+              const endDeg = startDeg + pctArc * 360;
+              const arcPts = [];
+              for (let s = 0; s <= steps; s++) {
+                const rad = (startDeg + (endDeg - startDeg) * (s / steps)) * Math.PI / 180;
+                arcPts.push([ringCX + ringR * Math.cos(rad), ringCY + ringR * Math.sin(rad)]);
+              }
+              const arcSegs = [];
+              for (let s = 1; s < arcPts.length; s++) {
+                arcSegs.push([arcPts[s][0] - arcPts[s - 1][0], arcPts[s][1] - arcPts[s - 1][1]]);
+              }
+              doc.setLineCap('round');
+              doc.lines(arcSegs, arcPts[0][0], arcPts[0][1], [1, 1], 'S');
+              doc.setLineCap('butt');
+            }
+          }
 
-          // Header: Category Label (uppercase, tracking, muted)
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7.5);
-          doc.setTextColor(...muted);
-          doc.text(c.label, cx + 8, cy + 9.5);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(...(healthScore < 50 && txCount > 0 ? red : darkText));
+          doc.text(txCount > 0 ? `${healthScore}` : '--', ringCX, ringCY + 1.6, { align: 'center' });
 
-          // Header: Status Tag Pill (Right side)
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6);
-          const tagW = doc.getTextWidth(c.tag) + 5;
-          const tagH = 4.2;
-          const tagX = cx + cardW - tagW - 6;
-          const tagY = cy + 6;
+          const hiTxtX = hiX + 29;
+          const hiTxtW = hiW - 32;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(5.8); doc.setTextColor(...muted);
+          doc.text('FINANCIAL HEALTH', hiTxtX, curY + 9.5);
+          doc.text('INDEX', hiTxtX, curY + 13);
 
-          doc.setFillColor(...c.bgColor);
-          doc.roundedRect(tagX, tagY, tagW, tagH, 1, 1, 'F');
-          doc.setTextColor(...c.color);
-          doc.text(c.tag, tagX + 2.5, tagY + 3.1);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.2); doc.setTextColor(...(healthScore < 50 && txCount > 0 ? red : darkText));
+          const lblLines = doc.splitTextToSize(scoreLabel, hiTxtW);
+          lblLines.slice(0, 2).forEach((l, li) => doc.text(l, hiTxtX, curY + 19.5 + li * 4));
 
-          // Hero Value — Bold, prominent, high-contrast (20pt)
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(20);
-          doc.setTextColor(...c.color);
-          doc.text(c.val, cx + 8, cy + 24);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(6.2); doc.setTextColor(...muted);
+          const savTxt = hasNoIncomeWithExp ? 'Savings rate: Deficit' : `Savings rate ${savRate}%`;
+          doc.text(savTxt, hiTxtX, curY + 30.5);
+          doc.text(`Top category conc. ${concPct}%`, hiTxtX, curY + 35.5);
 
-          // Hairline divider
-          doc.setDrawColor(234, 237, 245);
-          doc.setLineWidth(0.15);
-          doc.line(cx + 8, cy + 28.5, cx + cardW - 8, cy + 28.5);
-
-          // Subtitle commentary (crisp financial context)
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(7);
-          doc.setTextColor(...muted);
-          doc.text(c.sub, cx + 8, cy + 34);
-        });
-
-        curY += (cardH + cardGap) * 2 + 3;
-
-        // Tx count summary strip — text vertically centred
-        const txStripH = 10;
-        // 8.5pt cap height ≈ 8.5 × 0.3528mm × 0.72 ≈ 2.16mm; baseline = top + (h + capH) / 2
-        const txCapH = 8.5 * 0.3528 * 0.72;
-        const txTextY = curY + (txStripH + txCapH) / 2;
-        doc.setFillColor(...panel2); doc.roundedRect(pL, curY, W - 30, txStripH, 2, 2, 'F');
-        doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, curY, W - 30, txStripH, 2, 2, 'S');
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...darkText);
-        doc.text(`${txCount} total transactions`, pL + 6, txTextY);
-        doc.setTextColor(green[0], green[1], green[2]);
-        doc.text(`${allInPeriod.filter(t => t.type === 'income').length} income`, pL + 70, txTextY);
-        doc.setTextColor(red[0], red[1], red[2]);
-        doc.text(`${expTxs.length} expenses`, pL + 105, txTextY);
-        curY += txStripH + 8;
-
-        // ── FINANCIAL HEALTH SCORE (Executive Makeover) ─────────────────────
-        if (txCount > 0) {
-          const savRateNum = parseFloat(savRate);
-          const scoreA = savRateNum >= 25 ? 40 : savRateNum >= 15 ? 30 : savRateNum >= 5 ? 20 : 10;
-          const scoreB = topCat && totalExp > 0 && (topCat[1] / totalExp) <= 0.4 ? 30 : (topCat && totalExp > 0 && (topCat[1] / totalExp) <= 0.6 ? 20 : 10);
-          const scoreC = txCount >= 8 ? 30 : (txCount >= 3 ? 20 : 10);
-          const healthScore = Math.min(100, Math.max(10, scoreA + scoreB + scoreC));
-          const scoreColor = healthScore >= 75 ? green : (healthScore >= 50 ? [184, 134, 11] : red);
-          const scoreBg = healthScore >= 75 ? greenBg : (healthScore >= 50 ? [254, 243, 199] : redBg);
-          const scoreLabel = healthScore >= 75 ? 'Strong Financial Posture' : (healthScore >= 50 ? 'Moderate Health • Monitor Spending' : 'Needs Optimization');
-
-          checkBreak(26);
-          const bannerH = 22;
-          const bannerW = W - 30;
-          const bY = curY;
-
-          // Card container (white with subtle border)
-          doc.setFillColor(...panel);
-          doc.roundedRect(pL, bY, bannerW, bannerH, 3, 3, 'F');
-          doc.setDrawColor(...bd);
-          doc.setLineWidth(0.25);
-          doc.roundedRect(pL, bY, bannerW, bannerH, 3, 3, 'S');
-
-          // Left Score Badge Pod
-          const podW = 28;
-          const podH = bannerH - 4;
-          const podX = pL + 2;
-          const podY = bY + 2;
-          doc.setFillColor(...scoreBg);
-          doc.roundedRect(podX, podY, podW, podH, 2, 2, 'F');
-          // Left accent bar inside pod
-          doc.setFillColor(...scoreColor);
-          doc.roundedRect(podX, podY, 3, podH, 1, 1, 'F');
-          doc.rect(podX + 1.5, podY, 1.5, podH, 'F');
-
-          // Score big digits inside pod
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(16);
-          doc.setTextColor(...scoreColor);
-          doc.text(`${healthScore}`, podX + 14, podY + 10.5, { align: 'center' });
-          // Score sub-label
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6);
-          doc.setTextColor(...muted);
-          doc.text('OUT OF 100', podX + 14, podY + 15, { align: 'center' });
-
-          // Middle description column
-          const midX = podX + podW + 6;
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7.5);
-          doc.setTextColor(...accentStripe);
-          doc.text('FINANCIAL HEALTH INDEX', midX, bY + 7);
-
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.setTextColor(...darkText);
-          doc.text(scoreLabel, midX, bY + 12.5);
-
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(7.5);
-          doc.setTextColor(...muted);
-          const concPct = topCat && totalExp > 0 ? Math.round((topCat[1] / totalExp) * 100) : 0;
-          doc.text(`Savings rate: ${savRate}% • Top category concentration: ${concPct}%`, midX, bY + 17.5);
-
-          // Right Gauge column
-          const gaugeW = 44;
-          const gaugeX = pR - gaugeW - 3;
-          const gaugeH = 4.5;
-          const gaugeY = bY + 11.5;
-
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7);
-          doc.setTextColor(...muted);
-          doc.text('HEALTH SCORE', gaugeX, bY + 8);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8);
-          doc.setTextColor(...scoreColor);
-          doc.text(`${healthScore}%`, pR - 3, bY + 8, { align: 'right' });
-
-          // Track
-          doc.setFillColor(...panel3);
-          doc.roundedRect(gaugeX, gaugeY, gaugeW, gaugeH, 1.5, 1.5, 'F');
-          // Fill
-          const fillW = Math.max(3, (healthScore / 100) * gaugeW);
-          doc.setFillColor(...scoreColor);
-          doc.roundedRect(gaugeX, gaugeY, fillW, gaugeH, 1.5, 1.5, 'F');
-
-          curY += bannerH + 7;
+          curY += row1H + 6;
         }
 
-        // ── CASH FLOW VITALS & LIQUIDITY (Page 1 Executive Filler) ──────────
-        if (txCount > 0) {
-          sectionTitle('CASH FLOW VITALS & LIQUIDITY');
+        // ── ROW 2: TOTAL INFLOW (50%) + TOTAL OUTFLOW (50%) ──────────────────
+        {
+          const row2Gap = 6;
+          const row2W = (W - 30 - row2Gap) / 2;
+          const row2H = 31;
 
-          // 1. Full-Width Cash Flow Ratio Bar Card
-          const flowCardH = 17;
-          const flowCardW = W - 30;
-          const flowY = curY;
+          const flowCards = [
+            {
+              label: 'TOTAL INFLOW',
+              tag: `${incEntriesCount} ${incEntriesCount === 1 ? 'CREDIT' : 'CREDITS'}`,
+              val: fmtPDFS(totalInc),
+              color: totalInc > 0 ? green : (hasNoIncomeWithExp ? red : muted),
+              bgColor: totalInc > 0 ? greenBg : (hasNoIncomeWithExp ? redBg : panel3),
+              sub: totalInc > 0
+                ? `Avg ${fmtPDFS(Math.round(totalInc / Math.max(1, incEntriesCount)))} per transaction`
+                : 'Zero incoming funds logged'
+            },
+            {
+              label: 'TOTAL OUTFLOW',
+              tag: `${expEntriesCount} ${expEntriesCount === 1 ? 'DEBIT' : 'DEBITS'}`,
+              val: fmtPDFS(totalExp),
+              color: totalExp > 0 ? red : muted,
+              bgColor: totalExp > 0 ? redBg : panel3,
+              sub: totalExp > 0
+                ? `Avg debit ${fmtPDFS(Math.round(totalExp / Math.max(1, expEntriesCount)))} across ${expEntriesCount} purchase${expEntriesCount === 1 ? '' : 's'}`
+                : 'Zero outgoing expenses recorded'
+            }
+          ];
+
+          flowCards.forEach((c, i) => {
+            const cx = pL + i * (row2W + row2Gap);
+            const cy = curY;
+
+            doc.setFillColor(...panel);
+            doc.roundedRect(cx, cy, row2W, row2H, 3.5, 3.5, 'F');
+            doc.setDrawColor(...bd); doc.setLineWidth(0.2);
+            doc.roundedRect(cx, cy, row2W, row2H, 3.5, 3.5, 'S');
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+            doc.text(c.label, cx + 7, cy + 9);
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5);
+            const tW = doc.getTextWidth(c.tag) + 6;
+            doc.setFillColor(...c.bgColor);
+            doc.roundedRect(cx + row2W - tW - 6, cy + 5.2, tW, 4.4, 2, 2, 'F');
+            doc.setTextColor(...c.color);
+            doc.text(c.tag, cx + row2W - tW / 2 - 6, cy + 8.3, { align: 'center' });
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...c.color);
+            doc.text(c.val, cx + 7, cy + 20.5);
+
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+            const subLines = doc.splitTextToSize(c.sub, row2W - 14);
+            doc.text(subLines[0], cx + 7, cy + 27);
+          });
+
+          curY += row2H + 6;
+        }
+
+        // ── ROW 3: CAPITAL RETENTION RATE (Full Width with 20% Benchmark Tick) ─
+        {
+          const retH = 26;
+          const retW = W - 30;
+          const isNegRet = savRateNum < 0 || hasNoIncomeWithExp;
+          const retColor = savRateNum >= 20 ? green : (savRateNum >= 0 && !hasNoIncomeWithExp ? gold : red);
+          const retBg = savRateNum >= 20 ? greenBg : (savRateNum >= 0 && !hasNoIncomeWithExp ? [254, 243, 199] : redBg);
+          const retTag = hasNoIncomeWithExp ? 'NO INFLOW' : (savRateNum >= 20 ? 'HEALTHY' : (savRateNum >= 0 ? 'SUB-OPTIMAL' : 'DEFICIT'));
+          const retVal = hasNoIncomeWithExp ? 'Deficit' : `${savRate}%`;
+          const retSub = hasNoIncomeWithExp
+            ? 'Outflows recorded without period income'
+            : (savRateNum >= 20
+              ? 'Exceeds the standard 20% savings threshold'
+              : (savRateNum >= 0 ? 'Below the standard 20% savings threshold' : 'Negative retention — outflows exceed earnings'));
 
           doc.setFillColor(...panel);
-          doc.roundedRect(pL, flowY, flowCardW, flowCardH, 2.5, 2.5, 'F');
-          doc.setDrawColor(...bd);
-          doc.setLineWidth(0.2);
-          doc.roundedRect(pL, flowY, flowCardW, flowCardH, 2.5, 2.5, 'S');
+          doc.roundedRect(pL, curY, retW, retH, 3.5, 3.5, 'F');
+          doc.setDrawColor(...(isNegRet ? [239, 180, 180] : bd)); doc.setLineWidth(isNegRet ? 0.3 : 0.2);
+          doc.roundedRect(pL, curY, retW, retH, 3.5, 3.5, 'S');
 
-          // Labels above the track
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7.5);
-          doc.setTextColor(...darkText);
-          doc.text('CASH FLOW RATIO', pL + 6, flowY + 5.5);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+          doc.text('CAPITAL RETENTION RATE', pL + 7, curY + 8.5);
 
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5);
+          const rtW = doc.getTextWidth(retTag) + 6;
+          doc.setFillColor(...retBg);
+          doc.roundedRect(pR - rtW - 6, curY + 5, rtW, 4.4, 2, 2, 'F');
+          doc.setTextColor(...retColor);
+          doc.text(retTag, pR - rtW / 2 - 6, curY + 8, { align: 'center' });
+
+          // Large percentage / status value on left
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(hasNoIncomeWithExp ? 15 : 18);
+          doc.setTextColor(...(isNegRet ? red : darkText));
+          doc.text(retVal, pL + 7, curY + 20.5);
+
+          // Progress track + 20% threshold tick mark
+          const trkX = pL + 36;
+          const trkW = retW - 44;
+          const trkH = 3.2;
+          const trkY = curY + 13.5;
+
+          doc.setFillColor(232, 234, 240);
+          doc.roundedRect(trkX, trkY, trkW, trkH, 1.5, 1.5, 'F');
+
+          if (isNegRet) {
+            // Show proportional red deficit warning bar from left
+            const defRatio = hasNoIncomeWithExp ? 1 : Math.min(1, Math.abs(savRateNum) / 100);
+            const defW = Math.max(8, defRatio * trkW);
+            doc.setFillColor(...red);
+            doc.roundedRect(trkX, trkY, defW, trkH, 1.5, 1.5, 'F');
+          } else if (savRateNum > 0) {
+            const fillW = Math.max(3, (Math.min(100, savRateNum) / 100) * trkW);
+            doc.setFillColor(...retColor);
+            doc.roundedRect(trkX, trkY, fillW, trkH, 1.5, 1.5, 'F');
+          }
+
+          // Vertical 20% benchmark tick mark
+          const tickX = trkX + 0.20 * trkW;
+          doc.setDrawColor(...darkText); doc.setLineWidth(0.6);
+          doc.line(tickX, trkY - 1.3, tickX, trkY + trkH + 1.3);
+
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(...(isNegRet ? red : muted));
+          doc.text(retSub, trkX, curY + 22);
+
+          curY += retH + 6;
+        }
+
+        // ── ROW 4: CASH FLOW VITALS ──────────────────────────────────────────
+        {
           const totalFlow = totalInc + totalExp;
           const incPct = totalFlow > 0 ? Math.round((totalInc / totalFlow) * 100) : 50;
           const expPct = 100 - incPct;
+          const flowCardH = 30;
+          const flowCardW = W - 30;
+          const flowY = curY;
 
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7.5);
-          doc.setTextColor(netBal >= 0 ? green[0] : red[0], netBal >= 0 ? green[1] : red[1], netBal >= 0 ? green[2] : red[2]);
-          const netLabel = netBal >= 0 ? `Net Surplus: +${fmtPDFS(netBal)}` : `Net Deficit: -${fmtPDFS(Math.abs(netBal))}`;
-          doc.text(netLabel, pL + 46, flowY + 5.5);
+          doc.setFillColor(...panel); doc.roundedRect(pL, flowY, flowCardW, flowCardH, 3.5, 3.5, 'F');
+          doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, flowY, flowCardW, flowCardH, 3.5, 3.5, 'S');
 
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(7);
-          doc.setTextColor(...muted);
-          doc.text(`Total Turnover: ${fmtPDFS(totalFlow)}`, pR - 6, flowY + 5.5, { align: 'right' });
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+          doc.text('CASH FLOW VITALS', pL + 7, flowY + 8);
 
-          // Dual-Color Progress Track
-          const trkX = pL + 6;
-          const trkW = flowCardW - 12;
-          const trkH = 4;
-          const trkY = flowY + 7.5;
+          const netFlowColor = netBal > 0 ? green : (netBal < 0 ? red : muted);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...netFlowColor);
+          const netLabel = netBal > 0 ? `Net surplus ${fmtPDFS(netBal, true)}` : (netBal < 0 ? `Net deficit ${fmtPDFS(netBal)}` : `Balanced ${fmtPDFS(0)}`);
+          doc.text(netLabel, pL + 7, flowY + 14.5);
 
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...muted);
+          doc.text(`Total turnover ${fmtPDFS(totalFlow)}`, pR - 7, flowY + 14.5, { align: 'right' });
+
+          // Dual proportion track
+          const trkX = pL + 7, trkW = flowCardW - 14, trkH = 3.8, trkY = flowY + 17;
           if (totalFlow > 0) {
-            const incW = Math.max(2, (incPct / 100) * trkW);
-            doc.setFillColor(...red);
-            doc.roundedRect(trkX, trkY, trkW, trkH, 1.5, 1.5, 'F');
-            doc.setFillColor(...green);
-            doc.roundedRect(trkX, trkY, Math.min(incW, trkW), trkH, 1.5, 1.5, 'F');
+            if (totalInc <= 0) {
+              doc.setFillColor(...red); doc.roundedRect(trkX, trkY, trkW, trkH, 1.8, 1.8, 'F');
+            } else if (totalExp <= 0) {
+              doc.setFillColor(...green); doc.roundedRect(trkX, trkY, trkW, trkH, 1.8, 1.8, 'F');
+            } else {
+              const incW = Math.max(3, Math.min(trkW - 3, (incPct / 100) * trkW));
+              doc.setFillColor(...red); doc.roundedRect(trkX, trkY, trkW, trkH, 1.8, 1.8, 'F');
+              doc.setFillColor(...green); doc.roundedRect(trkX, trkY, incW, trkH, 1.8, 1.8, 'F');
+              doc.rect(trkX + Math.max(1.8, incW - 1.8), trkY, 1.8, trkH, 'F');
+            }
           } else {
-            doc.setFillColor(...panel3);
-            doc.roundedRect(trkX, trkY, trkW, trkH, 1.5, 1.5, 'F');
+            doc.setFillColor(...panel3); doc.roundedRect(trkX, trkY, trkW, trkH, 1.8, 1.8, 'F');
           }
 
-          // Sub-labels below track
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6.5);
-          doc.setTextColor(...green);
-          doc.text(`Income: ${fmtPDFS(totalInc)} (${incPct}%)`, trkX, flowY + 15);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8);
+          doc.setTextColor(...muted);
+          doc.text(`Income ${fmtPDFS(totalInc)} (${totalFlow > 0 ? incPct : 0}%)`, trkX, flowY + 25.5);
+          doc.text(`Expenses ${fmtPDFS(totalExp)} (${totalFlow > 0 ? expPct : 0}%)`, pR - 7, flowY + 25.5, { align: 'right' });
 
-          doc.setTextColor(...red);
-          doc.text(`Expenses: ${fmtPDFS(totalExp)} (${expPct}%)`, pR - 6, flowY + 15, { align: 'right' });
+          curY += flowCardH + 6;
+        }
 
-          curY += flowCardH + 5;
-
-          // 2. 3 Executive Metric Pods (Discretionary vs Fixed, Peak Spend Day, Avg Ticket)
-          const podGap = 5;
-          const pColW = (W - 30 - podGap * 2) / 3;
-          const pPodH = 24;
-
-          // Fixed vs Flexible
+        // ── ROW 5: 3 METRIC PODS (Fixed vs Flexible, Peak Spend Day, Avg Ticket) ──
+        {
           const fixedExpAmt = expTxs.filter(t => t.subId || t._recurring || t.cat === 'housing' || t.cat === 'utilities').reduce((s, t) => s + t.amount, 0);
           const discExpAmt = Math.max(0, totalExp - fixedExpAmt);
           const discPct = totalExp > 0 ? Math.round((discExpAmt / totalExp) * 100) : 0;
 
-          // Peak Spend Day
           const daySpendMap = {};
           expTxs.forEach(t => { daySpendMap[t.date] = (daySpendMap[t.date] || 0) + t.amount; });
           const dayEntries = Object.entries(daySpendMap).sort((a, b) => b[1] - a[1]);
           const peakDate = dayEntries.length ? dayEntries[0][0] : null;
           const peakAmt = dayEntries.length ? dayEntries[0][1] : 0;
-          const peakPct = totalExp > 0 ? Math.round((peakAmt / totalExp) * 100) : 0;
           let peakDateFormatted = 'None';
           if (peakDate) {
             const pkD = new Date(peakDate + 'T00:00:00');
             peakDateFormatted = `${pkD.getDate()} ${pkD.toLocaleString('en-US', { month: 'short' })}`;
           }
 
-          // Average Ticket Size
           const avgExpTicket = expTxs.length ? Math.round(totalExp / expTxs.length) : 0;
-          const incTxs = allInPeriod.filter(t => t.type === 'income');
-          const avgIncTicket = incTxs.length ? Math.round(totalInc / incTxs.length) : 0;
+          const podGap = 5, pColW = (W - 30 - podGap * 2) / 3, pPodH = 28;
 
           const vitalsPods = [
-            {
-              topColor: [110, 157, 200],
-              title: 'FIXED VS FLEXIBLE',
-              value: fmtPDFS(fixedExpAmt),
-              sub: `Fixed bills • ${fmtPDFS(discExpAmt)} flex (${discPct}%)`
-            },
-            {
-              topColor: red,
-              title: 'PEAK SPEND DAY',
-              value: peakAmt > 0 ? fmtPDFS(peakAmt) : fmtPDFS(0),
-              sub: peakAmt > 0 ? `${peakDateFormatted} • ${peakPct}% of spend` : 'No expenses recorded'
-            },
-            {
-              topColor: accentStripe,
-              title: 'AVG TICKET SIZE',
-              value: fmtPDFS(avgExpTicket),
-              sub: `Per expense • ${avgIncTicket > 0 ? `${fmtPDFS(avgIncTicket)}/inc` : `${expTxs.length} txns`}`
-            }
+            { title: 'FIXED VS FLEXIBLE', value: fmtPDFS(fixedExpAmt), valColor: darkText, sub: totalExp > 0 ? `Fixed bills • ${discPct}% flex` : 'Fixed bills' },
+            { title: 'PEAK SPEND DAY', value: peakAmt > 0 ? fmtPDFS(peakAmt) : fmtPDFS(0), valColor: netBal < 0 && peakAmt > 0 ? red : darkText, sub: peakAmt > 0 ? `${peakDateFormatted} • Highest outflow` : 'No expenses recorded' },
+            { title: 'AVG TICKET SIZE', value: fmtPDFS(avgExpTicket), valColor: darkText, sub: 'Per expense' }
           ];
 
           vitalsPods.forEach((pod, pIdx) => {
-            const px = pL + pIdx * (pColW + podGap);
-            const py = curY;
-
-            doc.setFillColor(...panel);
-            doc.roundedRect(px, py, pColW, pPodH, 2.5, 2.5, 'F');
-            doc.setDrawColor(...bd);
-            doc.setLineWidth(0.2);
-            doc.roundedRect(px, py, pColW, pPodH, 2.5, 2.5, 'S');
-
-            // Top accent stripe
-            doc.setFillColor(...pod.topColor);
-            doc.roundedRect(px, py, pColW, 2.5, 1, 1, 'F');
-            doc.rect(px, py + 1.2, pColW, 1.3, 'F');
-
-            // Title
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(6.5);
-            doc.setTextColor(...muted);
-            doc.text(pod.title, px + 5, py + 7);
-
-            // Value
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.setTextColor(...darkText);
-            doc.text(pod.value, px + 5, py + 15);
-
-            // Sub
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(6);
-            doc.setTextColor(...muted);
-            doc.text(pod.sub, px + 5, py + 20.5);
+            const px = pL + pIdx * (pColW + podGap), py = curY;
+            doc.setFillColor(...panel); doc.roundedRect(px, py, pColW, pPodH, 3.5, 3.5, 'F');
+            doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(px, py, pColW, pPodH, 3.5, 3.5, 'S');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(6.2); doc.setTextColor(...muted);
+            doc.text(pod.title, px + 6, py + 8.5);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(...pod.valColor);
+            doc.text(pod.value, px + 6, py + 19);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+            const podSubLines = doc.splitTextToSize(pod.sub, pColW - 12);
+            doc.text(podSubLines[0], px + 6, py + 24.5);
           });
 
           curY += pPodH + 6;
         }
 
-        // ── INSIGHTS (Real Dashboard Intelligence System) ───────────────────
+        // ── ROW 6: BOTTOM TRANSACTION SUMMARY BAR ────────────────────────────
+        {
+          const stripH = 21;
+          const stripW = W - 30;
+          doc.setFillColor(...panel); doc.roundedRect(pL, curY, stripW, stripH, 3.5, 3.5, 'F');
+          doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, curY, stripW, stripH, 3.5, 3.5, 'S');
+
+          const colW3 = stripW / 3;
+          const stripCols = [
+            { num: `${txCount}`, lbl: 'Total transactions', color: darkText },
+            { num: `${incEntriesCount}`, lbl: 'Income', color: incEntriesCount > 0 ? green : muted },
+            { num: `${expEntriesCount}`, lbl: 'Expenses', color: expEntriesCount > 0 ? red : muted }
+          ];
+          stripCols.forEach((sc, idx) => {
+            const cx = pL + colW3 * (idx + 0.5);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5); doc.setTextColor(...sc.color);
+            doc.text(sc.num, cx, curY + 10.5, { align: 'center' });
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8); doc.setTextColor(...muted);
+            doc.text(sc.lbl, cx, curY + 16.5, { align: 'center' });
+          });
+
+          curY += stripH + 6;
+        }
+
+        // ── PAGE 2: KEY INSIGHTS (Concept Layout + Adverse State Handling) ────
         if (txCount > 0) {
           const pdfInsightCandidates = [];
+          let featuredInsight = null;
 
-          // 1. Accurately Computed Daily Burn / Average
+          // 0. Macro Retention / Deficit Featured Insight
+          if (totalInc > 0) {
+            if (savRateNum >= 30) {
+              featuredInsight = {
+                type: 'pos',
+                badge: 'HIGH SAVINGS',
+                metric: `${savRateNum}% saved`,
+                text: `Retaining ${savRateNum}% of total income (${fmtPDFS(netBal)} buffer), exceeding the 20% benchmark.`
+              };
+            } else if (savRateNum >= 15) {
+              featuredInsight = {
+                type: 'pos',
+                badge: 'ON TARGET',
+                metric: `${savRateNum}% saved`,
+                text: `Healthy savings rate: ${savRateNum}% of income retained (${fmtPDFS(netBal)} net balance), aligned with financial guidelines.`
+              };
+            } else if (savRateNum >= 0 && netBal >= 0) {
+              featuredInsight = {
+                type: 'warn',
+                badge: 'SLIM BUFFER',
+                metric: `${savRateNum}% margin`,
+                text: `Slim savings margin: Only ${savRateNum}% of income retained (${fmtPDFS(netBal)} remaining), below the 20% benchmark.`
+              };
+            } else {
+              featuredInsight = {
+                type: 'neg',
+                badge: 'NET DEFICIT',
+                metric: fmtPDFS(netBal),
+                text: `Spending exceeded earnings by ${fmtPDFS(Math.abs(netBal))} (${savRateNum}% retention). Review top expense categories to curb deficit.`
+              };
+            }
+          } else if (hasNoIncomeWithExp) {
+            featuredInsight = {
+              type: 'neg',
+              badge: 'NET DEFICIT',
+              metric: fmtPDFS(-totalExp),
+              text: `Outflows reached ${fmtPDFS(totalExp)} across ${expTxs.length} transactions with zero income logged in this period.`
+            };
+          }
+
+          // 1. Micro-Spend Leak
+          if (expTxs.length >= 6 && totalExp >= 600) {
+            const avgTx = totalExp / expTxs.length;
+            const smallThresh = Math.min(300, Math.max(80, Math.round(avgTx * 0.5)));
+            const smallTxs = expTxs.filter(t => t.amount <= smallThresh && t.amount > 0);
+            const smallTotal = smallTxs.reduce((s, t) => s + t.amount, 0);
+            const smallPct = totalExp > 0 ? Math.round((smallTotal / totalExp) * 100) : 0;
+            if (smallTxs.length >= 4 && smallTotal >= 200 && smallPct >= 8) {
+              pdfInsightCandidates.push({
+                priority: 2,
+                type: 'neg',
+                badge: 'MICRO-LEAK',
+                metric: `${fmtPDFS(smallTotal)} (${smallPct}%)`,
+                text: `${smallTxs.length} small purchases (${fmtPDFS(smallThresh)} or less) added up to ${fmtPDFS(smallTotal)}, ${smallPct}% of total spend. Habitual small taps quietly erode savings.`
+              });
+            }
+          }
+
+          // 2. Daily Burn
           if (avgDailyExp > 0) {
             pdfInsightCandidates.push({
               priority: 3,
-              type: 'neu',
-              icon: '\u{1F4C5}',
+              type: netBal < 0 ? 'neg' : 'neu',
               badge: 'DAILY BURN',
               metric: `${fmtPDFS(Math.round(avgDailyExp))}/day`,
-              text: `Daily spending burn: ${fmtPDFS(Math.round(avgDailyExp))}/day over ${periodDays} elapsed day${periodDays > 1 ? 's' : ''}${uniqueExpDays > 0 && uniqueExpDays < periodDays ? ` (averaged ${fmtPDFS(Math.round(avgActiveDayExp))}/day across ${uniqueExpDays} active spend days)` : ''}.`
+              text: `Over ${periodDays} elapsed day${periodDays > 1 ? 's' : ''}.${uniqueExpDays > 0 && uniqueExpDays < periodDays ? ` Averaged ${fmtPDFS(Math.round(avgActiveDayExp))}/day across ${uniqueExpDays} active spend days.` : ''}`
             });
           }
 
-          // 2. Outlier Purchase Detection (from dashboard intelligence)
+          // 3. Top Category Concentration
+          if (topCat && totalExp > 0) {
+            const pct = Math.round((topCat[1] / totalExp) * 100);
+            const cn = topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1);
+            pdfInsightCandidates.push({
+              priority: pct >= 50 ? 1 : 4,
+              type: pct >= 50 ? 'neg' : 'neu',
+              badge: 'TOP CATEGORY',
+              metric: `${fmtPDFS(topCat[1])} (${pct}%)`,
+              text: `${cn} is the highest spending category, ${pct}% of all expense transactions.`
+            });
+          }
+
+          // 4. Payment Channel Intelligence
+          if (totalExp > 0 && (onlineExp > 0 || offlineExp > 0)) {
+            const onPct = Math.round((onlineExp / totalExp) * 100);
+            const offPct = 100 - onPct;
+            if (onPct >= 65) {
+              pdfInsightCandidates.push({
+                priority: 5,
+                type: 'info',
+                badge: 'DIGITAL TAP',
+                metric: `${onPct}% online`,
+                text: `${onPct}% of expenses (${fmtPDFS(onlineExp)}) were paid via digital or online channels.`
+              });
+            } else if (offPct >= 40) {
+              pdfInsightCandidates.push({
+                priority: 5,
+                type: 'neu',
+                badge: 'CASH SHARE',
+                metric: `${offPct}% cash`,
+                text: `${offPct}% of expenses (${fmtPDFS(offlineExp)}) were paid in offline cash across ${expTxs.filter(t => t.mode === 'offline').length} cash transactions.`
+              });
+            }
+          }
+
+          // 5. Outlier Expense Detection
           let outlierFound = false;
           Object.keys(catMap).forEach(cat => {
             if (outlierFound) return;
@@ -11654,139 +11757,17 @@
                 const ratio = (top.amount / restAvg).toFixed(1);
                 const cn = cat.charAt(0).toUpperCase() + cat.slice(1);
                 pdfInsightCandidates.push({
-                  priority: 1,
+                  priority: 2,
                   type: 'neg',
-                  icon: '\u26A0',
-                  badge: 'OUTLIER BUY',
-                  metric: `${ratio}x ${cn} Avg`,
-                  text: `Outlier expense: "${top.desc || 'No description'}" (${fmtPDFS(top.amount)}) on ${top.date} was ${ratio}x your typical ${cn} purchase.`
+                  badge: 'OUTLIER EXPENSE',
+                  metric: `${ratio}x ${cn} avg`,
+                  text: `${top.desc || 'Transaction'} (${fmtPDFS(top.amount)}) on ${top.date} was ${ratio}x your typical ${cn} purchase.`
                 });
               }
             }
           });
 
-          // 3. Top Category Concentration
-          if (topCat && totalExp > 0) {
-            const pct = Math.round((topCat[1] / totalExp) * 100);
-            const cn = topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1);
-            pdfInsightCandidates.push({
-              priority: pct >= 50 ? 2 : 5,
-              type: pct >= 50 ? 'neg' : 'neu',
-              icon: '\u{1F4B8}',
-              badge: 'TOP CATEGORY',
-              metric: `${fmtPDFS(topCat[1])} (${pct}%)`,
-              text: `Highest spending category is ${cn} at ${fmtPDFS(topCat[1])}, accounting for ${pct}% of all expense transactions.`
-            });
-          }
-
-          // 4. Micro-Spend Leak / Latte Factor (from dashboard intelligence)
-          if (expTxs.length >= 6 && totalExp >= 600) {
-            const avgTx = totalExp / expTxs.length;
-            const smallThresh = Math.min(300, Math.max(80, Math.round(avgTx * 0.5)));
-            const smallTxs = expTxs.filter(t => t.amount <= smallThresh && t.amount > 0);
-            const smallTotal = smallTxs.reduce((s, t) => s + t.amount, 0);
-            const smallPct = totalExp > 0 ? Math.round((smallTotal / totalExp) * 100) : 0;
-            if (smallTxs.length >= 4 && smallTotal >= 200 && smallPct >= 8) {
-              pdfInsightCandidates.push({
-                priority: 4,
-                type: 'neg',
-                icon: '\u2615',
-                badge: 'MICRO-LEAK',
-                metric: `${fmtPDFS(smallTotal)} (${smallPct}%)`,
-                text: `${smallTxs.length} small purchases (<= ${fmtPDFS(smallThresh)}) accumulated to ${fmtPDFS(smallTotal)} (${smallPct}% of total spend). Habitual small taps quietly erode savings.`
-              });
-            }
-          }
-
-          // 5. Capital Retention & Savings Rate Benchmark (from dashboard intelligence)
-          const savRateNum = parseFloat(savRate);
-          if (totalInc > 0) {
-            if (savRateNum >= 30) {
-              pdfInsightCandidates.push({
-                priority: 2,
-                type: 'pos',
-                icon: '\u2713',
-                badge: 'HIGH SAVINGS',
-                metric: `${savRateNum}% Saved`,
-                text: `Outstanding savings rate: Retaining ${savRateNum}% of total income (${fmtPDFS(netBal)} buffer). Exceeding the 20% benchmark.`
-              });
-            } else if (savRateNum >= 15) {
-              pdfInsightCandidates.push({
-                priority: 3,
-                type: 'pos',
-                icon: '\u2713',
-                badge: 'ON TARGET',
-                metric: `${savRateNum}% Saved`,
-                text: `Healthy savings rate: ${savRateNum}% of income retained (${fmtPDFS(netBal)} net balance), aligned with healthy financial guidelines.`
-              });
-            } else if (savRateNum > 0) {
-              pdfInsightCandidates.push({
-                priority: 2,
-                type: 'neg',
-                icon: '\u26A1',
-                badge: 'SLIM BUFFER',
-                metric: `${savRateNum}% Margin`,
-                text: `Slim savings margin: Only ${savRateNum}% of income retained (${fmtPDFS(netBal)} remaining). Vulnerable to unexpected shocks.`
-              });
-            } else if (netBal < 0) {
-              pdfInsightCandidates.push({
-                priority: 1,
-                type: 'neg',
-                icon: '\u{1F6A8}',
-                badge: 'DEFICIT',
-                metric: `-${fmtPDFS(Math.abs(netBal))}`,
-                text: `Spending exceeded earnings by ${fmtPDFS(Math.abs(netBal))}. Review top expense categories to curb deficit.`
-              });
-            }
-          }
-
-          // 6. Weekend vs Weekday Surge Divergence (from dashboard intelligence)
-          let wkndExp = 0, wkdayExp = 0, wkndCount = 0, wkdayCount = 0;
-          expTxs.forEach(t => {
-            const dow = new Date(t.date + 'T00:00:00').getDay();
-            if (dow === 0 || dow === 6) { wkndExp += t.amount; wkndCount++; }
-            else { wkdayExp += t.amount; wkdayCount++; }
-          });
-          if (wkndCount >= 2 && wkdayCount >= 2 && wkndExp > 0 && totalExp > 0) {
-            const wkndPct = Math.round((wkndExp / totalExp) * 100);
-            if (wkndPct >= 40) {
-              pdfInsightCandidates.push({
-                priority: 6,
-                type: 'neu',
-                icon: '\u{1F37B}',
-                badge: 'WEEKEND SPEND',
-                metric: `${wkndPct}% on Sat-Sun`,
-                text: `Weekend spend concentration: ${fmtPDFS(wkndExp)} (${wkndPct}% of total) occurred across Saturday and Sunday (${wkndCount} transactions).`
-              });
-            }
-          }
-
-          // 7. Payment Channel Intelligence
-          if (totalExp > 0 && (onlineExp > 0 || offlineExp > 0)) {
-            const onPct = Math.round((onlineExp / totalExp) * 100);
-            const offPct = 100 - onPct;
-            if (onPct >= 80) {
-              pdfInsightCandidates.push({
-                priority: 7,
-                type: 'neu',
-                icon: '\u{1F4B3}',
-                badge: 'DIGITAL TAP',
-                metric: `${onPct}% Online`,
-                text: `${onPct}% of expenses (${fmtPDFS(onlineExp)}) paid via digital/online channels. Frictionless card/UPI taps dominate this period.`
-              });
-            } else if (offPct >= 40) {
-              pdfInsightCandidates.push({
-                priority: 7,
-                type: 'neu',
-                icon: '\u{1F4B5}',
-                badge: 'CASH SHARE',
-                metric: `${offPct}% Cash`,
-                text: `${offPct}% of expenses (${fmtPDFS(offlineExp)}) paid in offline cash across ${expTxs.filter(t => t.mode === 'offline').length} cash transactions.`
-              });
-            }
-          }
-
-          // 8. Repeat Merchant / Frequent Payee (from dashboard intelligence)
+          // 6. Repeat Payee / Frequent Merchant
           const descCounts = {};
           expTxs.forEach(t => {
             if (t.desc) {
@@ -11801,101 +11782,175 @@
             const totalForDesc = expTxs.filter(t => (t.desc || '').trim().toLowerCase() === topDesc).reduce((s, t) => s + t.amount, 0);
             const dispName = topDesc.charAt(0).toUpperCase() + topDesc.slice(1);
             pdfInsightCandidates.push({
-              priority: 8,
+              priority: 6,
               type: 'neu',
-              icon: '\u{1F501}',
               badge: 'REPEAT PAYEE',
-              metric: `${count} txns • ${fmtPDFS(totalForDesc)}`,
-              text: `Frequent merchant: "${dispName}" visited ${count} times totaling ${fmtPDFS(totalForDesc)} (~${fmtPDFS(Math.round(totalForDesc / count))}/visit).`
+              metric: `${count} txns, ${fmtPDFS(totalForDesc)}`,
+              text: `Frequent merchant ${dispName} was visited ${count} times, totaling ${fmtPDFS(totalForDesc)} (about ${fmtPDFS(Math.round(totalForDesc / count))} per visit).`
             });
           }
 
-          // 9. Largest Transaction Fallback
+          // 7. Weekend Spend Divergence
+          let wkndExp = 0, wkndCount = 0, wkdayCount = 0;
+          expTxs.forEach(t => {
+            const dow = new Date(t.date + 'T00:00:00').getDay();
+            if (dow === 0 || dow === 6) { wkndExp += t.amount; wkndCount++; }
+            else wkdayCount++;
+          });
+          if (wkndCount >= 2 && wkdayCount >= 2 && wkndExp > 0 && totalExp > 0) {
+            const wkndPct = Math.round((wkndExp / totalExp) * 100);
+            if (wkndPct >= 40) {
+              pdfInsightCandidates.push({
+                priority: 7,
+                type: 'neu',
+                badge: 'WEEKEND SPEND',
+                metric: `${wkndPct}% Sat-Sun`,
+                text: `Weekend spend concentration: ${fmtPDFS(wkndExp)} (${wkndPct}% of total) occurred across Saturday and Sunday (${wkndCount} txns).`
+              });
+            }
+          }
+
+          // 8. Largest Transaction Fallback
           if (largestTx && !outlierFound) {
             pdfInsightCandidates.push({
-              priority: 9,
+              priority: 8,
               type: 'neu',
-              icon: '\u26A0',
               badge: 'LARGEST TX',
               metric: fmtPDFS(largestTx.amount),
               text: `Largest single purchase: "${largestTx.desc || 'No description'}" on ${largestTx.date} for ${fmtPDFS(largestTx.amount)}.`
             });
           }
 
-          const topInsights = pdfInsightCandidates.sort((a, b) => a.priority - b.priority).slice(0, 8);
-          doc.addPage();
-          curY = 22;
-          sectionTitle(`KEY INSIGHTS  (${topInsights.length})`);
+          const sortedOthers = pdfInsightCandidates.sort((a, b) => a.priority - b.priority);
+          if (!featuredInsight && sortedOthers.length > 0) {
+            featuredInsight = sortedOthers.shift();
+          }
+          const gridInsights = sortedOthers.slice(0, 6);
+          const totalSignals = (featuredInsight ? 1 : 0) + gridInsights.length;
 
-          // Card rendering — premium PDF vibe: gold/dark palette, pill badges, hairline dividers
-          topInsights.forEach((ins, idx) => {
-            const cardFullW = W - 30;
-            const cardTextW = cardFullW - 48; // text area after left bar + icon + right metric
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
-            const insLines = doc.splitTextToSize(ins.text, cardTextW);
-            const lineH = 8.5 * 0.3528 * 1.25;
-            const capH = 8.5 * 0.3528 * 0.72;
-            const textBlockH = capH + (insLines.length - 1) * lineH;
-            const vPad = 4.5;
-            const cardRowH = Math.max(20, textBlockH + vPad * 2 + 7); // row for badge + text
-            checkBreak(cardRowH + 2);
+          if (totalSignals > 0) {
+            doc.addPage();
+            curY = 22;
 
-            // Color scheme: pos=green, neg=red, neu=gold (matches PDF brand palette)
-            const insColor = ins.type === 'pos' ? green : ins.type === 'neg' ? red : accentStripe;
-            const insBgLight = ins.type === 'pos' ? greenBg : ins.type === 'neg' ? redBg : [255, 251, 240];
-            const cardY = curY;
+            // Editorial Page 2 Heading
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...accentStripe);
+            doc.text(reportTitle.toUpperCase(), pL, curY);
+            curY += 6.5;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...darkText);
+            doc.text('Key insights', pL, curY);
+            curY += 5;
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+            doc.text(`${totalSignals} signal${totalSignals === 1 ? '' : 's'} from ${txCount} transaction${txCount === 1 ? '' : 's'}`, pL, curY);
+            curY += 7;
 
-            // ── Card background (white with very light tint) ──
-            doc.setFillColor(...panel); doc.roundedRect(pL, cardY, cardFullW, cardRowH, 2.5, 2.5, 'F');
-            // Top tinted strip (3px band at top of card for type-color accent)
-            doc.setFillColor(...insBgLight);
-            doc.roundedRect(pL, cardY, cardFullW, 3, 1, 1, 'F');
-            doc.rect(pL, cardY + 1.5, cardFullW, 1.5, 'F'); // square off bottom of rounded strip
-            // Outer border
-            doc.setDrawColor(...bd); doc.setLineWidth(0.2);
-            doc.roundedRect(pL, cardY, cardFullW, cardRowH, 2.5, 2.5, 'S');
-            // Left accent bar (solid, type color)
-            doc.setFillColor(...insColor);
-            doc.roundedRect(pL, cardY, 4, cardRowH, 1.5, 1.5, 'F');
-            doc.rect(pL + 2, cardY, 2, cardRowH, 'F');
+            // Featured Full-Width Hero Insight Card
+            if (featuredInsight) {
+              const featW = W - 30;
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+              const featLines = doc.splitTextToSize(featuredInsight.text, featW - 14);
+              const featH = Math.max(25, 16 + featLines.length * 4 + 4);
 
-            // ── Badge pill (top-left, after bar) ──
-            const badgeX = pL + 8;
-            const badgeY = cardY + 4;
-            const badgeTxt = ins.badge;
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(6);
-            const badgeW = doc.getTextWidth(badgeTxt) + 5;
-            doc.setFillColor(...insColor);
-            doc.roundedRect(badgeX, badgeY, badgeW, 4.5, 1, 1, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.text(badgeTxt, badgeX + 2.5, badgeY + 3.2);
+              const featFill = featuredInsight.type === 'pos' ? heroGreen : (featuredInsight.type === 'neg' ? heroRed : (featuredInsight.type === 'warn' ? heroAmber : heroSlate));
+              const featPillBg = featuredInsight.type === 'pos' ? [220, 244, 232] : (featuredInsight.type === 'neg' ? [254, 226, 226] : (featuredInsight.type === 'warn' ? [254, 243, 199] : [226, 232, 240]));
+              const featSubCol = featuredInsight.type === 'pos' ? [204, 232, 214] : (featuredInsight.type === 'neg' ? [254, 215, 215] : (featuredInsight.type === 'warn' ? [253, 230, 196] : [203, 213, 225]));
 
-            // ── Metric value (top-right, type-colored, bold) ──
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...insColor);
-            doc.text(ins.metric, pR - 3, cardY + 7.5, { align: 'right' });
+              doc.setFillColor(...featFill);
+              doc.roundedRect(pL, curY, featW, featH, 3.5, 3.5, 'F');
 
-            // ── Vertical divider between badge+metric area and text ──
-            const dividerY = cardY + 10;
-            doc.setDrawColor(...bd); doc.setLineWidth(0.15);
-            doc.line(pL + 8, dividerY, pL + cardFullW - 8, dividerY);
+              // Badge pill
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(5.8);
+              const fbW = doc.getTextWidth(featuredInsight.badge) + 6;
+              doc.setFillColor(...featPillBg);
+              doc.roundedRect(pL + 7, curY + 5.5, fbW, 4.5, 2, 2, 'F');
+              doc.setTextColor(...featFill);
+              doc.text(featuredInsight.badge, pL + 7 + fbW / 2, curY + 8.6, { align: 'center' });
 
-            // ── Main text ──
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...darkText);
-            const firstBaseline = dividerY + 2 + capH;
-            insLines.forEach((line, li) => {
-              doc.text(line, pL + 8, firstBaseline + li * lineH);
-            });
+              // Metric on right
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(13.5); doc.setTextColor(255, 255, 255);
+              doc.text(featuredInsight.metric, pR - 7, curY + 10.5, { align: 'right' });
 
-            curY = cardY + cardRowH + 2.5;
-          });
-          curY += 5;
+              // Description below
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(8.2); doc.setTextColor(...featSubCol);
+              featLines.forEach((l, li) => doc.text(l, pL + 7, curY + 17 + li * 4));
+
+              curY += featH + 6;
+            }
+
+            // 2-Column Grid of Remaining Signals
+            const iCardGap = 5;
+            const iCardW = (W - 30 - iCardGap) / 2;
+
+            for (let idx = 0; idx < gridInsights.length; idx += 2) {
+              const ins1 = gridInsights[idx];
+              const ins2 = gridInsights[idx + 1];
+
+              const textW = iCardW - 14;
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(7.8);
+              const lines1 = doc.splitTextToSize(ins1.text, textW);
+              const lines2 = ins2 ? doc.splitTextToSize(ins2.text, textW) : [];
+              const lineH = 3.8;
+              const h1 = Math.max(31, 17 + lines1.length * lineH + 4);
+              const h2 = ins2 ? Math.max(31, 17 + lines2.length * lineH + 4) : 0;
+              const rowH = ins2 ? Math.max(h1, h2) : h1;
+
+              checkBreak(rowH + 4);
+
+              const getInsStyle = (ins) => {
+                if (ins.type === 'neg') return { pillBg: redBg, pillTx: red, border: [239, 195, 195], metricCol: red };
+                if (ins.type === 'pos') return { pillBg: greenBg, pillTx: green, border: bd, metricCol: green };
+                if (ins.type === 'info') return { pillBg: blueBg, pillTx: blue, border: bd, metricCol: darkText };
+                return { pillBg: [252, 240, 215], pillTx: [161, 98, 7], border: bd, metricCol: darkText };
+              };
+
+              const drawInsightCard = (ins, cx, cW, lines) => {
+                const cy = curY;
+                const st = getInsStyle(ins);
+
+                doc.setFillColor(...panel); doc.roundedRect(cx, cy, cW, rowH, 3.5, 3.5, 'F');
+                doc.setDrawColor(...st.border); doc.setLineWidth(0.22); doc.roundedRect(cx, cy, cW, rowH, 3.5, 3.5, 'S');
+
+                // Badge pill (soft tint, colored text)
+                const bX = cx + 7, bY = cy + 6;
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5);
+                const bW = doc.getTextWidth(ins.badge) + 6;
+                doc.setFillColor(...st.pillBg); doc.roundedRect(bX, bY, bW, 4.4, 2, 2, 'F');
+                doc.setTextColor(...st.pillTx); doc.text(ins.badge, bX + bW / 2, bY + 3.1, { align: 'center' });
+
+                // Metric (bold, right aligned)
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(...st.metricCol);
+                doc.text(ins.metric, cx + cW - 7, cy + 9.8, { align: 'right' });
+
+                // Body text
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(7.8); doc.setTextColor(...muted);
+                lines.forEach((line, li) => {
+                  doc.text(line, cx + 7, cy + 17 + li * lineH);
+                });
+              };
+
+              drawInsightCard(ins1, pL, ins2 ? iCardW : W - 30, lines1);
+              if (ins2) drawInsightCard(ins2, pL + iCardW + iCardGap, iCardW, lines2);
+
+              curY += rowH + 5;
+            }
+          }
         }
 
-        // ── PAGE 2: TREND CHARTS (Income and Expense) ───────────────────
+        // ── PAGE 3: INCOME AND EXPENSE TRENDS ─────────────────────────────────
         if (allInPeriod.length > 0) {
           doc.addPage();
           curY = 22;
-          sectionTitle('INCOME AND EXPENSE TRENDS');
+
+          const startTs = new Date(fromDate + 'T00:00:00').getTime();
+          const endTs = new Date(toDate + 'T00:00:00').getTime();
+          const daysCount = Math.max(1, Math.round((endTs - startTs) / 86400000) + 1);
+
+          // Avoid plotting unelapsed future days/months as flat zeros when viewing current year/month in progress
+          const maxTxDate = allInPeriod.reduce((m, t) => (t.date > m ? t.date : m), fromDate);
+          const chartToDate = (toDate > todayISO && fromDate <= todayISO)
+            ? (maxTxDate > effectiveToDate ? maxTxDate : effectiveToDate)
+            : toDate;
+          const chartEndTs = new Date(chartToDate + 'T00:00:00').getTime();
+          const chartDaysCount = Math.max(1, Math.round((chartEndTs - startTs) / 86400000) + 1);
 
           const trendData = {};
           allInPeriod.forEach(t => {
@@ -11904,15 +11959,9 @@
             if (t.type === 'expense') trendData[t.date].exp += t.amount;
           });
 
-          // M3 FIX: Append T00:00:00 so JS parses as local midnight, not UTC midnight.
-          // Without this, IST (+5:30) users get an off-by-one day shift (e.g. "Jan 1"
-          // becomes "Dec 31" in the trend chart because UTC midnight is 5:30 AM IST).
-          const startTs = new Date(fromDate + 'T00:00:00').getTime();
-          const endTs = new Date(toDate + 'T00:00:00').getTime();
-          const daysCount = Math.max(1, Math.round((endTs - startTs) / 86400000) + 1);
-
           const pts = [];
-          if (daysCount > 90) {
+          const isMonthlyMode = daysCount > 90;
+          if (isMonthlyMode) {
             const mData = {};
             allInPeriod.forEach(t => {
               const my = t.date.slice(0, 7);
@@ -11920,191 +11969,408 @@
               if (t.type === 'income') mData[my].inc += t.amount;
               if (t.type === 'expense') mData[my].exp += t.amount;
             });
-
+            const multiYear = fromDate.slice(0, 4) !== chartToDate.slice(0, 4);
             let currD = new Date(fromDate.slice(0, 7) + '-01T00:00:00');
-            const endD = new Date(toDate.slice(0, 7) + '-01T00:00:00');
+            const endD = new Date(chartToDate.slice(0, 7) + '-01T00:00:00');
             while (currD <= endD) {
               const my = `${currD.getFullYear()}-${String(currD.getMonth() + 1).padStart(2, '0')}`;
               const v = mData[my] || { inc: 0, exp: 0 };
-              pts.push({ label: currD.toLocaleString('default', { month: 'short' }) + ' ' + String(currD.getFullYear()).slice(2), inc: v.inc, exp: v.exp });
+              const mShort = currD.toLocaleString('en-US', { month: 'short' });
+              const mFull = currD.toLocaleString('en-US', { month: 'long' });
+              pts.push({
+                label: multiYear ? `${mShort} '${String(currD.getFullYear()).slice(2)}` : mShort,
+                fullLabel: multiYear ? `${mFull} ${currD.getFullYear()}` : mFull,
+                inc: v.inc,
+                exp: v.exp
+              });
               currD.setMonth(currD.getMonth() + 1);
             }
           } else {
-            for (let i = 0; i < daysCount; i++) {
+            for (let i = 0; i < chartDaysCount; i++) {
               const d = new Date(startTs + i * 86400000);
               const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
               const v = trendData[dStr] || { inc: 0, exp: 0 };
-              pts.push({ label: `${d.getDate()} ${d.toLocaleString('default', { month: 'short' })}`, inc: v.inc, exp: v.exp });
+              const lbl = `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })}`;
+              pts.push({ label: lbl, fullLabel: lbl, inc: v.inc, exp: v.exp });
             }
           }
 
-          const drawTrendChart = (title, dataKey, color, startY) => {
-            const chartH = 110;
-            const fullW = W - pL - 15;
-            const cX = pL;
-            const cY = startY;
+          // Editorial Page 3 Heading
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...accentStripe);
+          doc.text(reportTitle.toUpperCase(), pL, curY);
+          curY += 6.5;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...darkText);
+          doc.text('Income and expense trends', pL, curY);
+          curY += 5;
+          const periodSub = isMonthlyMode
+            ? `Month by month, ${pts[0]?.fullLabel || ''} to ${pts[pts.length - 1]?.fullLabel || ''}`
+            : `Day by day, ${pts[0]?.fullLabel || fromDate} to ${pts[pts.length - 1]?.fullLabel || chartToDate}`;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+          doc.text(periodSub, pL, curY);
+          curY += 7;
 
-            doc.setFillColor(...panel2); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'F');
-            doc.setDrawColor(...borderDark); doc.setLineWidth(0.15); doc.roundedRect(cX, cY, fullW, chartH, 3, 3, 'S');
+          const formatPdfAmt = (v) => {
+            const absV = Math.abs(v);
+            const sign = v < 0 ? '-' : '';
+            if (absV < 1000) return sign + Math.round(absV).toString();
+            if (absV < 100000) {
+              let kStr = (absV / 1000).toFixed(1);
+              if (kStr.endsWith('.0')) kStr = kStr.slice(0, -2);
+              return sign + kStr + 'k';
+            }
+            return sign + Math.round(absV / 1000) + 'k';
+          };
 
-            // 3 horizontal gradient bands (decreasing opacity from bottom)
-            const bandColors = [
-              color.map(c => Math.round(c + (255 - c) * 0.94)),
-              color.map(c => Math.round(c + (255 - c) * 0.97)),
-              color.map(c => Math.round(c + (255 - c) * 0.99)),
-            ];
+          // ── CHART 1: INCOME VS EXPENSE (Dual Line Chart, Values on Every Point) ──
+          {
+            const chartH = 96;
+            const fullW = W - 30;
+            const cX = pL, cY = curY;
 
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...gold);
-            doc.text(title, cX + fullW / 2, cY + 8, { align: 'center' });
+            doc.setFillColor(...panel); doc.roundedRect(cX, cY, fullW, chartH, 3.5, 3.5, 'F');
+            doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(cX, cY, fullW, chartH, 3.5, 3.5, 'S');
 
-            let maxAmt = 0;
-            pts.forEach(d => { maxAmt = Math.max(maxAmt, d[dataKey]); });
-            maxAmt = maxAmt > 0 ? Math.ceil(maxAmt * 1.1) : 1000;
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+            doc.text('INCOME VS EXPENSE', cX + 8, cY + 8.5);
 
-            const padLeft = 25;
-            const padRight = 10;
-            const padTop = 16;
-            const padBottom = 22;
+            // Legend
+            const legX = cX + fullW - 46;
+            doc.setDrawColor(...green); doc.setLineWidth(1.2); doc.line(legX, cY + 7.2, legX + 4.5, cY + 7.2);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(7.2); doc.setTextColor(...darkText);
+            doc.text('Income', legX + 6.5, cY + 8.4);
+            doc.setDrawColor(...red); doc.setLineWidth(1.2); doc.line(legX + 22, cY + 7.2, legX + 26.5, cY + 7.2);
+            doc.text('Expense', legX + 28.5, cY + 8.4);
+
+            const padLeft = 22, padRight = 10, padTop = 16, padBottom = 18;
             const drawW = fullW - padLeft - padRight;
             const drawH = chartH - padTop - padBottom;
-            const gridX = cX + padLeft;
-            const gridY = cY + padTop;
-            const gridBottom = gridY + drawH;
+            const gridX = cX + padLeft, gridY = cY + padTop, gridBottom = gridY + drawH;
 
-            // Draw 3 gradient-like horizontal bands as background within chart area
-            const bandH = drawH / 3;
-            [0, 1, 2].forEach(bi => {
-              doc.setFillColor(...bandColors[2 - bi]);
-              doc.rect(gridX, gridY + bi * bandH, drawW, bandH, 'F');
-            });
+            let maxAmt = 0;
+            pts.forEach(d => { maxAmt = Math.max(maxAmt, d.inc, d.exp); });
+            maxAmt = maxAmt > 0 ? Math.ceil(maxAmt * 1.18) : 1000;
 
-            const formatPdfAmt = (v) => {
-              if (v < 1000) return v.toFixed(0);
-              if (v < 100000) {
-                let kStr = (v / 1000).toFixed(1);
-                if (kStr.endsWith('.0')) kStr = kStr.slice(0, -2);
-                return kStr + 'k';
-              }
-              return Math.round(v / 1000) + 'k';
-            };
-
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
-            for (let i = 0; i <= 4; i++) {
-              const yPos = gridBottom - (i / 4) * drawH;
-              const amtVal = (maxAmt * (i / 4));
-              const amtStr = formatPdfAmt(amtVal);
-
-              doc.text(amtStr, gridX - 3, yPos + 2.5, { align: 'right' });
-              doc.setDrawColor(...bd); doc.setLineWidth(0.1);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8); doc.setTextColor(...muted);
+            for (let i = 0; i <= 3; i++) {
+              const yPos = gridBottom - (i / 3) * drawH;
+              const amtStr = i === 0 ? `${curSym}0` : formatPdfAmt(maxAmt * (i / 3));
+              doc.text(amtStr, gridX - 3, yPos + 1.8, { align: 'right' });
+              doc.setDrawColor(232, 234, 240); doc.setLineWidth(0.15);
               doc.line(gridX, yPos, gridX + drawW, yPos);
             }
 
             const getX = (idx) => gridX + (pts.length <= 1 ? drawW / 2 : (idx / (pts.length - 1)) * drawW);
             const getY = (val) => gridBottom - (val / maxAmt) * drawH;
 
-            // Area fill under the line (semi-transparent, mixed with white at ~82% opacity)
-            if (pts.length > 1) {
-              const areaColor = color.map(c => Math.round(c + (255 - c) * 0.82));
+            const drawAreaFill = (dataKey, areaColor) => {
+              if (pts.length < 2) return;
               doc.setFillColor(...areaColor);
-              const areaSegs = [];
-              // Start at bottom-left corner
-              const x0 = getX(0);
-              const xN = getX(pts.length - 1);
-              // Build polygon: (x0,gridBottom) → each point → (xN,gridBottom) → close
+              const x0 = getX(0), xN = getX(pts.length - 1);
               const polyPts = [[x0, gridBottom]];
               for (let i = 0; i < pts.length; i++) polyPts.push([getX(i), getY(pts[i][dataKey])]);
               polyPts.push([xN, gridBottom]);
-              const lineSegsArea = [];
-              for (let i = 1; i < polyPts.length; i++) {
-                lineSegsArea.push([polyPts[i][0] - polyPts[i - 1][0], polyPts[i][1] - polyPts[i - 1][1]]);
-              }
-              doc.lines(lineSegsArea, polyPts[0][0], polyPts[0][1], [1, 1], 'F', true);
-            }
+              const segs = [];
+              for (let i = 1; i < polyPts.length; i++) segs.push([polyPts[i][0] - polyPts[i - 1][0], polyPts[i][1] - polyPts[i - 1][1]]);
+              doc.lines(segs, polyPts[0][0], polyPts[0][1], [1, 1], 'F', true);
+            };
 
-            doc.setDrawColor(...color); doc.setLineWidth(1.0);
-            for (let i = 1; i < pts.length; i++) doc.line(getX(i - 1), getY(pts[i - 1][dataKey]), getX(i), getY(pts[i][dataKey]));
+            drawAreaFill('inc', green.map(c => Math.round(c + (255 - c) * 0.90)));
+            drawAreaFill('exp', red.map(c => Math.round(c + (255 - c) * 0.92)));
 
-            doc.setFillColor(...color);
-            for (let i = 0; i < pts.length; i++) doc.circle(getX(i), getY(pts[i][dataKey]), 1.2, 'F');
+            // Trend Lines
+            doc.setDrawColor(...green); doc.setLineWidth(1.1);
+            for (let i = 1; i < pts.length; i++) doc.line(getX(i - 1), getY(pts[i - 1].inc), getX(i), getY(pts[i].inc));
+            doc.setDrawColor(...red); doc.setLineWidth(1.1);
+            for (let i = 1; i < pts.length; i++) doc.line(getX(i - 1), getY(pts[i - 1].exp), getX(i), getY(pts[i].exp));
 
-            const labelSteps = Math.max(1, Math.ceil(pts.length / 8));
+            // Dots on every point
+            doc.setFillColor(...green);
+            for (let i = 0; i < pts.length; i++) doc.circle(getX(i), getY(pts[i].inc), 1.2, 'F');
+            doc.setFillColor(...red);
+            for (let i = 0; i < pts.length; i++) doc.circle(getX(i), getY(pts[i].exp), 1.2, 'F');
 
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-            const placedLabels = [];
-            for (let i = 0; i < pts.length; i++) {
-              const val = pts[i][dataKey];
-              if (val > 0) {
-                const amtStr = formatPdfAmt(val);
-                const currY = getY(val);
-                const prevY = i > 0 ? getY(pts[i - 1][dataKey]) : currY;
-                const nextY = i < pts.length - 1 ? getY(pts[i + 1][dataKey]) : currY;
+            // Value labels on EVERY active point (and zero points if <= 12 buckets and free)
+            const lblFontSize = pts.length <= 14 ? 6.2 : (pts.length <= 24 ? 5.2 : 4.6);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(lblFontSize);
+            const placedLbls = [];
 
-                let isValley = (currY >= prevY && currY >= nextY) || (i === 0 && nextY < currY) || (i === pts.length - 1 && prevY < currY);
-
-                const offsets = isValley ? [4.5, -2.5, 7.5, -5.5] : [-2.5, 4.5, -5.5, 7.5];
+            const drawSeriesLabels = (dataKey, otherKey, lineColor) => {
+              for (let i = 0; i < pts.length; i++) {
+                const val = pts[i][dataKey];
+                const isZero = val <= 0;
+                if (isZero && pts.length > 12) continue;
+                const amtStr = isZero ? '0' : formatPdfAmt(val);
+                const pX = getX(i);
+                const pY = getY(val);
                 const txtW = doc.getTextWidth(amtStr);
-                const txtH = 3;
+                const txtH = lblFontSize * 0.3528;
 
-                let finalOff = offsets[0];
-                for (let off of offsets) {
-                  const cx = getX(i);
-                  const cy = currY + off;
-                  let collides = false;
-                  for (let pl of placedLabels) {
-                    if (Math.abs(cx - pl.x) < (txtW + pl.w) / 2 + 1.5 && Math.abs(cy - pl.y) < txtH + 1) {
-                      collides = true; break;
+                // Prefer above if this series >= other series at index i, else below
+                const otherVal = pts[i][otherKey];
+                const preferAbove = val >= otherVal;
+                const yOffsets = preferAbove
+                  ? [-3.0, 4.2, -5.8, 7.0, -8.6, 9.8, -11.4]
+                  : [4.2, -3.0, 7.0, -5.8, 9.8, -8.6, 12.4];
+                const xNudges = [0, -1.6, 1.6];
+
+                let bestX = pX, bestY = Math.max(gridY + 3, Math.min(gridBottom - 1.2, pY + yOffsets[0]));
+                let foundFree = false;
+                for (const off of yOffsets) {
+                  const candY = Math.max(gridY + 3, Math.min(gridBottom - 1.2, pY + off));
+                  for (const dx of xNudges) {
+                    const candX = Math.max(gridX + txtW / 2, Math.min(gridX + drawW - txtW / 2, pX + dx));
+                    const collides = placedLbls.some(pl =>
+                      Math.abs(candX - pl.x) < (txtW + pl.w) / 2 + 1.0 && Math.abs(candY - pl.y) < txtH + 1.2
+                    );
+                    if (!collides) {
+                      bestX = candX; bestY = candY; foundFree = true; break;
                     }
                   }
-                  if (!collides) {
-                    finalOff = off; break;
-                  }
+                  if (foundFree) break;
                 }
+                if (isZero && !foundFree) continue;
 
-                const drawX = getX(i);
-                const drawY = currY + finalOff;
-
-                // Mask background to prevent line intersection
-                doc.setFillColor(...panel2);
-                doc.rect(drawX - txtW / 2 - 0.5, drawY - 2.5, txtW + 1, 3.2, 'F');
-
-                doc.setTextColor(...color);
-                doc.text(amtStr, drawX, drawY, { align: 'center' });
-
-                placedLabels.push({ x: drawX, y: drawY, w: txtW });
+                // White mask behind label so lines don't strike through text
+                doc.setFillColor(...panel);
+                doc.rect(bestX - txtW / 2 - 0.5, bestY - txtH - 0.2, txtW + 1, txtH + 0.8, 'F');
+                doc.setTextColor(...(isZero ? muted : lineColor));
+                doc.text(amtStr, bestX, bestY, { align: 'center' });
+                placedLbls.push({ x: bestX, y: bestY, w: txtW });
               }
-            }
+            };
 
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...muted);
+            drawSeriesLabels('inc', 'exp', green);
+            drawSeriesLabels('exp', 'inc', red);
+
+            // X-axis labels
+            const labelSteps = Math.max(1, Math.ceil(pts.length / 12));
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8); doc.setTextColor(...muted);
             for (let i = 0; i < pts.length; i += labelSteps) {
               if (i !== pts.length - 1 && (pts.length - 1 - i) < labelSteps * 0.6) continue;
               const lx = getX(i);
-              doc.text(pts[i].label, lx, gridBottom + 7, { align: 'center' });
-              doc.setDrawColor(...bd); doc.setLineWidth(0.1); doc.line(lx, gridBottom, lx, gridBottom + 2.5);
+              doc.text(pts[i].label, lx, gridBottom + 6.5, { align: 'center' });
+              doc.setDrawColor(...bd); doc.setLineWidth(0.1); doc.line(lx, gridBottom, lx, gridBottom + 2);
             }
             if (pts.length > 1 && (pts.length - 1) % labelSteps !== 0) {
-              const lst = pts.length - 1;
-              const lx = getX(lst);
-              doc.text(pts[lst].label, lx, gridBottom + 7, { align: 'center' });
-              doc.line(lx, gridBottom, lx, gridBottom + 2.5);
+              const lx = getX(pts.length - 1);
+              doc.text(pts[pts.length - 1].label, lx, gridBottom + 6.5, { align: 'center' });
+              doc.line(lx, gridBottom, lx, gridBottom + 2);
             }
 
-            return cY + chartH;
-          };
+            curY = cY + chartH;
+          }
 
-          let nextY = drawTrendChart('INCOME TREND', 'inc', green, curY);
-          drawTrendChart('EXPENSE TREND', 'exp', red, nextY + 16);
+          // ── 3 Summary Callout Cards (Peak Income, Peak Expense, Period Net) ──
+          {
+            const peakInc = pts.reduce((m, p) => p.inc > m.val ? { val: p.inc, lbl: p.fullLabel } : m, { val: 0, lbl: '' });
+            const peakExp = pts.reduce((m, p) => p.exp > m.val ? { val: p.exp, lbl: p.fullLabel } : m, { val: 0, lbl: '' });
+            const posBuckets = pts.filter(p => (p.inc - p.exp) > 0).length;
+            const unitName = isMonthlyMode ? 'months' : 'days';
 
-          curY = nextY + 140;
+            const calloutH = 21, calloutGap = 5;
+            const calloutW = (W - 30 - calloutGap * 2) / 3;
+            const cTop = curY + 5;
+
+            const callouts = [
+              {
+                title: 'PEAK INCOME',
+                val: peakInc.val > 0 ? `${curSym}${formatPdfAmt(peakInc.val)}` : `${curSym}0`,
+                color: peakInc.val > 0 ? green : muted,
+                sub: peakInc.val > 0 ? peakInc.lbl : 'No income logged'
+              },
+              {
+                title: 'PEAK EXPENSE',
+                val: peakExp.val > 0 ? `${curSym}${formatPdfAmt(peakExp.val)}` : `${curSym}0`,
+                color: peakExp.val > 0 ? red : muted,
+                sub: peakExp.val > 0 ? peakExp.lbl : 'No expenses logged'
+              },
+              {
+                title: netBal >= 0 ? 'NET SURPLUS' : 'NET DEFICIT',
+                val: `${netBal > 0 ? '+' : (netBal < 0 ? '-' : '')}${curSym}${formatPdfAmt(Math.abs(netBal))}`,
+                color: netBal > 0 ? green : (netBal < 0 ? red : muted),
+                sub: `${posBuckets} of ${pts.length} ${unitName} positive`
+              }
+            ];
+
+            callouts.forEach((co, idx) => {
+              const cx = pL + idx * (calloutW + calloutGap);
+              doc.setFillColor(...panel); doc.roundedRect(cx, cTop, calloutW, calloutH, 3.5, 3.5, 'F');
+              doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(cx, cTop, calloutW, calloutH, 3.5, 3.5, 'S');
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(6.2); doc.setTextColor(...muted);
+              doc.text(co.title, cx + 6, cTop + 6.5);
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...co.color);
+              doc.text(co.val, cx + 6, cTop + 14);
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+              doc.text(co.sub, cx + 6, cTop + 18.5);
+            });
+
+            curY = cTop + calloutH + 5;
+          }
+
+          // ── CHART 2: MONTHLY / DAILY NET (Bar Chart with Signs & Non-Clipping Labels) ──
+          {
+            const chartH = 78;
+            const fullW = W - 30;
+            const cX = pL, cY = curY;
+
+            doc.setFillColor(...panel); doc.roundedRect(cX, cY, fullW, chartH, 3.5, 3.5, 'F');
+            doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(cX, cY, fullW, chartH, 3.5, 3.5, 'S');
+
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+            doc.text(`${isMonthlyMode ? 'MONTHLY' : 'DAILY'} NET (INCOME MINUS EXPENSE)`, cX + 8, cY + 8.5);
+
+            const netPts = pts.map(p => ({ label: p.label, net: p.inc - p.exp, hasAct: p.inc > 0 || p.exp > 0 }));
+
+            const padLeft = 10, padRight = 10, padTop = 16, padBottom = 16;
+            const drawW = fullW - padLeft - padRight;
+            const drawH = chartH - padTop - padBottom;
+            const gridX = cX + padLeft, gridY = cY + padTop, gridBottom = gridY + drawH;
+
+            const maxPos = Math.max(0, ...netPts.map(p => p.net));
+            const maxNeg = Math.max(0, ...netPts.map(p => -p.net));
+            const topScale = maxPos > 0 ? maxPos * 1.28 : (maxNeg > 0 ? maxNeg * 0.25 : 1000);
+            const botScale = maxNeg > 0 ? maxNeg * 1.28 : 0;
+            const totalScale = topScale + botScale;
+
+            const getNetY = (val) => gridBottom - ((val + botScale) / totalScale) * drawH;
+            const zLine = getNetY(0);
+
+            // Baseline
+            doc.setDrawColor(...borderDark); doc.setLineWidth(0.25);
+            doc.line(gridX, zLine, gridX + drawW, zLine);
+
+            // Bars centered inside equal slots so edge bars never overflow chart borders
+            const slotW = drawW / Math.max(1, netPts.length);
+            const barW = Math.min(10, slotW * 0.58);
+            const barLblSize = netPts.length <= 14 ? 5.8 : (netPts.length <= 24 ? 4.8 : 4.2);
+
+            netPts.forEach((p, i) => {
+              const bCenter = gridX + (i + 0.5) * slotW;
+              const bX = bCenter - barW / 2;
+              const bColor = p.net > 0 ? green : (p.net < 0 ? red : muted);
+              const valY = getNetY(p.net);
+              const barH = Math.abs(valY - zLine);
+
+              if (barH > 0.4) {
+                doc.setFillColor(...bColor);
+                const topY = Math.min(valY, zLine);
+                doc.roundedRect(bX, topY, barW, barH, 1, 1, 'F');
+              }
+
+              // Always show value label for every active/monthly bar
+              if (p.net !== 0 || netPts.length <= 12 || p.hasAct) {
+                const valStr = p.net > 0
+                  ? `+${formatPdfAmt(p.net)}`
+                  : (p.net < 0 ? `-${formatPdfAmt(Math.abs(p.net))}` : '0');
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(barLblSize); doc.setTextColor(...bColor);
+                const lblY = p.net >= 0
+                  ? Math.max(gridY + 3, valY - 1.8)
+                  : Math.min(gridBottom - 0.5, Math.max(valY, zLine) + 3.4);
+                doc.text(valStr, bCenter, lblY, { align: 'center' });
+              }
+            });
+
+            // X-axis labels
+            const labelSteps = Math.max(1, Math.ceil(netPts.length / 12));
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8); doc.setTextColor(...muted);
+            netPts.forEach((p, i) => {
+              if (i !== netPts.length - 1 && (i % labelSteps !== 0 || (netPts.length - 1 - i) < labelSteps * 0.6)) return;
+              const lx = gridX + (i + 0.5) * slotW;
+              doc.text(p.label, lx, gridBottom + 6.5, { align: 'center' });
+            });
+
+            curY = cY + chartH + 6;
+          }
         }
 
-        // ── PAGE 3: CHARTS (Category Donut + Online/Offline Donut) ───────────
+        // ── PAGE 4: SPENDING ANALYSIS (Concept Layout + 3 Top KPI Cards) ─────
         if (catEntries.length > 0 || totalExp > 0) {
           doc.addPage();
           curY = 22;
-          sectionTitle('SPENDING ANALYSIS');
+
+          // Editorial Page 4 Heading
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...accentStripe);
+          doc.text(reportTitle.toUpperCase(), pL, curY);
+          curY += 6.5;
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(17); doc.setTextColor(...darkText);
+          doc.text('Spending analysis', pL, curY);
+          curY += 5;
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+          doc.text('Where the money went', pL, curY);
+          curY += 7;
+
+          // ── TOP 3 KPI SUMMARY CARDS (Linked above Category Distribution) ────
+          {
+            const kpiGap = 5;
+            const kpiW = (W - 30 - kpiGap * 2) / 3;
+            const kpiH = 26;
+
+            const topCatLabel = topCat ? (topCat[0].charAt(0).toUpperCase() + topCat[0].slice(1)) : 'None';
+            const topCatAmt = topCat ? topCat[1] : 0;
+            const topCatPct = totalExp > 0 ? Math.round((topCatAmt / totalExp) * 100) : 0;
+
+            const top3Entries = catEntries.slice(0, 3);
+            const top3Amt = top3Entries.reduce((s, e) => s + e[1], 0);
+            const top3Pct = totalExp > 0 ? Math.round((top3Amt / totalExp) * 100) : 0;
+            const top3Names = top3Entries.length
+              ? top3Entries.map(([c]) => c.charAt(0).toUpperCase() + c.slice(1)).join(', ')
+              : 'No categories';
+
+            const spendingKpis = [
+              {
+                title: 'TOP CATEGORY',
+                val: topCatLabel,
+                valColor: topCatPct >= 50 ? red : darkText,
+                sub: topCat ? `${fmtPDFS(topCatAmt)}, ${topCatPct}% of expenses` : 'No expenses recorded'
+              },
+              {
+                title: 'TOP 3 SHARE',
+                val: `${top3Pct}%`,
+                valColor: top3Pct >= 85 && catEntries.length > 3 ? red : darkText,
+                sub: top3Names
+              },
+              {
+                title: 'TOTAL SPEND',
+                val: fmtPDFS(totalExp),
+                valColor: totalExp > 0 ? red : muted,
+                sub: `${expEntriesCount} expense transaction${expEntriesCount === 1 ? '' : 's'}`
+              }
+            ];
+
+            spendingKpis.forEach((k, idx) => {
+              const kx = pL + idx * (kpiW + kpiGap);
+              const ky = curY;
+
+              doc.setFillColor(...panel);
+              doc.roundedRect(kx, ky, kpiW, kpiH, 3.5, 3.5, 'F');
+              doc.setDrawColor(...bd); doc.setLineWidth(0.2);
+              doc.roundedRect(kx, ky, kpiW, kpiH, 3.5, 3.5, 'S');
+
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(6.2); doc.setTextColor(...muted);
+              doc.text(k.title, kx + 6.5, ky + 7.5);
+
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(14.5); doc.setTextColor(...k.valColor);
+              const valFitted = doc.splitTextToSize(k.val, kpiW - 13)[0];
+              doc.text(valFitted, kx + 6.5, ky + 16.5);
+
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(6.4); doc.setTextColor(...muted);
+              let subTxt = k.sub;
+              while (subTxt.length > 4 && doc.getTextWidth(subTxt) > kpiW - 13) {
+                subTxt = subTxt.slice(0, -2) + '…';
+              }
+              doc.text(subTxt, kx + 6.5, ky + 22);
+            });
+
+            curY += kpiH + 4.5;
+          }
 
           // Helper: draw a donut slice using polygon arc approximation
           const drawDonutSlice = (cx, cy, r, innerR, startDeg, endDeg, fillColor) => {
+            if (endDeg - startDeg >= 359.8) {
+              doc.setFillColor(...fillColor);
+              doc.circle(cx, cy, r, 'F');
+              return;
+            }
             const STEPS = Math.max(8, Math.round(Math.abs(endDeg - startDeg) / 3));
             const toRad = (d) => (d - 90) * Math.PI / 180;
             const outerPts = [], innerPts = [];
@@ -12125,179 +12391,168 @@
             doc.lines(lineSegs, allPts[0][0], allPts[0][1], [1, 1], 'F', true);
           };
 
-          // Chart colour palette (accessible, distinct)
+          // Print-friendly accessible category palette
           const PALETTE = [
-            [200, 169, 110], [93, 186, 138], [110, 157, 200], [224, 112, 112],
-            [157, 122, 200], [200, 185, 80], [80, 200, 185], [200, 120, 80],
-            [140, 200, 100], [200, 100, 160], [100, 160, 200], [160, 200, 140],
+            [189, 146, 73], [70, 158, 121], [86, 134, 180], [209, 95, 95],
+            [140, 102, 184], [122, 168, 72], [58, 166, 160], [204, 118, 66],
+            [168, 154, 62], [184, 88, 140], [92, 132, 194], [116, 130, 150],
           ];
 
-          const chartPanelTop = curY;
-          const fullW = W - pL - 15;
+          const fullW = W - 30;
 
-          const catW = fullW;
+          // ── CATEGORY DISTRIBUTION CARD (Shows ALL categories cleanly) ────────
+          {
+            const numCats = Math.max(1, catEntries.length);
+            const rowH = numCats <= 10 ? 9.4 : Math.max(7.2, 98 / numCats);
+            const panH = Math.max(78, 18 + numCats * rowH);
+            const panTop = curY;
 
-          // ── LEFT: CATEGORY DISTRIBUTION ──────────────────────────────────────
-          const leftX = pL;
-          const catChartTitle = 'CATEGORY DISTRIBUTION';
-          // Panel background
-          doc.setFillColor(...panel2); doc.roundedRect(leftX, chartPanelTop, catW, 110, 3, 3, 'F');
-          doc.setDrawColor(...borderDark); doc.setLineWidth(0.15); doc.roundedRect(leftX, chartPanelTop, catW, 110, 3, 3, 'S');
-          // Title
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...gold);
-          doc.text(catChartTitle, leftX + catW / 2, chartPanelTop + 8, { align: 'center' });
+            doc.setFillColor(...panel); doc.roundedRect(pL, panTop, fullW, panH, 3.5, 3.5, 'F');
+            doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, panTop, fullW, panH, 3.5, 3.5, 'S');
 
-          const catCX = leftX + 45, catCY = chartPanelTop + 55;
-          const catR = 26, catInnerR = 15;
+            const donutCX = pL + 33, donutCY = panTop + panH / 2, donutR = 25, donutInnerR = 16;
 
-          if (catEntries.length > 0) {
-            let catAngle = 0;
-            catEntries.forEach(([cat, amt], idx) => {
-              const slice = totalExp > 0 ? (amt / totalExp) * 360 : 0;
-              if (slice > 0) drawDonutSlice(catCX, catCY, catR, catInnerR, catAngle, catAngle + slice, PALETTE[idx % PALETTE.length]);
-              catAngle += slice;
-            });
-            // Center hole label
-            doc.setFillColor(...panel); doc.circle(catCX, catCY, catInnerR - 0.5, 'F');
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...muted);
-            doc.text('EXP', catCX, catCY - 2, { align: 'center' });
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...red);
-            doc.text(fmtPDFS(totalExp), catCX, catCY + 4, { align: 'center' });
+            if (catEntries.length > 0) {
+              let catAngle = 0;
+              catEntries.forEach(([cat, amt], idx) => {
+                const slice = totalExp > 0 ? (amt / totalExp) * 360 : 0;
+                if (slice > 0) drawDonutSlice(donutCX, donutCY, donutR, donutInnerR, catAngle, catAngle + slice, PALETTE[idx % PALETTE.length]);
+                catAngle += slice;
+              });
+              // Crisp white slice separators for readability (when >1 slice)
+              if (catEntries.length > 1) {
+                let sepAngle = 0;
+                doc.setDrawColor(...panel); doc.setLineWidth(0.6);
+                catEntries.forEach(([, amt]) => {
+                  const slice = totalExp > 0 ? (amt / totalExp) * 360 : 0;
+                  if (slice > 1) {
+                    const rad = (sepAngle - 90) * Math.PI / 180;
+                    doc.line(donutCX + donutInnerR * Math.cos(rad), donutCY + donutInnerR * Math.sin(rad),
+                      donutCX + (donutR + 0.5) * Math.cos(rad), donutCY + (donutR + 0.5) * Math.sin(rad));
+                  }
+                  sepAngle += slice;
+                });
+              }
 
-            // Legend
-            const maxLegendItems = Math.min(catEntries.length, 12);
-            const cols = 2;
-            const itemsPerCol = Math.ceil(maxLegendItems / cols);
-            const startY = catCY - ((itemsPerCol - 1) * 11) / 2;
+              // Center hole
+              doc.setFillColor(...panel); doc.circle(donutCX, donutCY, donutInnerR, 'F');
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(5.5); doc.setTextColor(...muted);
+              doc.text('TOTAL SPEND', donutCX, donutCY - 3, { align: 'center' });
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...darkText);
+              doc.text(fmtPDFS(totalExp), donutCX, donutCY + 3.5, { align: 'center' });
 
-            catEntries.slice(0, maxLegendItems).forEach(([cat, amt], idx) => {
-              const c = Math.floor(idx / itemsPerCol);
-              const r = idx % itemsPerCol;
-              const legendX = leftX + 76 + c * 52;
+              // Right-side header + full category rows
+              const listX = pL + 68;
+              const listRight = pR - 7;
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+              doc.text('CATEGORY DISTRIBUTION', listX, panTop + 9);
 
-              const ly = startY + r * 11 + 3; // +3 for text baseline alignment
-              const pct = totalExp > 0 ? ((amt / totalExp) * 100).toFixed(0) : '0';
-              const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+              const maxAmtCat = Math.max(1, catEntries[0][1]);
+              const nameX = listX + 5.5;
+              const barX = listX + 34;
+              const pctX = listRight - 21;
+              const barTrackW = pctX - barX - 8;
+              const listStartY = panTop + 13;
 
-              doc.setFillColor(...PALETTE[idx % PALETTE.length]); doc.roundedRect(legendX, ly - 3.5, 4.5, 4.5, 0.5, 0.5, 'F');
+              catEntries.forEach(([cat, amt], idx) => {
+                const ry = listStartY + idx * rowH;
+                const midY = ry + rowH / 2;
+                const pct = totalExp > 0 ? Math.round((amt / totalExp) * 100) : 0;
+                const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
+                const pColor = PALETTE[idx % PALETTE.length];
 
-              doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...white);
-              let maxLen = 10;
-              let displayLabel = label.length > maxLen ? label.slice(0, maxLen - 1) + '..' : label;
-              doc.text(displayLabel, legendX + 6.5, ly);
+                // Color swatch
+                doc.setFillColor(...pColor);
+                doc.roundedRect(listX, midY - 1.5, 3, 3, 0.7, 0.7, 'F');
 
-              const rightEdgeX = legendX + 48;
-              doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...muted);
-              doc.text(fmtPDFS(amt), rightEdgeX, ly, { align: 'right' });
+                // Category name
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...darkText);
+                const dispCat = catLabel.length > 13 ? catLabel.slice(0, 12) + '…' : catLabel;
+                doc.text(dispCat, nameX, midY + 1.1);
 
-              doc.setTextColor(...white);
-              doc.text(`${pct}%`, rightEdgeX - 22, ly, { align: 'right' });
-            });
-            if (catEntries.length > maxLegendItems) {
-              const ly = startY + itemsPerCol * 11 + 3;
-              const legendX = leftX + 76;
-              doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...muted);
-              doc.text(`+${catEntries.length - maxLegendItems} more`, legendX, ly);
+                // Full-track rounded pill bar (proportional to top category)
+                const barH = 2.6;
+                doc.setFillColor(235, 236, 240);
+                doc.roundedRect(barX, midY - barH / 2, barTrackW, barH, 1.3, 1.3, 'F');
+                const fillLen = Math.max(2.6, (amt / maxAmtCat) * barTrackW * 0.92);
+                doc.setFillColor(...pColor);
+                doc.roundedRect(barX, midY - barH / 2, fillLen, barH, 1.3, 1.3, 'F');
+
+                // Percentage (bold)
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...darkText);
+                doc.text(`${pct}%`, pctX, midY + 1.1, { align: 'right' });
+
+                // Amount (right-aligned)
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+                doc.text(fmtPDFS(amt), listRight, midY + 1.1, { align: 'right' });
+              });
+            } else {
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
+              doc.text('No expense data', pL + fullW / 2, panTop + panH / 2, { align: 'center' });
             }
-          } else {
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
-            doc.text('No expense data', leftX + catW / 2, chartPanelTop + 48, { align: 'center' });
+
+            curY = panTop + panH + 6;
           }
 
-          // ── RIGHT: ONLINE vs OFFLINE ──────────────────────────────────────────
-          curY = chartPanelTop + 110 + 10;
-          const splitPanelTop = curY;
-          const rightX = leftX;
-          const splitW = fullW;
+          // ── PAYMENT CHANNEL SPLIT CARD (Stacked Horizontal Bar) ───────────────
+          {
+            const panH = 44;
+            const panTop = curY;
+            const onlinePctVal = totalExp > 0 ? onlineExp / totalExp : 0;
+            const offlinePctVal = totalExp > 0 ? 1 - onlinePctVal : 0;
+            const onlinePct = Math.round(onlinePctVal * 100);
+            const offlinePct = totalExp > 0 ? 100 - onlinePct : 0;
 
-          doc.setFillColor(...panel2); doc.roundedRect(rightX, splitPanelTop, splitW, 110, 3, 3, 'F');
-          doc.setDrawColor(...borderDark); doc.setLineWidth(0.15); doc.roundedRect(rightX, splitPanelTop, splitW, 110, 3, 3, 'S');
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...gold);
-          doc.text('PAYMENT CHANNEL SPLIT', rightX + splitW / 2, splitPanelTop + 8, { align: 'center' });
+            const onlineColor = [96, 139, 184];
+            const offlineColor = [147, 108, 178];
 
-          const oCX = rightX + 45, oCY = splitPanelTop + 55;
-          const oR = 26, oInnerR = 15;
-          const onlinePctVal = totalExp > 0 ? onlineExp / totalExp : 0;
-          const offlinePctVal = 1 - onlinePctVal;
+            doc.setFillColor(...panel); doc.roundedRect(pL, panTop, fullW, panH, 3.5, 3.5, 'F');
+            doc.setDrawColor(...bd); doc.setLineWidth(0.2); doc.roundedRect(pL, panTop, fullW, panH, 3.5, 3.5, 'S');
 
-          if (totalExp > 0) {
-            // Online slice (blue)
-            const onlineSlice = onlinePctVal * 360;
-            if (onlineSlice > 1) drawDonutSlice(oCX, oCY, oR, oInnerR, 0, onlineSlice, [110, 157, 200]);
-            if (onlineSlice < 359) drawDonutSlice(oCX, oCY, oR, oInnerR, onlineSlice, 360, [157, 122, 200]);
-            // Center hole
-            doc.setFillColor(...panel); doc.circle(oCX, oCY, oInnerR - 0.5, 'F');
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...muted);
-            doc.text('SPLIT', oCX, oCY - 2, { align: 'center' });
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...red);
-            doc.text(fmtPDFS(totalExp), oCX, oCY + 4, { align: 'center' });
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.setTextColor(...muted);
+            doc.text('PAYMENT CHANNEL SPLIT', pL + 7, panTop + 8.5);
 
-            // Legend items
-            const oLegendX = rightX + 100;
-            const oItems = [
-              { label: 'Online', pct: (onlinePctVal * 100).toFixed(0), amt: onlineExp, color: [110, 157, 200] },
-              { label: 'Offline', pct: (offlinePctVal * 100).toFixed(0), amt: offlineExp, color: [157, 122, 200] },
-            ].sort((a, b) => b.amt - a.amt);
-            const oStartY = oCY - 5;
-            oItems.forEach((item, idx) => {
-              const ly = oStartY + idx * 14;
-              doc.setFillColor(...item.color); doc.roundedRect(oLegendX, ly - 4, 4.5, 4.5, 0.5, 0.5, 'F');
-
-              doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...item.color);
-              doc.text(`${item.pct}%`, oLegendX + 7, ly);
-
-              doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...muted);
-              doc.text(item.label, oLegendX + 24, ly);
-
-              const rightEdgeX = oLegendX + 60;
-              doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...white);
-              doc.text(fmtPDFS(item.amt), rightEdgeX, ly, { align: 'right' });
-            });
-          } else {
-            doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(...muted);
-            doc.text('No expense data', rightX + splitW / 2, splitPanelTop + 48, { align: 'center' });
-          }
-
-          curY = splitPanelTop + 110 + 10;
-        }
-
-        // ── CATEGORY BREAKDOWN ───────────────────────────────────────────────
-        if (incCat && catEntries.length > 0) {
-          doc.addPage(); // Give CATEGORY BREAKDOWN the whole page
-          curY = 22;
-          sectionTitle('CATEGORY BREAKDOWN (EXPENSES)');
-          const catRows = catEntries.map(([cat, amt]) => {
-            const pct = totalExp > 0 ? ((amt / totalExp) * 100).toFixed(0) + '%' : '0%';
-            const catLabel = cat.charAt(0).toUpperCase() + cat.slice(1);
-            return [catLabel, fmtPDFS(amt), pct];
-          });
-          doc.autoTable({
-            startY: curY, head: [['Category', 'Amount', 'Share of Expenses']], body: catRows,
-            margin: { left: pL, right: 15, top: 22, bottom: 18 }, theme: 'grid',
-            headStyles: { fillColor: headerBg, textColor: accentStripe, fontStyle: 'bold', fontSize: 9.5, cellPadding: 5 },
-            bodyStyles: { fillColor: panel, textColor: darkText, fontSize: 9, cellPadding: 4.5, valign: 'middle' },
-            alternateRowStyles: { fillColor: altRow },
-            columnStyles: { 0: {}, 1: { cellWidth: 44, halign: 'right' }, 2: { cellWidth: 38, halign: 'right' } },
-            tableLineColor: bd, tableLineWidth: 0.2,
-            didParseCell: (d) => {
-              if (d.section === 'body' && d.column.index === 1) {
-                d.cell.styles.textColor = red;
-                d.cell.styles.fontStyle = 'bold';
+            const barX = pL + 7, barW = fullW - 14, barY = panTop + 13, barH = 7.5;
+            if (totalExp > 0) {
+              if (onlinePctVal >= 0.999) {
+                doc.setFillColor(...onlineColor);
+                doc.roundedRect(barX, barY, barW, barH, 2.2, 2.2, 'F');
+              } else if (onlinePctVal <= 0.001) {
+                doc.setFillColor(...offlineColor);
+                doc.roundedRect(barX, barY, barW, barH, 2.2, 2.2, 'F');
+              } else {
+                const onW = Math.max(4, Math.min(barW - 4, onlinePctVal * barW));
+                doc.setFillColor(...offlineColor);
+                doc.roundedRect(barX, barY, barW, barH, 2.2, 2.2, 'F');
+                doc.setFillColor(...onlineColor);
+                doc.roundedRect(barX, barY, onW, barH, 2.2, 2.2, 'F');
+                doc.rect(barX + Math.max(2.2, onW - 2.2), barY, 2.2, barH, 'F');
               }
-              if (d.section === 'body' && d.column.index === 2) {
-                d.cell.styles.textColor = muted;
-              }
+
+              // Online & Offline columns below stacked bar
+              const midColX = pL + fullW * 0.52;
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...muted);
+              doc.text(`Online (${onlinePct}%)`, barX, panTop + 28);
+              doc.text(`Offline (${offlinePct}%)`, midColX, panTop + 28);
+
+              doc.setFont('helvetica', 'bold'); doc.setFontSize(13.5); doc.setTextColor(...darkText);
+              doc.text(fmtPDFS(onlineExp), barX, panTop + 37.5);
+              doc.text(fmtPDFS(offlineExp), midColX, panTop + 37.5);
+            } else {
+              doc.setFillColor(...panel3);
+              doc.roundedRect(barX, barY, barW, barH, 2.2, 2.2, 'F');
+              doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...muted);
+              doc.text('No expense channel data', pL + fullW / 2, panTop + 32, { align: 'center' });
             }
-          });
-          curY = doc.lastAutoTable.finalY + 12;
+
+            curY = panTop + panH + 8;
+          }
         }
 
         // ── TRANSACTION LIST ─────────────────────────────────────────────────
         if (incList && filtered.length) {
-          if (!incCat || catEntries.length >= 7) {
-            doc.addPage();
-            curY = 22;
-          }
+          doc.addPage();
+          curY = 22;
           sectionTitle('TRANSACTION LIST');
 
           const hasEvents = filtered.some(t => t.eventId && events[t.eventId]);
