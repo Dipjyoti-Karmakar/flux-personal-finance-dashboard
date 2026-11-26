@@ -1118,7 +1118,7 @@
             </button>
             <div class="dv-title-block">
               <div class="dv-flux-label">FLUX LEDGER</div>
-              <h1 class="dv-title">DEBT</h1>
+              <h1 class="dv-title">Debt Ledger</h1>
             </div>
           </div>
           <div class="dv-header-actions">
@@ -9518,8 +9518,6 @@
             const _recNameLc = data.name ? data.name.trim().toLowerCase() : '';
             const _allDataAmts = [Math.abs(data.amount), ...(data.altAmounts || []).map(a => Math.abs(a))];
             // Build allTxs once, then push newTxs incrementally (was re-spreading entire txs array every iteration)
-            const allTxs = [...txs];
-
             while (currentDue <= today && cyclesProcessed < MAX_CYCLES) {
               if (data.paymentsLimit && paymentsMade >= data.paymentsLimit) {
                 updatesNeeded = true;
@@ -12508,7 +12506,7 @@
           desktopViewTitle.textContent = 'Activity Log';
           if (desktopViewSub) desktopViewSub.textContent = 'Audit Trail & Transaction History';
         } else if (tab === 'debts') {
-          desktopViewTitle.textContent = 'DEBT';
+          desktopViewTitle.textContent = 'Debt Ledger';
           if (desktopViewSub) desktopViewSub.textContent = 'Counterparty Balances & Settlement Ledger';
         }
       }
