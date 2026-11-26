@@ -12703,6 +12703,42 @@ body.in-debts #sideAddBtn {
   flex-wrap: wrap;
 }
 
+#debtLogView .log-cat-icon {
+  overflow: visible;
+}
+
+#debtLogView .log-meta {
+  margin-top: 8px;
+  gap: 8px;
+  align-items: center;
+}
+
+#debtLogView .log-time-wrap {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  color: var(--mu);
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#debtLogView .log-time-wrap svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+#debtLogView .log-time {
+  margin-top: 0;
+  line-height: 1;
+}
+
+#debtLogView .log-meta-pills {
+  margin-top: 0;
+  align-items: center;
+}
+
 #debtLogView .diff-row {
   grid-template-columns: 58px 1fr;
 }

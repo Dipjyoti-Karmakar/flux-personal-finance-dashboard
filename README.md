@@ -19,7 +19,7 @@
 
 ## Overview
 
-Flux is a production-grade personal finance application built with clean, modular vanilla web technologies, pairing a streamlined `index.html` (~10,600 lines) with a dedicated stylesheet (`style.css`). It leverages **Firebase Authentication** and **Cloud Firestore** for secure, real-time data synchronization. Built with an offline-first PWA architecture, it guarantees full functionality with or without an active internet connection.
+Flux is a production-grade personal finance application built with clean, modular vanilla web technologies, pairing a streamlined `index.html` (~16,300 lines) with a dedicated stylesheet (`style.css`). It leverages **Firebase Authentication** and **Cloud Firestore** for secure, real-time data synchronization. Built with an offline-first PWA architecture, it guarantees full functionality with or without an active internet connection.
 
 The application is localized for India (`en-IN`), formatting all currencies in **INR (₹)**.
 
@@ -34,6 +34,12 @@ The application is localized for India (`en-IN`), formatting all currencies in *
   - **Multi-Filter Support:** Filter by cadence, type (Expense/Income), due dates (Overdue, Due Today, Due Soon, Month, Exact Date), and search query.
   - **Inline Payment History:** Expandable card panels displaying matched payment logs, totals, and annualized cost projections.
   - **Billing Radar & Lifecycle:** Real-time billing cycle progress bars, early payment detection, pause/resume, and multi-tier pricing support.
+- **Debt Ledger (Receivables & Payables):** Dedicated counterparty ledger for tracking money lent (receivables) and borrowed (payables) with signed-ledger balance recomputation. Features:
+  - **Net Position & Filtering:** Live Net Position summary card with Receivable vs. Payable donut breakdown, instant search, and status filter pills (`All`, `Receivable`, `Payable`, `Settled`).
+  - **Account Ledger & Active-Cycle Tracking:** Per-counterparty statement view with running balances, active-cycle settlement progress bars, due dates with overdue badges, an upcoming due dates timeline, and one-click full settlement.
+  - **Payments & Flux Sync:** Partial or full payment recording (`UPI / Online` or `Cash`) with optional synchronization to main Flux income/expense transactions.
+  - **Statements & Reminders:** Built-in WhatsApp reminder sharing (`wa.me`) and one-click clipboard statement summaries.
+  - **Debt Activity Log:** Dedicated audit trail (auto-capped at 300 entries) supporting action/type filters (`ADD`, `EDIT`, `SETTLE`, `DELETE`, `Receivable`, `Payable`, `Payments`, `Accounts`), date-range filtering, search, field-level edit diffs, and bulk log deletion.
 - **Event Tracking & Budgets:** Special event grouping for transactions (e.g., vacations, weddings, renovations) with custom date windows, dedicated event filters, and inline budget tracking.
 - **Analytics & Yearly Insights:** Interactive Canvas 2D trend charts, dynamic category breakdowns, multi-period filtering, and annual spending summaries.
 - **Activity Log & Audit Trail:** Real-time system activity log tracking additions, edits, deletions, updates, and CSV imports with automated log pruning.
@@ -59,10 +65,13 @@ Flux operates without an intermediate application server, interfacing directly w
 
 ```text
 users/{uid}/
-  ├── transactions/{txId}   # Income/expense records (amount, date, desc, category, receipts, subId, eventId)
-  ├── events/{eventId}      # Special events for transaction grouping
-  ├── recurring/{recId}     # Automated subscription and recurring bill definitions
-  └── activities/{actId}    # System activity log (auto-pruned to 300 entries)
+  ├── transactions/{txId}      # Income/expense records (amount, date, desc, category, receipts, subId, eventId)
+  ├── events/{eventId}         # Special events for transaction grouping
+  ├── recurring/{recId}        # Automated subscription and recurring bill definitions
+  ├── activities/{actId}       # System activity log (auto-pruned to 300 entries)
+  ├── debt_persons/{personId}  # Counterparty debt accounts (name, contact, role, currentBalance, dueDate, status)
+  ├── debt_records/{recordId}  # Debt ledger entries (lent, borrowed, repayments, settlements, runningBalance)
+  └── debt_activities/{actId}  # Debt Ledger activity log (auto-capped at 300 entries)
 ```
 
 *(See `firestore.rules` for exact schema validation and security rules.)*
@@ -93,13 +102,13 @@ By default, Flux connects to a pre-configured Firebase instance. To connect your
 2. Enable **Google Authentication** (Build > Authentication).
 3. Create a **Firestore Database** and deploy the rules from `firestore.rules`.
 4. Register a Web App in Project Settings to obtain your `firebaseConfig`.
-5. Update the `firebaseConfig` object in `index.html` (around line ~1690).
+5. Update the `firebaseConfig` object in `index.html` (around line ~2807).
 
 ### 3. Configure Cloudinary for Receipts (Optional)
 
 1. Create a free [Cloudinary](https://cloudinary.com/) account.
 2. Under **Settings > Upload**, create a new **Unsigned** upload preset.
-3. Update the credentials in `index.html` (around line ~1285):
+3. Update the credentials in `index.html` (around line ~2398):
 
    ```js
    const CLOUDINARY_CLOUD = 'your_cloud_name';

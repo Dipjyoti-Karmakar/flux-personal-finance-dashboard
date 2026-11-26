@@ -1,11 +1,11 @@
 // Flux Service Worker - Offline-first caching strategy
-// V58: Debt Activity Log, active-cycle metrics, professional copy & statement polish
-const CACHE_NAME = 'flux-v58';
+// V59: Fix Debt Activity Log clock alignment, date+time formatting, badge placement & README update
+const CACHE_NAME = 'flux-v59';
 // Assets to pre-cache on install
 const PRE_CACHE = [
-  './?v=41',
-  './index.html?v=41',
-  './style.css?v=4',
+  './?v=42',
+  './index.html?v=42',
+  './style.css?v=5',
   './manifest.json?v=7',
   './icon.svg?v=7',
   './icon-192.png?v=7',
@@ -29,7 +29,7 @@ self.addEventListener('install', (event) => {
         const fallback = [
           './',
           './index.html',
-          './style.css?v=3',
+          './style.css?v=5',
           './manifest.json?v=7',
           './icon.svg?v=7',
           './icon-192.png?v=7',

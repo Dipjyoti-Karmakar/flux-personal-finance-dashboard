@@ -37,7 +37,7 @@
     integrity="sha384-fCAW/rDWORTbQXSiB7mOg0QtQ5c+r0f544y6XoKjuVva0nMBlCpNUjiFeG5iMdS3"
     crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.min.js" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="./style.css?v=4">
+  <link rel="stylesheet" href="./style.css?v=5">
   <script src="https://unpkg.com/twemoji@14.0.2/dist/twemoji.min.js" crossorigin="anonymous"></script>
 </head>
 
@@ -13929,7 +13929,11 @@
         const cloudIds = new Set(cloudLogs.map(x => x.id));
         const localOnly = debtActivityLogs.filter(x => x && x._localOnly && !cloudIds.has(x.id));
         debtActivityLogs = [...localOnly, ...cloudLogs]
-          .sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0))
+          .sort((a, b) => {
+            const ta = dvParseLogTimestamp(b.ts)?.getTime() || 0;
+            const tb = dvParseLogTimestamp(a.ts)?.getTime() || 0;
+            return ta - tb;
+          })
           .slice(0, DEBT_ACTIVITY_LOG_LIMIT);
         saveDebtLogsLocal();
         const dlv = document.getElementById('debtLogView');
@@ -15801,9 +15805,20 @@
     }
 
     // ── Debt Activity Log UI & Interactions ──
+    function dvParseLogTimestamp(ts) {
+      if (ts && typeof ts.toDate === 'function') {
+        const d = ts.toDate();
+        return isNaN(d.getTime()) ? null : d;
+      }
+      if (ts === null || ts === undefined || ts === '') return null;
+      const n = Number(ts);
+      const d = new Date(Number.isFinite(n) && n > 0 ? n : ts);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
     function dvFormatLogDateHeader(ts) {
-      const d = new Date(Number(ts) || Date.now());
-      if (isNaN(d.getTime())) return 'Recent';
+      const d = dvParseLogTimestamp(ts);
+      if (!d) return 'Recent';
       const day = d.getDate();
       const mod100 = day % 100;
       const ord = (mod100 >= 11 && mod100 <= 13) ? 'th' : (['th', 'st', 'nd', 'rd'][day % 10] || 'th');
@@ -15812,8 +15827,8 @@
     }
 
     function dvToLocalISO(ts) {
-      const d = new Date(Number(ts) || Date.now());
-      if (isNaN(d.getTime())) return '';
+      const d = dvParseLogTimestamp(ts);
+      if (!d) return '';
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
@@ -16061,8 +16076,10 @@
         iconSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--on)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>';
       }
 
-      const dObj = new Date(Number(l.ts) || Date.now());
-      const timeStr = isNaN(dObj.getTime()) ? '' : dObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const dObj = dvParseLogTimestamp(l.ts);
+      const dateStr = dObj ? dObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' }) : '';
+      const timeStr = dObj ? dObj.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
+      const dateTimeStr = (dateStr && timeStr) ? (dateStr + ' \u00b7 ' + timeStr) : (dateStr || timeStr);
       const msgClass = 'log-msg' + (l.a === 'DELETE' ? ' tx-deleted-text' : '');
 
       const diffsHtml = (Array.isArray(l.diffs) && l.diffs.length)
@@ -16080,9 +16097,10 @@
       const pills = [];
       if (l.entity === 'lend') pills.push('<span class="log-pill log-pill-income">Receivable</span>');
       else if (l.entity === 'borrow') pills.push('<span class="log-pill log-pill-expense">Payable</span>');
-      else if (l.entity === 'payment' || l.entity === 'settlement') {
-        if (l.a === 'SETTLE') pills.push('<span class="log-pill log-pill-income">Settled</span>');
-        else if (l.direction === 'paid') pills.push('<span class="log-pill log-pill-expense">Payment Made</span>');
+      else if (l.entity === 'settlement' || l.a === 'SETTLE') {
+        pills.push('<span class="log-pill log-pill-income">' + (l.a === 'SETTLE' ? 'Settled' : 'Settlement') + '</span>');
+      } else if (l.entity === 'payment') {
+        if (l.direction === 'paid') pills.push('<span class="log-pill log-pill-expense">Payment Made</span>');
         else pills.push('<span class="log-pill log-pill-income">Payment Received</span>');
       } else if (l.entity === 'person') {
         pills.push('<span class="log-pill log-pill-sub">Account</span>');
@@ -16107,12 +16125,20 @@
         ? '<input type="checkbox" class="debt-log-cb" aria-label="Select log entry"' + (isSelected ? ' checked' : '') + '>'
         : '';
 
+      const timeHtml = dateTimeStr
+        ? '<span class="log-time-wrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="log-time">' + dvEscape(dateTimeStr) + '</span></span>'
+        : '';
+      const metaHtml = (timeHtml || pills.length)
+        ? '<div class="log-meta">' + timeHtml + (pills.length ? '<div class="log-meta-pills">' + pills.join('') + '</div>' : '') + '</div>'
+        : '';
+
       return '<div class="log-item debt-log-item ' + meta.item + (debtLogSelectionMode ? ' is-selectable' : '') + (isSelected ? ' is-selected' : '') + '" data-dlogid="' + safeId + '">'
-        + '<div class="log-cat-icon">' + iconSvg + '</div>'
+        + '<div class="log-cat-icon">' + iconSvg
+        + '<span class="log-action-badge ' + meta.badge + '">' + svgBadge + '</span>'
+        + '</div>'
         + '<div class="log-content">'
         + '<div class="log-header-row">'
         + '<div class="log-title-wrap">'
-        + '<span class="log-action-badge ' + meta.badge + '">' + svgBadge + '</span>'
         + '<span class="log-action-label">' + meta.label + '</span>'
         + '<div class="' + msgClass + '">' + dvEscape(l.m) + '</div>'
         + (l.note && !diffsHtml ? '<div class="log-msg-desc">' + dvEscape(l.note) + '</div>' : '')
@@ -16120,10 +16146,8 @@
         + '</div>'
         + cbHtml
         + '</div>'
-        + '<div class="log-meta">'
-        + '<span class="log-time-wrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="log-time">' + dvEscape(timeStr) + '</span></span>'
-        + (pills.length ? '<div class="log-meta-pills">' + pills.join('') + '</div>' : '')
-        + '</div></div></div>';
+        + metaHtml
+        + '</div></div>';
     }
 
     function renderDebtLogs() {
